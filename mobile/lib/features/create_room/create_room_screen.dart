@@ -48,7 +48,11 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
         const Text('PLAYERS', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         SegmentedButton<int>(
-          segments: const [for (final n in [2, 3, 4]) ButtonSegment(value: n, label: Text('$n'))],
+          segments: [
+            const ButtonSegment(value: 2, label: Text('2')),
+            const ButtonSegment(value: 3, label: Text('3')),
+            const ButtonSegment(value: 4, label: Text('4')),
+          ],
           selected: {players},
           onSelectionChanged: (s) => setState(() => players = s.first),
         ),
