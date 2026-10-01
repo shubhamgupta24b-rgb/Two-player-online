@@ -9,9 +9,10 @@ function register(mod) {
   games.set(mod.id, mod);
 }
 const get=id=>games.get(id), has=id=>games.has(id);
-for(const id of ['fruit_duel','paint_fight']) register({id,minPlayers:2,maxPlayers:4,implemented:false});
 register(require('./guess_person').game);
 register(require('./memory').game);
 register(require('./crush_it').game);
 register(require('./basketball_hoops').game);
+register(require('./fruit_duel').game);
+register(require('./paint_fight').game);
 module.exports={register,get,has};
