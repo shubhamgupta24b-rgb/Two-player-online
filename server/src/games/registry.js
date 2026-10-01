@@ -10,9 +10,9 @@ function register(mod) {
 }
 const get = id => games.get(id);
 const has = id => games.has(id);
-// Slots for the six planned games. NOT playable until implemented in later phases.
-for (const id of ['crush_it', 'basketball_hoops', 'fruit_duel', 'memory', 'paint_fight']) {
+for (const id of ['crush_it', 'basketball_hoops', 'fruit_duel', 'paint_fight']) {
   register({ id, minPlayers: 2, maxPlayers: 4, implemented: false });
 }
 register(require('./guess_person').game);
+register(require('./memory').game);
 module.exports = { register, get, has };
