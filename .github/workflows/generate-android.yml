@@ -1,9 +1,6 @@
 name: Generate Android Platform
 
 on:
-  push:
-    paths:
-      - ".github/workflows/generate-android.yml"
   workflow_dispatch:
 
 permissions:
@@ -21,8 +18,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.47.6"
-          channel: "stable"
+          channel: stable
           cache: true
 
       - name: Generate Android platform
