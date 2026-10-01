@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - ".github/workflows/generate-android.yml"
+      - ".android-generation-trigger"
   workflow_dispatch:
 
 permissions:
