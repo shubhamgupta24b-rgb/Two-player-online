@@ -1,6 +1,9 @@
 name: Generate Android Platform
 
 on:
+  push:
+    paths:
+      - ".github/workflows/generate-android.yml"
   workflow_dispatch:
 
 permissions:
