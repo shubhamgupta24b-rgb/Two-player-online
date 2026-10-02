@@ -1,16 +1,25 @@
-# One-click hosting on Render (render.com > New > Blueprint > pick this repo).
-# The server then runs at https://<name>.onrender.com; enter that in the app under Home > Server.
 services:
   - type: web
-    name: two-player-online
-    runtime: docker
+    name: two-player-online-server
+    env: node
     rootDir: server
-    dockerfilePath: ./Dockerfile
-    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
     healthCheckPath: /health
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: AUTH_MODE
-        value: dev
-      # Guest logins on a public server: fine for playing with friends, not for a store release.
+        value: firebase
+      - key: RECONNECT_GRACE_MS
+        value: 60000
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        sync: false
+      - key: MONGO_URI
+        sync: false
       - key: ALLOW_DEV_AUTH
-        value: "true"
+        sync: false
