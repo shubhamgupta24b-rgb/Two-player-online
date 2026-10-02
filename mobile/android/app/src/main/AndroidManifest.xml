@@ -2,10 +2,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:label="Multiplayer Game"
+        android:label="Party Games"
         android:icon="@mipmap/ic_launcher"
         android:name="${applicationName}"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/LaunchTheme">
         <activity
             android:name="io.flutter.embedding.android.FlutterActivity"
             android:exported="true"

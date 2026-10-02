@@ -5,6 +5,7 @@ import 'core/auth/authentication_manager.dart';
 import 'core/network/socket_manager.dart';
 import 'core/room/room_manager.dart';
 import 'core/session/game_session_manager.dart';
+import 'core/ui/app_ui.dart';
 import 'features/splash/splash_screen.dart';
 
 Future<void> main() async {
@@ -37,7 +38,7 @@ class _AppState extends State<App> {
       child: MaterialApp(
         title: 'Party Games',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorSchemeSeed: const Color(0xFF6C5CE7), brightness: Brightness.dark, useMaterial3: true),
+        theme: buildAppTheme(),
         home: const SplashScreen(),
       ),
     );

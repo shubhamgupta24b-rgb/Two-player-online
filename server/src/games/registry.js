@@ -16,4 +16,5 @@ register(require('./basketball_hoops').game);
 register(require('./fruit_duel').game);
 register(require('./paint_fight').game);
 register(require('./guess_who').game);
+register(require('./raja_mantri').game);
 module.exports={register,get,has};

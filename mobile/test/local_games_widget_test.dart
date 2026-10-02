@@ -82,6 +82,40 @@ void main() {
     expect(find.text('PLAYERS'), findsNothing, reason: '2 players only');
   });
 
+  for (final players in [2, 4]) {
+    testWidgets('Basketball: swiping straight up at the still hoop is a swish ($players players)', (tester) async {
+      tester.view.physicalSize = sizes['phone']!;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(home: LocalGameShell(game: localGames.firstWhere((g) => g.id == 'basketball_hoops'))));
+      if (players > 2) await tapText(tester, '$players');
+      await tester.pump();
+      await tapText(tester, 'PLAY');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 2800));
+      expect(find.text('SWIPE UP TO SHOOT'), findsNWidgets(players));
+
+      // Player 1's zone: bottom half (2 players) or top-left, sideways (4 players).
+      final ball = players == 2 ? const Offset(205, 840) : const Offset(35, 228);
+      final up = players == 2 ? const Offset(0, -250) : const Offset(150, 0);
+      final down = players == 2 ? const Offset(0, 250) : const Offset(-150, 0);
+      await tester.dragFrom(ball, up);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('+3 SWISH!'), findsOneWidget);
+      expect(find.text('SWIPE UP TO SHOOT'), findsNWidgets(players - 1));
+
+      // Swiping the wrong way does nothing.
+      await tester.pump(const Duration(seconds: 1));
+      await tester.dragFrom(ball + up / 2, down);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('MISS'), findsNothing);
+      expect(find.text('+3 SWISH!'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 2));
+    });
+  }
+
   for (final size in sizes.entries) {
     for (final game in localGames) {
       testWidgets('${game.title} plays through on ${size.key}', (tester) => playThrough(tester, game, size.value, 2));

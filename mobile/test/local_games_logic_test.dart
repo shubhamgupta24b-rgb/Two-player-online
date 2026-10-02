@@ -25,50 +25,63 @@ void main() {
   });
 
   group('Basketball Hoops', () {
-    test('points by distance match the online version', () {
+    test('points by how far the ball lands from the rim centre', () {
       expect(BasketballLogic.pointsFor(0), 3);
-      expect(BasketballLogic.pointsFor(7), 3);
-      expect(BasketballLogic.pointsFor(8), 2);
-      expect(BasketballLogic.pointsFor(18), 2);
-      expect(BasketballLogic.pointsFor(32), 1);
-      expect(BasketballLogic.pointsFor(33), 0);
+      expect(BasketballLogic.pointsFor(0.1), 3);
+      expect(BasketballLogic.pointsFor(0.11), 2);
+      expect(BasketballLogic.pointsFor(0.25), 2);
+      expect(BasketballLogic.pointsFor(0.26), 0);
     });
 
-    test('meter stays in 0..100 and shots respect the cooldown', () {
-      final g = BasketballLogic(random: Random(1));
-      for (var t = 0; t < 5000; t += 37) {
+    test('hoop stays still at first, then slides within its swing', () {
+      final g = BasketballLogic();
+      for (var t = 0; t < BasketballLogic.calmMs; t += 250) {
         g.update(t);
-        expect(g.meter(0), inInclusiveRange(0, 100));
-        expect(g.target, inInclusiveRange(15, 85));
+        expect(g.hoopX, 0);
       }
-      g.update(6000);
-      final pts = g.shoot(0);
-      expect(pts, isNotNull);
-      expect(g.score[0], pts);
-      expect(g.shoot(0), isNull, reason: 'cooldown');
-      g.update(6400);
-      expect(g.shoot(0), isNull, reason: 'still cooling down');
-      g.update(6500);
-      expect(g.shoot(0), isNotNull);
-      expect(g.shots[0], 2);
-      expect(g.shots[1], 0);
+      var moved = false;
+      for (var t = BasketballLogic.calmMs; t < 30000; t += 37) {
+        g.update(t);
+        expect(g.hoopX.abs(), lessThanOrEqualTo(BasketballLogic.swing));
+        if (g.hoopX.abs() > 0.3) moved = true;
+      }
+      expect(moved, isTrue);
     });
 
-    test('a shot exactly on target scores 3', () {
-      final g = BasketballLogic(random: Random(2));
-      // Find a moment when player 1's meter is on the target.
-      for (var t = 0; t < 30000; t++) {
-        g.update(t);
-        if ((g.meter(0) - g.target).abs() < 1) break;
-      }
-      expect(g.shoot(0), 3);
+    test('straight shot at a still hoop is a swish; wide shots miss; cooldown applies', () {
+      final g = BasketballLogic();
+      g.update(1000);
+      expect(g.shoot(0, 0), 3);
+      expect(g.shoot(0, 0), isNull, reason: 'cooldown');
+      g.update(1700);
+      expect(g.shoot(0, 0), isNull, reason: 'still cooling down');
+      g.update(1800);
+      expect(g.shoot(0, 0.2), 2);
+      g.update(2600);
+      expect(g.shoot(0, -1), 0);
+      expect(g.score, [5, 0]);
+      expect(g.shots, [3, 0]);
+      expect(g.shoot(1, 0.05), 3, reason: 'players have their own cooldown');
+    });
+
+    test('a moving hoop has to be led: the ball is judged where the hoop will be', () {
+      final g = BasketballLogic();
+      g.update(12000);
+      final later = BasketballLogic.hoopXAt(12000 + BasketballLogic.flightMs);
+      expect((later - g.hoopX).abs(), greaterThan(0.25), reason: 'the hoop moves a lot during a flight');
+      expect(g.shoot(0, later), 3);
+      g.update(13000);
+      final now = g.hoopX;
+      final shot = g.shoot(1, now)!;
+      expect(g.lastShot[1]!.hoopX, BasketballLogic.hoopXAt(13000 + BasketballLogic.flightMs));
+      expect(shot, BasketballLogic.pointsFor((now - g.lastShot[1]!.hoopX).abs()));
     });
 
     test('no shots after time is up', () {
       final g = BasketballLogic();
       g.update(30000);
       expect(g.finished, isTrue);
-      expect(g.shoot(0), isNull);
+      expect(g.shoot(0, 0), isNull);
     });
   });
 

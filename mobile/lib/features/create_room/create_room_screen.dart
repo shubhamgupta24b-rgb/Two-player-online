@@ -42,8 +42,8 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
             groupValue: gameId,
             onChanged: (v) => setState(() {
               gameId = v!;
-              final max = gameCatalog.firstWhere((x) => x.id == gameId).maxPlayers;
-              if (players > max) players = max;
+              final g = gameCatalog.firstWhere((x) => x.id == gameId);
+              players = players.clamp(g.minPlayers, g.maxPlayers);
             }),
             title: Text(g.name),
             subtitle: g.playable ? null : const Text('Not implemented yet (lobby only)'),
@@ -54,7 +54,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
         SegmentedButton<int>(
           segments: [
             for (final n in [2, 3, 4])
-              ButtonSegment(value: n, label: Text('$n'), enabled: n <= gameCatalog.firstWhere((x) => x.id == gameId).maxPlayers),
+              ButtonSegment(value: n, label: Text('$n'), enabled: n >= gameCatalog.firstWhere((x) => x.id == gameId).minPlayers && n <= gameCatalog.firstWhere((x) => x.id == gameId).maxPlayers),
           ],
           selected: {players},
           onSelectionChanged: (s) => setState(() => players = s.first),

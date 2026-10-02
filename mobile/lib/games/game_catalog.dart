@@ -2,8 +2,9 @@ class GameInfo {
   final String id;
   final String name;
   final bool playable;
+  final int minPlayers;
   final int maxPlayers;
-  const GameInfo(this.id, this.name, {this.playable = false, this.maxPlayers = 4});
+  const GameInfo(this.id, this.name, {this.playable = false, this.minPlayers = 2, this.maxPlayers = 4});
 }
 const gameCatalog=<GameInfo>[
   GameInfo('guess_who','Guess Who (2 phones)',playable:true,maxPlayers:2),
@@ -13,5 +14,6 @@ const gameCatalog=<GameInfo>[
   GameInfo('fruit_duel','Fruit Duel',playable:true),
   GameInfo('memory','Memory',playable:true),
   GameInfo('paint_fight','Paint Fight',playable:true),
+  GameInfo('raja_mantri','Raja Mantri Chor Sipahi (4 phones)',playable:true,minPlayers:4,maxPlayers:4),
 ];
 String gameName(String id)=>gameCatalog.firstWhere((g)=>g.id==id,orElse:()=>GameInfo(id,id)).name;

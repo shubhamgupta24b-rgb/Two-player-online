@@ -6,6 +6,7 @@ import 'crush_it/crush_it_screen.dart';
 import 'basketball_hoops/basketball_hoops_screen.dart';
 import 'fruit_duel/fruit_duel_screen.dart';
 import 'paint_fight/paint_fight_screen.dart';
+import 'raja_mantri/raja_mantri_screen.dart';
 
 Widget? gameScreenFor(String gameType){
  switch(gameType){
@@ -16,6 +17,7 @@ Widget? gameScreenFor(String gameType){
   case 'basketball_hoops': return const BasketballHoopsScreen();
   case 'fruit_duel': return const FruitDuelScreen();
   case 'paint_fight': return const PaintFightScreen();
+  case 'raja_mantri': return const RajaMantriScreen();
  }
  return null;
 }

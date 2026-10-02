@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../guess_person/screens/guess_person_menu_screen.dart';
 import '../guess_person/widgets/gp_theme.dart';
+import '../raja_mantri/rmcs_screen.dart';
 import 'basketball/basketball_game.dart';
 import 'crush_it/crush_it_game.dart';
 import 'fruit_duel/fruit_duel_game.dart';
@@ -35,6 +36,14 @@ class LocalGamesHubScreen extends StatelessWidget {
         color: const Color(0xFFFFC93C),
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GuessPersonMenuScreen())),
       ),
+      _Tile(
+        emoji: '👑',
+        title: 'Raja Mantri Chor Sipahi',
+        tagline: 'Can the Mantri catch the Chor?',
+        players: '4',
+        color: const Color(0xFF8A1C3A),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RmcsMenuScreen())),
+      ),
       for (final g in localGames)
         _Tile(
           emoji: g.emoji,
@@ -67,7 +76,7 @@ class LocalGamesHubScreen extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
                 child: Column(children: [
                   Text('PARTY GAMES', style: TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0xFF6C5CE7), offset: Offset(0, 4))])),
-                  Text('15 GAMES · ONE DEVICE · NO INTERNET', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                  Text('16 GAMES · ONE DEVICE · NO INTERNET', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
                 ]),
               ),
             ),

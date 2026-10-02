@@ -373,16 +373,13 @@ void main() {
       }
     });
 
-    test('Basketball with 4: every meter stays in range', () {
+    test('Basketball with 4: everyone shoots at the same hoop', () {
       final g = BasketballLogic(players: 4);
-      for (var t = 0; t < 3000; t += 37) {
-        g.update(t);
-        for (var p = 0; p < 4; p++) {
-          expect(g.meter(p), inInclusiveRange(0, 100));
-        }
-      }
-      expect(g.shoot(3), isNotNull);
-      expect(g.shots, [0, 0, 0, 1]);
+      g.update(2000);
+      expect(g.shoot(3, 0), 3);
+      expect(g.shoot(1, 1), 0);
+      expect(g.shots, [0, 1, 0, 1]);
+      expect(g.scores, [0, 0, 0, 3]);
     });
 
     test('Guess the Person with 3 players rotates chooser and guesser', () {

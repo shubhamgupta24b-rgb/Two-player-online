@@ -74,7 +74,7 @@ Future<void> disposeGame(WidgetTester tester) async {
 void main() {
   group('game catalog and routing', () {
     test('every catalog game is playable and has a screen', () {
-      expect(gameCatalog.map((g) => g.id), ['guess_who', 'guess_person', 'crush_it', 'basketball_hoops', 'fruit_duel', 'memory', 'paint_fight']);
+      expect(gameCatalog.map((g) => g.id), ['guess_who', 'guess_person', 'crush_it', 'basketball_hoops', 'fruit_duel', 'memory', 'paint_fight', 'raja_mantri']);
       for (final g in gameCatalog) {
         expect(g.playable, isTrue, reason: g.id);
         expect(gameScreenFor(g.id), isNotNull, reason: g.id);
