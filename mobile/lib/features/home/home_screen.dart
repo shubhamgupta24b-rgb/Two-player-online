@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/room/room_manager.dart';
 import '../create_room/create_room_screen.dart';
+import '../guess_person/screens/guess_person_menu_screen.dart';
 import '../join_room/join_room_screen.dart';
 import '../lobby/lobby_screen.dart';
 
@@ -36,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Text('PARTY GAMES', textAlign: TextAlign.center, style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 32),
+            big('GUESS THE PERSON · 2P ON ONE DEVICE', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GuessPersonMenuScreen()))),
             big('CREATE ROOM', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateRoomScreen()))),
             big('JOIN ROOM', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const JoinRoomScreen()))),
             big('QUICK PLAY (coming later)', null),

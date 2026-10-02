@@ -1,0 +1,41 @@
+import '../models/person.dart';
+
+/// Fictional cast of 32. Attributes are spread evenly (half glasses, half hats, 8 of
+/// each hair and shirt colour, 16 male / 16 female, ...) and every person has a unique combination,
+/// which test/guess_person_controller_test.dart checks.
+const List<Person> allPeople = [
+  Person(id: 1, name: 'Alex', gender: Gender.male, hasGlasses: true, hasBeard: false, hasHat: true, hasLongHair: false, hairColor: 'black', shirtColor: 'red', skinTone: 'light'),
+  Person(id: 2, name: 'Sam', gender: Gender.female, hasGlasses: false, hasBeard: false, hasHat: false, hasLongHair: true, hairColor: 'brown', shirtColor: 'blue', skinTone: 'tan', accessory: 'earrings'),
+  Person(id: 3, name: 'Jordan', gender: Gender.male, hasGlasses: false, hasBeard: true, hasHat: false, hasLongHair: false, hairColor: 'red', shirtColor: 'green', skinTone: 'dark'),
+  Person(id: 4, name: 'Taylor', gender: Gender.female, hasGlasses: true, hasBeard: false, hasHat: true, hasLongHair: true, hairColor: 'blonde', shirtColor: 'yellow', skinTone: 'light', accessory: 'necklace'),
+  Person(id: 5, name: 'Chris', gender: Gender.male, hasGlasses: true, hasBeard: true, hasHat: false, hasLongHair: false, hairColor: 'brown', shirtColor: 'blue', skinTone: 'tan', accessory: 'bowtie'),
+  Person(id: 6, name: 'Jamie', gender: Gender.female, hasGlasses: false, hasBeard: false, hasHat: true, hasLongHair: false, hairColor: 'black', shirtColor: 'red', skinTone: 'dark', accessory: 'earrings'),
+  Person(id: 7, name: 'Riley', gender: Gender.male, hasGlasses: false, hasBeard: false, hasHat: false, hasLongHair: true, hairColor: 'blonde', shirtColor: 'yellow', skinTone: 'light'),
+  Person(id: 8, name: 'Morgan', gender: Gender.female, hasGlasses: true, hasBeard: false, hasHat: false, hasLongHair: true, hairColor: 'red', shirtColor: 'green', skinTone: 'tan'),
+  Person(id: 9, name: 'Casey', gender: Gender.male, hasGlasses: false, hasBeard: true, hasHat: true, hasLongHair: false, hairColor: 'blonde', shirtColor: 'red', skinTone: 'tan'),
+  Person(id: 10, name: 'Robin', gender: Gender.female, hasGlasses: false, hasBeard: false, hasHat: false, hasLongHair: false, hairColor: 'red', shirtColor: 'blue', skinTone: 'light', accessory: 'necklace'),
+  Person(id: 11, name: 'Charlie', gender: Gender.male, hasGlasses: true, hasBeard: false, hasHat: false, hasLongHair: false, hairColor: 'black', shirtColor: 'yellow', skinTone: 'dark', accessory: 'bowtie'),
+  Person(id: 12, name: 'Drew', gender: Gender.female, hasGlasses: true, hasBeard: false, hasHat: false, hasLongHair: true, hairColor: 'blonde', shirtColor: 'green', skinTone: 'dark'),
+  Person(id: 13, name: 'Avery', gender: Gender.male, hasGlasses: false, hasBeard: true, hasHat: false, hasLongHair: true, hairColor: 'red', shirtColor: 'red', skinTone: 'light', accessory: 'bowtie'),
+  Person(id: 14, name: 'Cameron', gender: Gender.female, hasGlasses: true, hasBeard: false, hasHat: true, hasLongHair: false, hairColor: 'brown', shirtColor: 'blue', skinTone: 'dark'),
+  Person(id: 15, name: 'Logan', gender: Gender.male, hasGlasses: true, hasBeard: false, hasHat: true, hasLongHair: false, hairColor: 'black', shirtColor: 'yellow', skinTone: 'tan'),
+  Person(id: 16, name: 'Quinn', gender: Gender.female, hasGlasses: false, hasBeard: false, hasHat: false, hasLongHair: true, hairColor: 'brown', shirtColor: 'green', skinTone: 'light', accessory: 'earrings'),
+  // 17-32 mirror 1-16 with glasses and hat flipped and hair/shirt/skin colours shifted,
+  // which keeps every attribute balanced and every combination unique.
+  Person(id: 17, name: 'Parker', gender: Gender.male, hasGlasses: false, hasBeard: false, hasHat: false, hasLongHair: false, hairColor: 'brown', shirtColor: 'blue', skinTone: 'tan'),
+  Person(id: 18, name: 'Reese', gender: Gender.female, hasGlasses: true, hasBeard: false, hasHat: true, hasLongHair: true, hairColor: 'blonde', shirtColor: 'green', skinTone: 'dark', accessory: 'earrings'),
+  Person(id: 19, name: 'Skyler', gender: Gender.male, hasGlasses: true, hasBeard: true, hasHat: true, hasLongHair: false, hairColor: 'black', shirtColor: 'yellow', skinTone: 'light'),
+  Person(id: 20, name: 'Harper', gender: Gender.female, hasGlasses: false, hasBeard: false, hasHat: false, hasLongHair: true, hairColor: 'red', shirtColor: 'red', skinTone: 'tan', accessory: 'necklace'),
+  Person(id: 21, name: 'Jesse', gender: Gender.male, hasGlasses: false, hasBeard: true, hasHat: true, hasLongHair: false, hairColor: 'blonde', shirtColor: 'green', skinTone: 'dark', accessory: 'bowtie'),
+  Person(id: 22, name: 'Sage', gender: Gender.female, hasGlasses: true, hasBeard: false, hasHat: false, hasLongHair: false, hairColor: 'brown', shirtColor: 'blue', skinTone: 'light', accessory: 'earrings'),
+  Person(id: 23, name: 'Rowan', gender: Gender.male, hasGlasses: true, hasBeard: false, hasHat: true, hasLongHair: true, hairColor: 'red', shirtColor: 'red', skinTone: 'tan'),
+  Person(id: 24, name: 'Dakota', gender: Gender.female, hasGlasses: false, hasBeard: false, hasHat: true, hasLongHair: true, hairColor: 'black', shirtColor: 'yellow', skinTone: 'dark'),
+  Person(id: 25, name: 'Kai', gender: Gender.male, hasGlasses: true, hasBeard: true, hasHat: false, hasLongHair: false, hairColor: 'red', shirtColor: 'blue', skinTone: 'dark'),
+  Person(id: 26, name: 'Ellis', gender: Gender.female, hasGlasses: true, hasBeard: false, hasHat: true, hasLongHair: false, hairColor: 'black', shirtColor: 'green', skinTone: 'tan', accessory: 'necklace'),
+  Person(id: 27, name: 'Blake', gender: Gender.male, hasGlasses: false, hasBeard: false, hasHat: true, hasLongHair: false, hairColor: 'brown', shirtColor: 'red', skinTone: 'light', accessory: 'bowtie'),
+  Person(id: 28, name: 'Jules', gender: Gender.female, hasGlasses: false, hasBeard: false, hasHat: true, hasLongHair: true, hairColor: 'red', shirtColor: 'yellow', skinTone: 'light'),
+  Person(id: 29, name: 'Finley', gender: Gender.male, hasGlasses: true, hasBeard: true, hasHat: true, hasLongHair: true, hairColor: 'black', shirtColor: 'blue', skinTone: 'tan', accessory: 'bowtie'),
+  Person(id: 30, name: 'Hayden', gender: Gender.female, hasGlasses: false, hasBeard: false, hasHat: false, hasLongHair: false, hairColor: 'blonde', shirtColor: 'green', skinTone: 'light'),
+  Person(id: 31, name: 'Emerson', gender: Gender.male, hasGlasses: false, hasBeard: false, hasHat: false, hasLongHair: false, hairColor: 'brown', shirtColor: 'red', skinTone: 'dark'),
+  Person(id: 32, name: 'Rory', gender: Gender.female, hasGlasses: true, hasBeard: false, hasHat: true, hasLongHair: true, hairColor: 'blonde', shirtColor: 'yellow', skinTone: 'tan', accessory: 'earrings'),
+];
