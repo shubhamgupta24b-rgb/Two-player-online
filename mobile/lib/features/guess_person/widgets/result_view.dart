@@ -35,7 +35,9 @@ class ResultView extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
+            child: DarkPanel(
+              padding: const EdgeInsets.all(20),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text('$emoji $title', textAlign: TextAlign.center, style: TextStyle(color: color, fontSize: 34, fontWeight: FontWeight.w900)),
               const SizedBox(height: 6),
               Text(sub, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
@@ -43,7 +45,7 @@ class ResultView extends StatelessWidget {
               found ? _Pop(child: secretCard) : _Shake(child: secretCard),
               if (result.outcome == RoundOutcome.wrong && result.guessed != null) ...[
                 const SizedBox(height: 8),
-                Text('You guessed #${result.guessed!.number} ${result.guessed!.name}', style: const TextStyle(color: Colors.white70)),
+                Text('You guessed ${result.guessed!.name}', style: const TextStyle(color: Colors.white70)),
               ],
               const SizedBox(height: 12),
               Text(result.points == 1 ? '+1 POINT' : '+${result.points} POINTS',
@@ -60,7 +62,8 @@ class ResultView extends StatelessWidget {
                 width: double.infinity,
                 child: GpButton(lastRound ? 'SEE FINAL SCORE' : 'NEXT ROUND', onPressed: onNext, icon: lastRound ? Icons.emoji_events_rounded : Icons.arrow_forward_rounded),
               ),
-            ]),
+              ]),
+            ),
           ),
         ),
       ),

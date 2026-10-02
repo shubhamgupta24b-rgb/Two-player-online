@@ -16,7 +16,7 @@ class _GpSettingsScreenState extends State<GpSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GpBackground(
+      body: CoralBackground(
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -26,6 +26,13 @@ class _GpSettingsScreenState extends State<GpSettingsScreen> {
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   const Text('SETTINGS', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 24),
+                  _Choice<int>(
+                    title: 'PLAYERS',
+                    options: GpSettings.playerOptions,
+                    label: (v) => '$v',
+                    value: s.playerCount,
+                    onChanged: (v) => setState(() => s = s.copyWith(playerCount: v)),
+                  ),
                   _Choice<int>(
                     title: 'ROUNDS',
                     options: GpSettings.roundOptions,
@@ -86,7 +93,7 @@ class _Choice<T> extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+        Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         Row(children: [
           for (final o in options)
@@ -97,7 +104,7 @@ class _Choice<T> extends StatelessWidget {
                   selected: o == value,
                   button: true,
                   child: Material(
-                    color: o == value ? GpColors.accent : GpColors.panel,
+                    color: o == value ? GpColors.accent : GpCoral.panel,
                     borderRadius: BorderRadius.circular(16),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),

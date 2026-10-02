@@ -43,11 +43,16 @@ class LocalGameShell extends StatefulWidget {
 }
 
 class _LocalGameShellState extends State<LocalGameShell> {
-  final players = defaultPlayers();
-  final wins = [0, 0];
+  var players = defaultPlayers();
+  var wins = [0, 0];
   var phase = _ShellPhase.intro;
   var matchNo = 0;
-  List<int> lastScores = const [0, 0];
+
+  /// Changing the player count starts a fresh tally.
+  void _setPlayerCount(int n) => setState(() {
+        players = defaultPlayers(n);
+        wins = List.filled(n, 0);
+      });
 
   void _start() => setState(() => phase = _ShellPhase.countdown);
 
@@ -60,7 +65,6 @@ class _LocalGameShellState extends State<LocalGameShell> {
     if (!mounted) return;
     HapticFeedback.mediumImpact().ignore();
     setState(() {
-      lastScores = scores;
       for (var i = 0; i < players.length; i++) {
         players[i].score = scores[i];
       }
@@ -91,7 +95,7 @@ class _LocalGameShellState extends State<LocalGameShell> {
   Widget build(BuildContext context) {
     final g = widget.game;
     final Widget body = switch (phase) {
-      _ShellPhase.intro => _Intro(game: g, onPlay: _start),
+      _ShellPhase.intro => _Intro(game: g, onPlay: _start, playerCount: players.length, onPlayerCount: _setPlayerCount),
       _ShellPhase.countdown => _Countdown(onDone: _go, color: g.color),
       // A new key per match guarantees fresh game state on Play Again.
       _ShellPhase.playing => KeyedSubtree(key: ValueKey('match$matchNo'), child: g.play(players, _finished)),
@@ -119,7 +123,9 @@ class _LocalGameShellState extends State<LocalGameShell> {
 class _Intro extends StatelessWidget {
   final LocalGameInfo game;
   final VoidCallback onPlay;
-  const _Intro({required this.game, required this.onPlay});
+  final int playerCount;
+  final ValueChanged<int> onPlayerCount;
+  const _Intro({required this.game, required this.onPlay, required this.playerCount, required this.onPlayerCount});
 
   @override
   Widget build(BuildContext context) {
@@ -172,14 +178,49 @@ class _Intro extends StatelessWidget {
                     ),
                 ]),
               ),
+              if (game.maxPlayers > 2) ...[
+                const SizedBox(height: 16),
+                const Text('PLAYERS', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                const SizedBox(height: 8),
+                Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6, children: [
+                  for (var n = 2; n <= game.maxPlayers; n++)
+                    Padding(
+                      padding: EdgeInsets.zero,
+                      child: Semantics(
+                        button: true,
+                        selected: n == playerCount,
+                        label: '$n players',
+                        child: Material(
+                          color: n == playerCount ? GpColors.accent : GpColors.panel,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => onPlayerCount(n),
+                            child: SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: Center(
+                                child: Text('$n', style: TextStyle(color: n == playerCount ? GpColors.ink : Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ]),
+              ],
               if (game.splitScreen) ...[
                 const SizedBox(height: 12),
-                const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(Icons.screen_rotation_alt_rounded, color: Colors.white60, size: 18),
-                  SizedBox(width: 6),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Icon(Icons.screen_rotation_alt_rounded, color: Colors.white60, size: 18),
+                  const SizedBox(width: 6),
                   Flexible(
-                    child: Text('Lay the phone flat · Player 1 bottom, Player 2 top',
-                        textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, fontSize: 13)),
+                    child: Text(
+                        playerCount == 2
+                            ? 'Lay the phone flat · Player 1 bottom, Player 2 top'
+                            : 'Lay the phone flat · players sit along both long sides, each at their own zone',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white60, fontSize: 13)),
                   ),
                 ]),
               ],
@@ -265,7 +306,7 @@ class _Result extends StatelessWidget {
               const SizedBox(height: 8),
               ScoreBoard(players: players, large: true, highlight: draw ? const {} : leaders.toSet()),
               const SizedBox(height: 14),
-              Text('MATCHES WON  ·  ${players[0].name} ${wins[0]} – ${wins[1]} ${players[1].name}',
+              Text('MATCHES WON  ·  ${[for (var i = 0; i < players.length; i++) '${players[i].name} ${wins[i]}'].join('  ·  ')}',
                   textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
               const SizedBox(height: 28),
               GpButton('PLAY AGAIN', icon: Icons.replay_rounded, onPressed: onAgain),

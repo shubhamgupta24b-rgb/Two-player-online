@@ -27,7 +27,9 @@ class PassDeviceView extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
+          child: DarkPanel(
+            padding: const EdgeInsets.all(24),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
             Container(
               width: 110,
               height: 110,
@@ -48,7 +50,8 @@ class PassDeviceView extends StatelessWidget {
             Text('"$message"', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 15, fontStyle: FontStyle.italic)),
             const SizedBox(height: 36),
             SizedBox(width: double.infinity, child: GpButton(buttonLabel, onPressed: onReady, icon: Icons.thumb_up_alt_rounded)),
-          ]),
+            ]),
+          ),
         ),
       ),
     );

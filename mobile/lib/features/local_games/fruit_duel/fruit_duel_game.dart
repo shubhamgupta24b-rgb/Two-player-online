@@ -95,16 +95,19 @@ final fruitDuelInfo = LocalGameInfo(
   rules: const [
     'A fruit pops up in one of three lanes on both sides.',
     'Tap the lane with the fruit to slice it. One try per fruit!',
-    'First to slice gets +2, second gets +1. Fruits get faster. 20 seconds.',
+    'First to slice gets +2, everyone else who gets it +1. Fruits get faster. 20 seconds. 2 to 4 players.',
   ],
   scoreUnit: 'points',
   splitScreen: true,
+  maxPlayers: 4,
   play: (players, onFinished) => TickingPlay<FruitDuelLogic>(
-    create: () => FruitDuelLogic(),
+    create: () => FruitDuelLogic(players: players.length),
     onFinished: onFinished,
-    builder: (context, g) => SplitScreen(
+    builder: (context, g) => PlayerZones(
+      count: players.length,
       middle: DuelMiddleBar(players: players, scores: g.scores, secondsLeft: g.secondsLeft, progress: g.progress),
-      half: (i) => _FruitHalf(player: players[i], index: i, g: g),
+      center: ZoneCenterChip('${g.secondsLeft}s'),
+      zone: (i) => _FruitHalf(player: players[i], index: i, g: g),
     ),
   ),
 );

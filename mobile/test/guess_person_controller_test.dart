@@ -22,19 +22,41 @@ Person setupGuessing(GuessPersonController c, {Person? secret}) {
 
 void main() {
   group('dataset', () {
-    test('every person has a unique attribute combination', () {
-      final sigs = allPeople
-          .map((p) => [p.gender, p.hasGlasses, p.hasBeard, p.hasHat, p.hasLongHair, p.hairColor, p.shirtColor, p.accessory].join('|'))
-          .toSet();
-      expect(sigs.length, allPeople.length);
-      expect(allPeople.map((p) => p.id).toSet().length, allPeople.length);
+    test('30 people with unique ids and names', () {
+      expect(allPeople, hasLength(30));
+      expect(allPeople.map((p) => p.id).toSet(), hasLength(30));
+      expect(allPeople.map((p) => p.name).toSet(), hasLength(30));
+      expect(allPeople.where((p) => p.gender == Gender.female), hasLength(15));
     });
 
-    test('attributes are reasonably balanced (25%-75%)', () {
+    test('the main yes/no traits are reasonably balanced (25%-75%)', () {
       final n = allPeople.length;
-      for (final q in buildQuestions(allPeople).where((q) => !q.id.startsWith('hair_') && !q.id.startsWith('shirt_') && !q.id.startsWith('acc_'))) {
-        final yes = allPeople.where(q.test).length;
-        expect(yes / n, inInclusiveRange(0.25, 0.75), reason: q.id);
+      const balanced = {'male', 'female', 'glasses', 'hat', 'long_hair'};
+      final qs = buildQuestions(allPeople).where((q) => balanced.contains(q.id)).toList();
+      expect(qs, hasLength(balanced.length));
+      for (final q in qs) {
+        expect(allPeople.where(q.test).length / n, inInclusiveRange(0.25, 0.75), reason: q.id);
+      }
+    });
+
+    test('every question belongs to a category, and every category has questions', () {
+      final qs = buildQuestions(allPeople);
+      final ids = gpCategories.map((c) => c.id).toSet();
+      for (final q in qs) {
+        expect(ids, contains(q.category), reason: q.id);
+      }
+      for (final c in gpCategories) {
+        expect(qs.where((q) => q.category == c.id), isNotEmpty, reason: c.id);
+      }
+    });
+
+    test('bearded people also answer YES to mustache, bald people have no hair colour', () {
+      for (final p in allPeople.where((p) => p.hasBeard)) {
+        expect(p.hasMustache, isTrue, reason: p.name);
+      }
+      final hairQs = buildQuestions(allPeople).where((q) => q.category == 'hair_color');
+      for (final p in allPeople.where((p) => p.isBald)) {
+        expect(hairQs.any((q) => q.test(p)), isFalse, reason: p.name);
       }
     });
 

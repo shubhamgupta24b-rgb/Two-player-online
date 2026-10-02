@@ -5,6 +5,7 @@ import 'package:multiplayer_game/features/local_games/crush_it/crush_it_game.dar
 import 'package:multiplayer_game/features/local_games/fruit_duel/fruit_duel_game.dart';
 import 'package:multiplayer_game/features/local_games/memory/memory_game.dart';
 import 'package:multiplayer_game/features/local_games/paint_fight/paint_fight_game.dart';
+import 'package:multiplayer_game/features/local_games/tic_tac_toe/tic_tac_toe_game.dart';
 
 void main() {
   group('Crush It', () {
@@ -155,6 +156,64 @@ void main() {
       expect(g.flip(3), isFalse);
       expect(g.flip(-1), isFalse);
       expect(g.flip(99), isFalse);
+    });
+  });
+
+  group('Tic-Tac-Toe', () {
+    test('players alternate from the chosen starter', () {
+      final g = TicTacToeLogic(starter: 1);
+      expect(g.turn, 1);
+      g.play(4);
+      expect(g.cells[4], 1);
+      expect(g.turn, 0);
+    });
+
+    test('rejects taken squares, out-of-range squares and moves after the end', () {
+      final g = TicTacToeLogic();
+      expect(g.play(0), isTrue);
+      expect(g.play(0), isFalse);
+      expect(g.play(-1), isFalse);
+      expect(g.play(9), isFalse);
+      expect(g.turn, 1, reason: 'rejected moves keep the turn');
+    });
+
+    test('every line wins', () {
+      for (final line in TicTacToeLogic.lines) {
+        final g = TicTacToeLogic();
+        final others = [for (var i = 0; i < 9; i++) if (!line.contains(i)) i];
+        // X takes the line, O plays elsewhere in between.
+        g.play(line[0]);
+        g.play(others[0]);
+        g.play(line[1]);
+        g.play(others[1]);
+        g.play(line[2]);
+        expect(g.winner, 0, reason: '$line');
+        expect(g.winLine, line);
+        expect(g.scores, [1, 0]);
+        expect(g.play(others[2]), isFalse, reason: 'game over');
+      }
+    });
+
+    test('a full board without a line is a draw', () {
+      final g = TicTacToeLogic();
+      // X O X / X O O / O X X
+      for (final c in [0, 1, 2, 4, 3, 5, 7, 6, 8]) {
+        g.play(c);
+      }
+      expect(g.winner, isNull);
+      expect(g.isDraw, isTrue);
+      expect(g.finished, isTrue);
+      expect(g.scores, [0, 0]);
+    });
+
+    test('winning on the last square is a win, not a draw', () {
+      final g = TicTacToeLogic();
+      // X fills the right-hand column with the ninth and final move.
+      for (final c in [0, 1, 2, 3, 5, 4, 7, 6, 8]) {
+        g.play(c);
+      }
+      expect(g.winner, 0);
+      expect(g.isDraw, isFalse);
     });
   });
 

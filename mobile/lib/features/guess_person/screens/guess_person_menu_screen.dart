@@ -33,7 +33,7 @@ class _GuessPersonMenuScreenState extends State<GuessPersonMenuScreen> with Sing
   Widget build(BuildContext context) {
     final faces = [allPeople[3], allPeople[0], allPeople[11], allPeople[4], allPeople[15]];
     return Scaffold(
-      body: GpBackground(
+      body: CoralBackground(
         child: SafeArea(
           child: Stack(children: [
             Positioned(
@@ -88,11 +88,11 @@ class _GuessPersonMenuScreenState extends State<GuessPersonMenuScreen> with Sing
                           height: 1.0,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.5,
-                          shadows: [Shadow(color: Color(0xFF6C5CE7), offset: Offset(0, 4), blurRadius: 0)],
+                          shadows: [Shadow(color: GpCoral.board, offset: Offset(0, 4), blurRadius: 0)],
                         )),
                     const SizedBox(height: 10),
-                    const Text('2 players · one device · pass & play',
-                        textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontSize: 15, fontWeight: FontWeight.w600)),
+                    Text('${settings.playerCount} players · one device · pass & play',
+                        textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 36),
                     GpButton('PLAY', icon: Icons.play_arrow_rounded, onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => GuessPersonGameScreen(settings: settings)));
@@ -107,7 +107,7 @@ class _GuessPersonMenuScreenState extends State<GuessPersonMenuScreen> with Sing
                     Text(
                       '${settings.peopleCount} people · ${settings.rounds} rounds ·${settings.hasTimer ? '${settings.timerSeconds}s timer' : 'no timer'} ·${settings.autoEliminate ? 'auto' : 'manual'} elimination · sound ${settings.sound ? 'on' : 'off'}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ]),
                 ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../logic/gp_settings.dart';
 import '../logic/guess_person_controller.dart';
+import '../models/gp_player.dart';
+import '../models/gp_question.dart';
 import '../widgets/game_header.dart';
 import '../widgets/gp_sound.dart';
 import '../widgets/gp_theme.dart';
@@ -21,7 +23,7 @@ class GuessPersonGameScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => GuessPersonController(settings: settings, onSfx: playGpSfx)..startGame(),
+      create: (_) => GuessPersonController(settings: settings, players: defaultPlayers(settings.playerCount), onSfx: playGpSfx)..startGame(),
       child: const _GameView(),
     );
   }
@@ -34,7 +36,7 @@ class _GameView extends StatelessWidget {
     final leave = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: GpColors.bgTop,
+        backgroundColor: GpCoral.panel,
         title: const Text('Leave game?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
         content: const Text('Scores for this match will be lost.', style: TextStyle(color: Colors.white70)),
         actions: [
@@ -51,6 +53,7 @@ class _GameView extends StatelessWidget {
     final c = context.watch<GuessPersonController>();
     // guessing <-> finalGuess share one view so the board doesn't flash.
     final viewKey = '${c.round}-${c.phase == GpPhase.finalGuess ? GpPhase.guessing : c.phase}';
+    void leave() => _confirmLeave(context);
 
     Widget body;
     if (!c.hasEnoughPeople) {
@@ -65,10 +68,10 @@ class _GameView extends StatelessWidget {
             buttonLabel: 'START CHOOSING',
             onReady: c.beginSelection,
           ),
-        GpPhase.selectingPerson => _SelectView(c: c, onClose: () => _confirmLeave(context)),
+        GpPhase.selectingPerson => _SelectView(c: c, onClose: leave),
         GpPhase.confirmSelection => _ConfirmView(c: c),
         GpPhase.passDevice => PassDeviceView(title: '🔒 PERSON SELECTED', to: c.guesser, onReady: c.switchToGuessing),
-        GpPhase.guessing || GpPhase.finalGuess => _GuessView(c: c, onClose: () => _confirmLeave(context)),
+        GpPhase.guessing || GpPhase.finalGuess => _GuessView(c: c, onClose: leave),
         GpPhase.result => ResultView(result: c.result!, players: c.players, lastRound: c.isLastRound, onNext: c.nextRound),
         GpPhase.gameOver => _GameOverView(c: c),
       };
@@ -77,10 +80,10 @@ class _GameView extends StatelessWidget {
     return PopScope(
       canPop: c.phase == GpPhase.gameOver || !c.hasEnoughPeople,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _confirmLeave(context);
+        if (!didPop) leave();
       },
       child: Scaffold(
-        body: GpBackground(
+        body: CoralBackground(
           child: SafeArea(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
@@ -93,6 +96,49 @@ class _GameView extends StatelessWidget {
   }
 }
 
+/// ✕ on the left, who's playing on the right.
+class _TopBar extends StatelessWidget {
+  final GuessPersonController c;
+  final VoidCallback onClose;
+  final bool guessing;
+  const _TopBar({required this.c, required this.onClose, required this.guessing});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = guessing ? c.guesser : c.chooser;
+    return Row(children: [
+      CircleCloseButton(onPressed: onClose),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              _Pill('ROUND ${c.round}/${c.totalRounds}'),
+              const SizedBox(width: 6),
+              if (guessing) ...[_Pill('${c.peopleLeft} LEFT'), const SizedBox(width: 6)],
+              PlayerTag(name: p.name, color: p.color),
+              if (guessing && c.settings.hasTimer) ...[const SizedBox(width: 6), TimerBadge(c.secondsLeft)],
+            ]),
+          ),
+        ),
+      ),
+    ]);
+  }
+}
+
+class _Pill extends StatelessWidget {
+  final String text;
+  const _Pill(this.text);
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(color: GpCoral.panel, borderRadius: BorderRadius.circular(16)),
+        child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+      );
+}
+
 class _SelectView extends StatelessWidget {
   final GuessPersonController c;
   final VoidCallback onClose;
@@ -101,12 +147,10 @@ class _SelectView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        GameHeader(round: c.round, totalRounds: c.totalRounds, playerName: c.chooser.name, playerColor: c.chooser.color, role: 'CHOOSING', onClose: onClose),
+        _TopBar(c: c, onClose: onClose, guessing: false),
         const SizedBox(height: 10),
-        const Text('CHOOSE YOUR PERSON', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-        const Text('"Pick one character secretly."', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic)),
         Expanded(
           child: PersonGrid(
             people: c.people,
@@ -116,8 +160,12 @@ class _SelectView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
+        const Text('Choose your\ncharacter!',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontSize: 30, height: 1.05, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0x55000000), offset: Offset(0, 2), blurRadius: 3)])),
+        const SizedBox(height: 12),
         Row(children: [
-          Expanded(child: GpButton('RANDOM', icon: Icons.casino_rounded, outlined: true, onPressed: c.selectRandomPerson)),
+          Expanded(child: GpButton('RANDOM', icon: Icons.casino_rounded, color: Colors.white, onPressed: c.selectRandomPerson)),
           const SizedBox(width: 12),
           Expanded(child: GpButton('CONFIRM', icon: Icons.check_rounded, onPressed: c.selectedId == null ? null : c.requestConfirm)),
         ]),
@@ -139,17 +187,20 @@ class _ConfirmView extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Center(child: SizedBox(width: 170, height: 215, child: PersonCard(person: p, mark: CardMark.selected))),
-            const SizedBox(height: 24),
-            const Text('Are you sure?', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 6),
-            Text('${c.guesser.name} will try to find #${p.number} ${p.name}.', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
-            const SizedBox(height: 28),
-            GpButton('CONFIRM PERSON', icon: Icons.lock_rounded, onPressed: c.confirmSecretPerson),
-            const SizedBox(height: 12),
-            GpButton('CHANGE', icon: Icons.undo_rounded, outlined: true, onPressed: c.changeSelection),
-          ]),
+          child: DarkPanel(
+            padding: const EdgeInsets.all(22),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Center(child: SizedBox(width: 160, height: 200, child: PersonCard(person: p, mark: CardMark.selected))),
+              const SizedBox(height: 22),
+              const Text('Are you sure?', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 6),
+              Text('${c.guesser.name} will try to find ${p.name}.', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
+              const SizedBox(height: 24),
+              GpButton('CONFIRM PERSON', icon: Icons.lock_rounded, onPressed: c.confirmSecretPerson),
+              const SizedBox(height: 12),
+              GpButton('CHANGE', icon: Icons.undo_rounded, outlined: true, onPressed: c.changeSelection),
+            ]),
+          ),
         ),
       ),
     );
@@ -173,45 +224,71 @@ class _GuessView extends StatelessWidget {
     }
   }
 
+  bool? _answerFor(GpQuestion q) {
+    for (final h in c.history) {
+      if (h.question.id == q.id) return h.answer;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, box) {
+      final controls = _controls();
+      // Short screens: cap the controls and let them scroll so the board keeps its space.
+      final bottom = box.maxHeight < 700
+          ? ConstrainedBox(constraints: BoxConstraints(maxHeight: box.maxHeight * 0.42), child: SingleChildScrollView(child: controls))
+          : controls;
+      return _layout(context, bottom);
+    });
+  }
+
+  Widget _controls() {
     final finalMode = c.phase == GpPhase.finalGuess;
     final pending = c.pendingGuess;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        GameHeader(
-          round: c.round,
-          totalRounds: c.totalRounds,
-          playerName: c.guesser.name,
-          playerColor: c.guesser.color,
-          role: finalMode ? 'FINAL GUESS' : 'FIND THE PERSON',
-          trailing: c.settings.hasTimer ? TimerBadge(c.secondsLeft) : null,
-          onClose: onClose,
-        ),
-        const SizedBox(height: 8),
-        // Wrap, not Row: on narrow phones the hint drops to its own line instead of squeezing.
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(color: GpColors.panel, borderRadius: BorderRadius.circular(12)),
-              child: Text('PEOPLE LEFT: ${c.peopleLeft} / ${c.people.length}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (!finalMode) ...[
+        AnswerBanner(answer: c.lastAnswer, emptyHint: 'Pick a category, ask a question, then tap people to rule them out.'),
+        const SizedBox(height: 10),
+        CategoryPanel(questions: c.questions, answerFor: _answerFor, onAsk: c.askQuestion),
+        const SizedBox(height: 10),
+        GpButton('MAKE FINAL GUESS', icon: Icons.ads_click_rounded, onPressed: c.startFinalGuess),
+      ] else if (pending == null)
+        GpButton('CANCEL', icon: Icons.close_rounded, color: Colors.white, onPressed: c.cancelFinalGuess)
+      else
+        DarkPanel(
+          padding: const EdgeInsets.all(10),
+          child: Row(children: [
+            SizedBox(width: 74, height: 94, child: PersonCard(person: pending)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Text('Is ${pending.name} your final guess?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+                const SizedBox(height: 8),
+                GpButton('YES, FINAL GUESS', color: GpColors.yes, textColor: Colors.white, onPressed: c.makeFinalGuess),
+                const SizedBox(height: 8),
+                GpButton('CANCEL', outlined: true, onPressed: c.cancelFinalGuess),
+              ]),
             ),
-            Text(finalMode ? 'Tap your final guess' : 'Tap a person to eliminate them', style: const TextStyle(color: Colors.white60, fontSize: 12)),
-          ],
+          ]),
         ),
+    ]);
+  }
+
+  Widget _layout(BuildContext context, Widget bottom) {
+    final finalMode = c.phase == GpPhase.finalGuess;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _TopBar(c: c, onClose: onClose, guessing: true),
+        const SizedBox(height: 8),
         if (finalMode)
           Container(
-            margin: const EdgeInsets.only(top: 8),
+            margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(color: GpColors.accent, borderRadius: BorderRadius.circular(14)),
-            child: const Text('WHO IS THE PERSON?', textAlign: TextAlign.center, style: TextStyle(color: GpColors.ink, fontWeight: FontWeight.w900, fontSize: 18)),
+            child: const Text('WHO IS THE PERSON? Tap your final guess',
+                textAlign: TextAlign.center, style: TextStyle(color: GpColors.ink, fontWeight: FontWeight.w900, fontSize: 15)),
           ),
         Expanded(
           child: PersonGrid(
@@ -221,35 +298,12 @@ class _GuessView extends StatelessWidget {
             onTap: (p) => _tap(context, p.id),
           ),
         ),
+        const Padding(
+          padding: EdgeInsets.only(top: 4),
+          child: Text('Tip: press and hold a face to see it up close', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12)),
+        ),
         const SizedBox(height: 10),
-        if (!finalMode) ...[
-          AnswerBanner(answer: c.lastAnswer, emptyHint: 'Ask a question below, then eliminate people who don\'t match.'),
-          const SizedBox(height: 8),
-          QuestionPanel(questions: c.questions, wasAsked: c.wasAsked, onAsk: c.askQuestion),
-          const SizedBox(height: 6),
-          QuestionHistory(c.history),
-          const SizedBox(height: 10),
-          GpButton('MAKE FINAL GUESS', icon: Icons.ads_click_rounded, onPressed: c.startFinalGuess),
-        ] else if (pending == null)
-          GpButton('CANCEL', icon: Icons.close_rounded, outlined: true, onPressed: c.cancelFinalGuess)
-        else
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: GpColors.panel, borderRadius: BorderRadius.circular(18)),
-            child: Row(children: [
-              SizedBox(width: 74, height: 94, child: PersonCard(person: pending)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const Text('Is this your final guess?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-                  const SizedBox(height: 8),
-                  GpButton('YES, FINAL GUESS', color: GpColors.yes, textColor: Colors.white, onPressed: c.makeFinalGuess),
-                  const SizedBox(height: 8),
-                  GpButton('CANCEL', outlined: true, onPressed: c.cancelFinalGuess),
-                ]),
-              ),
-            ]),
-          ),
+        bottom,
       ]),
     );
   }
@@ -269,20 +323,23 @@ class _GameOverView extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              const Text('🏆', textAlign: TextAlign.center, style: TextStyle(fontSize: 72)),
-              const Text('GAME OVER', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 6),
-              Text(headline, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.accent, fontSize: 26, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 24),
-              const Text('FINAL SCORE', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
-              const SizedBox(height: 10),
-              ScoreBoard(players: c.players, large: true, highlight: c.isDraw ? const {} : leaders.toSet()),
-              const SizedBox(height: 32),
-              GpButton('PLAY AGAIN', icon: Icons.replay_rounded, onPressed: c.resetGame),
-              const SizedBox(height: 12),
-              GpButton('MAIN MENU', icon: Icons.home_rounded, outlined: true, onPressed: () => Navigator.pop(context)),
-            ]),
+            child: DarkPanel(
+              padding: const EdgeInsets.all(22),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                const Text('🏆', textAlign: TextAlign.center, style: TextStyle(fontSize: 72)),
+                const Text('GAME OVER', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 6),
+                Text(headline, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.accent, fontSize: 26, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 24),
+                const Text('FINAL SCORE', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+                const SizedBox(height: 10),
+                ScoreBoard(players: c.players, large: true, highlight: c.isDraw ? const {} : leaders.toSet()),
+                const SizedBox(height: 28),
+                GpButton('PLAY AGAIN', icon: Icons.replay_rounded, onPressed: c.resetGame),
+                const SizedBox(height: 12),
+                GpButton('MAIN MENU', icon: Icons.home_rounded, outlined: true, onPressed: () => Navigator.pop(context)),
+              ]),
+            ),
           ),
         ),
       ),

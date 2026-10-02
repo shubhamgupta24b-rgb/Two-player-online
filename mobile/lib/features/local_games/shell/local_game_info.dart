@@ -13,8 +13,10 @@ class LocalGameInfo {
   final List<String> rules;
   final String scoreUnit; // "taps", "points", "pairs", "cells"
   final bool splitScreen; // players sit at opposite ends of the phone
+  final int maxPlayers; // 2-6; the intro screen lets players pick how many
   final PlayBuilder play;
   const LocalGameInfo({
+    this.maxPlayers = 2,
     required this.id,
     required this.title,
     required this.emoji,

@@ -3,6 +3,7 @@
 
     <application
         android:label="Multiplayer Game"
+        android:icon="@mipmap/ic_launcher"
         android:name="${applicationName}"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity

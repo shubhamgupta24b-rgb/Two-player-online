@@ -15,7 +15,7 @@ class HowToPlayScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GpBackground(
+      body: CoralBackground(
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -29,7 +29,7 @@ class HowToPlayScreen extends StatelessWidget {
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(color: GpColors.panel, borderRadius: BorderRadius.circular(18)),
+                      decoration: BoxDecoration(color: GpCoral.panel, borderRadius: BorderRadius.circular(18)),
                       child: Row(children: [
                         CircleAvatar(
                           radius: 22,
@@ -39,7 +39,7 @@ class HowToPlayScreen extends StatelessWidget {
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text('STEP ${i + 1}', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, fontSize: 12)),
+                            Text('STEP ${i + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
                             const SizedBox(height: 2),
                             Text(_steps[i].$2, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                           ]),

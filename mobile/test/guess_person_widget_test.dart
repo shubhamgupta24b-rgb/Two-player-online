@@ -28,7 +28,7 @@ void main() {
 
       await tapText(tester, find.text('START CHOOSING'));
       await tester.pumpAndSettle();
-      expect(find.text('CHOOSE YOUR PERSON'), findsOneWidget);
+      expect(find.text('Choose your\ncharacter!'), findsOneWidget);
 
       await tapText(tester, find.text('RANDOM'));
       await tester.pumpAndSettle();
@@ -45,9 +45,18 @@ void main() {
 
       expect(find.text('MAKE FINAL GUESS'), findsOneWidget);
       expect(find.text('SELECTED'), findsNothing);
+      // Questions live inside category tiles.
+      expect(find.text('Choose your\ncharacter!'), findsNothing);
+      for (final cat in ['GENDER', 'EYE COLOR', 'HAIR', 'HAIR COLOR', 'SKIN TONE', 'ACCESSORIES', 'FACIAL HAIR']) {
+        expect(find.text(cat), findsOneWidget, reason: cat);
+      }
+      await tapText(tester, find.text('ACCESSORIES'));
+      await tester.pumpAndSettle();
       await tapText(tester, find.text('GLASSES'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Does the person have glasses?'), findsOneWidget);
+      expect(find.textContaining('Does the person wear glasses?'), findsOneWidget);
+      expect(find.text('ACCESSORIES'), findsOneWidget, reason: 'back on the category tiles');
+      expect(find.text('1'), findsOneWidget, reason: 'asked-count badge on the tile');
 
       // Default is no timer: waiting a long time must not end the round.
       expect(find.byType(TimerBadge), findsNothing);
@@ -59,6 +68,23 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   }
+
+  testWidgets('press and hold a face to see it up close with its traits', (tester) async {
+    tester.view.physicalSize = const Size(411, 914);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(const MaterialApp(home: GuessPersonGameScreen(settings: GpSettings(rounds: 3))));
+    await tapText(tester, find.text('START CHOOSING'));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.text('Tom'));
+    await tester.pumpAndSettle();
+    expect(find.text('Male · Brown eyes · Bald · Light skin · Glasses · Mustache'), findsOneWidget);
+    await tester.tap(find.text('Tap anywhere to close'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tap anywhere to close'), findsNothing);
+    expect(find.text('Choose your\ncharacter!'), findsOneWidget, reason: 'zooming does not select anyone');
+    await tester.pumpWidget(const SizedBox());
+  });
 
   testWidgets('game screen opens on the round 1 intro', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: GuessPersonGameScreen(settings: GpSettings(rounds: 3))));

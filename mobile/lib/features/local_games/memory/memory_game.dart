@@ -86,13 +86,14 @@ final memoryInfo = LocalGameInfo(
   rules: const [
     'Take turns flipping two cards.',
     'Find a matching pair to score a point and go again.',
-    'No match? The cards flip back and it\'s the other player\'s turn.',
-    'Most pairs when the board is clear wins.',
+    'No match? The cards flip back and it\'s the next player\'s turn.',
+    'Most pairs when the board is clear wins. 2 to 6 players.',
   ],
   scoreUnit: 'pairs',
   splitScreen: false,
+  maxPlayers: 6,
   play: (players, onFinished) => TickingPlay<MemoryLogic>(
-    create: () => MemoryLogic(),
+    create: () => MemoryLogic(players: players.length),
     onFinished: onFinished,
     builder: (context, g) => _MemoryBoard(players: players, g: g),
   ),
@@ -109,13 +110,21 @@ class _MemoryBoard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
       child: Column(children: [
-        Row(children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const PauseButton(),
           const SizedBox(width: 4),
-          for (var i = 0; i < players.length; i++) ...[
-            Expanded(child: _ScorePill(player: players[i], pairs: g.pairs[i], active: g.turn == i && !g.finished)),
-            if (i < players.length - 1) const SizedBox(width: 8),
-          ],
+          // 2 players side by side; 3-6 wrap into rows of three.
+          Expanded(
+            child: LayoutBuilder(builder: (context, c) {
+              final perRow = players.length <= 2 ? 2 : 3;
+              const gap = 8.0;
+              final w = (c.maxWidth - gap * (perRow - 1)) / perRow;
+              return Wrap(spacing: gap, runSpacing: 6, children: [
+                for (var i = 0; i < players.length; i++)
+                  SizedBox(width: w, child: _ScorePill(player: players[i], pairs: g.pairs[i], active: g.turn == i && !g.finished)),
+              ]);
+            }),
+          ),
         ]),
         const SizedBox(height: 10),
         AnimatedSwitcher(

@@ -78,16 +78,19 @@ final basketballInfo = LocalGameInfo(
   rules: const [
     'Your power meter slides back and forth.',
     'Tap your side when the white line is in the green zone.',
-    'Green = 3 pts, yellow = 2, orange = 1. Most points in 30s wins.',
+    'Green = 3 pts, yellow = 2, orange = 1. Most points in 30s wins. 2 to 4 players.',
   ],
   scoreUnit: 'points',
   splitScreen: true,
+  maxPlayers: 4,
   play: (players, onFinished) => TickingPlay<BasketballLogic>(
-    create: () => BasketballLogic(),
+    create: () => BasketballLogic(players: players.length),
     onFinished: onFinished,
-    builder: (context, g) => SplitScreen(
+    builder: (context, g) => PlayerZones(
+      count: players.length,
       middle: DuelMiddleBar(players: players, scores: g.scores, secondsLeft: g.secondsLeft, progress: g.progress),
-      half: (i) => _HoopHalf(player: players[i], index: i, g: g),
+      center: ZoneCenterChip('${g.secondsLeft}s'),
+      zone: (i) => _HoopHalf(player: players[i], index: i, g: g),
     ),
   ),
 );

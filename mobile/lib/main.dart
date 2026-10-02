@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'config.dart';
 import 'core/auth/authentication_manager.dart';
 import 'core/network/socket_manager.dart';
 import 'core/room/room_manager.dart';
 import 'core/session/game_session_manager.dart';
 import 'features/splash/splash_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppConfig.load();
   runApp(const App());
 }
 

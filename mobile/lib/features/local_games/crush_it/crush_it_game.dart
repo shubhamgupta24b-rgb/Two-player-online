@@ -30,15 +30,18 @@ final crushItInfo = LocalGameInfo(
   emoji: '👊',
   color: const Color(0xFFFF6B6B),
   tagline: 'Tap faster than your friend!',
-  rules: const ['Smash your side of the screen as fast as you can.', 'Every tap counts for 10 seconds.', 'Most taps wins.'],
+  rules: const ['Smash your zone of the screen as fast as you can.', 'Every tap counts for 10 seconds.', 'Most taps wins. 2 to 6 players.'],
   scoreUnit: 'taps',
   splitScreen: true,
+  maxPlayers: 6,
   play: (players, onFinished) => TickingPlay<CrushItLogic>(
-    create: () => CrushItLogic(),
+    create: () => CrushItLogic(players: players.length),
     onFinished: onFinished,
-    builder: (context, g) => SplitScreen(
+    builder: (context, g) => PlayerZones(
+      count: players.length,
       middle: DuelMiddleBar(players: players, scores: g.scores, secondsLeft: g.secondsLeft, progress: g.progress),
-      half: (i) => _CrushHalf(player: players[i], taps: g.taps[i], onTap: () => g.tap(i), done: g.finished),
+      center: ZoneCenterChip('${g.secondsLeft}s'),
+      zone: (i) => _CrushHalf(player: players[i], taps: g.taps[i], onTap: () => g.tap(i), done: g.finished),
     ),
   ),
 );

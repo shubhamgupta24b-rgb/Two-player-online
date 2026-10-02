@@ -1,54 +1,156 @@
 import 'package:flutter/material.dart';
+import '../logic/gp_rules.dart';
 import '../models/gp_question.dart';
 import 'gp_theme.dart';
 
-/// Two rows of question chips that scroll sideways. Asked questions are disabled
-/// and marked "✓", so a question can never be asked twice.
-class QuestionPanel extends StatelessWidget {
+/// Category tiles (GENDER, EYE COLOR, HAIR, ...). Tapping one shows its questions;
+/// asking returns to the tiles. Asked questions show their YES/NO and can't be re-asked.
+class CategoryPanel extends StatefulWidget {
   final List<GpQuestion> questions;
-  final bool Function(GpQuestion) wasAsked;
+  final bool? Function(GpQuestion) answerFor; // null = not asked yet
   final void Function(GpQuestion)? onAsk;
-  const QuestionPanel({super.key, required this.questions, required this.wasAsked, this.onAsk});
+  const CategoryPanel({super.key, required this.questions, required this.answerFor, this.onAsk});
+
+  @override
+  State<CategoryPanel> createState() => _CategoryPanelState();
+}
+
+class _CategoryPanelState extends State<CategoryPanel> {
+  String? open;
 
   @override
   Widget build(BuildContext context) {
-    final half = (questions.length / 2).ceil();
-    Widget row(List<GpQuestion> qs) => Row(children: [for (final q in qs) _chip(q)]);
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-      const Text('ASK A QUESTION', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2, fontSize: 12)),
-      const SizedBox(height: 6),
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          row(questions.take(half).toList()),
-          const SizedBox(height: 6),
-          row(questions.skip(half).toList()),
-        ]),
-      ),
-    ]);
+    final cats = gpCategories.where((c) => widget.questions.any((q) => q.category == c.id)).toList();
+    final current = cats.where((c) => c.id == open).firstOrNull;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      child: current == null ? _tiles(cats) : _options(current),
+    );
   }
 
-  Widget _chip(GpQuestion q) {
-    final asked = wasAsked(q);
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Semantics(
-        button: true,
-        enabled: !asked,
-        label: asked ? '${q.prompt} Already asked' : q.prompt,
-        child: Material(
-          color: asked ? Colors.white10 : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: asked || onAsk == null ? null : () => onAsk!(q),
-            child: Container(
-              constraints: const BoxConstraints(minHeight: 44),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              alignment: Alignment.center,
-              child: Text(asked ? '✓ ${q.label}' : q.label,
-                  style: TextStyle(color: asked ? Colors.white54 : GpColors.ink, fontWeight: FontWeight.w800, fontSize: 13)),
+  Widget _tiles(List<GpCategory> cats) {
+    return LayoutBuilder(
+      key: const ValueKey('tiles'),
+      builder: (context, c) {
+        const gap = 10.0;
+        final w = (c.maxWidth - gap * 3) / 4;
+        return Wrap(alignment: WrapAlignment.center, spacing: gap, runSpacing: gap, children: [
+          for (final cat in cats)
+            _Tile(
+              width: w,
+              emoji: cat.emoji,
+              label: cat.label,
+              asked: widget.questions.where((q) => q.category == cat.id && widget.answerFor(q) != null).length,
+              onTap: () => setState(() => open = cat.id),
             ),
+        ]);
+      },
+    );
+  }
+
+  Widget _options(GpCategory cat) {
+    final qs = widget.questions.where((q) => q.category == cat.id).toList();
+    return Container(
+      key: ValueKey(cat.id),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          IconButton(
+            tooltip: 'Back to categories',
+            onPressed: () => setState(() => open = null),
+            icon: const Icon(Icons.arrow_back_rounded, color: GpCoral.tileInk),
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          ),
+          Text('${cat.emoji}  ${cat.label}', style: const TextStyle(color: GpCoral.tileInk, fontWeight: FontWeight.w900, fontSize: 16)),
+        ]),
+        const SizedBox(height: 6),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final q in qs) _option(q),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _option(GpQuestion q) {
+    final ans = widget.answerFor(q);
+    final asked = ans != null;
+    final color = !asked ? GpCoral.tileInk : (ans ? GpColors.yes : GpColors.no);
+    return Semantics(
+      button: !asked,
+      label: asked ? '${q.prompt} ${ans ? 'Yes' : 'No'}' : q.prompt,
+      child: Material(
+        color: asked ? color.withValues(alpha: 0.18) : color,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: asked || widget.onAsk == null
+              ? null
+              : () {
+                  widget.onAsk!(q);
+                  setState(() => open = null);
+                },
+          // No alignment here: an aligned Container would stretch to the full row width.
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 46, minWidth: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            child: Text(
+              asked ? '${q.label} · ${ans ? 'YES' : 'NO'}' : q.label,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: asked ? Color.lerp(color, Colors.black, 0.35) : Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Tile extends StatelessWidget {
+  final double width;
+  final String emoji;
+  final String label;
+  final int asked;
+  final VoidCallback onTap;
+  const _Tile({required this.width, required this.emoji, required this.label, required this.asked, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: SizedBox(
+        width: width,
+        child: Material(
+          color: GpCoral.tile,
+          borderRadius: BorderRadius.circular(14),
+          elevation: 2,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: onTap,
+            child: Stack(alignment: Alignment.topCenter, children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Text(emoji, style: const TextStyle(fontSize: 26)),
+                  const SizedBox(height: 2),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(label, style: const TextStyle(color: GpCoral.tileInk, fontWeight: FontWeight.w900, fontSize: 13)),
+                  ),
+                ]),
+              ),
+              if (asked > 0)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(color: GpCoral.bg, borderRadius: BorderRadius.circular(8)),
+                    child: Text('$asked', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+                  ),
+                ),
+            ]),
           ),
         ),
       ),
@@ -76,17 +178,17 @@ class AnswerBanner extends StatelessWidget {
               key: const ValueKey('hint'),
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-              decoration: BoxDecoration(color: GpColors.panel, borderRadius: BorderRadius.circular(14)),
-              child: Text(emptyHint, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+              decoration: BoxDecoration(color: GpCoral.panel, borderRadius: BorderRadius.circular(16)),
+              child: Text(emptyHint, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
             )
           : Container(
               key: ValueKey(a.question.id),
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
               decoration: BoxDecoration(
-                color: (a.answer ? GpColors.yes : GpColors.no).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: a.answer ? GpColors.yes : GpColors.no, width: 2),
+                color: GpCoral.panel,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: a.answer ? GpColors.yes : GpColors.no, width: 3),
               ),
               child: Row(children: [
                 Expanded(child: Text(a.question.prompt, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14))),
@@ -95,33 +197,6 @@ class AnswerBanner extends StatelessWidget {
                 Text(a.answer ? 'YES' : 'NO', style: TextStyle(color: a.answer ? GpColors.yes : GpColors.no, fontWeight: FontWeight.w900, fontSize: 22)),
               ]),
             ),
-    );
-  }
-}
-
-/// Compact scrolling history: "Glasses → YES".
-class QuestionHistory extends StatelessWidget {
-  final List<AskedQuestion> history;
-  const QuestionHistory(this.history, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    if (history.isEmpty) return const SizedBox.shrink();
-    return SizedBox(
-      height: 30,
-      // Newest first, so the latest clue is always visible without scrolling.
-      child: ListView(scrollDirection: Axis.horizontal, children: [
-        const Center(child: Text('ASKED:', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, fontSize: 11))),
-        for (final h in history.reversed)
-          Container(
-            margin: const EdgeInsets.only(left: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: GpColors.panel, borderRadius: BorderRadius.circular(12)),
-            child: Text('${h.question.label} → ${h.answer ? 'YES' : 'NO'}',
-                style: TextStyle(color: h.answer ? GpColors.yes : GpColors.no, fontWeight: FontWeight.w800, fontSize: 12)),
-          ),
-      ]),
     );
   }
 }

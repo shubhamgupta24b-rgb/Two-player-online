@@ -20,6 +20,53 @@ class SplitScreen extends StatelessWidget {
   }
 }
 
+/// One zone per player on a phone lying flat.
+/// - 2 players: top (rotated) and bottom halves with [middle] between them.
+/// - 3-6 players: two columns along the long sides. Left zones face the left edge, right
+///   zones the right edge, so everyone reads their zone upright; [center] floats in the middle.
+class PlayerZones extends StatelessWidget {
+  final int count;
+  final Widget Function(int playerIndex) zone;
+  final Widget middle;
+  final Widget center;
+  const PlayerZones({super.key, required this.count, required this.zone, required this.middle, required this.center});
+
+  /// Players 1..ceil(n/2) sit on the left side (top to bottom), the rest on the right.
+  static int leftCount(int n) => (n + 1) ~/ 2;
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 2) return SplitScreen(half: zone, middle: middle);
+    final left = leftCount(count);
+    Widget column(Iterable<int> ids, int turns) => Column(children: [
+          for (final i in ids)
+            Expanded(child: Padding(padding: const EdgeInsets.all(3), child: RotatedBox(quarterTurns: turns, child: zone(i)))),
+        ]);
+    return Stack(children: [
+      Row(children: [
+        Expanded(child: column(Iterable.generate(left), 1)),
+        Expanded(child: column(Iterable.generate(count - left, (i) => left + i), 3)),
+      ]),
+      Center(child: center),
+    ]);
+  }
+}
+
+/// Small floating pill for the middle of a 3-6 player layout: status text + pause.
+class ZoneCenterChip extends StatelessWidget {
+  final String text;
+  const ZoneCenterChip(this.text, {super.key});
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.only(left: 12, right: 2),
+        decoration: BoxDecoration(color: GpColors.bgBottom, borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white24)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+          const PauseButton(),
+        ]),
+      );
+}
+
 class PlayerTagSmall extends StatelessWidget {
   final GpPlayer player;
   const PlayerTagSmall({super.key, required this.player});
@@ -29,6 +76,37 @@ class PlayerTagSmall extends StatelessWidget {
         decoration: BoxDecoration(color: player.color, borderRadius: BorderRadius.circular(14)),
         child: Text(player.name.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
       );
+}
+
+/// Centre strip for "first to N" games: both scores (player 2's upside down) and the target.
+class ScoreMiddleBar extends StatelessWidget {
+  final List<GpPlayer> players;
+  final List<int> scores;
+  final String label; // e.g. "FIRST TO 5"
+  const ScoreMiddleBar({super.key, required this.players, required this.scores, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget score(int i) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          decoration: BoxDecoration(color: players[i].color, borderRadius: BorderRadius.circular(12)),
+          child: Text('${scores[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+        );
+    return Container(
+      height: 50,
+      color: GpColors.bgBottom,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(children: [
+        RotatedBox(quarterTurns: 2, child: score(1)),
+        Expanded(
+          child: Text(label, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+        ),
+        const PauseButton(),
+        const SizedBox(width: 6),
+        score(0),
+      ]),
+    );
+  }
 }
 
 /// Centre strip: seconds left plus a tug-of-war bar showing who is ahead.

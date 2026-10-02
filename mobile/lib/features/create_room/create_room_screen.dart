@@ -40,7 +40,11 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
           RadioListTile<String>(
             value: g.id,
             groupValue: gameId,
-            onChanged: (v) => setState(() => gameId = v!),
+            onChanged: (v) => setState(() {
+              gameId = v!;
+              final max = gameCatalog.firstWhere((x) => x.id == gameId).maxPlayers;
+              if (players > max) players = max;
+            }),
             title: Text(g.name),
             subtitle: g.playable ? null : const Text('Not implemented yet (lobby only)'),
           ),
@@ -49,9 +53,8 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
         const SizedBox(height: 8),
         SegmentedButton<int>(
           segments: [
-            const ButtonSegment(value: 2, label: Text('2')),
-            const ButtonSegment(value: 3, label: Text('3')),
-            const ButtonSegment(value: 4, label: Text('4')),
+            for (final n in [2, 3, 4])
+              ButtonSegment(value: n, label: Text('$n'), enabled: n <= gameCatalog.firstWhere((x) => x.id == gameId).maxPlayers),
           ],
           selected: {players},
           onSelectionChanged: (s) => setState(() => players = s.first),
