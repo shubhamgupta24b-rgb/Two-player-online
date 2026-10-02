@@ -17,6 +17,8 @@ registry.register({
   isFinished: s => s.done,
   getResult: s => ({ scores: s.scores }),
 });
+// Registered but not playable yet.
+registry.register({ id: 'test_unimplemented', minPlayers: 2, maxPlayers: 4, implemented: false });
 
 const connect = (port, name) => new Promise((res, rej) => {
   const s = io(`http://localhost:${port}`, { auth: { token: `dev:${name}:${name}` }, transports: ['websocket'], reconnection: false });
@@ -84,7 +86,7 @@ test('ready/start rules; unimplemented games cannot start', async t => {
   assert.ok((await emit(h, 'start_game')).ok);
 
   const h2 = await mk('h2'), p2 = await mk('p2');
-  const r2 = await emit(h2, 'create_room', { gameType: 'memory', maxPlayers: 2 });
+  const r2 = await emit(h2, 'create_room', { gameType: 'test_unimplemented', maxPlayers: 2 });
   await emit(p2, 'join_room', { code: r2.room.code }); await emit(p2, 'player_ready');
   assert.strictEqual((await emit(h2, 'start_game')).error, 'GAME_NOT_AVAILABLE');
 });

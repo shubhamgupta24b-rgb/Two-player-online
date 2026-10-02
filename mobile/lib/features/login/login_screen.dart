@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config.dart';
@@ -24,7 +25,8 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => busy = true);
     try {
       await auth.signInAsGuest(name);
-      await socket.connect(AppConfig.serverUrl, auth.token);
+      // Don't wait for the server: 1-device games work offline, online rooms connect when they can.
+      unawaited(socket.connect(AppConfig.serverUrl, auth.token).catchError((_) {}));
       nav.pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
     } catch (e) {
       _snack('$e');

@@ -32,6 +32,94 @@ test('matcher: case, accents, aliases, one typo on long answers only', () => {
   for (const x of PEOPLE) assert.strictEqual(x.clues.length, 5, x.name);
 });
 
+// Pure game-logic tests: time is passed in explicitly, so every boundary is exact.
+const pure = () => createGuessPerson({ rounds: 2, clueMs: 1000, revealMs: 500, maxAttempts: 2, people: T, shuffle: false });
+const room2 = { players: [{ userId: 'a', username: 'A' }, { userId: 'b', username: 'B' }] };
+const answer = (g, s, u, text, now) => g.onAction(s, u, { type: 'guess_person:answer', payload: { text } }, now);
+
+test('Guess the Person starts round 1 with one clue and hides the answer', () => {
+  const g = pure(); const s = g.create(room2, 0);
+  assert.strictEqual(s.phase, 'round'); assert.strictEqual(s.roundEndsAt, 3000);
+  const pub = g.getPublicState(s, 'a');
+  assert.deepStrictEqual(pub.clues, ['c1']);
+  assert.strictEqual(pub.round, 1); assert.strictEqual(pub.totalRounds, 2); assert.strictEqual(pub.totalClues, 3);
+  assert.strictEqual(pub.nextClueAt, 1000); assert.strictEqual(pub.reveal, null);
+  assert.deepStrictEqual(pub.you, { attemptsLeft: 2, solved: false });
+  assert.ok(!JSON.stringify(pub).includes('Lovelace'));
+});
+
+test('Guess the Person unlocks clues on the clock', () => {
+  const g = pure(); const s = g.create(room2, 0);
+  assert.strictEqual(g.onTick(s, 999), false);
+  assert.strictEqual(g.onTick(s, 1000), true);
+  assert.strictEqual(g.onTick(s, 1500), false, 'no change until the next clue');
+  assert.deepStrictEqual(g.getPublicState(s, 'a').clues, ['c1', 'c2']);
+  assert.strictEqual(g.onTick(s, 2000), true);
+  assert.strictEqual(g.getPublicState(s, 'a').nextClueAt, null, 'all clues shown');
+});
+
+test('Guess the Person rejects invalid answers', () => {
+  const g = pure(); const s = g.create(room2, 0);
+  assert.throws(() => answer(g, s, 'x', 'Ada', 10), e => e.code === 'NOT_IN_GAME');
+  assert.throws(() => g.onAction(s, 'a', { type: 'memory:flip', payload: {} }, 10), e => e.code === 'INVALID_ACTION');
+  for (const text of [undefined, 5, '', '   ', 'x'.repeat(61)]) {
+    assert.throws(() => answer(g, s, 'a', text, 10), e => e.code === 'INVALID_PAYLOAD', String(text));
+  }
+  assert.throws(() => answer(g, s, 'a', 'Ada Lovelace', 3000), e => e.code === 'BAD_PHASE', 'at roundEndsAt');
+  assert.strictEqual(s.attempts.a, 0, 'rejected answers do not use attempts');
+});
+
+test('Guess the Person scores by clues shown, first solver bonus, and ends the round when all are done', () => {
+  const g = pure(); const s = g.create(room2, 0);
+  const a = answer(g, s, 'a', 'lovelace', 1500); // 2 of 3 clues: 100 - 80*1/2 = 60, +20 first bonus
+  assert.deepStrictEqual(a, { correct: true, points: 80 });
+  assert.throws(() => answer(g, s, 'a', 'Ada Lovelace', 1600), e => e.code === 'ALREADY_SOLVED');
+  assert.strictEqual(s.phase, 'round', 'b has not finished yet');
+  const b = answer(g, s, 'b', 'Ada Lovelace', 2500); // 3 of 3 clues: 20, no bonus
+  assert.deepStrictEqual(b, { correct: true, points: 20 });
+  assert.strictEqual(s.phase, 'reveal');
+  const pub = g.getPublicState(s, 'a');
+  assert.deepStrictEqual(pub.reveal, { answer: 'Ada Lovelace', gained: { a: 80, b: 20 } });
+  assert.deepStrictEqual(pub.clues, ['c1', 'c2', 'c3'], 'all clues shown during the reveal');
+  assert.strictEqual(pub.revealEndsAt, 3000);
+  assert.throws(() => answer(g, s, 'b', 'Ada', 2600), e => e.code === 'BAD_PHASE');
+});
+
+test('Guess the Person limits wrong attempts and running out counts as done', () => {
+  const g = pure(); const s = g.create(room2, 0);
+  assert.deepStrictEqual(answer(g, s, 'a', 'Babbage', 10), { correct: false, attemptsLeft: 1 });
+  assert.deepStrictEqual(answer(g, s, 'a', 'Hopper', 20), { correct: false, attemptsLeft: 0 });
+  assert.throws(() => answer(g, s, 'a', 'Ada Lovelace', 30), e => e.code === 'NO_ATTEMPTS');
+  assert.strictEqual(g.getPublicState(s, 'a').you.attemptsLeft, 0);
+  assert.strictEqual(s.phase, 'round');
+  answer(g, s, 'b', 'Ada Lovelace', 40);
+  assert.strictEqual(s.phase, 'reveal', 'a is out of attempts and b solved');
+  assert.deepStrictEqual(s.reveal.gained, { b: 120 });
+});
+
+test('Guess the Person runs both rounds on the clock and finishes', () => {
+  const g = pure(); const s = g.create(room2, 0);
+  answer(g, s, 'a', 'lovelace', 100);
+  assert.strictEqual(g.onTick(s, 3000), true); assert.strictEqual(s.phase, 'reveal');
+  assert.strictEqual(g.onTick(s, 3499), false);
+  assert.strictEqual(g.onTick(s, 3500), true);
+  assert.strictEqual(s.phase, 'round'); assert.strictEqual(g.getPublicState(s, 'a').round, 2);
+  assert.deepStrictEqual(g.getPublicState(s, 'a').you, { attemptsLeft: 2, solved: false }, 'attempts reset each round');
+  assert.ok(!JSON.stringify(g.getPublicState(s, 'a')).includes('Turing'));
+  assert.strictEqual(g.onTick(s, 6500), true); assert.strictEqual(s.phase, 'reveal');
+  assert.strictEqual(g.onTick(s, 7000), true); assert.strictEqual(g.isFinished(s), true);
+  assert.strictEqual(g.onTick(s, 9000), false);
+  const r = g.getResult(s);
+  assert.deepStrictEqual(r.winners, ['a']); assert.deepStrictEqual(r.scores, { a: 120, b: 0 });
+});
+
+test('Guess the Person ties share the win', () => {
+  const g = pure(); const s = g.create(room2, 0);
+  const r = g.getResult(s);
+  assert.deepStrictEqual(r.winners, ['a', 'b']);
+  assert.ok(r.ranking.every(x => x.rank === 1));
+});
+
 test('full Guess the Person game over sockets', async t => {
   const srv = createServer();
   await new Promise(r => srv.httpServer.listen(0, r));
