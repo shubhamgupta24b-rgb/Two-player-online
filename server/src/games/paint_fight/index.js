@@ -25,7 +25,7 @@ function createPaintFight(opts = {}) {
       const owned=s.cells[uid];
       if(owned.has(key)) return {changed:false,score:s.scores[uid]};
       owned.add(key);
-      s.players.forEach(p=>{if(p!==uid)s.cells[p].delete(key);});
+      s.players.forEach(p=>{if(p!==uid&&s.cells[p].delete(key))s.scores[p]=s.cells[p].size;});
       s.scores[uid]=owned.size;
       return {changed:true,score:s.scores[uid]};
     },

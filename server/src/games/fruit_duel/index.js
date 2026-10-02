@@ -1,5 +1,7 @@
 const { GameError } = require('../../errors');
 
+const laneFor = (fruitId) => (fruitId * 7 + 1) % 3;
+
 function createFruitDuel(opts = {}) {
   const durationMs = opts.durationMs ?? 20000;
   const spawnMs = opts.spawnMs ?? 900;
@@ -12,8 +14,9 @@ function createFruitDuel(opts = {}) {
         score:Object.fromEntries(room.players.map(p=>[p.userId,0])),
         hits:Object.fromEntries(room.players.map(p=>[p.userId,0])),
         misses:Object.fromEntries(room.players.map(p=>[p.userId,0])),
+        lastSlashed:Object.fromEntries(room.players.map(p=>[p.userId,-1])),
         startedAt:now, endsAt:now+durationMs, spawnMs, phase:'playing',
-        fruitId:0, fruitLane:0, fruitExpiresAt:now+spawnMs,
+        fruitId:0, fruitLane:laneFor(0), fruitExpiresAt:now+spawnMs,
       };
     },
     onAction(s,uid,{type,payload},now=Date.now()) {
@@ -23,6 +26,8 @@ function createFruitDuel(opts = {}) {
       const lane=Number(payload?.lane);
       const fruitId=Number(payload?.fruitId);
       if(!Number.isInteger(lane)||lane<0||lane>2||fruitId!==s.fruitId) throw new GameError('INVALID_PAYLOAD');
+      if(s.lastSlashed[uid]===fruitId) throw new GameError('ALREADY_SLASHED');
+      s.lastSlashed[uid]=fruitId;
       if(now>s.fruitExpiresAt) { s.misses[uid]++; return {hit:false,score:s.score[uid]}; }
       const hit=lane===s.fruitLane;
       if(hit){s.score[uid]+=1;s.hits[uid]++;}else{s.misses[uid]++;}
@@ -33,7 +38,7 @@ function createFruitDuel(opts = {}) {
       if(now>=s.endsAt){s.phase='finished';return true;}
       if(now>=s.fruitExpiresAt){
         s.fruitId++;
-        s.fruitLane=(s.fruitId*7+1)%3;
+        s.fruitLane=laneFor(s.fruitId);
         s.fruitExpiresAt=now+s.spawnMs;
         return true;
       }
