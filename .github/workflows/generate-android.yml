@@ -1,0 +1,42 @@
+name: Generate Android Platform
+
+on:
+  push:
+    paths:
+      - ".github/workflows/generate-android.yml"
+      - ".android-generation-trigger"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate Android platform
+        working-directory: mobile
+        run: flutter create --platforms=android .
+
+      - name: Commit generated Android files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/android
+          if git diff --cached --quiet; then
+            echo "No Android platform changes to commit."
+            exit 0
+          fi
+          git commit -m "Generate Flutter Android platform"
+          git push origin "HEAD:${{ github.ref_name }}"

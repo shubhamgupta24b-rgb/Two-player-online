@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config.dart';
@@ -30,12 +31,9 @@ class _SplashScreenState extends State<SplashScreen> {
       nav.pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
       return;
     }
-    try {
-      await socket.connect(AppConfig.serverUrl, auth.token);
-      nav.pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
-    } catch (e) {
-      if (mounted) setState(() => error = '$e');
-    }
+    // Don't block on the server: 1-device games work offline, online rooms connect when they can.
+    unawaited(socket.connect(AppConfig.serverUrl, auth.token).catchError((_) {}));
+    nav.pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
   }
 
   @override

@@ -1,0 +1,16 @@
+# One-click hosting on Render (render.com > New > Blueprint > pick this repo).
+# The server then runs at https://<name>.onrender.com; enter that in the app under Home > Server.
+services:
+  - type: web
+    name: two-player-online
+    runtime: docker
+    rootDir: server
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: AUTH_MODE
+        value: dev
+      # Guest logins on a public server: fine for playing with friends, not for a store release.
+      - key: ALLOW_DEV_AUTH
+        value: "true"

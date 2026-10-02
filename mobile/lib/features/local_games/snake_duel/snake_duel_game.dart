@@ -1,0 +1,210 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../guess_person/models/gp_player.dart';
+import '../../guess_person/widgets/gp_theme.dart';
+import '../shell/local_game_info.dart';
+import '../shell/local_game_logic.dart';
+import '../shell/split_screen.dart';
+import '../shell/ticking_play.dart';
+
+/// Two snakes that never stop growing (light-bike rules). Hitting a wall or any trail
+/// loses the round; crashing at the same moment is a tie. Turning is relative (left or
+/// right of where you're heading), so it works the same from both ends of the phone.
+class SnakeDuelLogic extends LocalGameLogic {
+  static const _dx = [0, 1, 0, -1]; // up, right, down, left
+  static const _dy = [-1, 0, 1, 0];
+  final int cols, rows, stepMs, target, pauseMs;
+  final List<int> score = [0, 0];
+  late List<int> owner; // -1 empty, else player
+  final List<int> head = [0, 0];
+  final List<int> dir = [0, 2];
+  final List<int?> _queued = [null, null];
+  int round = 0;
+  int? roundWinner; // -1 = tie
+  int _now = 0;
+  int _nextStep = 700; // a moment to get ready before the first move
+  int? _nextRoundAt;
+
+  SnakeDuelLogic({this.cols = 18, this.rows = 26, this.stepMs = 130, this.target = 3, this.pauseMs = 1400}) {
+    _reset();
+  }
+
+  void _reset() {
+    owner = List.filled(cols * rows, -1);
+    head[0] = (rows - 3) * cols + cols ~/ 2; // player 1 starts at the bottom going up
+    head[1] = 2 * cols + cols ~/ 2 - 1; // player 2 at the top going down
+    dir[0] = 0;
+    dir[1] = 2;
+    _queued[0] = _queued[1] = null;
+    owner[head[0]] = 0;
+    owner[head[1]] = 1;
+    roundWinner = null;
+  }
+
+  @override
+  List<int> get scores => score;
+  @override
+  bool get finished => score.any((s) => s >= target) && _nextRoundAt == null;
+  bool get betweenRounds => roundWinner != null;
+
+  /// Turn left (-1) or right (+1) relative to the current heading; applied on the next step.
+  void turn(int player, int side) {
+    if (betweenRounds || finished) return;
+    _queued[player] = (dir[player] + side + 4) % 4;
+  }
+
+  @override
+  void update(int elapsedMs) {
+    _now = elapsedMs;
+    final next = _nextRoundAt;
+    if (next != null) {
+      if (_now >= next) {
+        _nextRoundAt = null;
+        if (!score.any((s) => s >= target)) {
+          round++;
+          _reset();
+          _nextStep = _now + stepMs;
+        }
+        notifyListeners();
+      }
+      return;
+    }
+    if (finished) return;
+    var changed = false;
+    while (_now >= _nextStep && roundWinner == null) {
+      _step();
+      _nextStep += stepMs;
+      changed = true;
+    }
+    if (changed) notifyListeners();
+  }
+
+  void _step() {
+    final crashed = [false, false];
+    final next = [0, 0];
+    for (var p = 0; p < 2; p++) {
+      if (_queued[p] != null) dir[p] = _queued[p]!;
+      _queued[p] = null;
+      final x = head[p] % cols + _dx[dir[p]], y = head[p] ~/ cols + _dy[dir[p]];
+      if (x < 0 || x >= cols || y < 0 || y >= rows) {
+        crashed[p] = true;
+        next[p] = head[p];
+      } else {
+        next[p] = y * cols + x;
+        if (owner[next[p]] >= 0) crashed[p] = true;
+      }
+    }
+    if (!crashed[0] && !crashed[1] && next[0] == next[1]) crashed[0] = crashed[1] = true; // head-on
+    for (var p = 0; p < 2; p++) {
+      if (!crashed[p]) {
+        head[p] = next[p];
+        owner[next[p]] = p;
+      }
+    }
+    if (crashed[0] || crashed[1]) {
+      roundWinner = crashed[0] && crashed[1] ? -1 : (crashed[0] ? 1 : 0);
+      if (roundWinner! >= 0) score[roundWinner!]++;
+      _nextRoundAt = _now + pauseMs;
+    }
+  }
+}
+
+final snakeDuelInfo = LocalGameInfo(
+  id: 'snake_duel',
+  title: 'Snake Duel',
+  emoji: '🐍',
+  color: const Color(0xFF00B894),
+  tagline: "Trap your rival, don't crash!",
+  rules: const [
+    'Your snake moves on its own and leaves a trail that never goes away.',
+    'Tap ◀ or ▶ at your end to turn left or right.',
+    'Hit a wall or any trail and you lose the round. First to 3 rounds wins.',
+  ],
+  scoreUnit: 'rounds',
+  splitScreen: true,
+  play: (players, onFinished) => TickingPlay<SnakeDuelLogic>(
+    create: () => SnakeDuelLogic(),
+    onFinished: onFinished,
+    builder: (context, g) => Column(children: [
+      RotatedBox(quarterTurns: 2, child: _Controls(player: players[1], index: 1, g: g)),
+      Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: _Arena(players: players, g: g))),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      _Controls(player: players[0], index: 0, g: g),
+    ]),
+  ),
+);
+
+class _Controls extends StatelessWidget {
+  final GpPlayer player;
+  final int index;
+  final SnakeDuelLogic g;
+  const _Controls({required this.player, required this.index, required this.g});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget btn(String label, int side) => Expanded(
+          child: Listener(
+            onPointerDown: (_) {
+              g.turn(index, side);
+              HapticFeedback.selectionClick().ignore();
+            },
+            child: Container(
+              height: 76,
+              margin: const EdgeInsets.all(6),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: player.color, borderRadius: BorderRadius.circular(20)),
+              child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900)),
+            ),
+          ),
+        );
+    final status = g.roundWinner == null
+        ? player.name.toUpperCase()
+        : g.roundWinner == -1
+            ? 'TIE!'
+            : (g.roundWinner == index ? 'YOU WIN THE ROUND!' : 'CRASH!');
+    return Column(children: [
+      Text(status, style: TextStyle(color: player.color, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+      Row(children: [btn('◀', -1), btn('▶', 1)]),
+    ]);
+  }
+}
+
+class _Arena extends StatelessWidget {
+  final List<GpPlayer> players;
+  final SnakeDuelLogic g;
+  const _Arena({required this.players, required this.g});
+  @override
+  Widget build(BuildContext context) => Center(
+        child: AspectRatio(
+          aspectRatio: g.cols / g.rows,
+          child: Container(
+            decoration: BoxDecoration(color: GpColors.bgBottom, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white24, width: 2)),
+            child: CustomPaint(painter: _ArenaPainter(g, players.map((p) => p.color).toList(), List.of(g.owner), List.of(g.head))),
+          ),
+        ),
+      );
+}
+
+class _ArenaPainter extends CustomPainter {
+  final SnakeDuelLogic g;
+  final List<Color> colors;
+  final List<int> owners;
+  final List<int> heads;
+  _ArenaPainter(this.g, this.colors, this.owners, this.heads);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cw = size.width / g.cols, ch = size.height / g.rows;
+    for (var i = 0; i < owners.length; i++) {
+      final o = owners[i];
+      if (o < 0) continue;
+      final rect = Rect.fromLTWH((i % g.cols) * cw + 1, (i ~/ g.cols) * ch + 1, cw - 2, ch - 2);
+      final isHead = heads[o] == i;
+      canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(cw * 0.3)), Paint()..color = isHead ? Colors.white : colors[o].withValues(alpha: 0.85));
+      if (isHead) canvas.drawRRect(RRect.fromRectAndRadius(rect.deflate(cw * 0.18), Radius.circular(cw * 0.2)), Paint()..color = colors[o]);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ArenaPainter old) => true;
+}
