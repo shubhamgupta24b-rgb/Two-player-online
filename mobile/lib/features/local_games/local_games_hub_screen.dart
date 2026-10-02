@@ -15,11 +15,20 @@ import 'ping_pong/ping_pong_game.dart';
 import 'reaction_tap/reaction_tap_game.dart';
 import 'snake_duel/snake_duel_game.dart';
 import 'tic_tac_toe/tic_tac_toe_game.dart';
+import 'colour_clash/colour_clash_game.dart';
+import 'dots_boxes/dots_boxes_game.dart';
+import 'ludo/ludo_game.dart';
+import 'snakes_ladders/snakes_ladders_game.dart';
+import 'truth_dare/truth_dare_game.dart';
 import 'shell/local_game_info.dart';
 import 'shell/local_game_shell.dart';
 
-final localGames = <LocalGameInfo>[crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo, ticTacToeInfo,
-  airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo];
+final localGames = <LocalGameInfo>[colourClashInfo, ludoInfo, snakesLaddersInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo,
+  paintFightInfo, ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo,
+  dotsBoxesInfo, truthDareInfo];
+
+/// Everything in the hub: the shell games plus Guess the Person and Raja Mantri.
+int get totalGameCount => localGames.length + 2;
 
 /// All 2-player games that run on one device, no server needed.
 class LocalGamesHubScreen extends StatelessWidget {
@@ -71,12 +80,13 @@ class LocalGamesHubScreen extends StatelessWidget {
                 ]),
               ),
             ),
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                 child: Column(children: [
-                  Text('PARTY GAMES', style: TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0xFF6C5CE7), offset: Offset(0, 4))])),
-                  Text('16 GAMES · ONE DEVICE · NO INTERNET', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                  const Text('PARTY GAMES', style: TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0xFF6C5CE7), offset: Offset(0, 4))])),
+                  Text('$totalGameCount GAMES · ONE DEVICE · NO INTERNET',
+                      textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
                 ]),
               ),
             ),

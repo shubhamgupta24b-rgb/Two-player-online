@@ -74,10 +74,17 @@ Future<void> disposeGame(WidgetTester tester) async {
 void main() {
   group('game catalog and routing', () {
     test('every catalog game is playable and has a screen', () {
-      expect(gameCatalog.map((g) => g.id), ['guess_who', 'guess_person', 'crush_it', 'basketball_hoops', 'fruit_duel', 'memory', 'paint_fight', 'raja_mantri']);
+      expect(gameCatalog.map((g) => g.id).toSet(), {
+        'colour_clash', 'raja_mantri', 'ludo', 'snakes_ladders', 'dots_boxes', 'connect_four', 'tic_tac_toe', 'memory', 'guess_who', //
+        'air_hockey', 'ping_pong', 'snake_duel', 'penalty', 'basketball_hoops', 'crush_it', 'fruit_duel', 'paint_fight', 'reaction_tap', 'math_duel', //
+        'truth_dare',
+      });
+      expect(gameCatalog.map((g) => g.id), isNot(contains('guess_person')), reason: 'quiz removed from rooms');
+      expect(gameCatalog.length, 20);
       for (final g in gameCatalog) {
         expect(g.playable, isTrue, reason: g.id);
         expect(gameScreenFor(g.id), isNotNull, reason: g.id);
+        expect(g.minPlayers <= g.maxPlayers && g.maxPlayers <= 6, isTrue, reason: g.id);
       }
       expect(gameScreenFor('chess'), isNull);
       expect(gameScreenFor('memory'), isA<MemoryScreen>());

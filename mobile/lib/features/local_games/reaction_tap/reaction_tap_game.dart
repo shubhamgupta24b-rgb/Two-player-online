@@ -56,6 +56,7 @@ class ReactionTapLogic extends LocalGameLogic {
 
   /// Returns true if the tap counted (scored or was a false start).
   bool tap(int player) {
+    if (forward('tap', [player])) return false;
     if (finished || phase == ReactionPhase.result) return false;
     lastTapper = player;
     if (phase == ReactionPhase.wait) {
@@ -88,6 +89,24 @@ final reactionTapInfo = LocalGameInfo(
   scoreUnit: 'points',
   splitScreen: true,
   maxPlayers: 6,
+  online: RelaySpec<ReactionTapLogic>(
+    create: (n) => ReactionTapLogic(players: n),
+    save: (g) => {'score': g.score, 'phase': g.phase.index, 'last': g.lastTapper, 'false': g.falseStart, 'ms': g.reactionMs},
+    load: (g, s, me) {
+      g.score.setAll(0, ints(s['score']));
+      g.phase = ReactionPhase.values[asInt(s['phase'])];
+      g.lastTapper = nInt(s['last']);
+      g.falseStart = s['false'] == true;
+      g.reactionMs = nInt(s['ms']);
+    },
+    apply: (g, from, name, a) {
+      if (name == 'tap' && asInt(a[0]) == from) g.tap(from);
+    },
+    view: (context, g, players, me) => Column(children: [
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      Expanded(child: _ReactionHalf(player: players[me], index: me, g: g)),
+    ]),
+  ),
   play: (players, onFinished) => TickingPlay<ReactionTapLogic>(
     create: () => ReactionTapLogic(players: players.length),
     onFinished: onFinished,

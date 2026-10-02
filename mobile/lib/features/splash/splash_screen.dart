@@ -70,9 +70,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: SlideTransition(
                     position: Tween(begin: const Offset(0, 0.4), end: Offset.zero).animate(text),
                     child: const Column(children: [
-                      Text('PARTY GAMES', style: TextStyle(color: AppColors.gold, fontSize: 30, fontWeight: FontWeight.w900, letterSpacing: 3, shadows: [Shadow(color: AppColors.red, offset: Offset(0, 3))])),
-                      SizedBox(height: 6),
-                      Text('16 games · 2–6 players · one phone or many', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
+                      PartyWordmark(width: 280),
+                      SizedBox(height: 12),
+                      Text('One phone or many · play anywhere', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
                     ]),
                   ),
                 ),

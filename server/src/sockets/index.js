@@ -103,6 +103,14 @@ function attachSockets(io, rooms) {
       return { response: response || null };
     });
     on('return_to_lobby', () => { rooms.returnToLobby(userId); return {}; });
+    on('select_game', p => ({ room: rooms.publicRoom(rooms.selectGame(userId, String(p.gameType))) }));
+    const begin = room => {
+      io.to(room.code).emit('round_started', { gameType: room.gameType });
+      sendGameState(room);
+      return { room: rooms.publicRoom(room) };
+    };
+    on('start_party', p => begin(rooms.startParty(userId, p.count ?? 5)));
+    on('next_game', p => begin(rooms.nextGame(userId, p.gameType === undefined ? undefined : String(p.gameType))));
     on('resume_session', () => {
       const room = rooms.roomOf(userId);
       return { room: room ? rooms.publicRoom(room) : null };

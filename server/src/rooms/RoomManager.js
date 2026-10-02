@@ -5,6 +5,8 @@ const registry = require('../games/registry');
 const { MemoryRoomStore } = require('./RoomStore');
 
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+// Games the app no longer offers in rooms; never picked for party mode.
+const NOT_IN_ROOMS = new Set(['guess_person']);
 
 class RoomManager extends EventEmitter {
   constructor({ store = new MemoryRoomStore(), graceMs = 60000 } = {}) {
@@ -36,10 +38,10 @@ class RoomManager extends EventEmitter {
     if (this.userRoom.has(user.userId)) throw new GameError('ALREADY_IN_ROOM');
     const game = registry.get(gameType);
     if (!game) throw new GameError('INVALID_PAYLOAD', 'unknown gameType');
-    if (![2, 3, 4].includes(maxPlayers) || maxPlayers < game.minPlayers || maxPlayers > game.maxPlayers)
-      throw new GameError('INVALID_PAYLOAD', 'maxPlayers must be 2, 3 or 4 and supported by the game');
+    // The room size is independent of the game: the host can switch games in the lobby.
+    if (![2, 3, 4, 5, 6].includes(maxPlayers)) throw new GameError('INVALID_PAYLOAD', 'maxPlayers must be 2 to 6');
     const code = this._code();
-    const room = { code, gameType, maxPlayers, hostId: user.userId, status: 'lobby', players: [], game: null, seqs: {}, createdAt: Date.now() };
+    const room = { code, gameType, maxPlayers, hostId: user.userId, status: 'lobby', players: [], game: null, seqs: {}, party: null, createdAt: Date.now() };
     room.players.push({ ...user, ready: true, connected: true });
     this.store.set(code, room);
     this.userRoom.set(user.userId, code);
@@ -84,7 +86,94 @@ class RoomManager extends EventEmitter {
 
   _toLobby(room) {
     room.status = 'lobby'; room.game = null; room.seqs = {};
-    for (const p of room.players) p.ready = p.userId === room.hostId;
+    // Players who just played stay ready, so the host can go straight into the next game.
+    for (const p of room.players) p.ready = p.userId === room.hostId || (p.ready && p.connected);
+  }
+
+  /** Host picks the game for the next round. */
+  selectGame(userId, gameType) {
+    const room = this._mustRoom(userId);
+    if (room.hostId !== userId) throw new GameError('NOT_HOST');
+    if (room.status !== 'lobby') throw new GameError('BAD_PHASE');
+    const game = registry.get(gameType);
+    if (!game || !game.implemented || NOT_IN_ROOMS.has(gameType)) throw new GameError('INVALID_PAYLOAD', 'unknown gameType');
+    room.gameType = gameType;
+    room.party = null; // picking a game by hand ends a party
+    this._changed(room);
+    return room;
+  }
+
+  /** Games that can be played with the players currently in the room. */
+  _fits(room) {
+    const n = room.players.length;
+    return registry.list().filter(g => g.implemented && !NOT_IN_ROOMS.has(g.id) && n >= g.minPlayers && n <= g.maxPlayers).map(g => g.id);
+  }
+
+  /** Party mode: [count] random games in a row with a running points table. */
+  startParty(userId, count = 5) {
+    const room = this._mustRoom(userId);
+    if (room.hostId !== userId) throw new GameError('NOT_HOST');
+    if (room.status !== 'lobby') throw new GameError('BAD_PHASE');
+    if (!Number.isInteger(count) || count < 2 || count > 10) throw new GameError('INVALID_PAYLOAD');
+    if (room.players.length < 2) throw new GameError('NOT_ENOUGH_PLAYERS');
+    const pool = this._fits(room);
+    for (let i = pool.length - 1; i > 0; i--) { const j = crypto.randomInt(i + 1); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const games = pool.slice(0, Math.min(count, pool.length));
+    const prevType = room.gameType;
+    room.gameType = games[0];
+    try {
+      this.startGame(userId);
+    } catch (e) { room.gameType = prevType; throw e; }
+    room.party = { games, index: 0, totals: Object.fromEntries(room.players.map(p => [p.userId, 0])), lastPoints: null, done: false };
+    this._changed(room);
+    return room;
+  }
+
+  /** After a game: the next party game, or (outside a party) [gameType] / the same game again. */
+  nextGame(userId, gameType) {
+    const room = this._mustRoom(userId);
+    if (room.hostId !== userId) throw new GameError('NOT_HOST');
+    if (room.status !== 'finished') throw new GameError('BAD_PHASE');
+    const party = room.party;
+    let next = gameType || room.gameType;
+    if (party) {
+      if (party.done) throw new GameError('BAD_PHASE');
+      next = party.games[party.index + 1];
+    }
+    const game = registry.get(next);
+    if (!game || !game.implemented || NOT_IN_ROOMS.has(next)) throw new GameError('INVALID_PAYLOAD', 'unknown gameType');
+    this._toLobby(room);
+    for (const p of room.players) if (p.connected) p.ready = true;
+    const prevType = room.gameType;
+    room.gameType = next;
+    try {
+      this.startGame(userId);
+    } catch (e) { room.gameType = prevType; this._changed(room); throw e; }
+    if (party) party.index++;
+    this._changed(room);
+    return room;
+  }
+
+  /** A game just ended: score the party, if any. Returns the result to broadcast. */
+  _ended(room, result) {
+    const party = room.party;
+    if (party && result && Array.isArray(result.ranking)) {
+      const n = result.ranking.length;
+      party.lastPoints = {};
+      for (const r of result.ranking) {
+        const pts = n - (r.rank || n) + 1; // 1st gets n points, last gets 1
+        party.lastPoints[r.userId] = pts;
+        party.totals[r.userId] = (party.totals[r.userId] || 0) + pts;
+      }
+      party.done = party.index >= party.games.length - 1;
+      result = { ...result, party: this._publicParty(room) };
+    }
+    return result;
+  }
+
+  _publicParty(room) {
+    const p = room.party;
+    return p && { games: p.games, index: p.index, totals: p.totals, lastPoints: p.lastPoints, done: p.done };
   }
 
   setReady(userId, ready) {
@@ -103,6 +192,7 @@ class RoomManager extends EventEmitter {
     const game = registry.get(room.gameType);
     if (!game.implemented) throw new GameError('GAME_NOT_AVAILABLE');
     if (room.players.length < Math.max(2, game.minPlayers)) throw new GameError('NOT_ENOUGH_PLAYERS');
+    if (room.players.length > game.maxPlayers) throw new GameError('TOO_MANY_PLAYERS');
     if (!room.players.every(p => p.ready && p.connected)) throw new GameError('PLAYERS_NOT_READY');
     room.status = 'playing';
     room.game = game.create(room);
@@ -121,7 +211,7 @@ class RoomManager extends EventEmitter {
     let result = null;
     if (game.isFinished(room.game)) {
       room.status = 'finished';
-      result = game.getResult(room.game);
+      result = this._ended(room, game.getResult(room.game));
     }
     this._changed(room);
     this.emit('game_updated', room.code, result);
@@ -136,7 +226,7 @@ class RoomManager extends EventEmitter {
       try {
         if (!game.onTick || !game.onTick(room.game, now)) continue;
         let result = null;
-        if (game.isFinished(room.game)) { room.status = 'finished'; result = game.getResult(room.game); this._changed(room); }
+        if (game.isFinished(room.game)) { room.status = 'finished'; result = this._ended(room, game.getResult(room.game)); this._changed(room); }
         this.emit('game_updated', room.code, result);
       } catch (e) { console.error('[tick]', room.code, e); }
     }
@@ -147,6 +237,7 @@ class RoomManager extends EventEmitter {
     if (room.hostId !== userId) throw new GameError('NOT_HOST');
     if (room.status === 'lobby') throw new GameError('BAD_PHASE');
     this._toLobby(room);
+    room.party = null;
     this._changed(room);
     return room;
   }
@@ -175,6 +266,7 @@ class RoomManager extends EventEmitter {
   publicRoom(room) {
     return {
       code: room.code, gameType: room.gameType, maxPlayers: room.maxPlayers, hostId: room.hostId, status: room.status,
+      party: this._publicParty(room), playable: this._fits(room),
       players: room.players.map(({ userId, username, avatar, ready, connected }) => ({ userId, username, avatar, ready, connected })),
     };
   }

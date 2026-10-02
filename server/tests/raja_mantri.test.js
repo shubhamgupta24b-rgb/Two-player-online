@@ -21,14 +21,17 @@ test('Raja Mantri: points table', () => {
   assert.deepStrictEqual(ROLES.map(r => pointsFor(r, false)), [1000, 0, 300, 500]);
 });
 
-test('Raja Mantri: exactly 4 players, rooms only of 4', () => {
+test('Raja Mantri: exactly 4 players', () => {
   const g = createRajaMantri();
   assert.throws(() => g.create({ players: room.players.slice(0, 3) }), e => e.code === 'NOT_ENOUGH_PLAYERS');
   const srv = createServer();
-  for (const maxPlayers of [2, 3]) {
-    assert.throws(() => srv.rooms.createRoom({ userId: 'h', username: 'H' }, { gameType: 'raja_mantri', maxPlayers }), e => e.code === 'INVALID_PAYLOAD');
-  }
-  assert.ok(srv.rooms.createRoom({ userId: 'h', username: 'H' }, { gameType: 'raja_mantri', maxPlayers: 4 }));
+  const rm = srv.rooms;
+  rm.createRoom({ userId: 'h', username: 'H' }, { gameType: 'raja_mantri', maxPlayers: 6 });
+  const code = rm.roomOf('h').code;
+  for (const u of ['p', 'q']) { rm.joinRoom({ userId: u, username: u }, code); rm.setReady(u, true); }
+  assert.throws(() => rm.startGame('h'), e => e.code === 'NOT_ENOUGH_PLAYERS', '3 players');
+  rm.joinRoom({ userId: 'r', username: 'r' }, code); rm.setReady('r', true);
+  assert.strictEqual(rm.startGame('h').status, 'playing');
   srv.io.close(); srv.httpServer.close();
 });
 

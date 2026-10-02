@@ -1,0 +1,300 @@
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../guess_person/models/gp_player.dart';
+import '../../guess_person/widgets/gp_theme.dart';
+import '../shell/local_game_info.dart';
+import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/ticking_play.dart';
+import '../widgets/dice.dart';
+import 'ludo_logic.dart';
+
+export 'ludo_logic.dart';
+
+final ludoInfo = LocalGameInfo(
+  id: 'ludo',
+  title: 'Ludo',
+  emoji: '🎲',
+  color: const Color(0xFF1E7BE0),
+  tagline: 'Race all four tokens home!',
+  rules: const [
+    'Roll a 6 to bring a token out of your base. Move round the board and up your coloured path to the centre.',
+    'Land on a rival token to send it back to base (not on ★ safe squares).',
+    'A 6, a capture or getting a token home gives you another roll. Three 6s in a row lose your turn.',
+    'First to bring all four tokens home wins. 2 to 4 players.',
+  ],
+  scoreUnit: 'wins',
+  splitScreen: false,
+  maxPlayers: 4,
+  online: RelaySpec<LudoLogic>(
+    create: (n) => LudoLogic(players: n),
+    save: (g) => {
+      'tokens': [for (final t in g.tokens) ...t],
+      'turn': g.turn,
+      'phase': g.phase.index,
+      'roll': g.lastRoll,
+      'rolls': g.rolls,
+      'sixes': g.sixesInARow,
+      'winner': g.winner,
+      'msg': g.message,
+    },
+    load: (g, s, me) {
+      final t = ints(s['tokens']);
+      for (var p = 0; p < g.players; p++) {
+        g.tokens[p].setAll(0, t.sublist(p * LudoLogic.tokensEach, (p + 1) * LudoLogic.tokensEach));
+      }
+      g.turn = asInt(s['turn']);
+      g.phase = LudoPhase.values[asInt(s['phase'])];
+      g.lastRoll = nInt(s['roll']);
+      g.rolls = asInt(s['rolls']);
+      g.sixesInARow = asInt(s['sixes']);
+      g.winner = nInt(s['winner']);
+      g.message = s['msg'] as String;
+    },
+    apply: (g, from, name, a) {
+      if (from != g.turn) return;
+      if (name == 'roll') g.roll();
+      if (name == 'move') g.move(asInt(a[0]));
+    },
+    view: (context, g, players, me) => _LudoTable(players: players, g: g),
+  ),
+  play: (players, onFinished) => TickingPlay<LudoLogic>(
+    create: () => LudoLogic(players: players.length),
+    onFinished: onFinished,
+    builder: (context, g) => _LudoTable(players: players, g: g),
+  ),
+);
+
+class _LudoTable extends StatelessWidget {
+  final List<GpPlayer> players;
+  final LudoLogic g;
+  const _LudoTable({required this.players, required this.g});
+
+  @override
+  Widget build(BuildContext context) {
+    final current = players[g.turn];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 12),
+      child: Column(children: [
+        Row(children: [
+          const PauseButton(),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Wrap(spacing: 6, runSpacing: 6, children: [
+              for (var i = 0; i < players.length; i++)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(color: i == g.turn ? players[i].color : Colors.white10, borderRadius: BorderRadius.circular(12), border: Border.all(color: players[i].color, width: 2)),
+                  child: Text('${players[i].name} · 🏠${g.tokens[i].where((t) => t == LudoLogic.home).length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
+                ),
+            ]),
+          ),
+        ]),
+        const SizedBox(height: 8),
+        Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Board(players: players, g: g)))),
+        const SizedBox(height: 8),
+        Text(g.message, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Flexible(
+            child: Text(g.phase == LudoPhase.move ? '${current.name.toUpperCase()}: MOVE ${g.lastRoll}' : "${current.name.toUpperCase()}'S ROLL",
+                overflow: TextOverflow.ellipsis, style: TextStyle(color: current.color, fontWeight: FontWeight.w900, fontSize: 18)),
+          ),
+          const SizedBox(width: 14),
+          RollingDice(
+            value: g.lastRoll ?? 6,
+            rollId: g.rolls,
+            color: current.color,
+            size: 64,
+            onTap: g.phase == LudoPhase.roll
+                ? () {
+                    HapticFeedback.mediumImpact().ignore();
+                    g.roll();
+                  }
+                : null,
+          ),
+        ]),
+      ]),
+    );
+  }
+}
+
+class _Board extends StatelessWidget {
+  final List<GpPlayer> players;
+  final LudoLogic g;
+  const _Board({required this.players, required this.g});
+
+  static const _baseOrigins = [(0, 0), (9, 0), (9, 9), (0, 9)];
+  static const _homeOffsets = [Offset(-0.35, 0), Offset(0, -0.35), Offset(0.35, 0), Offset(0, 0.35)];
+
+  @override
+  Widget build(BuildContext context) {
+    final seatColors = List<Color?>.filled(4, null);
+    for (var p = 0; p < players.length; p++) {
+      seatColors[g.seats[p]] = players[p].color;
+    }
+    return LayoutBuilder(builder: (context, c) {
+      final s = c.maxWidth / 15;
+      // Where each token sits, in cell units (centre).
+      final placed = <(int, int, Offset)>[];
+      for (var p = 0; p < players.length; p++) {
+        final seat = g.seats[p];
+        for (var t = 0; t < LudoLogic.tokensEach; t++) {
+          final prog = g.tokens[p][t];
+          Offset at;
+          if (prog == -1) {
+            final (bx, by) = _baseOrigins[seat];
+            at = Offset(bx + 2.0 + (t % 2) * 2, by + 2.0 + (t ~/ 2) * 2);
+          } else if (prog == LudoLogic.home) {
+            at = const Offset(7.5, 7.5) + _homeOffsets[seat] * 2.2 + Offset((t - 1.5) * 0.18, (t - 1.5) * 0.18);
+          } else {
+            final (col, row) = g.squareOf(p, prog)!;
+            at = Offset(col + 0.5, row + 0.5);
+          }
+          placed.add((p, t, at));
+        }
+      }
+      // Spread tokens sharing a square.
+      final widgets = <Widget>[], onTop = <Widget>[];
+      for (final (p, t, at) in placed) {
+        final same = placed.where((o) => (o.$3 - at).distance < 0.01).toList();
+        final k = same.indexWhere((o) => o.$1 == p && o.$2 == t);
+        final spread = same.length > 1 && g.tokens[p][t] >= 0 ? Offset(cos(k * 2 * pi / same.length), sin(k * 2 * pi / same.length)) * 0.22 : Offset.zero;
+        final pos = (at + spread) * s;
+        final movable = g.canMove(p, t);
+        final size = s * (g.tokens[p][t] == LudoLogic.home ? 0.55 : 0.8);
+        (movable ? onTop : widgets).add(AnimatedPositioned(
+          key: ValueKey('tok$p-$t'),
+          duration: const Duration(milliseconds: 380),
+          curve: Curves.easeOutBack,
+          left: pos.dx - size / 2,
+          top: pos.dy - size / 2,
+          width: size,
+          height: size,
+          child: Semantics(
+            button: movable,
+            label: '${players[p].name} token ${t + 1}',
+            child: GestureDetector(
+              onTap: movable
+                  ? () {
+                      HapticFeedback.selectionClick().ignore();
+                      g.move(t);
+                    }
+                  : null,
+              child: _Pawn(color: players[p].color, glow: movable),
+            ),
+          ),
+        ));
+      }
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Stack(children: [
+          Positioned.fill(child: CustomPaint(painter: _LudoPainter(seatColors))),
+          ...widgets,
+          ...onTop, // movable tokens above the rest so they're easy to tap
+        ]),
+      );
+    });
+  }
+}
+
+class _Pawn extends StatelessWidget {
+  final Color color;
+  final bool glow;
+  const _Pawn({required this.color, required this.glow});
+  @override
+  Widget build(BuildContext context) => AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(center: const Alignment(-0.3, -0.4), colors: [Color.lerp(color, Colors.white, 0.5)!, color, Color.lerp(color, Colors.black, 0.3)!]),
+          border: Border.all(color: glow ? Colors.white : Colors.black87, width: glow ? 3 : 1.5),
+          boxShadow: [
+            const BoxShadow(color: Colors.black54, blurRadius: 3, offset: Offset(0, 2)),
+            if (glow) const BoxShadow(color: Color(0xFFFFE066), blurRadius: 10, spreadRadius: 2),
+          ],
+        ),
+      );
+}
+
+class _LudoPainter extends CustomPainter {
+  final List<Color?> seatColors;
+  _LudoPainter(this.seatColors);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 15;
+    Color seat(int i) => seatColors[i] ?? const Color(0xFF9A9AB0);
+    Rect cell(int c, int r) => Rect.fromLTWH(c * s, r * s, s, s);
+    final line = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.black26;
+
+    canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white);
+    // Bases.
+    const origins = [(0, 0), (9, 0), (9, 9), (0, 9)];
+    for (var i = 0; i < 4; i++) {
+      final (bx, by) = origins[i];
+      final base = Rect.fromLTWH(bx * s, by * s, 6 * s, 6 * s);
+      canvas.drawRect(base, Paint()..color = seat(i));
+      final inner = RRect.fromRectAndRadius(base.deflate(s * 0.8), Radius.circular(s * 0.5));
+      canvas.drawRRect(inner, Paint()..color = Colors.white);
+      for (var t = 0; t < 4; t++) {
+        final c = Offset((bx + 2.0 + (t % 2) * 2) * s, (by + 2.0 + (t ~/ 2) * 2) * s);
+        canvas.drawCircle(c, s * 0.62, Paint()..color = seat(i).withValues(alpha: 0.35));
+        canvas.drawCircle(c, s * 0.62, line);
+      }
+    }
+    // Track.
+    for (var i = 0; i < 52; i++) {
+      final (c, r) = LudoLogic.track[i];
+      final rect = cell(c, r);
+      final startSeat = i % 13 == 0 ? i ~/ 13 : null;
+      canvas.drawRect(rect, Paint()..color = startSeat != null ? seat(startSeat) : Colors.white);
+      canvas.drawRect(rect, line);
+      if (LudoLogic.safeCells.contains(i)) _star(canvas, rect.center, s * 0.3, startSeat != null ? Colors.white : const Color(0xFFB0B0C8));
+    }
+    // Home columns.
+    for (var i = 0; i < 4; i++) {
+      for (final (c, r) in LudoLogic.homeColumns[i]) {
+        canvas.drawRect(cell(c, r), Paint()..color = seat(i));
+        canvas.drawRect(cell(c, r), line);
+      }
+    }
+    // Centre: four triangles pointing in.
+    final centre = Offset(7.5 * s, 7.5 * s);
+    final corners = [Offset(6 * s, 6 * s), Offset(9 * s, 6 * s), Offset(9 * s, 9 * s), Offset(6 * s, 9 * s)];
+    // Triangle i sits on the side facing seat i's home column: left, top, right, bottom.
+    final sides = [(corners[3], corners[0]), (corners[0], corners[1]), (corners[1], corners[2]), (corners[2], corners[3])];
+    for (var i = 0; i < 4; i++) {
+      final (a, b) = sides[i];
+      canvas.drawPath(Path()
+        ..moveTo(a.dx, a.dy)
+        ..lineTo(b.dx, b.dy)
+        ..lineTo(centre.dx, centre.dy)
+        ..close(), Paint()..color = seat(i));
+    }
+    canvas.drawCircle(centre, s * 0.45, Paint()..color = Colors.white);
+    final tp = TextPainter(text: TextSpan(text: '🏆', style: TextStyle(fontSize: s * 0.55)), textDirection: TextDirection.ltr)..layout();
+    tp.paint(canvas, centre - Offset(tp.width / 2, tp.height / 2));
+    canvas.drawRect(Offset.zero & size, Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = Colors.black45);
+  }
+
+  void _star(Canvas canvas, Offset c, double r, Color color) {
+    final p = Path();
+    for (var i = 0; i < 10; i++) {
+      final rr = i.isEven ? r : r * 0.45;
+      final a = -pi / 2 + i * pi / 5;
+      final pt = c + Offset(cos(a) * rr, sin(a) * rr);
+      i == 0 ? p.moveTo(pt.dx, pt.dy) : p.lineTo(pt.dx, pt.dy);
+    }
+    canvas.drawPath(p..close(), Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_LudoPainter old) => true;
+}

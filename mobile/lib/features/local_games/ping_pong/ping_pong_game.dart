@@ -36,7 +36,10 @@ class PingPongLogic extends LocalGameLogic {
   bool get finished => points.any((p) => p >= target);
   bool get waitingToServe => _serveAt != null;
 
-  void movePaddle(int p, double x) => paddleX[p] = x.clamp(paddleHalf, 1 - paddleHalf);
+  void movePaddle(int p, double x) {
+    paddleX[p] = x.clamp(paddleHalf, 1 - paddleHalf); // online: shown straight away, host has the final say
+    if (forward('paddle', [p, x])) changed();
+  }
 
   /// Y of each player's paddle face: bottom for player 1, top for player 2.
   static double paddleLine(int p) => p == 0 ? length - paddleY : paddleY;
@@ -107,6 +110,38 @@ final pingPongInfo = LocalGameInfo(
   ],
   scoreUnit: 'points',
   splitScreen: true,
+  online: RelaySpec<PingPongLogic>(
+    create: (n) => PingPongLogic(),
+    save: (g) => {
+      'points': g.points,
+      'paddles': g.paddleX,
+      'ball': [g.ball.x, g.ball.y],
+      'last': g.lastPointTo,
+      'serving': g.waitingToServe,
+    },
+    load: (g, s, me) {
+      g.points.setAll(0, ints(s['points']));
+      final pads = doubles(s['paddles']);
+      for (var i = 0; i < 2; i++) {
+        if (i != me) g.paddleX[i] = pads[i];
+      }
+      final b = doubles(s['ball']);
+      g.ball = V(b[0], b[1]);
+      g.lastPointTo = nInt(s['last']);
+      g._serveAt = s['serving'] == true ? 1 << 40 : null;
+    },
+    apply: (g, from, name, a) {
+      if (name == 'paddle' && asInt(a[0]) == from) g.movePaddle(from, asDouble(a[1]));
+    },
+    continuous: const {'paddle'},
+    view: (context, g, players, me) => RotatedBox(
+      quarterTurns: me == 1 ? 2 : 0,
+      child: Column(children: [
+        Expanded(child: Padding(padding: const EdgeInsets.all(8), child: _PongTable(players: players, g: g))),
+        ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ]),
+    ),
+  ),
   play: (players, onFinished) => TickingPlay<PingPongLogic>(
     create: () => PingPongLogic(),
     onFinished: onFinished,

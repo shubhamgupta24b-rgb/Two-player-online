@@ -8,7 +8,7 @@ import 'rmcs_role.dart';
 import 'widgets/role_card.dart';
 import 'widgets/rmcs_widgets.dart';
 
-/// Setup: four names, the rules at a glance, then play 20 rounds on one device.
+/// Setup: four names, how many rounds, the rules at a glance, then play on one device.
 class RmcsMenuScreen extends StatefulWidget {
   const RmcsMenuScreen({super.key});
   @override
@@ -16,7 +16,9 @@ class RmcsMenuScreen extends StatefulWidget {
 }
 
 class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
+  static const roundChoices = [5, 10, 15, 20, 30];
   final _names = [for (var i = 0; i < 4; i++) TextEditingController()];
+  int _rounds = 20;
 
   @override
   void dispose() {
@@ -31,7 +33,7 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
       for (var i = 0; i < 4; i++)
         GpPlayer(name: _names[i].text.trim().isEmpty ? 'Player ${i + 1}' : _names[i].text.trim(), color: gpPlayerColors[i]),
     ];
-    Navigator.push(context, MaterialPageRoute(builder: (_) => RmcsGameScreen(game: RmcsGame(players: players))));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => RmcsGameScreen(game: RmcsGame(players: players, totalRounds: _rounds))));
   }
 
   @override
@@ -48,7 +50,7 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(color: RmcsColors.gold, fontSize: 32, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: 1, shadows: [Shadow(color: Color(0xFF8A1C3A), offset: Offset(0, 4))])),
             const SizedBox(height: 6),
-            const Text('4 PLAYERS · 20 ROUNDS · ONE PHONE', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+            Text('4 PLAYERS · $_rounds ROUNDS · ONE PHONE', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
             const SizedBox(height: 16),
             SizedBox(
               height: 150,
@@ -80,12 +82,48 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
                 ),
               ),
             const SizedBox(height: 8),
+            _roundPicker(),
+            const SizedBox(height: 16),
             GpButton('DEAL THE CARDS', icon: Icons.style_rounded, onPressed: _start),
           ]),
         ),
       ),
     );
   }
+
+  Widget _roundPicker() => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: RmcsColors.panel, borderRadius: BorderRadius.circular(18), border: Border.all(color: RmcsColors.gold.withValues(alpha: 0.35))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('ROUNDS', style: TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+          const SizedBox(height: 10),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final n in roundChoices)
+              Semantics(
+                button: true,
+                selected: n == _rounds,
+                label: '$n rounds',
+                child: GestureDetector(
+                  onTap: () => setState(() => _rounds = n),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 54,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: n == _rounds ? RmcsColors.gold : Colors.white10,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: n == _rounds ? Colors.white : Colors.white24, width: 2),
+                    ),
+                    child: Text('$n', style: TextStyle(color: n == _rounds ? GpColors.ink : Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+                  ),
+                ),
+              ),
+          ]),
+          const SizedBox(height: 8),
+          Text(_rounds <= 5 ? 'Quick game · about 5 minutes' : _rounds >= 30 ? 'Marathon · about 30 minutes' : 'About $_rounds minutes', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700, fontSize: 12)),
+        ]),
+      );
 
   Widget _rules() {
     Widget line(String emoji, String text) => Padding(
@@ -105,7 +143,7 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
         line('🃏', 'Each round the 4 cards are shuffled and dealt. Pass the phone so everyone secretly sees their own card.'),
         line('👑', 'The Raja is revealed (+1000 every round), then the Mantri steps forward.'),
         line('🧠', 'The Mantri has 10 seconds to point at the Chor. Right: Mantri +500. Wrong or too slow: Chor +500.'),
-        line('👮', 'The Sipahi always gets +300. Highest total after 20 rounds wins!'),
+        line('👮', 'The Sipahi always gets +300. Highest total after $_rounds rounds wins!'),
       ]),
     );
   }

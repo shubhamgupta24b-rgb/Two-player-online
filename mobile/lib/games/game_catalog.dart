@@ -1,19 +1,69 @@
+import 'package:flutter/material.dart';
+import '../features/local_games/local_games_hub_screen.dart';
+
+enum GameCategory {
+  cards('CARDS'),
+  board('BOARD'),
+  action('ACTION'),
+  party('PARTY');
+
+  final String label;
+  const GameCategory(this.label);
+}
+
+/// A game you can create an online room for.
 class GameInfo {
   final String id;
   final String name;
   final bool playable;
   final int minPlayers;
   final int maxPlayers;
-  const GameInfo(this.id, this.name, {this.playable = false, this.minPlayers = 2, this.maxPlayers = 4});
+  final String emoji;
+  final Color color;
+  final String tagline;
+  final GameCategory category;
+  const GameInfo(this.id, this.name,
+      {this.playable = false,
+      this.minPlayers = 2,
+      this.maxPlayers = 4,
+      this.emoji = '🎮',
+      this.color = const Color(0xFF7B4DFF),
+      this.tagline = '',
+      this.category = GameCategory.party});
+
+  String get playersLabel => minPlayers == maxPlayers ? '$maxPlayers' : '$minPlayers–$maxPlayers';
 }
-const gameCatalog=<GameInfo>[
-  GameInfo('guess_who','Guess Who (2 phones)',playable:true,maxPlayers:2),
-  GameInfo('guess_person','Guess the Person (quiz)',playable:true),
-  GameInfo('crush_it','Crush It',playable:true),
-  GameInfo('basketball_hoops','Basketball Hoops',playable:true),
-  GameInfo('fruit_duel','Fruit Duel',playable:true),
-  GameInfo('memory','Memory',playable:true),
-  GameInfo('paint_fight','Paint Fight',playable:true),
-  GameInfo('raja_mantri','Raja Mantri Chor Sipahi (4 phones)',playable:true,minPlayers:4,maxPlayers:4),
+
+/// Online version of a one-device game, using its look. [max] caps the room size where
+/// the online version supports fewer players than the one-device one.
+GameInfo _local(String id, GameCategory category, {int? max}) {
+  final g = localGames.firstWhere((x) => x.id == id);
+  return GameInfo(id, g.title, playable: true, emoji: g.emoji, color: g.color, tagline: g.tagline, maxPlayers: max ?? g.maxPlayers, category: category);
+}
+
+final List<GameInfo> gameCatalog = [
+  _local('colour_clash', GameCategory.cards),
+  const GameInfo('raja_mantri', 'Raja Mantri Chor Sipahi',
+      playable: true, minPlayers: 4, maxPlayers: 4, emoji: '👑', color: Color(0xFF8A1C3A), tagline: 'Can the Mantri catch the Chor?', category: GameCategory.cards),
+  _local('ludo', GameCategory.board),
+  _local('snakes_ladders', GameCategory.board),
+  _local('dots_boxes', GameCategory.board),
+  _local('connect_four', GameCategory.board),
+  _local('tic_tac_toe', GameCategory.board),
+  _local('memory', GameCategory.board, max: 4),
+  const GameInfo('guess_who', 'Guess Who',
+      playable: true, maxPlayers: 2, emoji: '🕵️', color: Color(0xFFE0A800), tagline: 'Ask yes/no questions, find their person', category: GameCategory.board),
+  _local('air_hockey', GameCategory.action),
+  _local('ping_pong', GameCategory.action),
+  _local('snake_duel', GameCategory.action),
+  _local('penalty', GameCategory.action),
+  _local('basketball_hoops', GameCategory.action, max: 4),
+  _local('crush_it', GameCategory.action, max: 4),
+  _local('fruit_duel', GameCategory.action, max: 4),
+  _local('paint_fight', GameCategory.action, max: 4),
+  _local('reaction_tap', GameCategory.action),
+  _local('math_duel', GameCategory.action),
+  _local('truth_dare', GameCategory.party),
 ];
-String gameName(String id)=>gameCatalog.firstWhere((g)=>g.id==id,orElse:()=>GameInfo(id,id)).name;
+
+String gameName(String id) => gameCatalog.firstWhere((g) => g.id == id, orElse: () => GameInfo(id, id)).name;

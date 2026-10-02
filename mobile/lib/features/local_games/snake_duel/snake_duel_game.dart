@@ -49,6 +49,7 @@ class SnakeDuelLogic extends LocalGameLogic {
 
   /// Turn left (-1) or right (+1) relative to the current heading; applied on the next step.
   void turn(int player, int side) {
+    if (forward('turn', [player, side])) return;
     if (betweenRounds || finished) return;
     _queued[player] = (dir[player] + side + 4) % 4;
   }
@@ -122,6 +123,43 @@ final snakeDuelInfo = LocalGameInfo(
   ],
   scoreUnit: 'rounds',
   splitScreen: true,
+  online: RelaySpec<SnakeDuelLogic>(
+    create: (n) => SnakeDuelLogic(),
+    save: (g) => {
+      'score': g.score,
+      // Trails as one short string: '.' empty, '0'/'1' owner.
+      'owner': String.fromCharCodes(g.owner.map((o) => o < 0 ? 46 : 48 + o)),
+      'head': g.head,
+      'dir': g.dir,
+      'round': g.round,
+      'roundWinner': g.roundWinner,
+      'between': g._nextRoundAt != null,
+    },
+    load: (g, s, me) {
+      g.score.setAll(0, ints(s['score']));
+      final o = (s['owner'] as String).codeUnits;
+      g.owner = [for (final c in o) c == 46 ? -1 : c - 48];
+      g.head.setAll(0, ints(s['head']));
+      g.dir.setAll(0, ints(s['dir']));
+      g.round = asInt(s['round']);
+      g.roundWinner = nInt(s['roundWinner']);
+      g._nextRoundAt = s['between'] == true ? 1 << 40 : null;
+    },
+    apply: (g, from, name, a) {
+      final side = asInt(a[1]);
+      if (name == 'turn' && asInt(a[0]) == from && (side == 1 || side == -1)) g.turn(from, side);
+    },
+    view: (context, g, players, me) => Column(children: [
+      Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: RotatedBox(quarterTurns: me == 1 ? 2 : 0, child: _Arena(players: players, g: g)),
+        ),
+      ),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      _Controls(player: players[me], index: me, g: g),
+    ]),
+  ),
   play: (players, onFinished) => TickingPlay<SnakeDuelLogic>(
     create: () => SnakeDuelLogic(),
     onFinished: onFinished,

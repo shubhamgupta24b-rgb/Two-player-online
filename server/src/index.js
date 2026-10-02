@@ -22,6 +22,12 @@ module.exports = { createServer };
 
 if (require.main === module) {
   connectDb().catch(e => console.error('[db] failed', e.message)).finally(() => {
-    createServer().httpServer.listen(config.port, () => console.log(`server on :${config.port} (auth=${config.authMode})`));
+    createServer().httpServer.listen(config.port, () => {
+      console.log(`server on :${config.port} (auth=${config.authMode})`);
+      // The address to type into the app (Home > Server) on phones on the same Wi-Fi.
+      const lan = Object.values(require('os').networkInterfaces()).flat()
+        .filter(a => a && a.family === 'IPv4' && !a.internal).map(a => `${a.address}:${config.port}`);
+      if (lan.length) console.log(`phones on the same Wi-Fi: enter ${lan.join(' or ')} under Home > Server`);
+    });
   });
 }

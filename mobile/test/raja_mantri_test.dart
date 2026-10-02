@@ -139,7 +139,7 @@ void main() {
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.reset);
         await tester.pumpWidget(const MaterialApp(home: LocalGamesHubScreen()));
-        expect(find.text('16 GAMES · ONE DEVICE · NO INTERNET'), findsOneWidget);
+        expect(find.text('$totalGameCount GAMES · ONE DEVICE · NO INTERNET'), findsOneWidget);
         await tester.tap(find.text('Raja Mantri Chor Sipahi'));
         await tester.pumpAndSettle();
 
@@ -194,6 +194,25 @@ void main() {
         await tester.pump(const Duration(seconds: 3));
       });
     }
+
+    testWidgets('players choose how many rounds', (tester) async {
+      tester.view.physicalSize = const Size(411, 914);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(const MaterialApp(home: RmcsMenuScreen()));
+      expect(find.text('4 PLAYERS · 20 ROUNDS · ONE PHONE'), findsOneWidget, reason: 'default');
+      await tester.scrollUntilVisible(find.text('5'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('5'));
+      await tester.pump();
+      expect(find.text('Quick game · about 5 minutes'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('DEAL THE CARDS'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('DEAL THE CARDS'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('ROUND 1 / 5'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 3));
+    });
 
     testWidgets('Mantri too slow: chor escapes; last round shows final results', (tester) async {
       var clock = 0;

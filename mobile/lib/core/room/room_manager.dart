@@ -9,14 +9,36 @@ class RoomPlayer {
   factory RoomPlayer.fromJson(Map j) => RoomPlayer(j['userId'], j['username'] ?? '?', j['ready'] == true, j['connected'] == true);
 }
 
+/// Party mode: a run of random games with a running points table.
+class Party {
+  final List<String> games;
+  final int index; // game being played / just played
+  final Map<String, int> totals;
+  final Map<String, int>? lastPoints;
+  final bool done;
+  Party(this.games, this.index, this.totals, this.lastPoints, this.done);
+  factory Party.fromJson(Map j) => Party(
+        (j['games'] as List).cast<String>(),
+        (j['index'] as num).toInt(),
+        {for (final e in (j['totals'] as Map).entries) '${e.key}': (e.value as num).toInt()},
+        j['lastPoints'] == null ? null : {for (final e in (j['lastPoints'] as Map).entries) '${e.key}': (e.value as num).toInt()},
+        j['done'] == true,
+      );
+  String? get nextGame => index + 1 < games.length ? games[index + 1] : null;
+}
+
 class Room {
   final String code, gameType, hostId, status;
   final int maxPlayers;
   final List<RoomPlayer> players;
-  Room(this.code, this.gameType, this.hostId, this.status, this.maxPlayers, this.players);
+  final Party? party;
+  final Set<String> playable; // games that fit the players in the room right now
+  Room(this.code, this.gameType, this.hostId, this.status, this.maxPlayers, this.players, {this.party, this.playable = const {}});
   factory Room.fromJson(Map j) => Room(
         j['code'], j['gameType'], j['hostId'], j['status'], j['maxPlayers'],
         (j['players'] as List).map((p) => RoomPlayer.fromJson(p as Map)).toList(),
+        party: j['party'] == null ? null : Party.fromJson(j['party'] as Map),
+        playable: {...((j['playable'] as List?) ?? const []).cast<String>()},
       );
   bool get allReady => players.length >= 2 && players.every((p) => p.ready && p.connected);
 }
@@ -27,7 +49,8 @@ const _errorText = {
   'ALREADY_IN_ROOM': 'You are already in a room.',
   'GAME_IN_PROGRESS': 'That game has already started.',
   'NOT_HOST': 'Only the host can do that.',
-  'NOT_ENOUGH_PLAYERS': 'Need at least 2 players.',
+  'NOT_ENOUGH_PLAYERS': 'Not enough players for this game.',
+  'TOO_MANY_PLAYERS': 'Too many players for this game. Pick another one.',
   'PLAYERS_NOT_READY': 'Everyone must be ready.',
   'GAME_NOT_AVAILABLE': 'This game is not implemented yet.',
   'INVALID_PAYLOAD': 'Invalid input.',
@@ -72,7 +95,11 @@ class RoomManager extends ChangeNotifier {
 
   Future<String?> _roomCall(String event, [Map<String, dynamic>? p]) async {
     final r = await _socket.request(event, p);
-    if (r['ok'] != true) return errorMessage(r['error']?.toString());
+    if (r['ok'] != true) {
+      // The room moved on without us noticing (e.g. a player left mid-game): catch up.
+      if (r['error'] == 'BAD_PHASE') await resync();
+      return errorMessage(r['error']?.toString());
+    }
     if (r['room'] != null) {
       room = Room.fromJson(r['room'] as Map);
       notifyListeners();
@@ -85,6 +112,11 @@ class RoomManager extends ChangeNotifier {
   Future<String?> setReady(bool ready) => _roomCall(ready ? 'player_ready' : 'player_unready');
   Future<String?> start() => _roomCall('start_game');
   Future<String?> returnToLobby() => _roomCall('return_to_lobby');
+  Future<String?> selectGame(String gameType) => _roomCall('select_game', {'gameType': gameType});
+  Future<String?> startParty([int count = 5]) => _roomCall('start_party', {'count': count});
+
+  /// After a game: the next party game, [gameType], or the same game again.
+  Future<String?> nextGame([String? gameType]) => _roomCall('next_game', {if (gameType != null) 'gameType': gameType});
 
   Future<void> leave() async {
     await _socket.request('leave_room');

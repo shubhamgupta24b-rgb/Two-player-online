@@ -88,6 +88,7 @@ class MathDuelLogic extends LocalGameLogic {
 
   /// Returns true for a correct answer, false for a wrong one, null if the tap didn't count.
   bool? answer(int player, int value) {
+    if (forward('answer', [player, value])) return null;
     if (finished || betweenQuestions || lockedOut.contains(player)) return null;
     if (value == question.answer) {
       score[player]++;
@@ -117,6 +118,36 @@ final mathDuelInfo = LocalGameInfo(
   scoreUnit: 'points',
   splitScreen: true,
   maxPlayers: 4,
+  online: RelaySpec<MathDuelLogic>(
+    create: (n) => MathDuelLogic(players: n),
+    save: (g) => {
+      'score': g.score,
+      'q': g.question.text,
+      'answer': g.question.answer,
+      'options': g.question.options,
+      'locked': g.lockedOut.toList(),
+      'solvedBy': g.solvedBy,
+      'between': g.betweenQuestions,
+      'no': g.questionNo,
+    },
+    load: (g, s, me) {
+      g.score.setAll(0, ints(s['score']));
+      g.question = MathQuestion(s['q'] as String, asInt(s['answer']), ints(s['options']));
+      g.lockedOut
+        ..clear()
+        ..addAll(ints(s['locked']));
+      g.solvedBy = nInt(s['solvedBy']);
+      g._nextAt = s['between'] == true ? 1 << 40 : null;
+      g.questionNo = asInt(s['no']);
+    },
+    apply: (g, from, name, a) {
+      if (name == 'answer' && asInt(a[0]) == from) g.answer(from, asInt(a[1]));
+    },
+    view: (context, g, players, me) => Column(children: [
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      Expanded(child: _MathHalf(player: players[me], index: me, g: g)),
+    ]),
+  ),
   play: (players, onFinished) => TickingPlay<MathDuelLogic>(
     create: () => MathDuelLogic(players: players.length),
     onFinished: onFinished,

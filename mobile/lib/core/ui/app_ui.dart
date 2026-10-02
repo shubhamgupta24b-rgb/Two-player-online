@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'party_logo.dart';
+
+export 'party_logo.dart';
 
 /// Colours taken from the app logo: deep navy, neon blue vs red, and gold.
 class AppColors {
@@ -91,7 +94,7 @@ class AppLogo extends StatelessWidget {
             BoxShadow(color: AppColors.red.withValues(alpha: 0.3), blurRadius: size * 0.3, offset: Offset(size * 0.06, 0)),
           ],
         ),
-        child: Image.asset('assets/images/logo.png', width: size, height: size, semanticLabel: 'Two Player Online', errorBuilder: (_, __, ___) => Icon(Icons.sports_esports_rounded, size: size * 0.6, color: AppColors.gold)),
+        child: PartyLogoIcon(size: size),
       );
 }
 

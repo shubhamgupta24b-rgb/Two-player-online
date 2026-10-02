@@ -30,6 +30,7 @@ class ConnectFourLogic extends LocalGameLogic {
 
   /// Drops a disc in [col]. Returns the row it landed on, or null if not allowed.
   int? drop(int col) {
+    if (forward('drop', [col])) return null;
     if (finished || col < 0 || col >= cols) return null;
     for (var r = rows - 1; r >= 0; r--) {
       if (at(col, r) < 0) {
@@ -80,6 +81,21 @@ final connectFourInfo = LocalGameInfo(
   ],
   scoreUnit: 'wins',
   splitScreen: false,
+  online: RelaySpec<ConnectFourLogic>(
+    create: (n) => ConnectFourLogic(),
+    save: (g) => {'cells': g.cells, 'turn': g.turn, 'winner': g.winner, 'winCells': g.winCells, 'lastDrop': g.lastDrop},
+    load: (g, s, me) {
+      g.cells.setAll(0, ints(s['cells']));
+      g.turn = asInt(s['turn']);
+      g.winner = nInt(s['winner']);
+      g.winCells = s['winCells'] == null ? null : ints(s['winCells']);
+      g.lastDrop = nInt(s['lastDrop']);
+    },
+    apply: (g, from, name, a) {
+      if (name == 'drop' && from == g.turn) g.drop(asInt(a[0]));
+    },
+    view: (context, g, players, me) => _Board(players: players, g: g),
+  ),
   play: (players, onFinished) => TickingPlay<ConnectFourLogic>(
     create: () => ConnectFourLogic(starter: _matchesStarted++ % 2),
     onFinished: onFinished,

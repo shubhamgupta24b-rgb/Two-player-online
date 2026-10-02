@@ -171,13 +171,13 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
       onTap: () => _open(const LocalGamesHubScreen()),
       child: Row(children: [
-        const Expanded(
+        Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('PLAY ON\nONE DEVICE', style: TextStyle(color: Colors.white, fontSize: 26, height: 1.05, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0x66000000), offset: Offset(0, 2))])),
-            SizedBox(height: 8),
-            Text('16 games · 2–6 players\nNo internet needed', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, height: 1.3)),
-            SizedBox(height: 12),
-            FittedBox(fit: BoxFit.scaleDown, child: _Pill('PLAY NOW', Icons.play_arrow_rounded)),
+            const Text('PLAY ON\nONE DEVICE', style: TextStyle(color: Colors.white, fontSize: 26, height: 1.05, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0x66000000), offset: Offset(0, 2))])),
+            const SizedBox(height: 8),
+            Text('$totalGameCount games · 2–6 players\nNo internet needed', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, height: 1.3)),
+            const SizedBox(height: 12),
+            const FittedBox(fit: BoxFit.scaleDown, child: _Pill('PLAY NOW', Icons.play_arrow_rounded)),
           ]),
         ),
         const SizedBox(width: 8),
@@ -225,9 +225,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _featured() {
     final picks = [
+      for (final id in ['colour_clash', 'ludo'])
+        for (final g in localGames.where((g) => g.id == id)) (g.emoji, g.title, g.color, () => _open(LocalGameShell(game: g))),
       ('👑', 'Raja Mantri', const Color(0xFF8A1C3A), () => _open(const RmcsMenuScreen())),
       ('🕵️', 'Guess the Person', const Color(0xFFE0A800), () => _open(const GuessPersonMenuScreen())),
-      for (final id in ['basketball_hoops', 'air_hockey', 'tic_tac_toe', 'crush_it', 'snake_duel'])
+      for (final id in ['truth_dare', 'snakes_ladders', 'basketball_hoops', 'air_hockey'])
         for (final g in localGames.where((g) => g.id == id)) (g.emoji, g.title, g.color, () => _open(LocalGameShell(game: g))),
     ];
     return SizedBox(

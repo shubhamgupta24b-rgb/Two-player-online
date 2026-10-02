@@ -4,9 +4,15 @@ import 'package:provider/provider.dart';
 import '../../core/auth/authentication_manager.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/room/room_manager.dart';
+import '../../core/ui/app_ui.dart';
 import '../../games/game_catalog.dart';
 import '../../games/game_host_screen.dart';
+import '../create_room/game_grid.dart';
+import '../guess_person/models/gp_player.dart' show gpPlayerColors;
+import '../guess_person/widgets/gp_theme.dart' show GpButton, GpColors;
 
+/// The room between games: the code to share, who's in, which game is next.
+/// The host picks the game (or a party of random games) and starts.
 class LobbyScreen extends StatelessWidget {
   const LobbyScreen({super.key});
 
@@ -29,12 +35,22 @@ class LobbyScreen extends StatelessWidget {
     final myId = context.read<AuthenticationManager>().token.split(':')[1];
     final isHost = room.hostId == myId;
     final me = room.players.where((p) => p.userId == myId).firstOrNull;
-    final theme = Theme.of(context);
+    final game = gameCatalog.firstWhere((g) => g.id == room.gameType, orElse: () => GameInfo(room.gameType, gameName(room.gameType)));
+    final n = room.players.length;
+    final fits = n >= game.minPlayers && n <= game.maxPlayers;
 
     Future<void> run(Future<String?> f) async {
       final messenger = ScaffoldMessenger.of(context);
       final err = await f;
       if (err != null) messenger.showSnackBar(SnackBar(content: Text(err)));
+    }
+
+    Future<void> pick() async {
+      final id = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(builder: (_) => GamePickerScreen(selectedId: room.gameType, playable: room.playable, playerCount: n)),
+      );
+      if (id != null) await run(rm.selectGame(id));
     }
 
     return PopScope(
@@ -44,63 +60,177 @@ class LobbyScreen extends StatelessWidget {
         await rm.leave();
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(gameName(room.gameType)),
-          automaticallyImplyLeading: false,
-          actions: [TextButton(onPressed: rm.leave, child: const Text('Leave'))],
-        ),
-        body: Column(children: [
-          ValueListenableBuilder<bool>(
-            valueListenable: socket.connected,
-            builder: (_, on, __) => on ? const SizedBox.shrink() : Container(
-              width: double.infinity, color: Colors.orange.shade800, padding: const EdgeInsets.all(8),
-              child: const Text('Connection lost, reconnecting...', textAlign: TextAlign.center)),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
+        body: AppBackground(
+          child: SafeArea(
             child: Column(children: [
-              const Text('ROOM CODE'),
-              InkWell(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: room.code));
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code copied')));
-                },
-                child: Text(room.code, style: theme.textTheme.displayMedium?.copyWith(letterSpacing: 8, fontWeight: FontWeight.w900)),
+              ValueListenableBuilder<bool>(
+                valueListenable: socket.connected,
+                builder: (_, on, __) => on
+                    ? const SizedBox.shrink()
+                    : Container(
+                        width: double.infinity,
+                        color: Colors.orange.shade800,
+                        padding: const EdgeInsets.all(8),
+                        child: const Text('Connection lost, reconnecting...', textAlign: TextAlign.center, style: TextStyle(color: Colors.white)),
+                      ),
               ),
-              Text('${room.players.length} / ${room.maxPlayers} players'),
-            ]),
-          ),
-          Expanded(
-            child: ListView(children: [
-              for (final p in room.players)
-                ListTile(
-                  leading: CircleAvatar(child: Text(p.username.isEmpty ? '?' : p.username[0].toUpperCase())),
-                  title: Text('${p.username}${p.userId == myId ? ' (you)' : ''}'),
-                  subtitle: Text(!p.connected ? 'DISCONNECTED' : p.userId == room.hostId ? 'HOST' : ''),
-                  trailing: Text(p.ready ? 'READY' : 'WAITING',
-                      style: TextStyle(color: p.ready ? Colors.greenAccent : Colors.grey, fontWeight: FontWeight.bold)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+                child: Row(children: [
+                  const Expanded(child: Text('GAME ROOM', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1.5))),
+                  TextButton.icon(
+                    onPressed: rm.leave,
+                    icon: const Icon(Icons.logout_rounded, color: AppColors.red, size: 18),
+                    label: const Text('LEAVE', style: TextStyle(color: AppColors.red, fontWeight: FontWeight.w900)),
+                  ),
+                ]),
+              ),
+              Expanded(
+                child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 16), children: [
+                  _CodeCard(code: room.code),
+                  const SizedBox(height: 14),
+                  _GameCard(game: game, fits: fits, playerCount: n, isHost: isHost, onChange: pick),
+                  SectionTitle('PLAYERS · $n / ${room.maxPlayers}'),
+                  for (var i = 0; i < room.players.length; i++)
+                    _PlayerRow(player: room.players[i], color: gpPlayerColors[i % gpPlayerColors.length], isHost: room.players[i].userId == room.hostId, isMe: room.players[i].userId == myId),
+                  for (var i = room.players.length; i < room.maxPlayers; i++) const _EmptySeat(),
+                ]),
+              ),
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                decoration: const BoxDecoration(
+                  color: AppColors.night,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+                  boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, -4))],
                 ),
-              for (var i = room.players.length; i < room.maxPlayers; i++)
-                const ListTile(leading: CircleAvatar(child: Icon(Icons.person_outline)), title: Text('Waiting for player...')),
+                child: isHost
+                    ? Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        if (!room.allReady)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Text('Waiting for everyone to join and tap READY…', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
+                          ),
+                        GpButton('START ${game.name.toUpperCase()}', icon: Icons.play_arrow_rounded, color: GpColors.accent, onPressed: room.allReady && fits ? () => run(rm.start()) : null),
+                        const SizedBox(height: 10),
+                        GpButton('🎲 PARTY MODE · 5 RANDOM GAMES', color: AppColors.purple, textColor: Colors.white, onPressed: room.allReady ? () => run(rm.startParty(5)) : null),
+                      ])
+                    : Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 8),
+                          child: Text('The host picks the games. Get ready!', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
+                        ),
+                        GpButton(
+                          me?.ready == true ? "I'M READY ✓ (TAP TO UNDO)" : "I'M READY",
+                          icon: me?.ready == true ? null : Icons.check_circle_rounded,
+                          color: me?.ready == true ? GpColors.yes : GpColors.accent,
+                          textColor: me?.ready == true ? Colors.white : GpColors.ink,
+                          onPressed: () => run(rm.setReady(!(me?.ready ?? false))),
+                        ),
+                      ]),
+              ),
             ]),
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                child: isHost
-                    ? FilledButton(
-                        onPressed: room.allReady ? () => run(rm.start()) : null,
-                        child: const Padding(padding: EdgeInsets.all(14), child: Text('START GAME')))
-                    : FilledButton(
-                        onPressed: () => run(rm.setReady(!(me?.ready ?? false))),
-                        child: Padding(padding: const EdgeInsets.all(14), child: Text(me?.ready == true ? 'UNREADY' : 'READY'))),
-              ),
-            ),
-          ),
-        ]),
+        ),
       ),
     );
   }
+}
+
+class _CodeCard extends StatelessWidget {
+  final String code;
+  const _CodeCard({required this.code});
+  @override
+  Widget build(BuildContext context) => PressableCard(
+        semanticLabel: 'Room code $code. Tap to copy',
+        colors: const [AppColors.blue, AppColors.purple],
+        onTap: () {
+          Clipboard.setData(ClipboardData(text: code));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code copied')));
+        },
+        child: Column(children: [
+          const Text('ROOM CODE', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12)),
+          FittedBox(child: Text(code, style: const TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w900, letterSpacing: 8))),
+          const Text('Friends tap JOIN ROOM and enter this code · tap to copy', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12)),
+        ]),
+      );
+}
+
+class _GameCard extends StatelessWidget {
+  final GameInfo game;
+  final bool fits;
+  final int playerCount;
+  final bool isHost;
+  final VoidCallback onChange;
+  const _GameCard({required this.game, required this.fits, required this.playerCount, required this.isHost, required this.onChange});
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [game.color, Color.lerp(game.color, Colors.black, 0.45)!]),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Row(children: [
+          Text(game.emoji, style: const TextStyle(fontSize: 40)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('NEXT GAME', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5)),
+              Text(game.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, height: 1.1)),
+              Text(fits ? '👥 ${game.playersLabel} players' : '⚠ Needs ${game.playersLabel} players · you have $playerCount',
+                  style: TextStyle(color: fits ? Colors.white70 : const Color(0xFFFFE066), fontWeight: FontWeight.w800, fontSize: 12)),
+            ]),
+          ),
+          if (isHost)
+            FilledButton.tonal(
+              onPressed: onChange,
+              style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: AppColors.night),
+              child: const Text('CHANGE', style: TextStyle(fontWeight: FontWeight.w900)),
+            ),
+        ]),
+      );
+}
+
+class _PlayerRow extends StatelessWidget {
+  final RoomPlayer player;
+  final Color color;
+  final bool isHost, isMe;
+  const _PlayerRow({required this.player, required this.color, required this.isHost, required this.isMe});
+  @override
+  Widget build(BuildContext context) {
+    final status = !player.connected ? 'OFFLINE' : (player.ready ? 'READY' : 'NOT READY');
+    final statusColor = !player.connected ? Colors.orange : (player.ready ? AppColors.green : Colors.white38);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(color: AppColors.glass, borderRadius: BorderRadius.circular(18), border: Border.all(color: isMe ? color : AppColors.stroke, width: isMe ? 2 : 1)),
+      child: Row(children: [
+        CircleAvatar(
+          backgroundColor: color,
+          child: Text(player.username.isEmpty ? '?' : player.username.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text('${player.username}${isMe ? ' (you)' : ''}${isHost ? ' 👑' : ''}',
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+        ),
+        Text(status, style: TextStyle(color: statusColor, fontWeight: FontWeight.w900, fontSize: 12)),
+      ]),
+    );
+  }
+}
+
+class _EmptySeat extends StatelessWidget {
+  const _EmptySeat();
+  @override
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.stroke)),
+        child: const Row(children: [
+          CircleAvatar(backgroundColor: Colors.white10, child: Icon(Icons.person_outline_rounded, color: Colors.white38)),
+          SizedBox(width: 12),
+          Text('Waiting for a player…', style: TextStyle(color: Colors.white38, fontWeight: FontWeight.w700)),
+        ]),
+      );
 }

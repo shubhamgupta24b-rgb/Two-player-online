@@ -34,6 +34,7 @@ class TicTacToeLogic extends LocalGameLogic {
 
   /// Returns true if the move was accepted.
   bool play(int cell) {
+    if (forward('play', [cell])) return false;
     if (finished || cell < 0 || cell > 8 || cells[cell] >= 0) return false;
     cells[cell] = turn;
     for (final l in lines) {
@@ -63,6 +64,20 @@ final ticTacToeInfo = LocalGameInfo(
   ],
   scoreUnit: 'wins',
   splitScreen: false,
+  online: RelaySpec<TicTacToeLogic>(
+    create: (n) => TicTacToeLogic(),
+    save: (g) => {'cells': g.cells, 'turn': g.turn, 'winLine': g.winLine, 'winner': g.winner},
+    load: (g, s, me) {
+      g.cells.setAll(0, ints(s['cells']));
+      g.turn = asInt(s['turn']);
+      g.winLine = s['winLine'] == null ? null : ints(s['winLine']);
+      g.winner = nInt(s['winner']);
+    },
+    apply: (g, from, name, a) {
+      if (name == 'play' && from == g.turn) g.play(asInt(a[0]));
+    },
+    view: (context, g, players, me) => _Board(players: players, g: g),
+  ),
   play: (players, onFinished) => TickingPlay<TicTacToeLogic>(
     create: () => TicTacToeLogic(starter: _matchesStarted++ % 2),
     onFinished: onFinished,

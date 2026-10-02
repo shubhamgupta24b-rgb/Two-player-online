@@ -63,6 +63,7 @@ class PenaltyLogic extends LocalGameLogic {
 
   /// [zone] is absolute (0 left, 1 centre, 2 right from player 1's side). Returns true if accepted.
   bool pick(int player, int zone) {
+    if (forward('pick', [player, zone])) return false;
     if (finished || showingResult || zone < 0 || zone > 2 || picks[player] != null) return false;
     picks[player] = zone;
     if (picks[0] != null && picks[1] != null) {
@@ -90,6 +91,34 @@ final penaltyInfo = LocalGameInfo(
   ],
   scoreUnit: 'goals',
   splitScreen: true,
+  online: RelaySpec<PenaltyLogic>(
+    create: (n) => PenaltyLogic(),
+    save: (g) => {
+      'goals': g.goals,
+      'kicks': [for (final k in g.kicks) [k.kicker, k.shot, k.dive]],
+      // Only whether each player has picked: the side stays secret until both have.
+      'locked': [for (final p in g.picks) p != null],
+      'showing': g.showingResult,
+    },
+    load: (g, s, me) {
+      g.goals.setAll(0, ints(s['goals']));
+      g.kicks
+        ..clear()
+        ..addAll([for (final k in s['kicks'] as List) Kick(asInt((k as List)[0]), asInt(k[1]), asInt(k[2]))]);
+      final locked = (s['locked'] as List).cast<bool>();
+      for (var i = 0; i < 2; i++) {
+        g.picks[i] = locked[i] ? (g.picks[i] ?? 1) : null;
+      }
+      g._nextAt = s['showing'] == true ? 1 << 40 : null;
+    },
+    apply: (g, from, name, a) {
+      if (name == 'pick' && asInt(a[0]) == from) g.pick(from, asInt(a[1]));
+    },
+    view: (context, g, players, me) => Column(children: [
+      ScoreMiddleBar(players: players, scores: g.scores, label: g.kickNo < 2 * g.kicksEach ? 'KICK ${g.kickNo ~/ 2 + 1} OF ${g.kicksEach}' : 'SUDDEN DEATH'),
+      Expanded(child: _PenaltyHalf(player: players[me], index: me, g: g)),
+    ]),
+  ),
   play: (players, onFinished) => TickingPlay<PenaltyLogic>(
     create: () => PenaltyLogic(),
     onFinished: onFinished,

@@ -49,6 +49,11 @@ class AirHockeyLogic extends TimedDuel {
     final minY = p == 0 ? length / 2 + malletR : malletR;
     final maxY = p == 0 ? length - malletR : length / 2 - malletR;
     final clamped = V(to.x.clamp(malletR, 1 - malletR), to.y.clamp(minY, maxY));
+    if (forward('mallet', [p, to.x, to.y])) {
+      mallet[p] = clamped; // show my own mallet straight away
+      changed();
+      return;
+    }
     _malletVel[p] = (clamped - mallet[p]) * 60; // roughly per-frame movement -> per second
     mallet[p] = clamped;
   }
@@ -127,6 +132,40 @@ final airHockeyInfo = LocalGameInfo(
   ],
   scoreUnit: 'goals',
   splitScreen: true,
+  online: RelaySpec<AirHockeyLogic>(
+    create: (n) => AirHockeyLogic(),
+    save: (g) => {
+      't': g.elapsedMs,
+      'goals': g.goals,
+      'puck': [g.puck.x, g.puck.y],
+      'm': [g.mallet[0].x, g.mallet[0].y, g.mallet[1].x, g.mallet[1].y],
+      'last': g.lastGoalBy,
+      'paused': g.paused,
+    },
+    load: (g, s, me) {
+      g.elapsedMs = asInt(s['t']);
+      g.goals.setAll(0, ints(s['goals']));
+      final p = doubles(s['puck']), m = doubles(s['m']);
+      g.puck = V(p[0], p[1]);
+      for (var i = 0; i < 2; i++) {
+        if (i != me) g.mallet[i] = V(m[i * 2], m[i * 2 + 1]); // keep my own, it's ahead
+      }
+      g.lastGoalBy = nInt(s['last']);
+      g._resumeAt = s['paused'] == true ? 1 << 40 : null;
+    },
+    apply: (g, from, name, a) {
+      if (name == 'mallet' && asInt(a[0]) == from) g.moveMallet(from, V(asDouble(a[1]), asDouble(a[2])));
+    },
+    continuous: const {'mallet'},
+    // Player 2 sees the table turned round, so their goal is at the bottom too.
+    view: (context, g, players, me) => RotatedBox(
+      quarterTurns: me == 1 ? 2 : 0,
+      child: Column(children: [
+        Expanded(child: Padding(padding: const EdgeInsets.all(8), child: TableView(players: players, logic: g))),
+        DuelMiddleBar(players: players, scores: g.scores, secondsLeft: g.secondsLeft, progress: g.progress),
+      ]),
+    ),
+  ),
   play: (players, onFinished) => TickingPlay<AirHockeyLogic>(
     create: () => AirHockeyLogic(),
     onFinished: onFinished,
