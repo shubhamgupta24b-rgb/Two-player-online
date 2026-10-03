@@ -75,6 +75,7 @@ final List<GameInfo> gameCatalog = [
   _local('most_likely', GameCategory.party),
   _local('would_rather', GameCategory.party),
   _local('truth_dare', GameCategory.party),
+  _local('rock_paper_scissors', GameCategory.party),
 ];
 
 String gameName(String id) => gameCatalog.firstWhere((g) => g.id == id, orElse: () => GameInfo(id, id)).name;

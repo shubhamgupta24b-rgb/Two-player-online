@@ -81,7 +81,8 @@ class LocalGameInfo {
   final List<String> rules;
   final String scoreUnit; // "taps", "points", "pairs", "cells"
   final bool splitScreen; // players sit at opposite ends of the phone
-  final int minPlayers; // fewest players the game works with (2-4)
+  final int minPlayers; // fewest players the game works with (1 for solo games)
+  bool get solo => maxPlayers == 1;
   final int maxPlayers; // 2-6; the intro screen lets players pick how many
   final PlayBuilder play;
   final RelayGame? online; // how to play it over the internet, if it can be

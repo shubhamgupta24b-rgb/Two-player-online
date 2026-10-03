@@ -4,6 +4,7 @@ import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../../guess_person/widgets/result_view.dart' show Confetti;
 import '../../guess_person/widgets/score_board.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'local_game_info.dart';
 
 enum _ShellPhase { intro, countdown, playing, result }
@@ -43,7 +44,9 @@ class LocalGameShell extends StatefulWidget {
 }
 
 class _LocalGameShellState extends State<LocalGameShell> {
-  late var players = defaultPlayers(widget.game.minPlayers);
+  late var players = _makePlayers(widget.game.minPlayers);
+  int? best; // solo games: best score on this phone
+  bool newBest = false;
   late var wins = List.filled(players.length, 0);
   var phase = _ShellPhase.intro;
   var matchNo = 0;
@@ -52,6 +55,7 @@ class _LocalGameShellState extends State<LocalGameShell> {
 
   /// Against the computer you are seat 0 ("You"); the rest are CPU players.
   List<GpPlayer> _makePlayers(int n) {
+    if (widget.game.solo) return [GpPlayer(name: 'You', color: gpPlayerColors[0])];
     final base = defaultPlayers(n);
     if (!vsComputer) return base;
     return [for (var i = 0; i < n; i++) GpPlayer(name: i == 0 ? 'You' : 'CPU $i', color: base[i].color)];
@@ -95,6 +99,25 @@ class _LocalGameShellState extends State<LocalGameShell> {
       if (leaders.length == 1) wins[leaders.single]++;
       phase = _ShellPhase.result;
     });
+    if (widget.game.solo) _saveBest(scores.single);
+  }
+
+  /// Solo games keep a best score per game on this phone.
+  Future<void> _saveBest(int score) async {
+    final key = 'best_${widget.game.id}';
+    var prev = 0;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      prev = prefs.getInt(key) ?? 0;
+      if (score > prev) await prefs.setInt(key, score);
+    } catch (_) {
+      // No storage (e.g. tests): just show this game's score.
+    }
+    if (!mounted) return;
+    setState(() {
+      newBest = score > prev;
+      best = score > prev ? score : prev;
+    });
   }
 
   Future<void> _confirmLeave() async {
@@ -128,7 +151,9 @@ class _LocalGameShellState extends State<LocalGameShell> {
       _ShellPhase.countdown => _Countdown(onDone: _go, color: g.color),
       // A new key per match guarantees fresh game state on Play Again.
       _ShellPhase.playing => KeyedSubtree(key: ValueKey('match$matchNo'), child: _play(g)),
-      _ShellPhase.result => _Result(game: g, players: players, wins: wins, onAgain: _start, onExit: () => Navigator.pop(context)),
+      _ShellPhase.result => g.solo
+          ? _SoloResult(game: g, score: players.single.score, best: best, newBest: newBest, onAgain: _start, onExit: () => Navigator.pop(context))
+          : _Result(game: g, players: players, wins: wins, onAgain: _start, onExit: () => Navigator.pop(context)),
     };
     return PopScope(
       canPop: phase != _ShellPhase.playing && phase != _ShellPhase.countdown,
@@ -320,6 +345,44 @@ class _CountdownState extends State<_Countdown> with SingleTickerProviderStateMi
       },
     );
   }
+}
+
+class _SoloResult extends StatelessWidget {
+  final LocalGameInfo game;
+  final int score;
+  final int? best;
+  final bool newBest;
+  final VoidCallback onAgain;
+  final VoidCallback onExit;
+  const _SoloResult({required this.game, required this.score, required this.best, required this.newBest, required this.onAgain, required this.onExit});
+
+  @override
+  Widget build(BuildContext context) => Stack(children: [
+        Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Text(newBest ? '🏆' : game.emoji, textAlign: TextAlign.center, style: const TextStyle(fontSize: 72)),
+                Text(newBest ? 'NEW BEST!' : 'GAME OVER',
+                    textAlign: TextAlign.center, style: TextStyle(color: newBest ? GpColors.accent : Colors.white, fontSize: 34, fontWeight: FontWeight.w900)),
+                Text('${game.emoji} ${game.title}', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontSize: 15, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 22),
+                Text('$score', textAlign: TextAlign.center, style: TextStyle(color: game.color, fontSize: 72, fontWeight: FontWeight.w900, height: 1)),
+                Text(game.scoreUnit.toUpperCase(), textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+                const SizedBox(height: 10),
+                if (best != null) Text('BEST: $best', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, fontSize: 18)),
+                const SizedBox(height: 28),
+                GpButton('PLAY AGAIN', icon: Icons.replay_rounded, onPressed: onAgain),
+                const SizedBox(height: 12),
+                GpButton('ALL GAMES', icon: Icons.grid_view_rounded, outlined: true, onPressed: onExit),
+              ]),
+            ),
+          ),
+        ),
+        if (newBest) const Positioned.fill(child: IgnorePointer(child: Confetti())),
+      ]);
 }
 
 class _Result extends StatelessWidget {

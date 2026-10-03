@@ -27,6 +27,7 @@ const RELAY_GAMES = [
   { id: 'hand_cricket', min: 2, max: 2 },
   { id: 'quiz_battle', min: 2, max: 4 },
   { id: 'basketball_hoops', min: 2, max: 4 },
+  { id: 'rock_paper_scissors', min: 2, max: 6 },
 ];
 
 const MAX_STATE_BYTES = 64 * 1024;

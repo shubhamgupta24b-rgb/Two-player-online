@@ -30,18 +30,31 @@ import 'most_likely/most_likely_game.dart';
 import 'quiz_battle/quiz_battle_game.dart';
 import 'undercover/undercover_game.dart';
 import 'would_rather/would_rather_game.dart';
+import 'rps/rps_game.dart';
+import 'solo/brick_breaker.dart';
+import 'solo/classic_snake.dart';
+import 'solo/flappy_jump.dart';
+import 'solo/game_2048.dart';
+import 'solo/minesweeper.dart';
+import 'solo/piano_tiles.dart';
+import 'solo/simon_says.dart';
+import 'solo/stack_tower.dart';
+import 'solo/whack_mole.dart';
+import 'solo/word_scramble.dart';
 import 'shell/local_game_info.dart';
 import 'shell/local_game_shell.dart';
 
 final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
   drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo,
   ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo, dotsBoxesInfo,
-  mostLikelyInfo, wouldRatherInfo, truthDareInfo];
+  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo,
+  // Solo games (shown in their own section).
+  game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo];
 
 /// Everything in the hub: the shell games plus Guess the Person and Raja Mantri.
 int get totalGameCount => localGames.length + 2;
 
-/// All 2-player games that run on one device, no server needed.
+/// Every game that runs on one device, no server needed: together, or solo.
 class LocalGamesHubScreen extends StatelessWidget {
   const LocalGamesHubScreen({super.key});
 
@@ -64,7 +77,7 @@ class LocalGamesHubScreen extends StatelessWidget {
         color: const Color(0xFF8A1C3A),
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RmcsMenuScreen())),
       ),
-      for (final g in localGames)
+      for (final g in localGames.where((g) => !g.solo))
         _Tile(
           emoji: g.emoji,
           title: g.title,
@@ -74,6 +87,30 @@ class LocalGamesHubScreen extends StatelessWidget {
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LocalGameShell(game: g))),
         ),
     ];
+    final solo = [
+      for (final g in localGames.where((g) => g.solo))
+        _Tile(
+          emoji: g.emoji,
+          title: g.title,
+          tagline: g.tagline,
+          players: 'SOLO',
+          color: g.color,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LocalGameShell(game: g))),
+        ),
+    ];
+    Widget header(String text) => SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+            child: Text(text, style: const TextStyle(color: GpColors.accent, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.5)),
+          ),
+        );
+    Widget grid(List<Widget> items) => SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 240, mainAxisSpacing: 14, crossAxisSpacing: 14, childAspectRatio: 0.82),
+            delegate: SliverChildListDelegate(items),
+          ),
+        );
     return Scaffold(
       body: GpBackground(
         child: SafeArea(
@@ -101,13 +138,10 @@ class LocalGamesHubScreen extends StatelessWidget {
                 ]),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 240, mainAxisSpacing: 14, crossAxisSpacing: 14, childAspectRatio: 0.82),
-                delegate: SliverChildListDelegate(tiles),
-              ),
-            ),
+            header('👥 PLAY TOGETHER'),
+            grid(tiles),
+            header('🧍 SOLO GAMES'),
+            grid(solo),
           ]),
         ),
       ),
@@ -148,7 +182,7 @@ class _Tile extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(10)),
-                    child: Text('👥 $players', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                    child: Text(players == 'SOLO' ? '🧍 SOLO' : '👥 $players', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
                   ),
                 ]),
                 Expanded(child: Center(child: FittedBox(child: Text(emoji, style: const TextStyle(fontSize: 64))))),

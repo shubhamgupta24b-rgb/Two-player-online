@@ -40,7 +40,8 @@ Future<void> playThrough(WidgetTester tester, LocalGameInfo game, Size size, int
     await tester.tapAt(Offset(size.width * (0.15 + 0.23 * (i % 4)), size.height * (i.isEven ? 0.8 : 0.2)));
     await tester.pump(const Duration(milliseconds: 400));
   }
-  expect(find.byType(PauseButton), findsWidgets, reason: 'a way out is always on screen');
+  // A way out is always on screen (solo games may already be over: then it's the score screen).
+  expect(find.byType(PauseButton).evaluate().isNotEmpty || find.text('PLAY AGAIN').evaluate().isNotEmpty, isTrue);
 
   if (!selfFinishing.contains(game.id)) {
     await tester.pumpWidget(const SizedBox());
@@ -67,11 +68,13 @@ void main() {
 
   testWidgets('hub lists all games with their player counts', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: LocalGamesHubScreen()));
+    expect(find.text('👥 2–6').evaluate(), isNotEmpty, reason: 'player counts on the tiles');
     for (final t in ['Guess the Person', ...localGames.map((g) => g.title)]) {
       await tester.scrollUntilVisible(find.text(t), 100);
       expect(find.text(t), findsOneWidget);
     }
-    expect(find.text('👥 2–6').evaluate(), isNotEmpty);
+    expect(find.text('🧍 SOLO GAMES'), findsOneWidget);
+    expect(find.text('🧍 SOLO').evaluate(), isNotEmpty);
   });
 
   testWidgets('player count picker only offers what a game supports', (tester) async {
