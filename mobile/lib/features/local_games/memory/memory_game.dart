@@ -224,6 +224,27 @@ class _ScorePill extends StatelessWidget {
       );
 }
 
+/// Diagonal lattice on the card backs.
+class _CardBackPattern extends CustomPainter {
+  const _CardBackPattern();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = Colors.white.withValues(alpha: 0.13)
+      ..strokeWidth = 1.2;
+    canvas.save();
+    canvas.clipRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(10)));
+    for (var x = -size.height; x < size.width + size.height; x += 12) {
+      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), p);
+      canvas.drawLine(Offset(x, 0), Offset(x - size.height, size.height), p);
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 /// Card that flips around its vertical axis.
 class _FlipCard extends StatelessWidget {
   final bool faceUp;
@@ -259,13 +280,28 @@ class _FlipCard extends StatelessWidget {
   }
 
   Widget _back() => Container(
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: const [BoxShadow(color: Colors.black38, offset: Offset(0, 3), blurRadius: 4)],
+          boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 4), blurRadius: 6)],
         ),
-        alignment: Alignment.center,
-        child: const Text('?', style: TextStyle(color: Colors.white70, fontSize: 30, fontWeight: FontWeight.w900)),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFF7B4DFF), Color(0xFF4D2BD6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: CustomPaint(
+            painter: const _CardBackPattern(),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.18), border: Border.all(color: Colors.white70, width: 2)),
+                child: const FittedBox(child: Text('🧠', style: TextStyle(fontSize: 22))),
+              ),
+            ),
+          ),
+        ),
       );
 
   Widget _face() => Container(

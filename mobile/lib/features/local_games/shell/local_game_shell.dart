@@ -5,7 +5,10 @@ import '../../guess_person/widgets/gp_theme.dart';
 import '../../guess_person/widgets/result_view.dart' show Confetti;
 import '../../guess_person/widgets/score_board.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'game_style.dart';
 import 'local_game_info.dart';
+
+export 'game_style.dart';
 
 enum _ShellPhase { intro, countdown, playing, result }
 
@@ -24,12 +27,9 @@ class PauseButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final leave = LeaveGameScope.of(context);
     if (leave == null) return const SizedBox.shrink();
-    return IconButton(
-      tooltip: 'Leave game',
-      onPressed: leave,
-      padding: EdgeInsets.zero,
-      icon: const Icon(Icons.pause_circle_filled_rounded, color: Colors.white70, size: 30),
-      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+    return Padding(
+      padding: const EdgeInsets.all(2),
+      child: GlassIconButton(icon: Icons.pause_rounded, tooltip: 'Leave game', onPressed: leave),
     );
   }
 }
@@ -161,11 +161,17 @@ class _LocalGameShellState extends State<LocalGameShell> {
         if (!didPop) _confirmLeave();
       },
       child: Scaffold(
-        body: GpBackground(
-          child: SafeArea(
-            child: LeaveGameScope(
-              onLeave: _confirmLeave,
-              child: AnimatedSwitcher(duration: const Duration(milliseconds: 250), child: KeyedSubtree(key: ValueKey('$phase$matchNo'), child: body)),
+        // Each game glows in its own colour.
+        body: GameTheme(
+          color: g.color,
+          emoji: g.emoji,
+          child: GameBackground(
+            color: g.color,
+            child: SafeArea(
+              child: LeaveGameScope(
+                onLeave: _confirmLeave,
+                child: AnimatedSwitcher(duration: const Duration(milliseconds: 250), child: KeyedSubtree(key: ValueKey('$phase$matchNo'), child: body)),
+              ),
             ),
           ),
         ),
@@ -185,125 +191,155 @@ class _Intro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [
-      Positioned(
-        top: 4,
-        left: 4,
-        child: IconButton(
-          tooltip: 'Back',
-          onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
-          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-        ),
-      ),
-      Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Center(
-                child: Container(
-                  width: 120,
-                  height: 120,
+    final c = game.color;
+    final dark = Color.lerp(c, Colors.black, 0.45)!;
+    Widget sectionLabel(String t) => Padding(
+          padding: const EdgeInsets.only(bottom: 8, left: 2),
+          child: Text(t, style: TextStyle(color: Color.lerp(c, Colors.white, 0.55), fontWeight: FontWeight.w900, letterSpacing: 1.6, fontSize: 12)),
+        );
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Align(alignment: Alignment.centerLeft, child: GlassIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context))),
+            const SizedBox(height: 10),
+            // Hero banner in the game's colour.
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [c, dark], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                boxShadow: [BoxShadow(color: c.withValues(alpha: 0.45), blurRadius: 28, offset: const Offset(0, 10))],
+              ),
+              child: Column(children: [
+                Container(
+                  width: 104,
+                  height: 104,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(color: game.color, shape: BoxShape.circle, boxShadow: [BoxShadow(color: game.color.withValues(alpha: 0.5), blurRadius: 24)]),
-                  child: Text(game.emoji, style: const TextStyle(fontSize: 60)),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.18),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 3),
+                  ),
+                  child: Text(game.emoji, style: const TextStyle(fontSize: 56)),
                 ),
-              ),
-              const SizedBox(height: 18),
-              Text(game.title.toUpperCase(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0xFF6C5CE7), offset: Offset(0, 3))])),
-              const SizedBox(height: 6),
-              Text(game.tagline, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontSize: 15, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 22),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: GpColors.panel, borderRadius: BorderRadius.circular(18)),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('HOW TO PLAY', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2, fontSize: 12)),
-                  const SizedBox(height: 8),
-                  for (final r in game.rules)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const Text('•  ', style: TextStyle(color: GpColors.accent, fontWeight: FontWeight.w900, fontSize: 16)),
-                        Expanded(child: Text(r, style: const TextStyle(color: Colors.white, fontSize: 15))),
-                      ]),
-                    ),
+                const SizedBox(height: 12),
+                FittedBox(
+                  child: Text(game.title.toUpperCase(),
+                      style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: 1, shadows: [Shadow(color: Colors.black38, offset: Offset(0, 3))])),
+                ),
+                const SizedBox(height: 4),
+                Text(game.tagline, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 6, children: [
+                  _Badge(game.solo ? '🧍 SOLO' : '👥 ${game.minPlayers == game.maxPlayers ? game.maxPlayers : '${game.minPlayers}–${game.maxPlayers}'} PLAYERS'),
+                  if (game.bot != null) const _Badge('🤖 VS COMPUTER'),
+                  if (game.online != null) const _Badge('🌐 ONLINE'),
                 ]),
-              ),
-              if (game.maxPlayers > game.minPlayers) ...[
-                const SizedBox(height: 16),
-                const Text('PLAYERS', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-                const SizedBox(height: 8),
-                Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6, children: [
-                  for (var n = game.minPlayers; n <= game.maxPlayers; n++)
-                    Padding(
-                      padding: EdgeInsets.zero,
-                      child: Semantics(
-                        button: true,
-                        selected: n == playerCount,
-                        label: '$n players',
-                        child: Material(
-                          color: n == playerCount ? GpColors.accent : GpColors.panel,
-                          shape: const CircleBorder(),
-                          child: InkWell(
-                            customBorder: const CircleBorder(),
-                            onTap: () => onPlayerCount(n),
-                            child: SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: Center(
-                                child: Text('$n', style: TextStyle(color: n == playerCount ? GpColors.ink : Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
-                              ),
-                            ),
-                          ),
+              ]),
+            ),
+            const SizedBox(height: 18),
+            sectionLabel('HOW TO PLAY'),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
+              child: Column(children: [
+                for (var i = 0; i < game.rules.length; i++)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: i == game.rules.length - 1 ? 0 : 10),
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Container(
+                        width: 26,
+                        height: 26,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+                        child: Text('${i + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(child: Padding(padding: const EdgeInsets.only(top: 3), child: Text(game.rules[i], style: const TextStyle(color: Colors.white, fontSize: 14.5, height: 1.3)))),
+                    ]),
+                  ),
+              ]),
+            ),
+            if (game.maxPlayers > game.minPlayers) ...[
+              const SizedBox(height: 18),
+              sectionLabel('PLAYERS'),
+              Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 8, children: [
+                for (var n = game.minPlayers; n <= game.maxPlayers; n++)
+                  Semantics(
+                    button: true,
+                    selected: n == playerCount,
+                    label: '$n players',
+                    child: GestureDetector(
+                      onTap: () => onPlayerCount(n),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 50,
+                        height: 50,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: n == playerCount ? c : Colors.white.withValues(alpha: 0.08),
+                          border: Border.all(color: n == playerCount ? Colors.white : Colors.white24, width: 2),
+                          boxShadow: [if (n == playerCount) BoxShadow(color: c.withValues(alpha: 0.6), blurRadius: 12)],
                         ),
+                        child: Text('$n', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
                       ),
                     ),
-                ]),
-              ],
-              if (onVsComputer != null) ...[
-                const SizedBox(height: 14),
-                Material(
-                  color: vsComputer ? game.color : GpColors.panel,
-                  borderRadius: BorderRadius.circular(18),
-                  child: SwitchListTile(
-                    value: vsComputer,
-                    onChanged: onVsComputer,
-                    activeThumbColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                    title: const Text('🤖 PLAY VS COMPUTER', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-                    subtitle: Text(vsComputer ? 'You are Player 1. The computer plays the other ${playerCount - 1}.' : 'No friends around? Play against bots.',
-                        style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12.5)),
                   ),
+              ]),
+            ],
+            if (onVsComputer != null) ...[
+              const SizedBox(height: 14),
+              Material(
+                color: vsComputer ? c.withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(20),
+                child: SwitchListTile(
+                  value: vsComputer,
+                  onChanged: onVsComputer,
+                  activeThumbColor: Colors.white,
+                  activeTrackColor: dark,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  title: const Text('🤖 PLAY VS COMPUTER', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                  subtitle: Text(vsComputer ? 'You are Player 1. The computer plays the other ${playerCount - 1}.' : 'No friends around? Play against bots.',
+                      style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12.5)),
                 ),
-              ],
-              if (game.splitScreen && !vsComputer) ...[
-                const SizedBox(height: 12),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Icon(Icons.screen_rotation_alt_rounded, color: Colors.white60, size: 18),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                        playerCount == 2
-                            ? 'Lay the phone flat · Player 1 bottom, Player 2 top'
-                            : 'Lay the phone flat · players sit along both long sides, each at their own zone',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white60, fontSize: 13)),
-                  ),
-                ]),
-              ],
-              const SizedBox(height: 24),
-              GpButton('PLAY', icon: Icons.play_arrow_rounded, onPressed: onPlay),
-            ]),
-          ),
+              ),
+            ],
+            if (game.splitScreen && !vsComputer && !game.solo) ...[
+              const SizedBox(height: 12),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                const Icon(Icons.screen_rotation_alt_rounded, color: Colors.white60, size: 18),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                      playerCount == 2 ? 'Lay the phone flat · Player 1 bottom, Player 2 top' : 'Lay the phone flat · players sit along both long sides, each at their own zone',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white60, fontSize: 13)),
+                ),
+              ]),
+            ],
+            const SizedBox(height: 22),
+            GpButton('PLAY', icon: Icons.play_arrow_rounded, color: c, textColor: Colors.white, onPressed: onPlay),
+          ]),
         ),
       ),
-    ]);
+    );
   }
+}
+
+class _Badge extends StatelessWidget {
+  final String text;
+  const _Badge(this.text);
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(12)),
+        child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11.5, letterSpacing: 0.5)),
+      );
 }
 
 class _Countdown extends StatefulWidget {

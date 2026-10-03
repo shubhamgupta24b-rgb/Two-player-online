@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/local_game_shell.dart' show PauseButton, GameTheme;
 
 /// Common layout for the party games: a top bar (pause, title, optional timer) and a body.
 class PartyFrame extends StatelessWidget {
@@ -15,21 +15,45 @@ class PartyFrame extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.fromLTRB(12, 6, 12, 14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Row(children: [
-            const PauseButton(),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GpColors.accent, fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: 1)),
-                if (subtitle != null) Text(subtitle!, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700, fontSize: 12.5)),
-              ]),
-            ),
-            if (trailing != null) trailing!,
-          ]),
-          const SizedBox(height: 10),
+          GameTopBar(title: title, subtitle: subtitle, trailing: trailing),
+          const SizedBox(height: 12),
           Expanded(child: child),
         ]),
       );
+}
+
+/// Frosted header used by most games: pause, a bold title (and line under it), extras on the right.
+class GameTopBar extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  const GameTopBar({super.key, required this.title, this.subtitle, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GameTheme.colorOf(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(6, 6, 10, 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Row(children: [
+        const PauseButton(),
+        const SizedBox(width: 8),
+        Container(width: 4, height: 30, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(2))),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: 0.6)),
+            if (subtitle != null) Text(subtitle!, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700, fontSize: 12.5)),
+          ]),
+        ),
+        if (trailing != null) ...[const SizedBox(width: 6), trailing!],
+      ]),
+    );
+  }
 }
 
 /// "Pass to NAME" -> tap -> the secret -> "hide" and pass on. Used for every secret card.
@@ -45,23 +69,42 @@ class PassAndReveal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!revealed) {
+      final c = player.color;
       return Center(
         child: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(
-              width: 96,
-              height: 96,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: player.color, boxShadow: [BoxShadow(color: player.color.withValues(alpha: 0.6), blurRadius: 24)]),
-              child: Text(player.name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w900)),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 26, 20, 22),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [c.withValues(alpha: 0.28), Colors.white.withValues(alpha: 0.04)]),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: c.withValues(alpha: 0.5), width: 2),
             ),
-            const SizedBox(height: 16),
-            Text('📱 Pass the phone to ${player.name}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 6),
-            const Text('Everyone else, look away!', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 22),
-            GpButton('TAP TO SEE YOUR SECRET', icon: Icons.visibility_rounded, color: player.color, textColor: Colors.white, onPressed: onReveal),
-          ]),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Stack(clipBehavior: Clip.none, children: [
+                Container(
+                  width: 112,
+                  height: 112,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(colors: [Color.lerp(c, Colors.white, 0.25)!, c, Color.lerp(c, Colors.black, 0.3)!], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    border: Border.all(color: Colors.white, width: 4),
+                    boxShadow: [BoxShadow(color: c.withValues(alpha: 0.7), blurRadius: 30)],
+                  ),
+                  child: Text(player.name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 52, fontWeight: FontWeight.w900)),
+                ),
+                const Positioned(right: -8, bottom: -4, child: Text('📲', style: TextStyle(fontSize: 34))),
+              ]),
+              const SizedBox(height: 18),
+              const Text('PASS THE PHONE TO', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12)),
+              const SizedBox(height: 4),
+              FittedBox(child: Text(player.name.toUpperCase(), style: TextStyle(color: Color.lerp(c, Colors.white, 0.35), fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 1))),
+              const SizedBox(height: 6),
+              const Text('Everyone else, look away! 🙈', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 22),
+              GpButton('TAP TO SEE YOUR SECRET', icon: Icons.visibility_rounded, color: c, textColor: Colors.white, onPressed: onReveal),
+            ]),
+          ),
         ),
       );
     }

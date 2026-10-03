@@ -135,7 +135,11 @@ class _MinesViewState extends State<_MinesView> {
               aspectRatio: 1,
               child: Container(
                 padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: const Color(0xFF37474F), borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4A752C),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 14, offset: Offset(0, 6))],
+                ),
                 child: GridView.count(
                   crossAxisCount: n,
                   mainAxisSpacing: 3,
@@ -172,9 +176,15 @@ class _MinesViewState extends State<_MinesView> {
       onLongPress: () => g.toggleFlag(i),
       child: Container(
         alignment: Alignment.center,
+        // Grass you dig into; sand once opened (checkered like a lawn).
         decoration: BoxDecoration(
-          color: i == g.exploded ? Colors.redAccent : (isOpen ? const Color(0xFFECEFF1) : const Color(0xFF90A4AE)),
-          borderRadius: BorderRadius.circular(5),
+          color: i == g.exploded
+              ? Colors.redAccent
+              : isOpen
+                  ? ((i ~/ MinesweeperLogic.size + i) % 2 == 0 ? const Color(0xFFE5C29F) : const Color(0xFFD7B899))
+                  : ((i ~/ MinesweeperLogic.size + i) % 2 == 0 ? const Color(0xFFA2D149) : const Color(0xFF8ECC39)),
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: isOpen ? null : const [BoxShadow(color: Color(0x33000000), offset: Offset(0, 2))],
         ),
         child: FittedBox(
           child: Padding(

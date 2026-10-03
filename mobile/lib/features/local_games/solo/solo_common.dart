@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../party/party_widgets.dart' show GameTopBar;
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/local_game_shell.dart' show ScorePill;
 
 /// Base for one-player games: a clock, a score, and a short pause after "game over" so
 /// you can see what happened before the score screen.
@@ -47,21 +47,18 @@ class SoloFrame extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.fromLTRB(10, 6, 10, 12),
         child: Column(children: [
-          Row(children: [
-            const PauseButton(),
-            const SizedBox(width: 4),
-            Expanded(child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GpColors.accent, fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: 1))),
-            if (extra != null) ...[
-              Text(extra!, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, fontSize: 15)),
-              const SizedBox(width: 10),
-            ],
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(14)),
-              child: Text('$score', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
+          GameTopBar(
+            title: title,
+            subtitle: extra,
+            trailing: TweenAnimationBuilder<double>(
+              key: ValueKey(score),
+              tween: Tween(begin: 1.25, end: 1),
+              duration: const Duration(milliseconds: 250),
+              builder: (_, s, child) => Transform.scale(scale: s, child: child),
+              child: ScorePill('$score'),
             ),
-          ]),
-          const SizedBox(height: 8),
+          ),
+          const SizedBox(height: 10),
           Expanded(child: child),
         ]),
       );

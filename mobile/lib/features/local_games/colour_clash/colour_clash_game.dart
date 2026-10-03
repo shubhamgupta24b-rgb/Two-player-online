@@ -341,8 +341,18 @@ class _Centre extends StatelessWidget {
     final col = clashColors[g.color]!;
     final canDraw = canAct && g.phase == ClashPhase.play && !g.drewThisTurn;
     return LayoutBuilder(builder: (context, c) {
-      final w = min(c.maxWidth * 0.3, c.maxHeight * 0.5 / 1.5).clamp(40.0, 130.0);
-      return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      // Card width from the space inside the table (border, labels and message take ~90px).
+      final w = min(c.maxWidth * 0.28, (c.maxHeight - 90) * 0.62 / 1.5).clamp(36.0, 130.0);
+      // A felt card table under the piles.
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          gradient: const RadialGradient(colors: [Color(0xFF1F8A4C), Color(0xFF0F5C30)], radius: 0.9),
+          borderRadius: BorderRadius.circular(c.maxHeight * 0.3),
+          border: Border.all(color: const Color(0xFF8B5A2B), width: 5),
+          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 18, offset: Offset(0, 8))],
+        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Semantics(
             button: true,
@@ -386,10 +396,11 @@ class _Centre extends StatelessWidget {
           const SizedBox(width: 4),
           Flexible(
             child: Text([if (waitingFor != null) "$waitingFor's turn", g.message.isEmpty && waitingFor == null ? 'Match the colour, number or symbol' : g.message].where((t) => t.isNotEmpty).join(' · '),
-                textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 12)),
+                textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
           ),
         ]),
-      ]);
+      ]),
+      );
     });
   }
 }

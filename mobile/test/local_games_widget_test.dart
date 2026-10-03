@@ -6,7 +6,8 @@ import 'package:multiplayer_game/features/local_games/shell/local_game_info.dart
 import 'package:multiplayer_game/features/local_games/shell/local_game_shell.dart';
 
 Future<void> tapText(WidgetTester tester, String text) async {
-  final f = find.text(text);
+  // The intro numbers its how-to-play steps 1, 2, 3…; the player picker comes after them.
+  final f = find.text(text).last;
   await tester.ensureVisible(f);
   await tester.pump();
   await tester.tap(f);
@@ -37,6 +38,8 @@ Future<void> playThrough(WidgetTester tester, LocalGameInfo game, Size size, int
 
   // Tap around the screen: both halves, both sides.
   for (var i = 0; i < 8; i++) {
+    // A solo game can end early: stop tapping before a stray tap hits ALL GAMES.
+    if (find.text('PLAY AGAIN').evaluate().isNotEmpty) break;
     await tester.tapAt(Offset(size.width * (0.15 + 0.23 * (i % 4)), size.height * (i.isEven ? 0.8 : 0.2)));
     await tester.pump(const Duration(milliseconds: 400));
   }
