@@ -73,25 +73,37 @@ class _LocalGameShellState extends State<LocalGameShell> {
   late var wins = List.filled(players.length, 0);
   var phase = _ShellPhase.intro;
   var matchNo = 0;
-  bool vsComputer = false;
+  int botCount = 0; // computer players; 0 = everyone is a person
+  bool get vsComputer => botCount > 0;
   List<BotSeat> _bots = const [];
 
-  /// Against the computer you are seat 0 ("You"); the rest are CPU players.
+  /// People take the first seats, computer players the rest. A lone person is "You".
   List<GpPlayer> _makePlayers(int n) {
     if (widget.game.solo) return [GpPlayer(name: 'You', color: gpPlayerColors[0])];
     final base = defaultPlayers(n);
     if (!vsComputer) return base;
-    return [for (var i = 0; i < n; i++) GpPlayer(name: i == 0 ? 'You' : 'CPU $i', color: base[i].color)];
+    final people = n - botCount;
+    return [
+      for (var i = 0; i < n; i++)
+        GpPlayer(name: i < people ? (people == 1 ? 'You' : base[i].name) : 'CPU ${i - people + 1}', color: base[i].color),
+    ];
   }
 
   /// Changing the player count (or who's playing) starts a fresh tally.
   void _setPlayerCount(int n) => setState(() {
+        if (vsComputer) botCount = botCount.clamp(1, n - 1);
         players = _makePlayers(n);
         wins = List.filled(n, 0);
       });
 
+  /// Switching on fills every other seat with the computer; the BOTS row then gives seats back to people.
   void _setVsComputer(bool on) {
-    vsComputer = on;
+    botCount = on ? players.length - 1 : 0;
+    _setPlayerCount(players.length);
+  }
+
+  void _setBotCount(int n) {
+    botCount = n;
     _setPlayerCount(players.length);
   }
 
@@ -100,7 +112,7 @@ class _LocalGameShellState extends State<LocalGameShell> {
   void _go() => setState(() {
         matchNo++;
         // Fresh computer players every match (their memory and timing start over).
-        _bots = vsComputer && widget.game.bot != null ? [for (var i = 1; i < players.length; i++) BotSeat(i)] : const [];
+        _bots = vsComputer && widget.game.bot != null ? [for (var i = players.length - botCount; i < players.length; i++) BotSeat(i)] : const [];
         phase = _ShellPhase.playing;
       });
 
@@ -169,8 +181,9 @@ class _LocalGameShellState extends State<LocalGameShell> {
           onPlay: _start,
           playerCount: players.length,
           onPlayerCount: _setPlayerCount,
-          vsComputer: vsComputer,
+          botCount: botCount,
           onVsComputer: g.bot == null ? null : _setVsComputer,
+          onBotCount: _setBotCount,
         ),
       _ShellPhase.countdown => _Countdown(onDone: _go, color: g.color),
       // A new key per match guarantees fresh game state on Play Again.
@@ -211,9 +224,18 @@ class _Intro extends StatelessWidget {
   final VoidCallback onPlay;
   final int playerCount;
   final ValueChanged<int> onPlayerCount;
-  final bool vsComputer;
+  final int botCount;
   final ValueChanged<bool>? onVsComputer; // null: this game has no computer players
-  const _Intro({required this.game, required this.onPlay, required this.playerCount, required this.onPlayerCount, this.vsComputer = false, this.onVsComputer});
+  final ValueChanged<int>? onBotCount;
+  const _Intro({required this.game, required this.onPlay, required this.playerCount, required this.onPlayerCount, this.botCount = 0, this.onVsComputer, this.onBotCount});
+
+  bool get vsComputer => botCount > 0;
+
+  String get _vsText {
+    final people = playerCount - botCount;
+    if (people == 1) return 'You are Player 1. The computer plays the other $botCount.';
+    return '$people people + $botCount computer ${botCount == 1 ? 'player' : 'players'}.';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -330,12 +352,37 @@ class _Intro extends StatelessWidget {
                   activeTrackColor: dark,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   title: const Text('🤖 PLAY VS COMPUTER', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-                  subtitle: Text(vsComputer ? 'You are Player 1. The computer plays the other ${playerCount - 1}.' : 'No friends around? Play against bots.',
+                  subtitle: Text(vsComputer ? _vsText : 'Not enough friends? Fill the empty seats with bots.',
                       style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12.5)),
                 ),
               ),
             ],
-            if (game.splitScreen && !vsComputer && !game.solo) ...[
+            if (vsComputer && playerCount > 2 && onBotCount != null) ...[
+              const SizedBox(height: 14),
+              sectionLabel('BOTS  ·  ${playerCount - botCount} ${playerCount - botCount == 1 ? 'PERSON' : 'PEOPLE'} PLAYING'),
+              Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 8, children: [
+                for (var n = 1; n < playerCount; n++)
+                  Semantics(
+                    button: true,
+                    selected: n == botCount,
+                    label: '$n computer players',
+                    child: GestureDetector(
+                      onTap: () => onBotCount!(n),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          color: n == botCount ? c : Colors.white.withValues(alpha: 0.08),
+                          border: Border.all(color: n == botCount ? Colors.white : Colors.white24, width: 2),
+                        ),
+                        child: Text('🤖 $n', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+                      ),
+                    ),
+                  ),
+              ]),
+            ],
+            if (game.splitScreen && playerCount - botCount > 1 && !game.solo) ...[
               const SizedBox(height: 12),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 const Icon(Icons.screen_rotation_alt_rounded, color: Colors.white60, size: 18),

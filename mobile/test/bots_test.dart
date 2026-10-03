@@ -126,6 +126,52 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
   });
 
+  testWidgets('VS COMPUTER: choose how many bots; people take the first seats', (tester) async {
+    tester.view.physicalSize = const Size(411, 914);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(home: LocalGameShell(game: localGames.firstWhere((g) => g.id == 'snakes_ladders'))));
+    final scroll = find.byType(Scrollable).first;
+    await tester.ensureVisible(find.text('5').last);
+    await tester.pump();
+    await tester.tap(find.text('5').last);
+    await tester.pump();
+    await tester.scrollUntilVisible(find.text('🤖 PLAY VS COMPUTER'), 200, scrollable: scroll);
+    await tester.tap(find.text('🤖 PLAY VS COMPUTER'));
+    await tester.pump();
+    expect(find.text('You are Player 1. The computer plays the other 4.'), findsOneWidget, reason: 'switching on fills every other seat');
+    for (var n = 1; n <= 4; n++) {
+      expect(find.text('🤖 $n'), findsOneWidget);
+    }
+    await tester.scrollUntilVisible(find.text('🤖 2'), 200, scrollable: scroll);
+    await tester.tap(find.text('🤖 2'));
+    await tester.pump();
+    expect(find.text('3 people + 2 computer players.'), findsOneWidget);
+    expect(find.textContaining('3 PEOPLE PLAYING'), findsOneWidget);
+    // Fewer players keeps the bots within the seats left.
+    await tester.ensureVisible(find.text('3').last); // the last "3" is the player count (the rules are numbered too)
+    await tester.pump();
+    await tester.tap(find.text('3').last);
+    await tester.pump();
+    expect(find.text('1 people + 2 computer players.'), findsNothing);
+    expect(find.text('You are Player 1. The computer plays the other 2.'), findsOneWidget);
+    await tester.ensureVisible(find.text('4').last);
+    await tester.pump();
+    await tester.tap(find.text('4').last);
+    await tester.pump();
+    await tester.scrollUntilVisible(find.text('🤖 1'), 200, scrollable: scroll);
+    await tester.tap(find.text('🤖 1'));
+    await tester.pump();
+    expect(find.text('3 people + 1 computer player.'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('PLAY'), 200, scrollable: scroll);
+    await tester.tap(find.text('PLAY'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 2800));
+    expect(find.text("PLAYER 1'S ROLL"), findsOneWidget, reason: 'people are named Player 1-3, not "You"');
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
   testWidgets('games without bots (talking games) have no VS COMPUTER switch', (tester) async {
     await tester.pumpWidget(MaterialApp(home: LocalGameShell(game: localGames.firstWhere((g) => g.id == 'find_spy'))));
     expect(find.text('🤖 PLAY VS COMPUTER'), findsNothing);

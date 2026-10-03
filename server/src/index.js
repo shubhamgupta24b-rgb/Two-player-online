@@ -5,10 +5,12 @@ const config = require('./config');
 const { RoomManager } = require('./rooms/RoomManager');
 const { attachSockets } = require('./sockets');
 const { connectDb } = require('./database');
+const { privacyHtml } = require('./pages/privacy');
 
 function createServer({ graceMs = config.graceMs } = {}) {
   const app = express();
   app.get('/health', (_req, res) => res.json({ ok: true }));
+  app.get(['/privacy', '/privacy-policy'], (_req, res) => res.type('html').send(privacyHtml()));
   const httpServer = http.createServer(app);
   const io = new Server(httpServer, { cors: { origin: '*' } });
   const rooms = new RoomManager({ graceMs });

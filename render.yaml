@@ -14,3 +14,6 @@ services:
       # Guest logins on a public server: fine for playing with friends, not for a store release.
       - key: ALLOW_DEV_AUTH
         value: "true"
+      # Shown on the privacy policy page (/privacy). Render asks for it when you create the Blueprint.
+      - key: PRIVACY_CONTACT
+        sync: false
