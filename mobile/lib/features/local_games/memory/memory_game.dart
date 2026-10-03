@@ -157,7 +157,7 @@ class _MemoryBoard extends StatelessWidget {
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
           child: Text(
-            g.finished ? 'BOARD CLEAR!' : (g.showingMismatch ? 'NO MATCH…' : "${current.name.toUpperCase()}'S TURN"),
+            g.finished ? 'BOARD CLEAR!' : (g.showingMismatch ? 'NO MATCH…' : '${current.whose} TURN'),
             key: ValueKey('${g.turn}${g.showingMismatch}${g.finished}'),
             style: TextStyle(color: g.showingMismatch ? Colors.white70 : current.color, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1),
           ),

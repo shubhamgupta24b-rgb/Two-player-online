@@ -149,7 +149,7 @@ class WordTurnsView extends StatelessWidget {
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
-                  child: PromptCard(header: "${p.name.toUpperCase()}'S TURN", text: isPerformer ? readyText : watchText, emoji: '⏱️', footer: '${g.turnMs ~/ 1000} seconds. Get as many as you can!', color: p.color),
+                  child: PromptCard(header: '${p.whose} TURN', text: isPerformer ? readyText : watchText, emoji: '⏱️', footer: '${g.turnMs ~/ 1000} seconds. Get as many as you can!', color: p.color),
                 ),
               ),
             ),

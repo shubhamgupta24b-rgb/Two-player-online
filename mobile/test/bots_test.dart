@@ -114,7 +114,7 @@ void main() {
     await tester.tap(find.text('PLAY'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 2800));
-    expect(find.text("YOU'S ROLL"), findsOneWidget, reason: 'seat 0 is "You"');
+    expect(find.text('YOUR ROLL'), findsOneWidget, reason: 'seat 0 is "You"');
     await tester.tap(find.byType(RollingDice));
     await tester.pump();
     // The computer takes its own turn a moment later.

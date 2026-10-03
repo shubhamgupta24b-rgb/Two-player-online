@@ -278,7 +278,7 @@ class _ClashTable extends StatelessWidget {
           if (online || g.phase != ClashPhase.handoff) ...[
             Row(children: [
               Expanded(
-                child: Text(online ? 'YOUR HAND · ${hand.length} cards' : "${player.name.toUpperCase()}'S HAND · ${hand.length} cards",
+                child: Text(online ? 'YOUR HAND · ${hand.length} cards' : '${player.whose} HAND · ${hand.length} cards',
                     style: TextStyle(color: player.color, fontWeight: FontWeight.w900)),
               ),
               if (myTurn && hand.length == 2 && g.phase == ClashPhase.play)

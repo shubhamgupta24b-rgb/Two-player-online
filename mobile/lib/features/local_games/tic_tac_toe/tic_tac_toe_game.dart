@@ -116,7 +116,7 @@ class _Board extends StatelessWidget {
         ? '${players[g.winner!].name.toUpperCase()} WINS!'
         : g.isDraw
             ? "IT'S A DRAW!"
-            : "${current.name.toUpperCase()}'S TURN (${mark(g.turn)})";
+            : '${current.whose} TURN (${mark(g.turn)})';
     final statusColor = g.winner != null ? players[g.winner!].color : (g.isDraw ? Colors.white : current.color);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),

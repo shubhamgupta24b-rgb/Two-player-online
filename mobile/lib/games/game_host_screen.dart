@@ -36,10 +36,7 @@ class GameHostScreen extends StatelessWidget {
         if (leave == true) await rm.leave();
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(room.party == null ? gameName(room.gameType) : '${gameName(room.gameType)} · ${room.party!.index + 1}/${room.party!.games.length}'),
-          automaticallyImplyLeading: false,
-        ),
+        appBar: _RoomBar(room: room),
         body: SafeArea(child: _body(context, session, rm, myId)),
       ),
     );
@@ -52,6 +49,38 @@ class GameHostScreen extends StatelessWidget {
     if (screen == null) return const Center(child: Text('This game is not available in this app version.'));
     if (session.state == null) return const Center(child: CircularProgressIndicator());
     return screen;
+  }
+}
+
+/// The game's emoji and name in its colour, plus the party progress.
+class _RoomBar extends StatelessWidget implements PreferredSizeWidget {
+  final Room room;
+  const _RoomBar({required this.room});
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 3);
+
+  @override
+  Widget build(BuildContext context) {
+    final game = gameCatalog.firstWhere((g) => g.id == room.gameType, orElse: () => GameInfo(room.gameType, room.gameType));
+    final party = room.party;
+    return AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: AppColors.night,
+      centerTitle: false,
+      titleSpacing: 16,
+      title: Row(children: [
+        Text(game.emoji, style: const TextStyle(fontSize: 24)),
+        const SizedBox(width: 10),
+        Expanded(child: Text(game.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19))),
+        if (party != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(20)),
+            child: Text('🎉 GAME ${party.index + 1}/${party.games.length}', style: const TextStyle(color: AppColors.night, fontWeight: FontWeight.w900, fontSize: 12)),
+          ),
+      ]),
+      bottom: PreferredSize(preferredSize: const Size.fromHeight(3), child: Container(height: 3, color: game.color)),
+    );
   }
 }
 

@@ -261,7 +261,7 @@ class _DrawViewState extends State<_DrawView> {
             Expanded(
               child: Center(
                 child: PromptCard(
-                  header: "${artist.name.toUpperCase()}'S TURN TO DRAW",
+                  header: '${artist.whose} TURN TO DRAW',
                   text: isArtist ? 'Take the phone!' : 'Get ready to guess!',
                   emoji: '✏️',
                   footer: isArtist ? 'Only you may see the word: hold the 👁 button to peek.' : '${artist.name} is about to draw.',

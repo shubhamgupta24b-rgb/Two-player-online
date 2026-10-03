@@ -125,7 +125,7 @@ class _LudoTable extends StatelessWidget {
         const SizedBox(height: 8),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Flexible(
-            child: Text(g.phase == LudoPhase.move ? '${current.name.toUpperCase()}: MOVE ${g.lastRoll}' : "${current.name.toUpperCase()}'S ROLL",
+            child: Text(g.phase == LudoPhase.move ? '${current.name.toUpperCase()}: MOVE ${g.lastRoll}' : '${current.whose} ROLL',
                 overflow: TextOverflow.ellipsis, style: TextStyle(color: current.color, fontWeight: FontWeight.w900, fontSize: 18)),
           ),
           const SizedBox(width: 14),

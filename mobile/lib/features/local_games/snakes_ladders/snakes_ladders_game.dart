@@ -154,7 +154,7 @@ class _SnlTable extends StatelessWidget {
         Text(g.message, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Flexible(child: Text("${current.name.toUpperCase()}'S ROLL", overflow: TextOverflow.ellipsis, style: TextStyle(color: current.color, fontWeight: FontWeight.w900, fontSize: 18))),
+          Flexible(child: Text('${current.whose} ROLL', overflow: TextOverflow.ellipsis, style: TextStyle(color: current.color, fontWeight: FontWeight.w900, fontSize: 18))),
           const SizedBox(width: 14),
           RollingDice(
             value: g.lastRoll ?? 1,

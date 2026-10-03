@@ -139,7 +139,7 @@ class _DotsTable extends StatelessWidget {
           const PauseButton(),
           const SizedBox(width: 6),
           Expanded(
-            child: Text(g.finished ? 'BOARD COMPLETE!' : "${current.name.toUpperCase()}'S LINE",
+            child: Text(g.finished ? 'BOARD COMPLETE!' : '${current.whose} LINE',
                 textAlign: TextAlign.center, style: TextStyle(color: g.finished ? Colors.white : current.color, fontWeight: FontWeight.w900, fontSize: 20)),
           ),
           const SizedBox(width: 44),

@@ -5,6 +5,9 @@ class GpPlayer {
   final Color color;
   int score;
   GpPlayer({required this.name, required this.color, this.score = 0});
+
+  /// "YOUR" for the player called "You" (vs computer), otherwise "NAME'S".
+  String get whose => name == 'You' ? 'YOUR' : "${name.toUpperCase()}'S";
 }
 
 /// Defaults for up to 6 players: blue, red, green, yellow, purple, orange.

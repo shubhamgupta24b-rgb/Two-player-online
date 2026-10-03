@@ -153,7 +153,7 @@ class _Board extends StatelessWidget {
         ? '${players[g.winner!].name.toUpperCase()} WINS!'
         : g.isDraw
             ? "IT'S A DRAW!"
-            : "${current.name.toUpperCase()}'S TURN";
+            : '${current.whose} TURN';
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
       child: Column(children: [
