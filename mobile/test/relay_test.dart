@@ -16,7 +16,9 @@ import 'online_game_screens_test.dart' show FakeSession, pumpGame, disposeGame;
 
 const relayIds = [
   'colour_clash', 'ludo', 'snakes_ladders', 'dots_boxes', 'tic_tac_toe', 'connect_four', 'truth_dare', //
-  'math_duel', 'reaction_tap', 'air_hockey', 'ping_pong', 'snake_duel', 'penalty',
+  'math_duel', 'reaction_tap', 'air_hockey', 'ping_pong', 'snake_duel', 'penalty', //
+  'find_spy', 'undercover', 'mafia', 'charades', 'heads_up', 'draw_guess', 'most_likely', 'would_rather', 'hand_cricket', 'quiz_battle', //
+  'basketball_hoops',
 ];
 
 /// Applies an action the way the host does: with forwarding switched off.
@@ -36,7 +38,7 @@ void phone(WidgetTester tester, [Size size = const Size(411, 914)]) {
 Map<String, dynamic> roundTrip(Map<String, dynamic> s) => jsonDecode(jsonEncode(s)) as Map<String, dynamic>;
 
 void main() {
-  test('the 13 relay games all have an online version, matching the server list', () {
+  test('the 24 relay games all have an online version, matching the server list', () {
     final online = [for (final g in localGames) if (g.online != null) g.id];
     expect(online.toSet(), relayIds.toSet());
   });
@@ -63,6 +65,11 @@ void main() {
             'air_hockey' => 'mallet',
             'ping_pong' => 'paddle',
             'snake_duel' => 'turn',
+            'find_spy' || 'undercover' || 'mafia' => 'seen',
+            'charades' || 'heads_up' || 'draw_guess' => 'start',
+            'most_likely' || 'would_rather' => 'vote',
+            'quiz_battle' => 'answer',
+            'basketball_hoops' => 'shoot',
             _ => 'pick',
           }, switch (id) {
             'dots_boxes' => [true, 0, t ~/ 40 % 5],
@@ -73,6 +80,11 @@ void main() {
             'ping_pong' => [0, 0.3],
             'snake_duel' => [0, 1],
             'penalty' => [0, 2],
+            'hand_cricket' => [0, 3],
+            'find_spy' || 'undercover' || 'mafia' => [0],
+            'most_likely' || 'would_rather' => [0, 1],
+            'quiz_battle' => [0, 'nope'],
+            'basketball_hoops' => [0, 0.0],
             _ => <Object?>[],
           });
         }
@@ -237,7 +249,7 @@ void main() {
         phone(tester, const Size(320, 568));
         final game = localGames.firstWhere((g) => g.id == id);
         final spec = game.online!;
-        for (var n = 2; n <= game.maxPlayers; n++) {
+        for (var n = game.minPlayers; n <= game.maxPlayers; n++) {
           final g = spec.create(n);
           final players = defaultPlayers(n);
           for (var me = 0; me < n; me++) {

@@ -68,6 +68,23 @@ final dotsBoxesInfo = LocalGameInfo(
   scoreUnit: 'boxes',
   splitScreen: false,
   maxPlayers: 4,
+  bot: botFor<DotsBoxesLogic>((g, b, now) {
+    if (g.finished || g.turn != b.seat) return;
+    if (!b.thinkFirst(g.drawn, now, 500, 1000)) return;
+    final n = g.size;
+    int sides(int r, int c) => [g.hLines[r][c], g.hLines[r + 1][c], g.vLines[r][c], g.vLines[r][c + 1]].where((x) => x >= 0).length;
+    List<(int, int)> boxesOf(bool h, int r, int c) => h ? [(r - 1, c), (r, c)] : [(r, c - 1), (r, c)];
+    bool inside((int, int) p) => p.$1 >= 0 && p.$1 < n && p.$2 >= 0 && p.$2 < n;
+    final free = <(bool, int, int)>[
+      for (var r = 0; r <= n; r++) for (var c = 0; c < n; c++) if (g.hLines[r][c] < 0) (true, r, c),
+      for (var r = 0; r < n; r++) for (var c = 0; c <= n; c++) if (g.vLines[r][c] < 0) (false, r, c),
+    ];
+    // Take a box if one is ready; otherwise avoid handing over a box (a third side); otherwise anything.
+    final closing = free.where((l) => boxesOf(l.$1, l.$2, l.$3).where(inside).any((p) => sides(p.$1, p.$2) == 3));
+    final safe = free.where((l) => boxesOf(l.$1, l.$2, l.$3).where(inside).every((p) => sides(p.$1, p.$2) < 2));
+    final (bool, int, int) line = closing.firstOrNull ?? (safe.isNotEmpty ? b.pick(safe.toList()) : b.pick(free));
+    g.drawLine(horizontal: line.$1, row: line.$2, col: line.$3);
+  }),
   online: RelaySpec<DotsBoxesLogic>(
     create: (n) => DotsBoxesLogic(players: n),
     save: (g) => {

@@ -33,6 +33,43 @@ final colourClashInfo = LocalGameInfo(
   scoreUnit: 'wins',
   splitScreen: false,
   maxPlayers: 6,
+  bot: botFor<ColourClashLogic>((g, b, now) {
+    // Against the computer nobody needs to pass the phone.
+    if (g.phase == ClashPhase.handoff) return g.reveal();
+    if (g.finished || g.turn != b.seat) return;
+    if (!b.thinkFirst((g.discard.length, g.phase, g.drewThisTurn, g.hand.length), now, 700, 1500)) return;
+    final hand = g.hand;
+    ClashColor favourite() {
+      final counts = <ClashColor, int>{};
+      for (final c in hand.where((c) => !c.isWild)) {
+        counts[c.color] = (counts[c.color] ?? 0) + 1;
+      }
+      return counts.isEmpty ? b.pick(const [ClashColor.red, ClashColor.yellow, ClashColor.green, ClashColor.blue]) : (counts.entries.toList()..sort((a, c) => c.value - a.value)).first.key;
+    }
+
+    if (g.phase == ClashPhase.chooseColor) {
+      g.chooseColor(favourite());
+      return;
+    }
+    final options = g.playable.toList();
+    if (options.isEmpty) {
+      if (!g.drewThisTurn) g.draw();
+      return;
+    }
+    // Remember to call ONE! (usually).
+    if (hand.length == 2 && !g.calledOne && b.chance(0.9)) g.callOne();
+    final nextHasFew = g.hands[g.nextPlayer()].length <= 2;
+    int rank(ClashCard c) => switch (c.kind) {
+          ClashKind.wildFour => nextHasFew ? 50 : 1, // save the big ones unless someone is close to winning
+          ClashKind.wild => 2,
+          ClashKind.drawTwo => nextHasFew ? 40 : 20,
+          ClashKind.skip || ClashKind.reverse => 15,
+          ClashKind.number => 10 + (c.color == favourite() ? 3 : 0),
+        };
+    options.sort((a, c) => rank(c) - rank(a));
+    final card = options.first;
+    g.play(card.id, chosen: card.isWild ? favourite() : null);
+  }),
   online: RelaySpec<ColourClashLogic>(
     create: (n) => ColourClashLogic(players: n),
     save: (g) => {
@@ -100,7 +137,8 @@ final colourClashInfo = LocalGameInfo(
   play: (players, onFinished) => TickingPlay<ColourClashLogic>(
     create: () => ColourClashLogic(players: players.length),
     onFinished: onFinished,
-    builder: (context, g) => _ClashTable(players: players, g: g),
+    // Against the computer, you only ever see your own hand (seat 0).
+    builder: (context, g) => _ClashTable(players: players, g: g, me: BotScope.humanSeat(context)),
   ),
 );
 

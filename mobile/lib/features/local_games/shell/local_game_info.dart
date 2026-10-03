@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../guess_person/models/gp_player.dart';
+import 'bots.dart';
 import 'local_game_logic.dart';
+
+export 'bots.dart' show BotSeat, BotTurn, botFor, BotScope;
 
 typedef PlayBuilder = Widget Function(List<GpPlayer> players, void Function(List<int> scores) onFinished);
 
@@ -78,10 +81,14 @@ class LocalGameInfo {
   final List<String> rules;
   final String scoreUnit; // "taps", "points", "pairs", "cells"
   final bool splitScreen; // players sit at opposite ends of the phone
+  final int minPlayers; // fewest players the game works with (2-4)
   final int maxPlayers; // 2-6; the intro screen lets players pick how many
   final PlayBuilder play;
   final RelayGame? online; // how to play it over the internet, if it can be
+  final BotTurn? bot; // how the computer plays a seat, if it can
   const LocalGameInfo({
+    this.bot,
+    this.minPlayers = 2,
     this.maxPlayers = 2,
     this.online,
     required this.id,

@@ -110,6 +110,19 @@ final pingPongInfo = LocalGameInfo(
   ],
   scoreUnit: 'points',
   splitScreen: true,
+  bot: botFor<PingPongLogic>((g, b, now) {
+    final last = (b.memory['t'] as int?) ?? now;
+    b.memory['t'] = now;
+    final dt = ((now - last) / 1000).clamp(0.0, 0.05);
+    // Follow the ball when it's coming, aiming a little off-centre (for angle) and a little late.
+    final coming = b.seat == 1 ? g.vel.y < 0 : g.vel.y > 0;
+    final aimOff = (b.memory['off'] as double?) ?? 0.0;
+    if (!coming) b.memory['off'] = (b.rng.nextDouble() - 0.5) * 0.16;
+    final target = coming ? g.ball.x + aimOff : 0.5;
+    final x = g.paddleX[b.seat];
+    final step = 0.95 * dt;
+    g.movePaddle(b.seat, x + (target - x).clamp(-step, step));
+  }),
   online: RelaySpec<PingPongLogic>(
     create: (n) => PingPongLogic(),
     save: (g) => {

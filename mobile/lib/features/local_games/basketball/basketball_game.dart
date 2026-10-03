@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
+import '../../guess_person/widgets/gp_theme.dart' show GpColors;
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -57,6 +58,7 @@ class BasketballLogic extends TimedDuel {
   /// Shoots towards [aim]. The ball arrives [flightMs] later, so a moving hoop has to
   /// be led. Returns the points scored, or null if the shot isn't allowed right now.
   int? shoot(int player, double aim) {
+    if (forward('shoot', [player, aim])) return null;
     if (!canShoot(player)) return null;
     aim = aim.clamp(-3.0, 3.0);
     final hoop = hoopXAt(elapsedMs + flightMs);
@@ -84,6 +86,58 @@ final basketballInfo = LocalGameInfo(
   scoreUnit: 'points',
   splitScreen: true,
   maxPlayers: 4,
+  bot: botFor<BasketballLogic>((g, b, now) {
+    if (!g.canShoot(b.seat) || !b.due(now)) return;
+    // Aims where the hoop will be, with a shaky hand.
+    final aim = BasketballLogic.hoopXAt(g.elapsedMs + BasketballLogic.flightMs) + (b.rng.nextDouble() - 0.5) * 0.45;
+    g.shoot(b.seat, aim);
+    b.wait(now, 900, 1700);
+  }),
+  online: RelaySpec<BasketballLogic>(
+    create: (n) => BasketballLogic(players: n),
+    save: (g) => {
+      't': g.elapsedMs,
+      'score': g.score,
+      'shots': g.shots,
+      'last': g._lastShotAt,
+      'shotsAt': [for (final s in g.lastShot) s == null ? null : [s.points, s.aim, s.hoopX, s.atMs, s.number]],
+    },
+    load: (g, s, me) {
+      g.elapsedMs = asInt(s['t']);
+      g.score.setAll(0, ints(s['score']));
+      g.shots.setAll(0, ints(s['shots']));
+      g._lastShotAt.setAll(0, ints(s['last']));
+      final shots = s['shotsAt'] as List;
+      for (var i = 0; i < shots.length; i++) {
+        final v = shots[i] as List?;
+        g.lastShot[i] = v == null ? null : Shot(asInt(v[0]), asDouble(v[1]), asDouble(v[2]), asInt(v[3]), asInt(v[4]));
+      }
+    },
+    apply: (g, from, name, a) {
+      if (name == 'shoot' && asInt(a[0]) == from) g.shoot(from, asDouble(a[1]));
+    },
+    // Online: your own court fills the screen, everyone's score along the top.
+    view: (context, g, players, me) => Column(children: [
+      Container(
+        color: GpColors.bgBottom,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(children: [
+          Expanded(
+            child: Wrap(spacing: 6, runSpacing: 4, children: [
+              for (var i = 0; i < players.length; i++)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: players[i].color, borderRadius: BorderRadius.circular(10)),
+                  child: Text('${players[i].name} ${g.score[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                ),
+            ]),
+          ),
+          Text('${g.secondsLeft}s', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+        ]),
+      ),
+      Expanded(child: _HoopZone(player: players[me], index: me, g: g)),
+    ]),
+  ),
   play: (players, onFinished) => TickingPlay<BasketballLogic>(
     create: () => BasketballLogic(players: players.length),
     onFinished: onFinished,

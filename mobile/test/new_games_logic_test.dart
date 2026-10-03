@@ -18,10 +18,10 @@ import 'package:multiplayer_game/features/local_games/shell/split_screen.dart';
 import 'package:multiplayer_game/features/local_games/snake_duel/snake_duel_game.dart';
 
 void main() {
-  test('18 shell games in the hub (+ Guess the Person + Raja Mantri = 20), unique ids, 2-6 players', () {
-    expect(localGames, hasLength(18));
-    expect(localGames.map((g) => g.id).toSet(), hasLength(18));
-    expect(totalGameCount, 20);
+  test('28 shell games in the hub (+ Guess the Person + Raja Mantri = 30), unique ids, 2-6 players', () {
+    expect(localGames, hasLength(28));
+    expect(localGames.map((g) => g.id).toSet(), hasLength(28));
+    expect(totalGameCount, 30);
     for (final g in localGames) {
       expect(g.maxPlayers, inInclusiveRange(2, 6), reason: g.id);
     }

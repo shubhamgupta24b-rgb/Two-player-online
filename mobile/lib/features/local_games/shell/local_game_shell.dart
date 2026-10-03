@@ -43,23 +43,45 @@ class LocalGameShell extends StatefulWidget {
 }
 
 class _LocalGameShellState extends State<LocalGameShell> {
-  var players = defaultPlayers();
-  var wins = [0, 0];
+  late var players = defaultPlayers(widget.game.minPlayers);
+  late var wins = List.filled(players.length, 0);
   var phase = _ShellPhase.intro;
   var matchNo = 0;
+  bool vsComputer = false;
+  List<BotSeat> _bots = const [];
 
-  /// Changing the player count starts a fresh tally.
+  /// Against the computer you are seat 0 ("You"); the rest are CPU players.
+  List<GpPlayer> _makePlayers(int n) {
+    final base = defaultPlayers(n);
+    if (!vsComputer) return base;
+    return [for (var i = 0; i < n; i++) GpPlayer(name: i == 0 ? 'You' : 'CPU $i', color: base[i].color)];
+  }
+
+  /// Changing the player count (or who's playing) starts a fresh tally.
   void _setPlayerCount(int n) => setState(() {
-        players = defaultPlayers(n);
+        players = _makePlayers(n);
         wins = List.filled(n, 0);
       });
+
+  void _setVsComputer(bool on) {
+    vsComputer = on;
+    _setPlayerCount(players.length);
+  }
 
   void _start() => setState(() => phase = _ShellPhase.countdown);
 
   void _go() => setState(() {
         matchNo++;
+        // Fresh computer players every match (their memory and timing start over).
+        _bots = vsComputer && widget.game.bot != null ? [for (var i = 1; i < players.length; i++) BotSeat(i)] : const [];
         phase = _ShellPhase.playing;
       });
+
+  Widget _play(LocalGameInfo g) {
+    final game = g.play(players, _finished);
+    if (_bots.isEmpty) return game;
+    return BotScope(seats: _bots, turn: g.bot!, child: game);
+  }
 
   void _finished(List<int> scores) {
     if (!mounted) return;
@@ -95,10 +117,17 @@ class _LocalGameShellState extends State<LocalGameShell> {
   Widget build(BuildContext context) {
     final g = widget.game;
     final Widget body = switch (phase) {
-      _ShellPhase.intro => _Intro(game: g, onPlay: _start, playerCount: players.length, onPlayerCount: _setPlayerCount),
+      _ShellPhase.intro => _Intro(
+          game: g,
+          onPlay: _start,
+          playerCount: players.length,
+          onPlayerCount: _setPlayerCount,
+          vsComputer: vsComputer,
+          onVsComputer: g.bot == null ? null : _setVsComputer,
+        ),
       _ShellPhase.countdown => _Countdown(onDone: _go, color: g.color),
       // A new key per match guarantees fresh game state on Play Again.
-      _ShellPhase.playing => KeyedSubtree(key: ValueKey('match$matchNo'), child: g.play(players, _finished)),
+      _ShellPhase.playing => KeyedSubtree(key: ValueKey('match$matchNo'), child: _play(g)),
       _ShellPhase.result => _Result(game: g, players: players, wins: wins, onAgain: _start, onExit: () => Navigator.pop(context)),
     };
     return PopScope(
@@ -125,7 +154,9 @@ class _Intro extends StatelessWidget {
   final VoidCallback onPlay;
   final int playerCount;
   final ValueChanged<int> onPlayerCount;
-  const _Intro({required this.game, required this.onPlay, required this.playerCount, required this.onPlayerCount});
+  final bool vsComputer;
+  final ValueChanged<bool>? onVsComputer; // null: this game has no computer players
+  const _Intro({required this.game, required this.onPlay, required this.playerCount, required this.onPlayerCount, this.vsComputer = false, this.onVsComputer});
 
   @override
   Widget build(BuildContext context) {
@@ -178,12 +209,12 @@ class _Intro extends StatelessWidget {
                     ),
                 ]),
               ),
-              if (game.maxPlayers > 2) ...[
+              if (game.maxPlayers > game.minPlayers) ...[
                 const SizedBox(height: 16),
                 const Text('PLAYERS', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
                 const SizedBox(height: 8),
                 Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6, children: [
-                  for (var n = 2; n <= game.maxPlayers; n++)
+                  for (var n = game.minPlayers; n <= game.maxPlayers; n++)
                     Padding(
                       padding: EdgeInsets.zero,
                       child: Semantics(
@@ -209,7 +240,23 @@ class _Intro extends StatelessWidget {
                     ),
                 ]),
               ],
-              if (game.splitScreen) ...[
+              if (onVsComputer != null) ...[
+                const SizedBox(height: 14),
+                Material(
+                  color: vsComputer ? game.color : GpColors.panel,
+                  borderRadius: BorderRadius.circular(18),
+                  child: SwitchListTile(
+                    value: vsComputer,
+                    onChanged: onVsComputer,
+                    activeThumbColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                    title: const Text('🤖 PLAY VS COMPUTER', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                    subtitle: Text(vsComputer ? 'You are Player 1. The computer plays the other ${playerCount - 1}.' : 'No friends around? Play against bots.',
+                        style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12.5)),
+                  ),
+                ),
+              ],
+              if (game.splitScreen && !vsComputer) ...[
                 const SizedBox(height: 12),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   const Icon(Icons.screen_rotation_alt_rounded, color: Colors.white60, size: 18),

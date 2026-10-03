@@ -16,6 +16,17 @@ const RELAY_GAMES = [
   { id: 'ping_pong', min: 2, max: 2 },
   { id: 'snake_duel', min: 2, max: 2 },
   { id: 'penalty', min: 2, max: 2 },
+  { id: 'find_spy', min: 3, max: 6 },
+  { id: 'undercover', min: 3, max: 6 },
+  { id: 'mafia', min: 4, max: 6 },
+  { id: 'charades', min: 2, max: 6 },
+  { id: 'heads_up', min: 2, max: 6 },
+  { id: 'draw_guess', min: 2, max: 6 },
+  { id: 'most_likely', min: 3, max: 6 },
+  { id: 'would_rather', min: 2, max: 6 },
+  { id: 'hand_cricket', min: 2, max: 2 },
+  { id: 'quiz_battle', min: 2, max: 4 },
+  { id: 'basketball_hoops', min: 2, max: 4 },
 ];
 
 const MAX_STATE_BYTES = 64 * 1024;

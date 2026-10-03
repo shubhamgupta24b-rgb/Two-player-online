@@ -20,12 +20,23 @@ import 'dots_boxes/dots_boxes_game.dart';
 import 'ludo/ludo_game.dart';
 import 'snakes_ladders/snakes_ladders_game.dart';
 import 'truth_dare/truth_dare_game.dart';
+import 'charades/charades_game.dart';
+import 'draw_guess/draw_guess_game.dart';
+import 'find_spy/find_spy_game.dart';
+import 'hand_cricket/hand_cricket_game.dart';
+import 'heads_up/heads_up_game.dart';
+import 'mafia/mafia_game.dart';
+import 'most_likely/most_likely_game.dart';
+import 'quiz_battle/quiz_battle_game.dart';
+import 'undercover/undercover_game.dart';
+import 'would_rather/would_rather_game.dart';
 import 'shell/local_game_info.dart';
 import 'shell/local_game_shell.dart';
 
-final localGames = <LocalGameInfo>[colourClashInfo, ludoInfo, snakesLaddersInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo,
-  paintFightInfo, ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo,
-  dotsBoxesInfo, truthDareInfo];
+final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
+  drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo,
+  ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo, dotsBoxesInfo,
+  mostLikelyInfo, wouldRatherInfo, truthDareInfo];
 
 /// Everything in the hub: the shell games plus Guess the Person and Raja Mantri.
 int get totalGameCount => localGames.length + 2;
@@ -58,7 +69,7 @@ class LocalGamesHubScreen extends StatelessWidget {
           emoji: g.emoji,
           title: g.title,
           tagline: g.tagline,
-          players: g.maxPlayers > 2 ? '2–${g.maxPlayers}' : '2',
+          players: g.maxPlayers > g.minPlayers ? '${g.minPlayers}–${g.maxPlayers}' : '${g.maxPlayers}',
           color: g.color,
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LocalGameShell(game: g))),
         ),

@@ -12,6 +12,9 @@ abstract class LocalGameLogic extends ChangeNotifier {
   /// handed to this instead of changing the state here, and the host decides.
   void Function(String name, List<Object?> args)? sendToHost;
 
+  /// True on online guests (not the host): they only mirror the host's state.
+  bool isGuest = false;
+
   /// Call at the top of every player action. Returns true when the action was handed
   /// over to the host, in which case it must not be applied locally.
   @protected

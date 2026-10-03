@@ -96,6 +96,10 @@ final snakesLaddersInfo = LocalGameInfo(
   scoreUnit: 'wins',
   splitScreen: false,
   maxPlayers: 6,
+  bot: botFor<SnakesLaddersLogic>((g, b, now) {
+    if (g.finished || g.turn != b.seat) return;
+    if (b.thinkFirst(g.rolls, now, 800, 1400)) g.roll();
+  }),
   online: RelaySpec<SnakesLaddersLogic>(
     create: (n) => SnakesLaddersLogic(players: n),
     save: (g) => {'pos': g.pos, 'turn': g.turn, 'roll': g.lastRoll, 'rolls': g.rolls, 'winner': g.winner, 'msg': g.message},

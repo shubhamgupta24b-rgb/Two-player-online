@@ -75,6 +75,7 @@ class _RelayPlayState extends State<RelayPlay> with SingleTickerProviderStateMix
       _afterChange();
     } else {
       g.sendToHost = _sendInput;
+      g.isGuest = true;
     }
   }
 

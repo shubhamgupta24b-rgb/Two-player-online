@@ -81,6 +81,44 @@ final connectFourInfo = LocalGameInfo(
   ],
   scoreUnit: 'wins',
   splitScreen: false,
+  bot: botFor<ConnectFourLogic>((g, b, now) {
+    if (g.finished || g.turn != b.seat) return;
+    if (!b.thinkFirst(g.cells.where((c) => c >= 0).length, now, 600, 1300)) return;
+    const cols = ConnectFourLogic.cols, rows = ConnectFourLogic.rows;
+    int? landing(int c) {
+      for (var r = rows - 1; r >= 0; r--) {
+        if (g.at(c, r) < 0) return r;
+      }
+      return null;
+    }
+
+    bool wins(int c, int who) {
+      final r = landing(c);
+      if (r == null) return false;
+      int at(int x, int y) => x == c && y == r ? who : g.at(x, y);
+      for (final (dc, dr) in const [(1, 0), (0, 1), (1, 1), (1, -1)]) {
+        var n = 1;
+        for (final s in const [1, -1]) {
+          var x = c + dc * s, y = r + dr * s;
+          while (x >= 0 && x < cols && y >= 0 && y < rows && at(x, y) == who) {
+            n++;
+            x += dc * s;
+            y += dr * s;
+          }
+        }
+        if (n >= 4) return true;
+      }
+      return false;
+    }
+
+    final open = [for (var c = 0; c < cols; c++) if (landing(c) != null) c];
+    final opp = 1 - b.seat;
+    // Win, else block, else favour the middle (with a little randomness).
+    final int col = open.where((c) => wins(c, b.seat)).firstOrNull ??
+        open.where((c) => wins(c, opp)).firstOrNull ??
+        (b.chance(0.2) ? b.pick<int>(open) : (open.toList()..sort((a, c) => (a - 3).abs().compareTo((c - 3).abs()))).first);
+    g.drop(col);
+  }),
   online: RelaySpec<ConnectFourLogic>(
     create: (n) => ConnectFourLogic(),
     save: (g) => {'cells': g.cells, 'turn': g.turn, 'winner': g.winner, 'winCells': g.winCells, 'lastDrop': g.lastDrop},

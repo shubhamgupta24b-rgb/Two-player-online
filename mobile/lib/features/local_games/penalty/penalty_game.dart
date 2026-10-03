@@ -91,6 +91,10 @@ final penaltyInfo = LocalGameInfo(
   ],
   scoreUnit: 'goals',
   splitScreen: true,
+  bot: botFor<PenaltyLogic>((g, b, now) {
+    if (g.finished || g.showingResult || g.picks[b.seat] != null) return;
+    if (b.thinkFirst(g.kickNo, now, 700, 1600)) g.pick(b.seat, b.rng.nextInt(3));
+  }),
   online: RelaySpec<PenaltyLogic>(
     create: (n) => PenaltyLogic(),
     save: (g) => {

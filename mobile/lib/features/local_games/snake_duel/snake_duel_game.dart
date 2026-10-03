@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
@@ -123,6 +124,31 @@ final snakeDuelInfo = LocalGameInfo(
   ],
   scoreUnit: 'rounds',
   splitScreen: true,
+  bot: botFor<SnakeDuelLogic>((g, b, now) {
+    if (g.finished || g.betweenRounds || !b.due(now)) return;
+    b.wait(now, 60, 110);
+    const dx = [0, 1, 0, -1], dy = [-1, 0, 1, 0];
+    final h = g.head[b.seat];
+    bool free(int x, int y) => x >= 0 && x < g.cols && y >= 0 && y < g.rows && g.owner[y * g.cols + x] < 0;
+    // How much room is in a direction (a few steps of look-ahead).
+    int room(int dir) {
+      var x = h % g.cols, y = h ~/ g.cols, n = 0;
+      for (var i = 0; i < 6; i++) {
+        x += dx[dir];
+        y += dy[dir];
+        if (!free(x, y)) break;
+        n++;
+      }
+      return n;
+    }
+
+    final d = g.dir[b.seat];
+    final ahead = room(d), left = room((d + 3) % 4), right = room((d + 1) % 4);
+    if (ahead <= 1 || (b.chance(0.04) && max(left, right) > ahead)) {
+      if (left == 0 && right == 0) return;
+      g.turn(b.seat, left > right || (left == right && b.chance(0.5)) ? -1 : 1);
+    }
+  }),
   online: RelaySpec<SnakeDuelLogic>(
     create: (n) => SnakeDuelLogic(),
     save: (g) => {

@@ -118,6 +118,12 @@ final mathDuelInfo = LocalGameInfo(
   scoreUnit: 'points',
   splitScreen: true,
   maxPlayers: 4,
+  bot: botFor<MathDuelLogic>((g, b, now) {
+    if (g.finished || g.betweenQuestions || g.solvedBy != null || g.lockedOut.contains(b.seat)) return;
+    if (!b.thinkFirst(g.questionNo, now, 1800, 4500)) return;
+    final q = g.question;
+    g.answer(b.seat, b.chance(0.75) ? q.answer : b.pick(q.options.where((o) => o != q.answer).toList()));
+  }),
   online: RelaySpec<MathDuelLogic>(
     create: (n) => MathDuelLogic(players: n),
     save: (g) => {

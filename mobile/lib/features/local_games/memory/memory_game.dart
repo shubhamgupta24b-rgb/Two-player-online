@@ -92,6 +92,33 @@ final memoryInfo = LocalGameInfo(
   scoreUnit: 'pairs',
   splitScreen: false,
   maxPlayers: 6,
+  bot: botFor<MemoryLogic>((g, b, now) {
+    // Watch every flip (anyone's), remembering about three out of four cards.
+    final seen = (b.memory['seen'] ??= <int, String>{}) as Map<int, String>;
+    final judged = (b.memory['judged'] ??= <int>{}) as Set<int>;
+    for (final id in g.picks) {
+      if (judged.add(id * 1000 + g.pairs.reduce((a, c) => a + c)) && b.chance(0.75)) seen[id] = g.cards[id].symbol;
+    }
+    if (g.finished || g.showingMismatch || g.turn != b.seat || g.picks.length >= 2) return;
+    if (!b.thinkFirst((g.picks.length, g.pairs.reduce((a, c) => a + c), g.picks.firstOrNull), now, 700, 1300)) return;
+    final open = [for (final c in g.cards) if (!c.matched && !g.picks.contains(c.id)) c.id];
+    seen.removeWhere((id, _) => g.cards[id].matched);
+    int? partner(String symbol, int not) => seen.entries.where((e) => e.value == symbol && e.key != not && open.contains(e.key)).map((e) => e.key).firstOrNull;
+    int? target;
+    if (g.picks.isEmpty) {
+      // A pair I already know about?
+      for (final e in seen.entries) {
+        if (open.contains(e.key) && partner(e.value, e.key) != null) {
+          target = e.key;
+          break;
+        }
+      }
+    } else {
+      target = partner(g.cards[g.picks.first].symbol, g.picks.first);
+    }
+    final unknown = open.where((id) => !seen.containsKey(id)).toList();
+    g.flip(target ?? (unknown.isNotEmpty ? b.pick(unknown) : b.pick(open)));
+  }),
   play: (players, onFinished) => TickingPlay<MemoryLogic>(
     create: () => MemoryLogic(players: players.length),
     onFinished: onFinished,

@@ -38,7 +38,8 @@ class GameInfo {
 /// the online version supports fewer players than the one-device one.
 GameInfo _local(String id, GameCategory category, {int? max}) {
   final g = localGames.firstWhere((x) => x.id == id);
-  return GameInfo(id, g.title, playable: true, emoji: g.emoji, color: g.color, tagline: g.tagline, maxPlayers: max ?? g.maxPlayers, category: category);
+  return GameInfo(id, g.title,
+      playable: true, emoji: g.emoji, color: g.color, tagline: g.tagline, minPlayers: g.minPlayers, maxPlayers: max ?? g.maxPlayers, category: category);
 }
 
 final List<GameInfo> gameCatalog = [
@@ -63,6 +64,16 @@ final List<GameInfo> gameCatalog = [
   _local('paint_fight', GameCategory.action, max: 4),
   _local('reaction_tap', GameCategory.action),
   _local('math_duel', GameCategory.action),
+  _local('hand_cricket', GameCategory.action),
+  _local('quiz_battle', GameCategory.action),
+  _local('find_spy', GameCategory.party),
+  _local('mafia', GameCategory.party),
+  _local('undercover', GameCategory.party),
+  _local('charades', GameCategory.party),
+  _local('heads_up', GameCategory.party),
+  _local('draw_guess', GameCategory.party),
+  _local('most_likely', GameCategory.party),
+  _local('would_rather', GameCategory.party),
   _local('truth_dare', GameCategory.party),
 ];
 

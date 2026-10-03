@@ -64,6 +64,23 @@ final ticTacToeInfo = LocalGameInfo(
   ],
   scoreUnit: 'wins',
   splitScreen: false,
+  bot: botFor<TicTacToeLogic>((g, b, now) {
+    if (g.finished || g.turn != b.seat) return;
+    final empty = [for (var i = 0; i < 9; i++) if (g.cells[i] < 0) i];
+    if (!b.thinkFirst(empty.length, now, 500, 1100)) return;
+    int? finishing(int who) {
+      for (final l in TicTacToeLogic.lines) {
+        final mine = l.where((c) => g.cells[c] == who).length;
+        final free = l.where((c) => g.cells[c] < 0).toList();
+        if (mine == 2 && free.length == 1) return free.single;
+      }
+      return null;
+    }
+
+    // Win, else block, else centre, else a corner, else anything. Sometimes it slips up.
+    final int move = b.chance(0.12) ? b.pick(empty) : finishing(b.seat) ?? finishing(1 - b.seat) ?? (g.cells[4] < 0 ? 4 : null) ?? [0, 2, 6, 8].where(empty.contains).firstOrNull ?? b.pick<int>(empty);
+    g.play(move);
+  }),
   online: RelaySpec<TicTacToeLogic>(
     create: (n) => TicTacToeLogic(),
     save: (g) => {'cells': g.cells, 'turn': g.turn, 'winLine': g.winLine, 'winner': g.winner},

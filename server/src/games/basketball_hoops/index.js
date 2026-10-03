@@ -41,7 +41,8 @@ function createBasketballHoops(opts = {}) {
         targetCycleMs: s.targetCycleMs, target: (cycle * 37 + 23) % 101,
         players: s.players.map(userId => ({ userId, username: s.names[userId], score: s.score[userId], shots: s.shots[userId] })),
         yourScore: s.score[uid] ?? 0, yourShots: s.shots[uid] ?? 0,
-        nextShotAt: (s.lastShotAt[uid] ?? -Infinity) + shotCooldownMs,
+        // -Infinity would arrive as null in JSON: "can shoot now" is just "since the start".
+        nextShotAt: Math.max(s.startedAt, (s.lastShotAt[uid] ?? -Infinity) + shotCooldownMs),
       };
     },
     isFinished: s => s.phase === 'finished',

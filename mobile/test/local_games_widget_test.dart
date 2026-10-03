@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dart';
@@ -124,7 +125,7 @@ void main() {
 
   // Every player count on a small and a normal phone for the multi-player games.
   for (final game in localGames.where((g) => g.maxPlayers > 2)) {
-    for (var n = 3; n <= game.maxPlayers; n++) {
+    for (var n = max(3, game.minPlayers); n <= game.maxPlayers; n++) {
       for (final size in [sizes['small phone']!, sizes['phone']!]) {
         testWidgets('${game.title} with $n players on ${size.width.toInt()}x${size.height.toInt()}', (tester) => playThrough(tester, game, size, n));
       }

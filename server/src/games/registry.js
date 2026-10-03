@@ -12,7 +12,7 @@ const get=id=>games.get(id), has=id=>games.has(id), list=()=>[...games.values()]
 register(require('./guess_person').game);
 register(require('./memory').game);
 register(require('./crush_it').game);
-register(require('./basketball_hoops').game);
+// basketball_hoops is played through the relay now (the swipe-to-shoot version).
 register(require('./fruit_duel').game);
 register(require('./paint_fight').game);
 register(require('./guess_who').game);

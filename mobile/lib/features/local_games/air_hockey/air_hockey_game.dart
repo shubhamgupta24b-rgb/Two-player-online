@@ -102,6 +102,9 @@ class AirHockeyLogic extends TimedDuel {
         final along = rel.dot(n);
         if (along < 0) vel = vel - n * (1.9 * along);
         vel = vel + n * 0.15; // always a little kick away from the mallet
+        // A mallet must never shove the puck through a wall (only into a goal mouth).
+        final mouth = (puck.x - 0.5).abs() < goalHalf;
+        puck = V(puck.x.clamp(puckR, 1 - puckR), mouth ? puck.y : puck.y.clamp(puckR, length - puckR));
       }
     }
     final speed = vel.length;
@@ -132,6 +135,31 @@ final airHockeyInfo = LocalGameInfo(
   ],
   scoreUnit: 'goals',
   splitScreen: true,
+  bot: botFor<AirHockeyLogic>((g, b, now) {
+    // The computer defends the top goal: chase the puck in its half, otherwise guard the goal.
+    final last = (b.memory['t'] as int?) ?? now;
+    b.memory['t'] = now;
+    final dt = ((now - last) / 1000).clamp(0.0, 0.05);
+    final me = g.mallet[b.seat];
+    // Go for the puck in its half, or a slow one sitting on the centre line within reach.
+    final slow = g.vel.length < 0.3;
+    final inMyHalf = g.puck.y < AirHockeyLogic.length / 2 + (slow ? AirHockeyLogic.puckR + 0.02 : 0);
+    // Strike the puck a little off-centre so shots angle off the walls instead of straight at the keeper.
+    if (!inMyHalf) b.memory['side'] = b.chance(0.5) ? -1.0 : 1.0;
+    final side = (b.memory['side'] as double?) ?? 1.0;
+    // Puck trapped against my back wall: hit it from the middle side so it bounces off the side wall
+    // and back into play, instead of pinning it in the corner.
+    final trapped = g.puck.y < 0.15;
+    final target = trapped
+        ? V(g.puck.x + (g.puck.x > 0.5 ? -0.13 : 0.13), g.puck.y + 0.01)
+        : inMyHalf
+            ? V(g.puck.x + side * 0.05, g.puck.y - 0.06)
+            : V(0.5 + (g.puck.x - 0.5) * 0.5, 0.18);
+    final d = target - me;
+    final step = 1.4 * dt; // a little slower than a quick finger
+    final len = d.length;
+    g.moveMallet(b.seat, len <= step ? target : me + d * (step / len));
+  }),
   online: RelaySpec<AirHockeyLogic>(
     create: (n) => AirHockeyLogic(),
     save: (g) => {

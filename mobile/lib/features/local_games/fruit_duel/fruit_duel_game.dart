@@ -100,6 +100,12 @@ final fruitDuelInfo = LocalGameInfo(
   scoreUnit: 'points',
   splitScreen: true,
   maxPlayers: 4,
+  bot: botFor<FruitDuelLogic>((g, b, now) {
+    if (g.finished || g.slashedCurrent(b.seat)) return;
+    if (!b.thinkFirst(g.current, now, 380, 900)) return;
+    final lane = b.chance(0.85) ? g.fruitLane : (g.fruitLane + 1 + b.rng.nextInt(FruitDuelLogic.lanes - 1)) % FruitDuelLogic.lanes;
+    g.slash(b.seat, lane);
+  }),
   play: (players, onFinished) => TickingPlay<FruitDuelLogic>(
     create: () => FruitDuelLogic(players: players.length),
     onFinished: onFinished,

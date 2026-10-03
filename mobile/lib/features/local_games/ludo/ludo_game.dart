@@ -26,6 +26,34 @@ final ludoInfo = LocalGameInfo(
   scoreUnit: 'wins',
   splitScreen: false,
   maxPlayers: 4,
+  bot: botFor<LudoLogic>((g, b, now) {
+    if (g.finished || g.turn != b.seat) return;
+    if (!b.thinkFirst((g.rolls, g.phase), now, 700, 1300)) return;
+    if (g.phase == LudoPhase.roll) {
+      g.roll();
+      return;
+    }
+    final moves = g.movable;
+    if (moves.isEmpty) return;
+    final r = g.lastRoll!;
+    int value(int t) {
+      final p = g.tokens[b.seat][t];
+      final np = p == -1 ? 0 : p + r;
+      final cell = g.trackIndex(b.seat, np);
+      var v = np; // further along is better
+      if (cell != null && !LudoLogic.safeCells.contains(cell)) {
+        for (var o = 0; o < g.players; o++) {
+          if (o != b.seat && g.tokens[o].any((x) => g.trackIndex(o, x) == cell)) v += 200; // capture!
+        }
+      }
+      if (np == LudoLogic.home) v += 150;
+      if (p == -1) v += 100;
+      if (cell != null && LudoLogic.safeCells.contains(cell)) v += 40;
+      return v + b.rng.nextInt(10);
+    }
+
+    g.move(moves.reduce((a, c) => value(a) >= value(c) ? a : c));
+  }),
   online: RelaySpec<LudoLogic>(
     create: (n) => LudoLogic(players: n),
     save: (g) => {

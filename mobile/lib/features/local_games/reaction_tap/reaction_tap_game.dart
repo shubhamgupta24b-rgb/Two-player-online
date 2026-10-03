@@ -89,6 +89,11 @@ final reactionTapInfo = LocalGameInfo(
   scoreUnit: 'points',
   splitScreen: true,
   maxPlayers: 6,
+  bot: botFor<ReactionTapLogic>((g, b, now) {
+    if (g.finished || g.phase != ReactionPhase.go) return;
+    // Human-like reaction time: 280-650 ms after green.
+    if (b.thinkFirst(g.goAt, now, 280, 650)) g.tap(b.seat);
+  }),
   online: RelaySpec<ReactionTapLogic>(
     create: (n) => ReactionTapLogic(players: n),
     save: (g) => {'score': g.score, 'phase': g.phase.index, 'last': g.lastTapper, 'false': g.falseStart, 'ms': g.reactionMs},

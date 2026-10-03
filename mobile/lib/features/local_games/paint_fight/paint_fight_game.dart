@@ -49,6 +49,19 @@ final paintFightInfo = LocalGameInfo(
   ],
   scoreUnit: 'cells',
   splitScreen: true,
+  bot: botFor<PaintFightLogic>((g, b, now) {
+    if (g.finished || !b.due(now)) return;
+    b.wait(now, 45, 90); // a fast but human-ish brush
+    var (c, r) = (b.memory['pos'] as (int, int)?) ?? (g.cols ~/ 2, b.seat == 0 ? g.rows - 2 : 1);
+    g.paint(b.seat, c, r);
+    // Step to a neighbouring cell, preferring ones that aren't ours yet.
+    final steps = [for (final (dc, dr) in const [(1, 0), (-1, 0), (0, 1), (0, -1)]) (c + dc, r + dr)]
+        .where((p) => p.$1 >= 0 && p.$1 < g.cols && p.$2 >= 0 && p.$2 < g.rows)
+        .toList();
+    final fresh = steps.where((p) => g.owner[p.$2 * g.cols + p.$1] != b.seat).toList();
+    (c, r) = fresh.isNotEmpty && b.chance(0.85) ? b.pick(fresh) : b.pick(steps);
+    b.memory['pos'] = (c, r);
+  }),
   play: (players, onFinished) => TickingPlay<PaintFightLogic>(
     create: () => PaintFightLogic(),
     onFinished: onFinished,
