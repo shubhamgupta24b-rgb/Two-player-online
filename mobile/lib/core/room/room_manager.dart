@@ -54,8 +54,8 @@ const _errorText = {
   'PLAYERS_NOT_READY': 'Everyone must be ready.',
   'GAME_NOT_AVAILABLE': 'This game is not implemented yet.',
   'INVALID_PAYLOAD': 'Invalid input.',
-  'OFFLINE': 'You are offline.',
-  'TIMEOUT': 'Server did not respond.',
+  'OFFLINE': 'Not connected yet. The server may be waking up (up to a minute): try again shortly.',
+  'TIMEOUT': 'Server did not respond. Check your internet and try again.',
   'BAD_PHASE': 'Not possible right now.',
   'RATE_LIMITED': 'Too many requests, slow down.',
 };

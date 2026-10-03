@@ -1,4 +1,5 @@
 import java.util.Base64
+import java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -13,6 +14,13 @@ val dartDefines: List<String> = (project.findProperty("dart-defines") as String?
     ?.map { String(Base64.getDecoder().decode(it)) }
     ?: emptyList()
 val flatApp = dartDefines.contains("APP_STYLE=flat")
+
+// Release signing key (android/key.properties + upload-keystore.jks, never committed).
+// Without them (e.g. a CI build) release builds fall back to the debug key.
+val keyProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
 
 android {
     namespace = "com.example.multiplayer_game"
@@ -29,7 +37,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = if (flatApp) "com.example.multiplayer_game.flat" else "com.example.multiplayer_game"
+        applicationId = if (flatApp) "com.shubhamgupta.partygames.flat" else "com.shubhamgupta.partygames"
         manifestPlaceholders["appLabel"] = if (flatApp) "Party Games Flat" else "Party Games"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
@@ -37,9 +45,20 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (keyProps.isNotEmpty()) {
+            create("release") {
+                keyAlias = keyProps.getProperty("keyAlias")
+                keyPassword = keyProps.getProperty("keyPassword")
+                storeFile = file(keyProps.getProperty("storeFile"))
+                storePassword = keyProps.getProperty("storePassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 }

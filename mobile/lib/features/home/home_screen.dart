@@ -74,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await _socket.connect(normalised, token);
       messenger.showSnackBar(const SnackBar(content: Text('Connected!')));
     } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text('Could not reach $normalised. Is the server running?')));
+      messenger.showSnackBar(SnackBar(content: Text('No answer from $normalised yet. Still trying: a sleeping server can take a minute to wake up.')));
     }
   }
 

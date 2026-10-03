@@ -9,7 +9,7 @@ class GpColors {
   static const accent = Color(0xFFFFC93C);
   static const yes = Color(0xFF2ECC71);
   static const no = Color(0xFFFF5E5B);
-  static const muted = Color(0xFFB9B3E0);
+  static const muted = flatStyle ? Color(0xFFE6F3FB) : Color(0xFFB9B3E0);
   static const panel = Color(0x26FFFFFF);
   static const portraitBgs = [
     Color(0xFFFFD6A5), Color(0xFFCAFFBF), Color(0xFF9BF6FF), Color(0xFFBDB2FF),
@@ -109,12 +109,14 @@ class GpBackground extends StatelessWidget {
   final Widget child;
   const GpBackground({super.key, required this.child});
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [GpColors.bgTop, GpColors.bgBottom]),
-        ),
-        child: child,
-      );
+  Widget build(BuildContext context) => flatStyle
+      ? FlatBackground(child: child)
+      : DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [GpColors.bgTop, GpColors.bgBottom]),
+          ),
+          child: child,
+        );
 }
 
 /// Chunky rounded party-game button with a pressed-down shadow.

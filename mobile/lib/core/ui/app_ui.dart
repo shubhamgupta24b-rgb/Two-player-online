@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
+import 'app_flavor.dart';
 import 'party_logo.dart';
 
 export 'party_logo.dart';
 
 /// Colours taken from the app logo: deep navy, neon blue vs red, and gold.
+/// The flat app swaps the navy for board-game blues (sky background, dark-blue panels).
 class AppColors {
-  static const navy = Color(0xFF14207A);
-  static const night = Color(0xFF0A0F3D);
-  static const deep = Color(0xFF060827);
+  static const navy = flatStyle ? Color(0xFF2B6488) : Color(0xFF14207A);
+  static const night = flatStyle ? Color(0xFF22577A) : Color(0xFF0A0F3D);
+  static const deep = flatStyle ? Color(0xFF1B4A6B) : Color(0xFF060827);
   static const blue = Color(0xFF2E8BFF);
   static const red = Color(0xFFFF3B5C);
   static const gold = Color(0xFFFFC93C);
   static const purple = Color(0xFF7B4DFF);
   static const green = Color(0xFF2ECC71);
   static const text = Colors.white;
-  static const muted = Color(0xFFAAB2E8);
-  static const glass = Color(0x1AFFFFFF);
-  static const stroke = Color(0x26FFFFFF);
+  static const muted = flatStyle ? Color(0xFFE6F3FB) : Color(0xFFAAB2E8);
+  static const glass = flatStyle ? Color(0x2EFFFFFF) : Color(0x1AFFFFFF);
+  static const stroke = flatStyle ? Color(0x4DFFFFFF) : Color(0x26FFFFFF);
 }
 
 ThemeData buildAppTheme() {
@@ -48,7 +50,7 @@ class AppBackground extends StatelessWidget {
   final Widget child;
   const AppBackground({super.key, required this.child});
   @override
-  Widget build(BuildContext context) => DecoratedBox(
+  Widget build(BuildContext context) => flatStyle ? FlatBackground(child: child) : DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [AppColors.navy, AppColors.night, AppColors.deep]),
         ),
