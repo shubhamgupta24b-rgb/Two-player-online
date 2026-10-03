@@ -1,16 +1,19 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/app_flavor.dart';
 
 /// The colour (and emoji) of the game being played, for backgrounds, bars and buttons.
 class GameTheme extends InheritedWidget {
   final Color color;
   final String emoji;
-  const GameTheme({super.key, required this.color, required this.emoji, required super.child});
+  final bool flat; // drawn in the flat app's light board-game look
+  const GameTheme({super.key, required this.color, required this.emoji, this.flat = false, required super.child});
 
   static Color colorOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<GameTheme>()?.color ?? const Color(0xFFFFC93C);
+  static bool flatOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<GameTheme>()?.flat ?? false;
 
   @override
-  bool updateShouldNotify(GameTheme old) => old.color != color || old.emoji != emoji;
+  bool updateShouldNotify(GameTheme old) => old.color != color || old.emoji != emoji || old.flat != flat;
 }
 
 /// Deep night-blue background with a glow in the game's own colour, so every game
@@ -18,10 +21,11 @@ class GameTheme extends InheritedWidget {
 class GameBackground extends StatelessWidget {
   final Color color;
   final Widget child;
-  const GameBackground({super.key, required this.color, required this.child});
+  final bool flat; // the flat app's sky-blue board-game look
+  const GameBackground({super.key, required this.color, required this.child, this.flat = false});
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
+  Widget build(BuildContext context) => flat ? FlatBackground(child: child) : DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF151A4A), Color(0xFF0B0E2E), Color(0xFF060820)]),
         ),

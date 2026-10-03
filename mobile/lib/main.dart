@@ -5,6 +5,7 @@ import 'core/auth/authentication_manager.dart';
 import 'core/network/socket_manager.dart';
 import 'core/room/room_manager.dart';
 import 'core/session/game_session_manager.dart';
+import 'core/ui/app_flavor.dart';
 import 'core/ui/app_ui.dart';
 import 'features/splash/splash_screen.dart';
 
@@ -36,7 +37,7 @@ class _AppState extends State<App> {
         ChangeNotifierProvider.value(value: session),
       ],
       child: MaterialApp(
-        title: 'Party Games',
+        title: appName,
         debugShowCheckedModeBanner: false,
         theme: buildAppTheme(),
         home: const SplashScreen(),

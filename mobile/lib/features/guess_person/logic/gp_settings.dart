@@ -1,3 +1,5 @@
+import '../../../core/ui/app_flavor.dart';
+
 class GpSettings {
   static const roundOptions = [3, 5, 10];
   static const timerOptions = [0, 15, 30, 60];
@@ -16,7 +18,7 @@ class GpSettings {
     this.rounds = 5,
     this.timerSeconds = 0,
     this.peopleCount = 30,
-    this.autoEliminate = false,
+    this.autoEliminate = flatStyle, // the flat app folds down non-matching faces by itself
     this.sound = true,
     this.playerCount = 2,
   });

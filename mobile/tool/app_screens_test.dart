@@ -1,6 +1,7 @@
 // Renders the app's main screens (outside the games) for a design review.
 // Run from mobile/:  flutter test tool/app_screens_test.dart
 // Writes build/screens/app_<name>_shot.png
+// ignore_for_file: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:multiplayer_game/core/auth/authentication_manager.dart';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/ui/app_flavor.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../../guess_person/widgets/result_view.dart' show Confetti;
@@ -27,6 +28,28 @@ class PauseButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final leave = LeaveGameScope.of(context);
     if (leave == null) return const SizedBox.shrink();
+    if (GameTheme.flatOf(context)) {
+      // Flat look: round white button with a blue icon, like the board game app's ✕.
+      return Padding(
+        padding: const EdgeInsets.all(2),
+        child: Tooltip(
+          message: 'Leave game',
+          child: Semantics(
+            button: true,
+            label: 'Leave game',
+            child: Material(
+              color: Colors.white,
+              shape: const CircleBorder(side: BorderSide(color: FlatColors.tileShade, width: 2)),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: leave,
+                child: const SizedBox(width: 42, height: 42, child: Icon(Icons.pause_rounded, color: FlatColors.sky, size: 28)),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.all(2),
       child: GlassIconButton(icon: Icons.pause_rounded, tooltip: 'Leave game', onPressed: leave),
@@ -139,6 +162,7 @@ class _LocalGameShellState extends State<LocalGameShell> {
   @override
   Widget build(BuildContext context) {
     final g = widget.game;
+    final flat = isFlatGame(g.id) && phase == _ShellPhase.playing; // intro and results keep the dark look
     final Widget body = switch (phase) {
       _ShellPhase.intro => _Intro(
           game: g,
@@ -161,12 +185,14 @@ class _LocalGameShellState extends State<LocalGameShell> {
         if (!didPop) _confirmLeave();
       },
       child: Scaffold(
-        // Each game glows in its own colour.
+        // Each game glows in its own colour (the flat app draws word games on a sky-blue board).
         body: GameTheme(
           color: g.color,
           emoji: g.emoji,
+          flat: flat,
           child: GameBackground(
             color: g.color,
+            flat: flat,
             child: SafeArea(
               child: LeaveGameScope(
                 onLeave: _confirmLeave,

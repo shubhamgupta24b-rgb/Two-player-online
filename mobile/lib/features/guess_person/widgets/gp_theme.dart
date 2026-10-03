@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/app_flavor.dart';
 
 class GpColors {
   static const bgTop = Color(0xFF241A5C);
@@ -16,11 +17,11 @@ class GpColors {
   ];
 }
 
-/// Guess the Person's warm board look.
+/// Guess the Person's board look: warm coral, or sky blue in the flat app.
 class GpCoral {
-  static const bg = Color(0xFFF2A283);
+  static const bg = flatStyle ? FlatColors.sky : Color(0xFFF2A283);
   static const mark = Color(0x22FFFFFF); // faint "?" shapes
-  static const board = Color(0xFFA9634E);
+  static const board = flatStyle ? FlatColors.board : Color(0xFFA9634E);
   static const nameStrip = Color(0xFF3A3846);
   static const tile = Colors.white;
   static const tileInk = Color(0xFF2B2A35);

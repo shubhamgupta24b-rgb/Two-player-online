@@ -1,8 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/ui/app_flavor.dart';
+import '../../guess_person/data/person_data.dart';
 import '../../guess_person/models/gp_player.dart';
+import '../../guess_person/models/person.dart';
 import '../../guess_person/widgets/gp_theme.dart';
+import '../../guess_person/widgets/person_portrait.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/local_game_shell.dart' show PauseButton;
@@ -159,12 +163,14 @@ class _MemoryBoard extends StatelessWidget {
           child: Text(
             g.finished ? 'BOARD CLEAR!' : (g.showingMismatch ? 'NO MATCH…' : '${current.whose} TURN'),
             key: ValueKey('${g.turn}${g.showingMismatch}${g.finished}'),
-            style: TextStyle(color: g.showingMismatch ? Colors.white70 : current.color, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1),
+            style: flatStyle
+                ? const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 1, shadows: [Shadow(color: Color(0x66000000), offset: Offset(0, 2), blurRadius: 3)])
+                : TextStyle(color: g.showingMismatch ? Colors.white70 : current.color, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1),
           ),
         ),
         const SizedBox(height: 10),
         Expanded(
-          child: LayoutBuilder(builder: (context, c) {
+          child: _board(LayoutBuilder(builder: (context, c) {
             // 4 columns x 6 rows on phones; 6 x 4 when the space is wide.
             final cols = c.maxWidth > c.maxHeight ? 6 : 4;
             final rows = (g.cards.length / cols).ceil();
@@ -193,11 +199,23 @@ class _MemoryBoard extends StatelessWidget {
                 );
               },
             );
-          }),
+          })),
         ),
       ]),
     );
   }
+
+  /// The flat app lays the cards on a dark board panel, like Guess the Person.
+  Widget _board(Widget grid) => flatStyle
+      ? Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: FlatColors.board, borderRadius: BorderRadius.circular(24)), child: grid)
+      : grid;
+}
+
+/// Flat app: each memory symbol stands for one cartoon person (distinct looks, no near-twins).
+const _faceIds = [11, 16, 1, 12, 5, 3, 2, 4, 9, 19, 15, 28];
+Person _faceFor(String symbol) {
+  final id = _faceIds[MemoryLogic.symbols.indexOf(symbol) % _faceIds.length];
+  return allPeople.firstWhere((p) => p.id == id);
 }
 
 class _ScorePill extends StatelessWidget {
@@ -271,7 +289,7 @@ class _FlipCard extends StatelessWidget {
               transform: Matrix4.identity()
                 ..setEntry(3, 2, 0.002)
                 ..rotateY(showFace ? angle - pi : angle),
-              child: showFace ? _face() : _back(),
+              child: flatStyle ? (showFace ? _flatFace() : _flatBack()) : (showFace ? _face() : _back()),
             );
           },
         ),
@@ -303,6 +321,41 @@ class _FlipCard extends StatelessWidget {
           ),
         ),
       );
+
+  /// White card with a big blue "?".
+  Widget _flatBack() => Container(
+        decoration: flatTile(radius: 12),
+        alignment: Alignment.center,
+        child: const FittedBox(
+          child: Padding(
+            padding: EdgeInsets.all(6),
+            child: Text('?', style: TextStyle(color: FlatColors.sky, fontSize: 48, fontWeight: FontWeight.w900, height: 1)),
+          ),
+        ),
+      );
+
+  /// The person's face with their name on a dark strip; matched cards get the owner's colour.
+  Widget _flatFace() {
+    final p = _faceFor(symbol);
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ownerColor ?? Colors.white, width: ownerColor == null ? 2 : 4),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Expanded(child: Padding(padding: const EdgeInsets.fromLTRB(3, 4, 3, 0), child: PersonPortrait(p))),
+          Container(
+            color: ownerColor ?? FlatColors.strip,
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: FittedBox(fit: BoxFit.scaleDown, child: Text(p.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14))),
+          ),
+        ]),
+      ),
+    );
+  }
 
   Widget _face() => Container(
         decoration: BoxDecoration(

@@ -29,6 +29,14 @@ const _hair = {
 const _shirt = {'red': Color(0xFFE5484D), 'blue': Color(0xFF3B82F6), 'green': Color(0xFF2FB36D), 'yellow': Color(0xFFF6C344)};
 const _hatColors = [Color(0xFF7C3AED), Color(0xFFDC2626), Color(0xFF2563EB), Color(0xFF8B5E3C), Color(0xFF0F766E)];
 const _eyes = {'brown': Color(0xFF9A5B22), 'blue': Color(0xFF1E88FF), 'green': Color(0xFF1FB84A)};
+/// The colour a trait is drawn in, e.g. ('hair', 'red'), for swatches on question buttons.
+Color? traitColor(String kind, String value) => switch (kind) {
+      'skin' => _skin[value],
+      'hair' => _hair[value],
+      'eyes' => _eyes[value],
+      _ => null,
+    };
+
 const _gold = Color(0xFFFFB800);
 const _ink = Color(0xFF26213A);
 

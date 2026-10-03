@@ -1,8 +1,18 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// The flat app (--dart-define=APP_STYLE=flat) is a second app: its own id and name, so it
+// installs next to Party Games. Flutter hands the dart-defines to Gradle base64-encoded.
+val dartDefines: List<String> = (project.findProperty("dart-defines") as String?)
+    ?.split(",")
+    ?.map { String(Base64.getDecoder().decode(it)) }
+    ?: emptyList()
+val flatApp = dartDefines.contains("APP_STYLE=flat")
 
 android {
     namespace = "com.example.multiplayer_game"
@@ -19,7 +29,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.multiplayer_game"
+        applicationId = if (flatApp) "com.example.multiplayer_game.flat" else "com.example.multiplayer_game"
+        manifestPlaceholders["appLabel"] = if (flatApp) "Party Games Flat" else "Party Games"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
