@@ -6,6 +6,7 @@ import '../../guess_person/widgets/gp_theme.dart';
 import '../../guess_person/widgets/result_view.dart' show Confetti;
 import '../../guess_person/widgets/score_board.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/records/records.dart';
 import 'game_style.dart';
 import 'local_game_info.dart';
 
@@ -146,6 +147,23 @@ class _LocalGameShellState extends State<LocalGameShell> {
       phase = _ShellPhase.result;
     });
     if (widget.game.solo) _saveBest(scores.single);
+    _record(scores);
+  }
+
+  /// My Records on this phone: solo and "you vs the computer" count as yours (with wins);
+  /// a game shared by several people records the best score made on this phone.
+  void _record(List<int> scores) {
+    final top = scores.reduce((a, b) => a > b ? a : b);
+    final people = players.length - botCount;
+    if (widget.game.solo) {
+      Records.add(widget.game.id, score: scores.single).ignore();
+    } else if (vsComputer && people == 1) {
+      final leaders = [for (var i = 0; i < scores.length; i++) if (scores[i] == top) i];
+      final won = scores[0] == top && (leaders.length == 1 || _teamsOn && leaders.length == 2);
+      Records.add(_game.id, score: scores[0], won: won).ignore();
+    } else {
+      Records.add(_game.id, score: top).ignore();
+    }
   }
 
   /// Solo games keep a best score per game on this phone.

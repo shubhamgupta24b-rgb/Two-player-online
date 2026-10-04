@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth/authentication_manager.dart';
+import '../core/records/records.dart';
 import '../core/room/room_manager.dart';
 import '../core/session/game_session_manager.dart';
 import '../core/ui/app_ui.dart';
@@ -44,7 +45,9 @@ class GameHostScreen extends StatelessWidget {
 
   Widget _body(BuildContext context, GameSessionManager session, RoomManager rm, String myId) {
     final result = session.result;
-    if (room.status == 'finished' && result != null) return _Results(result: result, room: room, myId: myId);
+    if (room.status == 'finished' && result != null) {
+      return _RecordOnce(result: result, gameType: room.gameType, myId: myId, child: _Results(result: result, room: room, myId: myId));
+    }
     final screen = gameScreenFor(room.gameType);
     if (screen == null) return const Center(child: Text('This game is not available in this app version.'));
     if (session.state == null) return const Center(child: CircularProgressIndicator());
@@ -82,6 +85,34 @@ class _RoomBar extends StatelessWidget implements PreferredSizeWidget {
       bottom: PreferredSize(preferredSize: const Size.fromHeight(3), child: Container(height: 3, color: game.color)),
     );
   }
+}
+
+/// Adds this phone's player's result to My Records once, when the results first show.
+class _RecordOnce extends StatefulWidget {
+  final Map<String, dynamic> result;
+  final String gameType;
+  final String myId;
+  final Widget child;
+  const _RecordOnce({required this.result, required this.gameType, required this.myId, required this.child});
+  @override
+  State<_RecordOnce> createState() => _RecordOnceState();
+}
+
+class _RecordOnceState extends State<_RecordOnce> {
+  @override
+  void initState() {
+    super.initState();
+    final mine = (widget.result['ranking'] as List?)?.cast<Map>().where((r) => r['userId'] == widget.myId).firstOrNull;
+    if (mine == null) return;
+    final winners = (widget.result['winners'] as List?)?.cast<String>() ?? const [];
+    final ranking = (widget.result['ranking'] as List).cast<Map>();
+    // A win is a game you won outright, or together with your team (not an everyone-tied draw).
+    final won = winners.contains(widget.myId) && winners.length < ranking.length;
+    Records.add(widget.gameType, score: (mine['score'] as num?)?.toInt() ?? 0, won: won).ignore();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class _Results extends StatelessWidget {

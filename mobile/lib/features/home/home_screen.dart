@@ -12,7 +12,9 @@ import '../join_room/join_room_screen.dart';
 import '../lobby/lobby_screen.dart';
 import '../local_games/local_games_hub_screen.dart';
 import '../local_games/shell/local_game_shell.dart';
+import '../privacy/privacy_screen.dart';
 import '../raja_mantri/rmcs_screen.dart';
+import '../records/records_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -119,12 +121,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: const Text('SEE ALL', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900)),
                     )),
                 _featured(),
-                const SectionTitle('COMING SOON'),
-                const Row(children: [
-                  Expanded(child: _SoonTile(icon: Icons.bolt_rounded, title: 'QUICK PLAY', subtitle: 'Match with anyone')),
-                  SizedBox(width: 12),
-                  Expanded(child: _SoonTile(icon: Icons.emoji_events_rounded, title: 'PROFILE', subtitle: 'Stats & trophies')),
+                const SectionTitle('MORE'),
+                Row(children: [
+                  Expanded(
+                    child: _ActionCard(
+                      title: '🏆 MY RECORDS',
+                      subtitle: 'Best scores & wins',
+                      icon: Icons.emoji_events_rounded,
+                      colors: const [Color(0xFFFFB300), Color(0xFFFF6F00)],
+                      onTap: () => _open(const RecordsScreen()),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(child: _SoonTile(icon: Icons.bolt_rounded, title: 'QUICK PLAY', subtitle: 'Coming soon')),
                 ]),
+                const SizedBox(height: 14),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => _open(const PrivacyScreen()),
+                    icon: const Icon(Icons.shield_outlined, size: 18, color: AppColors.muted),
+                    label: const Text('Privacy', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
+                  ),
+                ),
               ]),
             ),
           ),

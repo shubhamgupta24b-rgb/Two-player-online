@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:multiplayer_game/features/local_games/battleship/battleship_game.dart';
 import 'package:multiplayer_game/features/local_games/bingo/bingo_game.dart';
 import 'package:multiplayer_game/features/local_games/checkers/checkers_game.dart';
-import 'package:multiplayer_game/features/local_games/shell/bots.dart';
 import 'package:multiplayer_game/features/local_games/shell/local_game_info.dart';
 import 'package:multiplayer_game/features/local_games/shell/local_game_logic.dart';
 
