@@ -256,19 +256,38 @@ class _ArenaPainter extends CustomPainter {
   final List<int> heads;
   _ArenaPainter(this.g, this.colors, this.owners, this.heads);
 
+  // Arena palette: a dark checkered floor.
+  static const _floorA = Color(0xFF1A2440);
+  static const _floorB = Color(0xFF1F2B4C);
+
   @override
   void paint(Canvas canvas, Size size) {
     final cw = size.width / g.cols, ch = size.height / g.rows;
+    final floor = Paint();
+    for (var r = 0; r < g.rows; r++) {
+      for (var c = 0; c < g.cols; c++) {
+        floor.color = (r + c).isEven ? _floorA : _floorB;
+        canvas.drawRect(Rect.fromLTWH(c * cw, r * ch, cw + 0.5, ch + 0.5), floor);
+      }
+    }
     for (var i = 0; i < owners.length; i++) {
       final o = owners[i];
       if (o < 0) continue;
       final rect = Rect.fromLTWH((i % g.cols) * cw + 1, (i ~/ g.cols) * ch + 1, cw - 2, ch - 2);
       final isHead = heads[o] == i;
-      canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(cw * 0.3)), Paint()..color = isHead ? Colors.white : colors[o].withValues(alpha: 0.85));
-      if (isHead) canvas.drawRRect(RRect.fromRectAndRadius(rect.deflate(cw * 0.18), Radius.circular(cw * 0.2)), Paint()..color = colors[o]);
+      final body = RRect.fromRectAndRadius(rect, Radius.circular(cw * (isHead ? 0.45 : 0.3)));
+      canvas.drawRRect(body.shift(const Offset(0, 1.5)), Paint()..color = Colors.black38);
+      canvas.drawRRect(body, Paint()..shader = LinearGradient(colors: [Color.lerp(colors[o], Colors.white, isHead ? 0.25 : 0.12)!, colors[o]], begin: Alignment.topLeft, end: Alignment.bottomRight).createShader(rect));
+      if (isHead) {
+        // Two eyes, so the head reads at a glance.
+        for (final dx in [-0.2, 0.2]) {
+          final e = rect.center + Offset(rect.width * dx, -rect.height * 0.08);
+          canvas.drawCircle(e, cw * 0.14, Paint()..color = Colors.white);
+          canvas.drawCircle(e, cw * 0.07, Paint()..color = Colors.black);
+        }
+      }
     }
   }
-
   @override
   bool shouldRepaint(_ArenaPainter old) => true;
 }

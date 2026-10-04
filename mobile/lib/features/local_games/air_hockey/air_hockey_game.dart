@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -257,43 +256,80 @@ class _TablePainter extends CustomPainter {
       : puck = g.puck,
         mallets = List.of(g.mallet);
 
+  // Rink palette.
+  static const _rail = [Color(0xFF39404F), Color(0xFF1C212B)];
+  static const _ice = [Color(0xFFF3F8FF), Color(0xFFDDE9F7)];
+  static const _marking = Color(0xFFE5484D);
+  static const _puck = Color(0xFF15181F);
+
   @override
   void paint(Canvas canvas, Size size) {
     final s = table.width;
     Offset at(V v) => Offset(table.left + v.x * s, table.top + v.y * s);
-    canvas.drawRRect(RRect.fromRectAndRadius(table, Radius.circular(s * 0.08)), Paint()..color = const Color(0xFF1B2A4A));
+    // Rail, then the ice inside it.
+    final outer = RRect.fromRectAndRadius(table.inflate(s * 0.035), Radius.circular(s * 0.11));
+    canvas.drawRRect(outer.shift(const Offset(0, 6)), Paint()..color = Colors.black54);
+    canvas.drawRRect(outer, Paint()..shader = const LinearGradient(colors: _rail, begin: Alignment.topCenter, end: Alignment.bottomCenter).createShader(outer.outerRect));
+    final ice = RRect.fromRectAndRadius(table, Radius.circular(s * 0.08));
+    canvas.drawRRect(ice, Paint()..shader = const LinearGradient(colors: _ice, begin: Alignment.topCenter, end: Alignment.bottomCenter).createShader(table));
+    canvas.save();
+    canvas.clipRRect(ice);
+    // Air holes.
+    final hole = Paint()..color = const Color(0x1F2A3B55);
+    for (var y = s * 0.05; y < table.height; y += s * 0.07) {
+      for (var x = s * 0.05; x < s; x += s * 0.07) {
+        canvas.drawCircle(Offset(table.left + x, table.top + y), 1.2, hole);
+      }
+    }
+    // Markings: centre line and circle, goal creases in each player's colour.
     final line = Paint()
-      ..color = Colors.white24
+      ..color = _marking.withValues(alpha: 0.75)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
     canvas.drawLine(at(const V(0, AirHockeyLogic.length / 2)), at(const V(1, AirHockeyLogic.length / 2)), line);
     canvas.drawCircle(at(const V(0.5, AirHockeyLogic.length / 2)), s * 0.15, line);
-    // Goals.
+    for (final (y, c) in [(0.0, colors[1]), (AirHockeyLogic.length, colors[0])]) {
+      canvas.drawArc(Rect.fromCircle(center: at(V(0.5, y)), radius: s * 0.24), y == 0 ? 0 : 3.1416, 3.1416, false, Paint()
+        ..color = c.withValues(alpha: 0.6)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3);
+    }
+    canvas.restore();
+    // Goal slots in the rail.
     for (final (y, c) in [(0.0, colors[1]), (AirHockeyLogic.length, colors[0])]) {
       canvas.drawLine(at(V(0.5 - AirHockeyLogic.goalHalf, y)), at(V(0.5 + AirHockeyLogic.goalHalf, y)), Paint()
+        ..color = const Color(0xFF0A0C10)
+        ..strokeWidth = 12
+        ..strokeCap = StrokeCap.round);
+      canvas.drawLine(at(V(0.5 - AirHockeyLogic.goalHalf, y)), at(V(0.5 + AirHockeyLogic.goalHalf, y)), Paint()
         ..color = c
-        ..strokeWidth = 10
+        ..strokeWidth = 4
         ..strokeCap = StrokeCap.round);
     }
-    // Mallets and puck.
-    for (var p = 0; p < 2; p++) {
-      canvas.drawCircle(at(mallets[p]), AirHockeyLogic.malletR * s, Paint()..color = colors[p]);
-      canvas.drawCircle(at(mallets[p]), AirHockeyLogic.malletR * s * 0.45, Paint()..color = Color.lerp(colors[p], Colors.white, 0.5)!);
-    }
-    canvas.drawCircle(at(puck), AirHockeyLogic.puckR * s, Paint()..color = GpColors.accent);
-    canvas.drawCircle(at(puck), AirHockeyLogic.puckR * s, Paint()
-      ..color = Colors.black26
+    // Puck (with shadow), then the mallets on top.
+    final pc = at(puck), pr = AirHockeyLogic.puckR * s;
+    canvas.drawCircle(pc + const Offset(2, 3), pr, Paint()..color = Colors.black26);
+    canvas.drawCircle(pc, pr, Paint()..shader = RadialGradient(center: const Alignment(-0.3, -0.4), colors: [const Color(0xFF4A5060), _puck]).createShader(Rect.fromCircle(center: pc, radius: pr)));
+    canvas.drawCircle(pc, pr * 0.62, Paint()
+      ..color = Colors.white24
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2);
+      ..strokeWidth = 1.5);
+    for (var p = 0; p < 2; p++) {
+      final m = at(mallets[p]), mr = AirHockeyLogic.malletR * s;
+      canvas.drawCircle(m + const Offset(3, 5), mr, Paint()..color = Colors.black38);
+      canvas.drawCircle(m, mr, Paint()..shader = RadialGradient(center: const Alignment(-0.35, -0.4), colors: [Color.lerp(colors[p], Colors.white, 0.35)!, colors[p], Color.lerp(colors[p], Colors.black, 0.35)!]).createShader(Rect.fromCircle(center: m, radius: mr)));
+      // The handle knob.
+      canvas.drawCircle(m, mr * 0.42, Paint()..color = Color.lerp(colors[p], Colors.black, 0.25)!);
+      canvas.drawCircle(m - Offset(mr * 0.1, mr * 0.12), mr * 0.3, Paint()..color = Color.lerp(colors[p], Colors.white, 0.45)!);
+    }
     if (g.paused && g.lastGoalBy != null) {
       final tp = TextPainter(
-        text: const TextSpan(text: 'GOAL!', style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900)),
+        text: const TextSpan(text: 'GOAL!', style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 3))])),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, table.center - Offset(tp.width / 2, tp.height / 2));
     }
   }
-
   @override
   bool shouldRepaint(_TablePainter old) => true;
 }
