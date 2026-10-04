@@ -4,6 +4,7 @@ import '../../core/auth/authentication_manager.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/records/records.dart';
 import '../../core/ui/app_ui.dart';
+import '../../core/ui/components.dart';
 import '../login/login_screen.dart';
 
 /// The privacy policy in short (the full text is on the server's /privacy page), and a way
@@ -21,18 +22,13 @@ class PrivacyScreen extends StatelessWidget {
   ];
 
   Future<void> _delete(BuildContext context) async {
-    final sure = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Delete my data?'),
-        content: const Text('This removes your name, player ID and all your records from this phone. You can start again with a new name.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('KEEP')),
-          TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('DELETE', style: TextStyle(color: AppColors.red))),
-        ],
-      ),
-    );
-    if (sure != true || !context.mounted) return;
+    final sure = await confirmAction(context,
+        title: 'Delete my data?',
+        message: 'This removes your name, player ID and all your records from this phone. You can start again with a new name.',
+        confirm: 'DELETE',
+        cancel: 'KEEP',
+        emoji: '🗑️');
+    if (!sure || !context.mounted) return;
     final auth = context.read<AuthenticationManager>();
     final socket = context.read<SocketManager>();
     final nav = Navigator.of(context);
@@ -48,7 +44,7 @@ class PrivacyScreen extends StatelessWidget {
           child: SafeArea(
             child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 24), children: [
               Row(children: [
-                IconButton(tooltip: 'Back', onPressed: () => Navigator.maybePop(context), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70)),
+                AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
                 const Text('🛡 PRIVACY', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1)),
               ]),
               const SizedBox(height: 8),

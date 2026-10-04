@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth/authentication_manager.dart';
 import '../../core/records/records.dart';
 import '../../core/ui/app_ui.dart';
+import '../../core/ui/components.dart';
 import '../../games/game_catalog.dart';
 import '../local_games/local_games_hub_screen.dart';
 import '../privacy/privacy_screen.dart';
@@ -50,7 +51,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 4, 16, 6),
               child: Row(children: [
-                IconButton(tooltip: 'Back', onPressed: () => Navigator.maybePop(context), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70)),
+                AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
                 const Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('🏆 MY RECORDS', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1)),

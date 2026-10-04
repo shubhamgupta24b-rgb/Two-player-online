@@ -5,6 +5,7 @@ import '../../config.dart';
 import '../../core/auth/authentication_manager.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/ui/app_ui.dart';
+import '../../core/ui/components.dart';
 import '../guess_person/widgets/gp_theme.dart' show GpButton;
 import '../home/home_screen.dart';
 
@@ -48,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _snack(String m) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+  void _snack(String m) => showToast(context, friendlyError(m), tone: Tone.warn, duration: const Duration(seconds: 3));
 
   @override
   Widget build(BuildContext context) {

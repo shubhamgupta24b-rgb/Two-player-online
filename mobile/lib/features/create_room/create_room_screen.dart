@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/room/room_manager.dart';
 import '../../core/ui/app_ui.dart';
+import '../../core/ui/components.dart';
 import '../../games/game_catalog.dart';
 import '../guess_person/widgets/gp_theme.dart' show GpButton, GpColors;
 import '../lobby/lobby_screen.dart';
@@ -31,7 +32,8 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
     if (!mounted) return;
     if (err != null) {
       setState(() => busy = false);
-      messenger.showSnackBar(SnackBar(content: Text(err)));
+      messenger.hideCurrentSnackBar();
+      if (mounted) showToast(context, friendlyError(err), tone: Tone.danger, duration: const Duration(seconds: 3));
       return;
     }
     nav.pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LobbyScreen()), (r) => r.isFirst);
@@ -46,7 +48,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 4, 16, 10),
               child: Row(children: [
-                IconButton(tooltip: 'Back', onPressed: () => Navigator.maybePop(context), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70)),
+                AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     const Text('CREATE A ROOM', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1)),

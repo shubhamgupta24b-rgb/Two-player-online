@@ -7,6 +7,7 @@ import '../../core/network/lan_discovery.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/room/room_manager.dart';
 import '../../core/ui/app_ui.dart';
+import '../../core/ui/components.dart';
 import '../create_room/create_room_screen.dart';
 import '../guess_person/screens/guess_person_menu_screen.dart';
 import '../join_room/join_room_screen.dart';
@@ -62,17 +63,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// (Re)connects to the server for the current mode and says how it went.
   Future<void> _connect({String? done}) async {
-    final messenger = ScaffoldMessenger.of(context);
     final token = context.read<AuthenticationManager>().token;
     final wifi = AppConfig.mode == ServerMode.wifi;
     try {
       await _socket.connect(AppConfig.serverUrl, token);
-      messenger.showSnackBar(SnackBar(content: Text(done ?? 'Connected!')));
+      if (mounted) showToast(context, done ?? 'Connected!', tone: Tone.success);
     } catch (_) {
-      messenger.showSnackBar(SnackBar(
-          content: Text(wifi
-              ? 'The host isn\'t answering. Is their app still open, on the same hotspot or Wi-Fi?'
-              : 'Not connected yet. The server may be waking up (up to a minute): it keeps trying by itself.')));
+      if (!mounted) return;
+      showToast(
+        context,
+        wifi ? 'The host isn\'t answering. Is their app still open, on the same hotspot or Wi-Fi?' : 'Not connected yet. The server may be waking up (up to a minute): it keeps trying by itself.',
+        tone: Tone.warn,
+        duration: const Duration(seconds: 4),
+      );
     }
   }
 
@@ -96,12 +99,11 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (_) => const _WifiSearchSheet(),
     );
     if (choice == null || !mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
     if (choice == _WifiSearchSheet.host) {
       try {
         await LanHost.start();
       } catch (_) {
-        messenger.showSnackBar(const SnackBar(content: Text('Could not start hosting on this phone. Close other game apps and try again.')));
+        if (mounted) showToast(context, 'Could not start hosting on this phone. Close other game apps and try again.', tone: Tone.danger, duration: const Duration(seconds: 4));
         return;
       }
       await AppConfig.useWifi(LanHost.selfUrl, hosting: true);
@@ -122,19 +124,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _showHostHelp() async {
     final ips = await LanHost.addresses();
     if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('📡 Hosting on this phone'),
-        content: Text(
-          '1. Turn on this phone\'s HOTSPOT (or stay on the same Wi-Fi as your friends).\n'
+    await showAppDialog<void>(
+      context,
+      emoji: '📡',
+      title: 'Hosting on this phone',
+      message: '1. Turn on this phone\'s HOTSPOT (or stay on the same Wi-Fi as your friends).\n'
           '2. Friends connect to it, open Party Games and tap 📶 SAME WI-FI → JOIN A FRIEND.\n'
           '3. Create a room here and share the code (or use Quick Play).\n\n'
           'No internet needed. Keep this app open while you play.'
           '${ips.isEmpty ? '' : '\n\nThis phone: ${ips.join(' · ')}'}',
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('GOT IT'))],
-      ),
+      actions: [Builder(builder: (c) => AppButton('GOT IT', onPressed: () => Navigator.pop(c)))],
     );
   }
 
@@ -186,6 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 14),
                 Center(
                   child: TextButton.icon(
+                    style: TextButton.styleFrom(minimumSize: const Size(kTouchTarget, kTouchTarget)),
                     onPressed: () => _open(const PrivacyScreen()),
                     icon: const Icon(Icons.shield_outlined, size: 18, color: AppColors.muted),
                     label: const Text('Privacy', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
@@ -219,6 +219,8 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text('Ready to play?', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
         ]),
       ),
+      AppIconButton(icon: Icons.tune_rounded, tooltip: 'Settings', onPressed: () => showSettingsSheet(context)),
+      const SizedBox(width: 4),
       const AppLogo(size: 52),
     ]);
   }

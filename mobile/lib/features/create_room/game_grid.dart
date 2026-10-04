@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/ui/app_ui.dart';
+import '../../core/ui/components.dart';
 import '../../games/game_catalog.dart';
 
 /// Category chips plus a grid of game tiles. Games outside [playable] (when given) are
@@ -59,7 +60,7 @@ class GamePickerScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 4, 16, 10),
                 child: Row(children: [
-                  IconButton(tooltip: 'Back', onPressed: () => Navigator.maybePop(context), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70)),
+                  AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       const Text('PICK THE NEXT GAME', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 1)),

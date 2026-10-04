@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/records/records.dart';
+import '../../core/ui/components.dart';
 import '../../games/game_catalog.dart';
 import '../guess_person/screens/guess_person_menu_screen.dart';
 import '../guess_person/widgets/gp_theme.dart';
@@ -253,16 +254,14 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(4, 4, 16, 0),
                 child: Row(children: [
-                  IconButton(
-                    tooltip: 'Back',
-                    onPressed: () => Navigator.maybePop(context),
-                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
-                    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                  ),
+                  AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
+                  const SizedBox(width: Space.xs),
                   const Expanded(
                     child: Text('PARTY GAMES', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: 0.5, shadows: [Shadow(color: Color(0xFF6C5CE7), offset: Offset(0, 3))])),
                   ),
                   Text('$totalGameCount GAMES', style: const TextStyle(color: GpColors.accent, fontWeight: FontWeight.w900, fontSize: 12.5, letterSpacing: 1)),
+                  const SizedBox(width: Space.xs),
+                  AppIconButton(icon: Icons.tune_rounded, tooltip: 'Settings', onPressed: () => showSettingsSheet(context)),
                 ]),
               ),
             ),
@@ -380,6 +379,7 @@ class _Tile extends StatelessWidget {
               boxShadow: [BoxShadow(color: Color.lerp(color, Colors.black, 0.55)!, offset: const Offset(0, 4))],
             ),
             child: Stack(children: [
+              const Positioned.fill(child: IgnorePointer(child: ClipRRect(borderRadius: BorderRadius.all(Radius.circular(20)), child: CustomPaint(painter: _TileStripes())))),
               Padding(
                 padding: const EdgeInsets.fromLTRB(9, 8, 9, 9),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -436,4 +436,26 @@ class _RecentTile extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// The same diagonal stripes as the game intro banners, so tiles and intros match.
+class _TileStripes extends CustomPainter {
+  const _TileStripes();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stripe = Paint()..color = Colors.white.withValues(alpha: 0.06);
+    for (var x = -size.height; x < size.width; x += 22) {
+      canvas.drawPath(
+          Path()
+            ..moveTo(x, size.height)
+            ..lineTo(x + 10, size.height)
+            ..lineTo(x + 10 + size.height, 0)
+            ..lineTo(x + size.height, 0)
+            ..close(),
+          stripe);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
