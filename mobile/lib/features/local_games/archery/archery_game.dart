@@ -5,7 +5,7 @@ import '../../../core/audio/game_audio.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
 import '../shell/sky.dart';
 import '../shell/ticking_play.dart';
 
@@ -243,24 +243,7 @@ class _ArcheryViewState extends State<_ArcheryView> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
       child: Column(children: [
-        Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Wrap(spacing: 6, runSpacing: 4, children: [
-              for (var i = 0; i < widget.players.length; i++)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: i == g.turn && !g.finished ? widget.players[i].color : Colors.white10,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: widget.players[i].color, width: 2),
-                  ),
-                  child: Text('${widget.players[i].name} ${g.score[i]} · 🏹${g.arrowsEach - g.shots[i].length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
-                ),
-            ]),
-          ),
-        ]),
+        GameHud(players: widget.players, scores: g.score, turn: g.finished ? null : g.turn, extra: (i) => '🏹${g.arrowsEach - g.shots[i].length}'),
         const SizedBox(height: 8),
         Expanded(
           child: LayoutBuilder(builder: (context, c) {
@@ -291,15 +274,11 @@ class _ArcheryViewState extends State<_ArcheryView> {
           }),
         ),
         const SizedBox(height: 10),
-        SizedBox(
+        GameStatus(
+          player: current,
           height: 52,
-          child: Center(
-            child: showLast
-                ? Text(g.lastScore == 0 ? 'MISS!' : (g.lastScore == 10 ? '🎯 BULLSEYE! +10' : '+${g.lastScore}'),
-                    style: TextStyle(color: g.lastScore! >= 9 ? const Color(0xFFFFD54F) : Colors.white, fontSize: 30, fontWeight: FontWeight.w900))
-                : Text(g.finished ? 'All arrows shot!' : (_myTurn ? '${current.whose} TURN · pull back and let go' : '${current.name} is aiming…'),
-                    textAlign: TextAlign.center, style: TextStyle(color: current.color, fontWeight: FontWeight.w900, fontSize: 16)),
-          ),
+          turnText: g.finished ? 'All arrows shot!' : (_myTurn ? '${current.whose} TURN · pull back and let go' : '${current.name} is aiming…'),
+          message: showLast ? (g.lastScore == 0 ? 'MISS!' : (g.lastScore == 10 ? '🎯 BULLSEYE! +10' : '+${g.lastScore}')) : null,
         ),
       ]),
     );

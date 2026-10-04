@@ -5,7 +5,7 @@ import '../../../core/audio/game_audio.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
 import '../shell/sky.dart';
 import '../shell/ticking_play.dart';
 
@@ -366,25 +366,7 @@ class _SlingViewState extends State<_SlingView> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
       child: Column(children: [
-        Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Wrap(spacing: 6, runSpacing: 4, children: [
-              for (var i = 0; i < widget.players.length; i++)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: i == g.turn && !g.finished ? widget.players[i].color : Colors.white10,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: widget.players[i].color, width: 2),
-                  ),
-                  child: Text('${widget.players[i].name} ${g.score[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
-                ),
-            ]),
-          ),
-          Text('FORT ${g.round}/${SlingLogic.rounds}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
-        ]),
+        GameHud(players: widget.players, scores: g.score, turn: g.finished ? null : g.turn, trailing: HudLabel('FORT ${g.round}/${SlingLogic.rounds}')),
         const SizedBox(height: 8),
         Expanded(
           child: LayoutBuilder(builder: (context, c) {
@@ -412,19 +394,10 @@ class _SlingViewState extends State<_SlingView> {
           }),
         ),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 40,
-          child: Center(
-            child: showMsg
-                ? Text(g.message!, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFFFD54F), fontSize: 20, fontWeight: FontWeight.w900))
-                : Text(
-                    g.finished
-                        ? 'All forts done!'
-                        : (_mine ? '${current.whose} TURN · ${'🐦' * g.birds} · pull back & let go' : '${current.name} is aiming… · 🐷 ${g.pigsLeft} left'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: current.color, fontWeight: FontWeight.w900, fontSize: 14),
-                  ),
-          ),
+        GameStatus(
+          player: current,
+          turnText: g.finished ? 'All forts done!' : (_mine ? '${current.whose} TURN · ${'🐦' * g.birds}' : '${current.name} is aiming… · 🐷 ${g.pigsLeft} left'),
+          message: showMsg ? g.message : null,
         ),
       ]),
     );

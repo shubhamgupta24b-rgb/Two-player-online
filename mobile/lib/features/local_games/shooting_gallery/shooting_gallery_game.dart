@@ -1,11 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../../../core/audio/game_audio.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
 import '../shell/ticking_play.dart';
 
 /// A target sliding along one of the gallery's lanes. Everything about it follows from
@@ -220,25 +221,12 @@ class _GalleryView extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
       child: Column(children: [
-        Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Wrap(spacing: 6, runSpacing: 4, children: [
-              for (var i = 0; i < players.length; i++)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: i == g.turn && !g.finished ? players[i].color : Colors.white10,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: players[i].color, width: 2),
-                  ),
-                  child: Text('${players[i].name} ${g.score[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
-                ),
-            ]),
-          ),
-          Text('⏱ ${(g.timeLeft / 1000).ceil()}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
-        ]),
+        GameHud(
+          players: players,
+          scores: g.score,
+          turn: g.finished ? null : g.turn,
+          trailing: TimerRing(fraction: g.timeLeft / GalleryLogic.turnMs, label: '${(g.timeLeft / 1000).ceil()}', urgent: !g.waiting && g.timeLeft < 5000, size: 44),
+        ),
         const SizedBox(height: 8),
         Expanded(
           child: LayoutBuilder(builder: (context, c) {
@@ -262,11 +250,7 @@ class _GalleryView extends StatelessWidget {
                       Text('${current.whose} TURN', style: TextStyle(color: current.color, fontSize: 24, fontWeight: FontWeight.w900)),
                       const SizedBox(height: 12),
                       if (_mine)
-                        FilledButton(
-                          style: FilledButton.styleFrom(backgroundColor: current.color, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14)),
-                          onPressed: () => g.begin(g.turn),
-                          child: const Text('🔫 START', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-                        )
+                        AppButton('🔫 START', color: current.color, onPressed: () => g.begin(g.turn))
                       else
                         Text('${current.name} is getting ready…', style: const TextStyle(color: Colors.white70)),
                     ]),
@@ -277,24 +261,29 @@ class _GalleryView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 34,
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            if (g.reloading)
-              const Text('RELOADING…', style: TextStyle(color: Color(0xFFFFD54F), fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 2))
-            else
-              for (var i = 0; i < GalleryLogic.clip; i++)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: Container(
-                    width: 10,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      color: i < g.shots ? const Color(0xFFFFC107) : Colors.white12,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(5), bottom: Radius.circular(2)),
+          height: 36,
+          child: Semantics(
+            label: g.reloading ? 'Reloading' : '${g.shots} shots left',
+            excludeSemantics: true,
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              if (g.reloading)
+                Text('RELOADING…', style: context.tk.styles.title.copyWith(color: Brand.gold, fontSize: 16, letterSpacing: 2))
+              else
+                for (var i = 0; i < GalleryLogic.clip; i++)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: Container(
+                      width: 11,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        gradient: i < g.shots ? const LinearGradient(colors: [Color(0xFFFFE08A), Color(0xFFD99A00)], begin: Alignment.topCenter, end: Alignment.bottomCenter) : null,
+                        color: i < g.shots ? null : context.tk.glass,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6), bottom: Radius.circular(2)),
+                      ),
                     ),
                   ),
-                ),
-          ]),
+            ]),
+          ),
         ),
       ]),
     );
