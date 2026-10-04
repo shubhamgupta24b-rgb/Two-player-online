@@ -190,13 +190,23 @@ class _Lane extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = slashHere;
     return Container(
+      // Fill the whole column, fruit or not (otherwise the fruit's lane shrinks to fit it).
+      width: double.infinity,
+      height: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withValues(alpha: fruit != null ? 0.38 : 0.24), color.withValues(alpha: 0.08)],
+        ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.5), width: 2),
+        border: Border.all(color: color.withValues(alpha: fruit != null ? 0.95 : 0.6), width: fruit != null ? 3 : 2),
+        boxShadow: [if (fruit != null) BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 16)],
       ),
       child: Stack(alignment: Alignment.center, children: [
+        // A faint knife at the bottom of every lane: tap here to slice.
+        Positioned(bottom: 14, child: Opacity(opacity: 0.25, child: Text('🔪', style: TextStyle(fontSize: 22, color: color)))),
         if (fruit != null)
           TweenAnimationBuilder<double>(
             key: ValueKey(fruitId),

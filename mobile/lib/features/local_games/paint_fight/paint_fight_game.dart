@@ -175,18 +175,33 @@ class _BoardPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final empty = Paint()..color = Colors.white10;
+    final w = g.cols * cell, h = g.rows * cell;
+    // A cream canvas; each half lightly tinted in its painter's colour (player 2 on top).
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, w, h), Radius.circular(cell * 0.3)), Paint()..color = const Color(0xFFF6F0E4));
+    if (colors.length >= 2) {
+      canvas.drawRect(Rect.fromLTWH(0, 0, w, h / 2), Paint()..color = colors[1].withValues(alpha: 0.07));
+      canvas.drawRect(Rect.fromLTWH(0, h / 2, w, h / 2), Paint()..color = colors[0].withValues(alpha: 0.07));
+    }
+    final empty = Paint()..color = const Color(0xFFE6DDCC);
+    final gloss = Paint()..color = Colors.white.withValues(alpha: 0.28);
     for (var r = 0; r < g.rows; r++) {
       for (var c = 0; c < g.cols; c++) {
         final o = _owners[r * g.cols + c];
         final rect = Rect.fromLTWH(c * cell + 2, r * cell + 2, cell - 4, cell - 4);
-        canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(cell * 0.2)), o < 0 ? empty : (Paint()..color = colors[o]));
+        final rr = RRect.fromRectAndRadius(rect, Radius.circular(cell * 0.22));
+        if (o < 0) {
+          canvas.drawRRect(rr, empty);
+          continue;
+        }
+        canvas.drawRRect(rr, Paint()..color = colors[o]);
+        // A paint-blob shine on the top-left.
+        canvas.drawOval(Rect.fromLTWH(rect.left + rect.width * 0.14, rect.top + rect.height * 0.12, rect.width * 0.38, rect.height * 0.24), gloss);
       }
     }
     // Halfway line: where each player's strokes must start.
     final y = g.rows * cell / 2;
     final line = Paint()
-      ..color = Colors.white38
+      ..color = Colors.black38
       ..strokeWidth = 2;
     for (double x = 0; x < size.width; x += 14) {
       canvas.drawLine(Offset(x, y), Offset(min(x + 7, size.width), y), line);

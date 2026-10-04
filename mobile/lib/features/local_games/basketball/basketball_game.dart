@@ -54,7 +54,11 @@ class BasketballLogic extends TimedDuel {
 
   bool canShoot(int player) => !finished && elapsedMs - _lastShotAt[player] >= cooldownMs;
 
-  static int pointsFor(double miss) => miss <= 0.1 ? 3 : miss <= 0.25 ? 2 : 0;
+  static int pointsFor(double miss) => miss <= 0.1
+      ? 3
+      : miss <= 0.25
+          ? 2
+          : 0;
 
   /// Shoots towards [aim]. The ball arrives [flightMs] later, so a moving hoop has to
   /// be led. Returns the points scored, or null if the shot isn't allowed right now.
@@ -101,7 +105,9 @@ final LocalGameInfo basketballInfo = LocalGameInfo(
       'score': g.score,
       'shots': g.shots,
       'last': g._lastShotAt,
-      'shotsAt': [for (final s in g.lastShot) s == null ? null : [s.points, s.aim, s.hoopX, s.atMs, s.number]],
+      'shotsAt': [
+        for (final s in g.lastShot) s == null ? null : [s.points, s.aim, s.hoopX, s.atMs, s.number]
+      ],
     },
     load: (g, s, me) {
       g.elapsedMs = asInt(s['t']);
@@ -146,7 +152,7 @@ final LocalGameInfo basketballInfo = LocalGameInfo(
       onFinished: (s) => onDone(s.first),
       builder: (context, g) => Column(children: [
         TurnBar(player: player, score: g.score.first, secondsLeft: g.secondsLeft),
-        Expanded(child: _HoopZone(player: player, index: 0, g: g)),
+        Expanded(child: _HoopZone(player: player, index: 0, g: g, chrome: false)),
       ]),
     ),
     simulate: (ms, rng) => simulateTurn(BasketballLogic(players: 1, durationMs: ms), basketballInfo.bot!, ms, rng),
@@ -183,7 +189,8 @@ class _HoopZone extends StatefulWidget {
   final GpPlayer player;
   final int index;
   final BasketballLogic g;
-  const _HoopZone({required this.player, required this.index, required this.g});
+  final bool chrome; // its own name tag and clock (the take-turns bar shows them instead)
+  const _HoopZone({required this.player, required this.index, required this.g, this.chrome = true});
   @override
   State<_HoopZone> createState() => _HoopZoneState();
 }
@@ -226,27 +233,32 @@ class _HoopZoneState extends State<_HoopZone> {
                 painter: _CourtPainter(geo: geo, hoopX: g.hoopX, score: g.score[i], shot: shot, since: since, ready: g.canShoot(i)),
               ),
             ),
-            Positioned(left: 8, top: 6, child: PlayerTagSmall(player: widget.player)),
-            Positioned(
-              right: 0,
-              bottom: geo.h * 0.06,
-              child: Container(
-                padding: EdgeInsets.fromLTRB(geo.h * 0.05 + 6, 4, geo.h * 0.05, 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2B2D34),
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(40)),
-                  border: Border.all(color: Colors.black, width: 3),
+            if (widget.chrome) Positioned(left: 8, top: 6, child: PlayerTagSmall(player: widget.player)),
+            if (widget.chrome)
+              Positioned(
+                right: 0,
+                bottom: geo.h * 0.06,
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(geo.h * 0.05 + 6, 4, geo.h * 0.05, 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2B2D34),
+                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(40)),
+                    border: Border.all(color: Colors.black, width: 3),
+                  ),
+                  child: Text('${g.secondsLeft}', style: TextStyle(color: const Color(0xFFFF5B57), fontWeight: FontWeight.w900, fontSize: max(16.0, geo.h * 0.06))),
                 ),
-                child: Text('${g.secondsLeft}', style: TextStyle(color: const Color(0xFFFF5B57), fontWeight: FontWeight.w900, fontSize: max(16.0, geo.h * 0.06))),
               ),
-            ),
             if (showText)
               Positioned(
                 left: 0,
                 right: 0,
                 top: geo.rimY + geo.netH + 2,
                 child: Text(
-                  shot.points == 3 ? '+3 SWISH!' : shot.points == 2 ? '+2 NICE!' : 'MISS',
+                  shot.points == 3
+                      ? '+3 SWISH!'
+                      : shot.points == 2
+                          ? '+2 NICE!'
+                          : 'MISS',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: shot.points == 0 ? Colors.white : (shot.points == 3 ? const Color(0xFFFFD43B) : Colors.white),
@@ -261,7 +273,8 @@ class _HoopZoneState extends State<_HoopZone> {
                 left: 0,
                 right: 0,
                 top: geo.courtTop + (geo.h - geo.courtTop) * 0.06,
-                child: Text('SWIPE UP TO SHOOT', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: max(11.0, geo.h * 0.032))),
+                child: Text('SWIPE UP TO SHOOT',
+                    textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: max(11.0, geo.h * 0.032))),
               ),
           ]),
         ),
@@ -335,8 +348,11 @@ class _CourtPainter extends CustomPainter {
 
   void _background(Canvas canvas) {
     final w = geo.w, h = geo.h;
-    canvas.drawRect(Rect.fromLTWH(0, 0, w, geo.courtTop),
-        Paint()..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF8FE3FB), Color(0xFFA6ECFC)]).createShader(Rect.fromLTWH(0, 0, w, geo.courtTop)));
+    canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, geo.courtTop),
+        Paint()
+          ..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF8FE3FB), Color(0xFFA6ECFC)])
+              .createShader(Rect.fromLTWH(0, 0, w, geo.courtTop)));
     // Cloud.
     final cloud = Paint()..color = const Color(0xFFB8F2FE);
     final cr = h * 0.05;
@@ -373,7 +389,9 @@ class _CourtPainter extends CustomPainter {
     canvas.drawLine(Offset(0, geo.courtTop + line.strokeWidth / 2), Offset(w, geo.courtTop + line.strokeWidth / 2), line);
     canvas.drawLine(Offset(w * 0.17, geo.courtTop), Offset(-w * 0.02, geo.courtTop + ch * 0.45), line);
     canvas.drawLine(Offset(w * 0.83, geo.courtTop), Offset(w * 1.02, geo.courtTop + ch * 0.45), line);
-    canvas.drawLine(Offset(w * 0.09, geo.courtTop + ch * 0.2), Offset(w * 0.91, geo.courtTop + ch * 0.2),
+    canvas.drawLine(
+        Offset(w * 0.09, geo.courtTop + ch * 0.2),
+        Offset(w * 0.91, geo.courtTop + ch * 0.2),
         Paint()
           ..color = const Color(0xFFF6DAD5)
           ..strokeWidth = line.strokeWidth * 0.7);
@@ -395,10 +413,12 @@ class _CourtPainter extends CustomPainter {
     canvas.drawRRect(board, Paint()..color = const Color(0xFFFF5B57));
     canvas.drawRRect(board, black);
     final inner = RRect.fromRectAndRadius(Rect.fromLTWH(hx - geo.bbW * 0.25, geo.bbTop + geo.bbH * 0.24, geo.bbW * 0.5, geo.bbH * 0.5), Radius.circular(geo.bbW * 0.03));
-    canvas.drawRRect(inner, Paint()
-      ..color = const Color(0xFFFF8783)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke * 1.6);
+    canvas.drawRRect(
+        inner,
+        Paint()
+          ..color = const Color(0xFFFF8783)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke * 1.6);
     // Scoreboard on top.
     final sb = RRect.fromRectAndRadius(Rect.fromLTWH(hx - geo.bbW * 0.16, geo.bbTop - geo.bbH * 0.22, geo.bbW * 0.32, geo.bbH * 0.25), Radius.circular(geo.bbW * 0.03));
     canvas.drawRRect(sb, Paint()..color = const Color(0xFF2A2A2E));
@@ -415,14 +435,24 @@ class _CourtPainter extends CustomPainter {
   void _rim(Canvas canvas, double hx, {required bool back}) {
     final sw = max(3.0, geo.rimW * 0.08);
     final start = back ? pi : 0.0;
-    canvas.drawArc(_rimRect(hx), start, pi, false, Paint()
-      ..color = const Color(0xFF3A2A10)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = sw + 2.5);
-    canvas.drawArc(_rimRect(hx), start, pi, false, Paint()
-      ..color = const Color(0xFFF5C542)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = sw);
+    canvas.drawArc(
+        _rimRect(hx),
+        start,
+        pi,
+        false,
+        Paint()
+          ..color = const Color(0xFF3A2A10)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = sw + 2.5);
+    canvas.drawArc(
+        _rimRect(hx),
+        start,
+        pi,
+        false,
+        Paint()
+          ..color = const Color(0xFFF5C542)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = sw);
   }
 
   void _net(Canvas canvas, double hx, {double stretch = 0}) {
@@ -461,10 +491,13 @@ class _CourtPainter extends CustomPainter {
     canvas.drawCircle(c.translate(-r * 1.35, 0), r, seam);
     canvas.drawCircle(c.translate(r * 1.35, 0), r, seam);
     canvas.restore();
-    canvas.drawCircle(c, r, Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = max(1.5, r * 0.08));
+    canvas.drawCircle(
+        c,
+        r,
+        Paint()
+          ..color = Colors.black
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = max(1.5, r * 0.08));
     if (opacity < 1) canvas.restore();
   }
 

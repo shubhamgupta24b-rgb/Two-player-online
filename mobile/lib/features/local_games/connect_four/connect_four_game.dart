@@ -146,6 +146,14 @@ class _Board extends StatelessWidget {
   final ConnectFourLogic g;
   const _Board({required this.players, required this.g});
 
+  /// The row a disc dropped in column [c] would land on, or null if the column is full.
+  int? _landing(int c) {
+    for (var r = ConnectFourLogic.rows - 1; r >= 0; r--) {
+      if (g.at(c, r) < 0) return r;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final current = players[g.turn];
@@ -168,6 +176,15 @@ class _Board extends StatelessWidget {
           const SizedBox(width: 44),
         ]),
         const SizedBox(height: 12),
+        // Drop arrows in the colour of whoever's turn it is.
+        if (!g.finished)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(children: [
+              for (var c = 0; c < ConnectFourLogic.cols; c++)
+                Expanded(child: Icon(Icons.arrow_drop_down_rounded, size: 34, color: _landing(c) == null ? Colors.white12 : current.color)),
+            ]),
+          ),
         Expanded(
           child: Center(
             child: AspectRatio(
@@ -187,7 +204,16 @@ class _Board extends StatelessWidget {
                             if (g.drop(c) != null) HapticFeedback.selectionClick().ignore();
                           },
                           child: Column(children: [
-                            for (var r = 0; r < ConnectFourLogic.rows; r++) Expanded(child: _Hole(owner: g.at(c, r), players: players, win: g.winCells?.contains(r * ConnectFourLogic.cols + c) ?? false, fresh: g.lastDrop == r * ConnectFourLogic.cols + c)),
+                            for (var r = 0; r < ConnectFourLogic.rows; r++)
+                              Expanded(
+                                child: _Hole(
+                                  owner: g.at(c, r),
+                                  players: players,
+                                  win: g.winCells?.contains(r * ConnectFourLogic.cols + c) ?? false,
+                                  fresh: g.lastDrop == r * ConnectFourLogic.cols + c,
+                                  ghost: !g.finished && _landing(c) == r ? current.color : null,
+                                ),
+                              ),
                           ]),
                         ),
                       ),
@@ -216,15 +242,22 @@ class _Hole extends StatelessWidget {
   final List<GpPlayer> players;
   final bool win;
   final bool fresh;
-  const _Hole({required this.owner, required this.players, required this.win, required this.fresh});
+  final Color? ghost; // where the current player's disc would land
+  const _Hole({required this.owner, required this.players, required this.win, required this.fresh, this.ghost});
 
   @override
   Widget build(BuildContext context) {
+    final c = owner < 0 ? null : players[owner].color;
     final disc = Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: owner < 0 ? GpColors.bgBottom : players[owner].color,
-        border: win ? Border.all(color: Colors.white, width: 4) : null,
+        color: c == null ? (ghost?.withValues(alpha: 0.22) ?? GpColors.bgBottom) : null,
+        // Discs get a shine so they look like plastic counters.
+        gradient: c == null ? null : RadialGradient(center: const Alignment(-0.3, -0.35), colors: [Color.lerp(c, Colors.white, 0.4)!, c, Color.lerp(c, Colors.black, 0.25)!]),
+        border: win
+            ? Border.all(color: Colors.white, width: 4)
+            : (ghost != null && c == null ? Border.all(color: ghost!.withValues(alpha: 0.7), width: 2) : null),
+        boxShadow: c == null ? const [BoxShadow(color: Colors.black54, offset: Offset(0, -2), blurRadius: 2, spreadRadius: -1)] : null,
       ),
     );
     return Padding(
