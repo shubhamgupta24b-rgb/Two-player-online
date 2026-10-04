@@ -8,13 +8,15 @@ class GameTheme extends InheritedWidget {
   final Color color;
   final String emoji;
   final bool flat; // drawn in the flat app's light board-game look
-  const GameTheme({super.key, required this.color, required this.emoji, this.flat = false, required super.child});
+  final String? id; // the game's id (e.g. for its records)
+  const GameTheme({super.key, required this.color, required this.emoji, this.flat = false, this.id, required super.child});
 
   static Color colorOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<GameTheme>()?.color ?? const Color(0xFFFFC93C);
   static bool flatOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<GameTheme>()?.flat ?? false;
+  static String? idOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<GameTheme>()?.id;
 
   @override
-  bool updateShouldNotify(GameTheme old) => old.color != color || old.emoji != emoji || old.flat != flat;
+  bool updateShouldNotify(GameTheme old) => old.color != color || old.emoji != emoji || old.flat != flat || old.id != id;
 }
 
 /// Deep night-blue background with a glow in the game's own colour, so every game
@@ -80,7 +82,7 @@ class ScorePill extends StatelessWidget {
   const ScorePill(this.text, {super.key, this.color});
   @override
   Widget build(BuildContext context) {
-    final c = color ?? GameTheme.colorOf(context);
+    final c = fillFor(color ?? GameTheme.colorOf(context)); // white digits stay readable on light game colours
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
@@ -88,7 +90,7 @@ class ScorePill extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(color: c.withValues(alpha: 0.45), blurRadius: 10, offset: const Offset(0, 3))],
       ),
-      child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17, shadows: [Shadow(color: Colors.black26, offset: Offset(0, 1))])),
+      child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17, fontFeatures: [FontFeature.tabularFigures()], shadows: [Shadow(color: Colors.black26, offset: Offset(0, 1))])),
     );
   }
 }

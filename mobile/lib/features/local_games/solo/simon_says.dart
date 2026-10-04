@@ -111,9 +111,19 @@ final simonInfo = LocalGameInfo(
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 90),
                       decoration: BoxDecoration(
-                        color: on ? Color.lerp(colors[p], Colors.white, 0.45) : colors[p].withValues(alpha: g.phase == SimonPhase.input ? 0.85 : 0.55),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: on
+                              ? [Colors.white, Color.lerp(colors[p], Colors.white, 0.45)!]
+                              : [Color.lerp(colors[p], Colors.white, 0.15)!, Color.lerp(colors[p], Colors.black, g.phase == SimonPhase.input ? 0.15 : 0.45)!],
+                        ),
                         borderRadius: BorderRadius.circular(28),
-                        boxShadow: [if (on) BoxShadow(color: colors[p], blurRadius: 30, spreadRadius: 4)],
+                        border: Border.all(color: Colors.white.withValues(alpha: on ? 0.9 : 0.18), width: 3),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.4), offset: const Offset(0, 5)),
+                          if (on) BoxShadow(color: colors[p], blurRadius: 34, spreadRadius: 6),
+                        ],
                       ),
                     ),
                   );

@@ -151,7 +151,12 @@ class _Board extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: const Color(0xFF7A6A5C), borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(
+          color: const Color(0xFF5C4F44),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF7A6A5C), width: 2),
+          boxShadow: const [BoxShadow(color: Colors.black54, offset: Offset(0, 6), blurRadius: 8)],
+        ),
         child: GridView.count(
           crossAxisCount: Game2048Logic.n,
           mainAxisSpacing: 8,
@@ -166,7 +171,12 @@ class _Board extends StatelessWidget {
                 builder: (_, s, child) => Transform.scale(scale: s, child: child),
                 child: Container(
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(color: tileColor(g.grid[i]), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(
+                    color: tileColor(g.grid[i]),
+                    borderRadius: BorderRadius.circular(10),
+                    // Raised tiles: a darker bottom edge under every numbered tile.
+                    boxShadow: g.grid[i] == 0 ? null : [BoxShadow(color: Color.lerp(tileColor(g.grid[i]), Colors.black, 0.35)!, offset: const Offset(0, 3))],
+                  ),
                   child: g.grid[i] == 0
                       ? null
                       : Padding(

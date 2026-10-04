@@ -94,7 +94,12 @@ final whackInfo = LocalGameInfo(
           aspectRatio: 1,
           child: Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: const Color(0xFF7CB342), borderRadius: BorderRadius.circular(20)),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFF8BC34A), Color(0xFF5E9A2E)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF4E7D24), width: 3),
+              boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 6), blurRadius: 6)],
+            ),
             child: GridView.count(
               crossAxisCount: 3,
               mainAxisSpacing: 10,
@@ -107,7 +112,12 @@ final whackInfo = LocalGameInfo(
                     return GestureDetector(
                       onTapDown: (_) => g.whack(h),
                       child: Container(
-                        decoration: const BoxDecoration(color: Color(0xFF4E342E), shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black38, offset: Offset(0, 4))]),
+                        // A dirt pit: dark in the middle, a lighter rim of earth around it.
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(colors: [Color(0xFF1E120D), Color(0xFF3B2519), Color(0xFF6D4A33)], stops: [0.45, 0.8, 1]),
+                          boxShadow: [BoxShadow(color: Color(0x66000000), offset: Offset(0, 3), blurRadius: 2)],
+                        ),
                         alignment: Alignment.center,
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 120),

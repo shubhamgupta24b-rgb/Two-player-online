@@ -278,6 +278,7 @@ class _LocalGameShellState extends State<LocalGameShell> {
             color: g.color,
             emoji: g.emoji,
             flat: flat,
+            id: g.id,
             child: GameBackground(
               color: g.color,
               flat: flat,

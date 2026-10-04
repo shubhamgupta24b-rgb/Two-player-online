@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
@@ -103,26 +105,43 @@ final hangmanInfo = LocalGameInfo(
               style: TextStyle(color: g.wonAt != null ? GpColors.yes : (g.over ? GpColors.no : Colors.white), fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 2)),
         ),
         const SizedBox(height: 14),
-        Wrap(alignment: WrapAlignment.center, spacing: 5, runSpacing: 6, children: [
-          for (final l in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''))
-            SizedBox(
-              width: 38,
-              height: 46,
-              child: Material(
-                color: !g.guessed.contains(l) ? Colors.white : (g.word.contains(l) ? GpColors.yes : Colors.white12),
-                borderRadius: BorderRadius.circular(10),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: g.guessed.contains(l) ? null : () => g.guess(l),
-                  child: Center(
-                    child: Text(l,
-                        style: TextStyle(color: !g.guessed.contains(l) ? GpColors.ink : (g.word.contains(l) ? Colors.white : Colors.white30), fontWeight: FontWeight.w900, fontSize: 18)),
+        // Keys at least 48dp wide: 7 a row where they fit, else 6.
+        LayoutBuilder(builder: (context, c) {
+          const gap = 5.0;
+          final perRow = c.maxWidth >= 7 * kTouchTarget + 6 * gap ? 7 : 6;
+          final keyW = ((c.maxWidth - gap * (perRow - 1)) / perRow).clamp(kTouchTarget, 58.0);
+          return Wrap(alignment: WrapAlignment.center, spacing: gap, runSpacing: 6, children: [
+            for (final l in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''))
+              SizedBox(
+                width: keyW,
+                height: 50,
+                child: Semantics(
+                  button: !g.guessed.contains(l),
+                  label: g.guessed.contains(l) ? '$l, ${g.word.contains(l) ? 'in the word' : 'not in the word'}' : l,
+                  excludeSemantics: true,
+                  child: Material(
+                    color: !g.guessed.contains(l) ? Colors.white : (g.word.contains(l) ? fillFor(context.tk.success) : Colors.white12),
+                    borderRadius: Radii.rMd,
+                    elevation: g.guessed.contains(l) ? 0 : 2,
+                    child: InkWell(
+                      borderRadius: Radii.rMd,
+                      onTap: g.guessed.contains(l)
+                          ? null
+                          : () {
+                              haptic(HapticWeight.selection);
+                              GameAudio.sfx(g.word.contains(l) ? 'pop' : 'tap');
+                              g.guess(l);
+                            },
+                      child: Center(
+                        child: Text(l,
+                            style: TextStyle(color: !g.guessed.contains(l) ? Brand.ink : (g.word.contains(l) ? Colors.white : Colors.white38), fontWeight: FontWeight.w900, fontSize: 19)),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-        ]),
-      ]),
+          ]);
+        }),      ]),
     ),
   ),
 );

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
@@ -158,35 +159,76 @@ final sudokuInfo = LocalGameInfo(
       child: Column(children: [
         Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Grid(g: g)))),
         const SizedBox(height: 10),
-        Row(children: [
-          for (var v = 1; v <= 9; v++)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Material(
-                  color: g.remaining(v) == 0 ? Colors.white10 : const Color(0xFF3949AB),
-                  borderRadius: BorderRadius.circular(10),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: g.remaining(v) == 0 ? null : () => g.enter(v),
-                    child: SizedBox(
-                      height: 54,
-                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Text('$v', style: TextStyle(color: g.remaining(v) == 0 ? Colors.white24 : Colors.white, fontWeight: FontWeight.w900, fontSize: 22)),
-                        Text('${g.remaining(v)}', style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w700)),
-                      ]),
-                    ),
-                  ),
+        // Number pad in two rows (keys stay at least 48dp on small phones); NOTES is the last key.
+        for (final row in const [
+          [1, 2, 3, 4, 5],
+          [6, 7, 8, 9, 0],
+        ]) ...[
+          Row(children: [
+            for (final v in row)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(3),
+                  child: v == 0
+                      ? Semantics(
+                          button: true,
+                          toggled: g.notes,
+                          label: 'Notes',
+                          excludeSemantics: true,
+                          child: Material(
+                            color: g.notes ? Brand.gold : Colors.white,
+                            borderRadius: Radii.rMd,
+                            child: InkWell(
+                              borderRadius: Radii.rMd,
+                              onTap: () {
+                                haptic(HapticWeight.selection);
+                                g.toggleNotes();
+                              },
+                              child: SizedBox(
+                                height: 52,
+                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                  const Text('✏️', style: TextStyle(fontSize: 18)),
+                                  Text(g.notes ? 'NOTES ON' : 'NOTES', style: const TextStyle(color: Brand.ink, fontWeight: FontWeight.w900, fontSize: 10.5)),
+                                ]),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Semantics(
+                          button: g.remaining(v) > 0,
+                          label: '$v, ${g.remaining(v)} left',
+                          excludeSemantics: true,
+                          child: Material(
+                            color: g.remaining(v) == 0 ? Colors.white10 : _key,
+                            borderRadius: Radii.rMd,
+                            elevation: g.remaining(v) == 0 ? 0 : 2,
+                            child: InkWell(
+                              borderRadius: Radii.rMd,
+                              onTap: g.remaining(v) == 0
+                                  ? null
+                                  : () {
+                                      haptic(HapticWeight.selection);
+                                      g.enter(v);
+                                    },
+                              child: SizedBox(
+                                height: 52,
+                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                  Text('$v', style: TextStyle(color: g.remaining(v) == 0 ? Colors.white24 : Colors.white, fontWeight: FontWeight.w900, fontSize: 22)),
+                                  Text('${g.remaining(v)}', style: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w700)),
+                                ]),
+                              ),
+                            ),
+                          ),
+                        ),
                 ),
               ),
-            ),
-        ]),
-        const SizedBox(height: 8),
-        GpButton(g.notes ? '✏️ NOTES: ON' : '✏️ NOTES: OFF', color: g.notes ? GpColors.accent : Colors.white, onPressed: g.toggleNotes),
-      ]),
+          ]),
+        ],      ]),
     ),
   ),
 );
+
+const _key = Color(0xFF3949AB); // number pad keys
 
 class _Grid extends StatelessWidget {
   final SudokuLogic g;
