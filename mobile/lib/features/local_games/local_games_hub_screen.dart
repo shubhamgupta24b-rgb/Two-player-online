@@ -52,6 +52,9 @@ final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafia
   // Solo games (shown in their own section).
   fruitMergeInfo, game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo];
 
+/// The hub's games plus their team versions (e.g. Ludo 2 vs 2), for online rooms.
+List<LocalGameInfo> get allLocalGames => [...localGames, for (final g in localGames) if (g.teamVariant != null) g.teamVariant!];
+
 /// Everything in the hub: the shell games plus Guess the Person and Raja Mantri.
 int get totalGameCount => localGames.length + 2;
 

@@ -77,10 +77,10 @@ void main() {
       expect(gameCatalog.map((g) => g.id).toSet(), {
         'colour_clash', 'raja_mantri', 'ludo', 'snakes_ladders', 'dots_boxes', 'connect_four', 'tic_tac_toe', 'memory', 'guess_who', //
         'air_hockey', 'ping_pong', 'snake_duel', 'penalty', 'basketball_hoops', 'crush_it', 'fruit_duel', 'paint_fight', 'reaction_tap', 'math_duel', //
-        'truth_dare', 'hand_cricket', 'quiz_battle', 'find_spy', 'mafia', 'undercover', 'charades', 'heads_up', 'draw_guess', 'most_likely', 'would_rather', 'rock_paper_scissors', 'fruit_merge_battle',
+        'truth_dare', 'hand_cricket', 'quiz_battle', 'find_spy', 'mafia', 'undercover', 'charades', 'heads_up', 'draw_guess', 'most_likely', 'would_rather', 'rock_paper_scissors', 'fruit_merge_battle', 'ludo_teams',
       });
       expect(gameCatalog.map((g) => g.id), isNot(contains('guess_person')), reason: 'quiz removed from rooms');
-      expect(gameCatalog.length, 32);
+      expect(gameCatalog.length, 33);
       for (final g in gameCatalog) {
         expect(g.playable, isTrue, reason: g.id);
         expect(gameScreenFor(g.id), isNotNull, reason: g.id);

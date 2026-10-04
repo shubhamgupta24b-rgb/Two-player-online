@@ -107,12 +107,18 @@ class _LocalGameShellState extends State<LocalGameShell> {
     _setPlayerCount(players.length);
   }
 
+  bool teams = false; // 2 vs 2, for games that have a team version and 4 players
+
+  /// The game being played: its team version when TEAMS is on.
+  LocalGameInfo get _game => teams && players.length == 4 && widget.game.teamVariant != null ? widget.game.teamVariant! : widget.game;
+  bool get _teamsOn => !identical(_game, widget.game);
+
   void _start() => setState(() => phase = _ShellPhase.countdown);
 
   void _go() => setState(() {
         matchNo++;
         // Fresh computer players every match (their memory and timing start over).
-        _bots = vsComputer && widget.game.bot != null ? [for (var i = players.length - botCount; i < players.length; i++) BotSeat(i, null, players.length - botCount == 1)] : const [];
+        _bots = vsComputer && _game.bot != null ? [for (var i = players.length - botCount; i < players.length; i++) BotSeat(i, null, players.length - botCount == 1)] : const [];
         phase = _ShellPhase.playing;
       });
 
@@ -131,7 +137,12 @@ class _LocalGameShellState extends State<LocalGameShell> {
       }
       final top = scores.reduce((a, b) => a > b ? a : b);
       final leaders = [for (var i = 0; i < scores.length; i++) if (scores[i] == top) i];
-      if (leaders.length == 1) wins[leaders.single]++;
+      // One winner, or a whole team (2 vs 2) winning together.
+      if (leaders.length == 1 || _teamsOn && leaders.length == 2) {
+        for (final i in leaders) {
+          wins[i]++;
+        }
+      }
       phase = _ShellPhase.result;
     });
     if (widget.game.solo) _saveBest(scores.single);
@@ -184,13 +195,18 @@ class _LocalGameShellState extends State<LocalGameShell> {
           botCount: botCount,
           onVsComputer: g.bot == null ? null : _setVsComputer,
           onBotCount: _setBotCount,
+          teams: g.teamVariant != null && players.length == 4 ? teams : null,
+          onTeams: (on) => setState(() {
+            teams = on;
+            wins = List.filled(players.length, 0); // a new kind of match: fresh tally
+          }),
         ),
       _ShellPhase.countdown => _Countdown(onDone: _go, color: g.color),
       // A new key per match guarantees fresh game state on Play Again.
-      _ShellPhase.playing => KeyedSubtree(key: ValueKey('match$matchNo'), child: _play(g)),
+      _ShellPhase.playing => KeyedSubtree(key: ValueKey('match$matchNo'), child: _play(_game)),
       _ShellPhase.result => g.solo
           ? _SoloResult(game: g, score: players.single.score, best: best, newBest: newBest, onAgain: _start, onExit: () => Navigator.pop(context))
-          : _Result(game: g, players: players, wins: wins, onAgain: _start, onExit: () => Navigator.pop(context)),
+          : _Result(game: _game, teams: _teamsOn, players: players, wins: wins, onAgain: _start, onExit: () => Navigator.pop(context)),
     };
     return PopScope(
       canPop: phase != _ShellPhase.playing && phase != _ShellPhase.countdown,
@@ -227,7 +243,18 @@ class _Intro extends StatelessWidget {
   final int botCount;
   final ValueChanged<bool>? onVsComputer; // null: this game has no computer players
   final ValueChanged<int>? onBotCount;
-  const _Intro({required this.game, required this.onPlay, required this.playerCount, required this.onPlayerCount, this.botCount = 0, this.onVsComputer, this.onBotCount});
+  final bool? teams; // null: no team version for this game / player count
+  final ValueChanged<bool>? onTeams;
+  const _Intro(
+      {required this.game,
+      required this.onPlay,
+      required this.playerCount,
+      required this.onPlayerCount,
+      this.botCount = 0,
+      this.onVsComputer,
+      this.onBotCount,
+      this.teams,
+      this.onTeams});
 
   bool get vsComputer => botCount > 0;
 
@@ -339,6 +366,23 @@ class _Intro extends StatelessWidget {
                     ),
                   ),
               ]),
+            ],
+            if (teams != null && onTeams != null) ...[
+              const SizedBox(height: 14),
+              Material(
+                color: teams! ? c.withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(20),
+                child: SwitchListTile(
+                  value: teams!,
+                  onChanged: onTeams,
+                  activeThumbColor: Colors.white,
+                  activeTrackColor: dark,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  title: const Text('🤝 PLAY IN TEAMS (2 vs 2)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                  subtitle: Text(teams! ? '🅰 Player 1 + Player 3  vs  🅱 Player 2 + Player 4' : 'Partners sit in opposite corners and win together.',
+                      style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12.5)),
+                ),
+              ),
             ],
             if (onVsComputer != null) ...[
               const SizedBox(height: 14),
@@ -500,13 +544,20 @@ class _Result extends StatelessWidget {
   final List<int> wins;
   final VoidCallback onAgain;
   final VoidCallback onExit;
-  const _Result({required this.game, required this.players, required this.wins, required this.onAgain, required this.onExit});
+  final bool teams;
+  const _Result({required this.game, this.teams = false, required this.players, required this.wins, required this.onAgain, required this.onExit});
 
   @override
   Widget build(BuildContext context) {
     final top = players.map((p) => p.score).reduce((a, b) => a > b ? a : b);
     final leaders = players.where((p) => p.score == top).toList();
-    final draw = leaders.length > 1;
+    final teamWin = teams && leaders.length == 2;
+    final draw = leaders.length > 1 && !teamWin;
+    final title = draw
+        ? 'DRAW!'
+        : teamWin
+            ? '${leaders[0].name.toUpperCase()} & ${leaders[1].name.toUpperCase()} WIN!'
+            : '${leaders.single.name.toUpperCase()} WINS!';
     return Stack(children: [
       Center(
         child: SingleChildScrollView(
@@ -515,9 +566,7 @@ class _Result extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 480),
             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Text(draw ? '🤝' : '🏆', textAlign: TextAlign.center, style: const TextStyle(fontSize: 72)),
-              Text(draw ? 'DRAW!' : '${leaders.single.name.toUpperCase()} WINS!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: draw ? Colors.white : leaders.single.color, fontSize: 34, fontWeight: FontWeight.w900)),
+              Text(title, textAlign: TextAlign.center, style: TextStyle(color: draw ? Colors.white : leaders.first.color, fontSize: 34, fontWeight: FontWeight.w900)),
               const SizedBox(height: 4),
               Text('${game.emoji} ${game.title}', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontSize: 15, fontWeight: FontWeight.w700)),
               const SizedBox(height: 20),

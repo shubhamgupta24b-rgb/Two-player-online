@@ -5,6 +5,7 @@ const { GameError } = require('../../errors');
 const RELAY_GAMES = [
   { id: 'colour_clash', min: 2, max: 6 },
   { id: 'ludo', min: 2, max: 4 },
+  { id: 'ludo_teams', min: 4, max: 4 },
   { id: 'snakes_ladders', min: 2, max: 6 },
   { id: 'dots_boxes', min: 2, max: 4 },
   { id: 'tic_tac_toe', min: 2, max: 2 },

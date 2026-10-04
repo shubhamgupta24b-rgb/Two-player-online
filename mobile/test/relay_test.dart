@@ -18,7 +18,7 @@ const relayIds = [
   'colour_clash', 'ludo', 'snakes_ladders', 'dots_boxes', 'tic_tac_toe', 'connect_four', 'truth_dare', //
   'math_duel', 'reaction_tap', 'air_hockey', 'ping_pong', 'snake_duel', 'penalty', //
   'find_spy', 'undercover', 'mafia', 'charades', 'heads_up', 'draw_guess', 'most_likely', 'would_rather', 'hand_cricket', 'quiz_battle', //
-  'basketball_hoops', 'rock_paper_scissors', 'fruit_merge_battle',
+  'basketball_hoops', 'rock_paper_scissors', 'fruit_merge_battle', 'ludo_teams',
 ];
 
 /// Applies an action the way the host does: with forwarding switched off.
@@ -38,15 +38,15 @@ void phone(WidgetTester tester, [Size size = const Size(411, 914)]) {
 Map<String, dynamic> roundTrip(Map<String, dynamic> s) => jsonDecode(jsonEncode(s)) as Map<String, dynamic>;
 
 void main() {
-  test('the 26 relay games all have an online version, matching the server list', () {
-    final online = [for (final g in localGames) if (g.online != null) g.id];
+  test('the 27 relay games all have an online version, matching the server list', () {
+    final online = [for (final g in allLocalGames) if (g.online != null) g.id];
     expect(online.toSet(), relayIds.toSet());
   });
 
   group('state survives the trip host -> JSON -> guest', () {
     for (final id in relayIds) {
       test(id, () {
-        final game = localGames.firstWhere((g) => g.id == id);
+        final game = allLocalGames.firstWhere((g) => g.id == id);
         final spec = game.online!;
         final n = game.maxPlayers;
         final host = spec.create(n);
@@ -247,7 +247,7 @@ void main() {
     for (final id in relayIds) {
       testWidgets(id, (tester) async {
         phone(tester, const Size(320, 568));
-        final game = localGames.firstWhere((g) => g.id == id);
+        final game = allLocalGames.firstWhere((g) => g.id == id);
         final spec = game.online!;
         for (var n = game.minPlayers; n <= game.maxPlayers; n++) {
           final g = spec.create(n);

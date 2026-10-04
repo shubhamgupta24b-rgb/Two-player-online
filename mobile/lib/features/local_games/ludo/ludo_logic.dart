@@ -39,6 +39,9 @@ class LudoLogic extends LocalGameLogic {
   ];
 
   final int players;
+  /// 2 vs 2: players 1+3 against 2+4 (opposite corners). Partners never capture each other,
+  /// a player whose tokens are all home moves their partner's, and a team wins together.
+  final bool teams;
   final List<int> seats; // seat (board corner) of each player
   final List<List<int>> tokens;
   final Random _random;
@@ -52,8 +55,9 @@ class LudoLogic extends LocalGameLogic {
   int? winner;
   String message = 'Roll a 6 to bring a token out';
 
-  LudoLogic({this.players = 2, Random? random})
+  LudoLogic({this.players = 2, bool teams = false, Random? random})
       : assert(players >= 2 && players <= 4),
+        teams = teams && players == 4,
         seats = players == 2 ? const [0, 2] : [for (var i = 0; i < players; i++) i],
         tokens = List.generate(players, (_) => List.filled(tokensEach, -1)),
         _random = random ?? Random();
@@ -61,7 +65,14 @@ class LudoLogic extends LocalGameLogic {
   @override
   bool get finished => winner != null;
   @override
-  List<int> get scores => [for (var i = 0; i < players; i++) winner == i ? 1 : 0];
+  List<int> get scores => [for (var i = 0; i < players; i++) winner != null && (winner == i || (teams && sameTeam(winner!, i))) ? 1 : 0];
+
+  bool sameTeam(int a, int b) => teams && a % 2 == b % 2;
+  int partnerOf(int p) => (p + 2) % 4;
+  bool allHome(int p) => tokens[p].every((x) => x == home);
+
+  /// Whose tokens move this turn: yours, or your partner's once all of yours are home.
+  int get mover => teams && allHome(turn) ? partnerOf(turn) : turn;
   @override
   void update(int elapsedMs) {}
 
@@ -72,13 +83,13 @@ class LudoLogic extends LocalGameLogic {
 
   bool canMove(int player, int token) {
     final r = lastRoll;
-    if (r == null || phase != LudoPhase.move || player != turn) return false;
+    if (r == null || phase != LudoPhase.move || player != mover) return false;
     final p = tokens[player][token];
     if (p == -1) return r == 6;
     return p != home && p + r <= home;
   }
 
-  List<int> get movable => [for (var t = 0; t < tokensEach; t++) if (canMove(turn, t)) t];
+  List<int> get movable => [for (var t = 0; t < tokensEach; t++) if (canMove(mover, t)) t];
 
   int? roll([int? value]) {
     if (forward('roll', const [])) return null;
@@ -105,16 +116,17 @@ class LudoLogic extends LocalGameLogic {
 
   bool move(int token) {
     if (forward('move', [token])) return false;
-    if (!canMove(turn, token)) return false;
+    final who = mover;
+    if (!canMove(who, token)) return false;
     final r = lastRoll!;
-    final p = tokens[turn][token];
+    final p = tokens[who][token];
     final np = p == -1 ? 0 : p + r;
-    tokens[turn][token] = np;
+    tokens[who][token] = np;
     var captured = false;
-    final cell = trackIndex(turn, np);
+    final cell = trackIndex(who, np);
     if (cell != null && !safeCells.contains(cell)) {
       for (var o = 0; o < players; o++) {
-        if (o == turn) continue;
+        if (o == who || sameTeam(o, who)) continue; // partners share squares safely
         for (var t = 0; t < tokensEach; t++) {
           if (trackIndex(o, tokens[o][t]) == cell) {
             tokens[o][t] = -1;
@@ -124,20 +136,22 @@ class LudoLogic extends LocalGameLogic {
       }
     }
     final reachedHome = np == home;
-    if (tokens[turn].every((x) => x == home)) {
-      winner = turn;
+    if (allHome(who) && (!teams || allHome(partnerOf(who)))) {
+      winner = who;
       phase = LudoPhase.finished;
-      message = 'All tokens home!';
+      message = teams ? 'Both partners home: the team wins!' : 'All tokens home!';
       notifyListeners();
       return true;
     }
     message = captured
         ? '💥 Captured! Roll again'
-        : reachedHome
-            ? '🏠 Token home! Roll again'
-            : r == 6
-                ? 'Rolled a 6: roll again'
-                : '';
+        : teams && reachedHome && who == turn && allHome(turn)
+            ? '🏠 All home! Now you move your partner\'s tokens'
+            : reachedHome
+                ? '🏠 Token home! Roll again'
+                : r == 6
+                    ? 'Rolled a 6: roll again'
+                    : '';
     _next(extra: r == 6 || captured || reachedHome);
     return true;
   }

@@ -37,7 +37,7 @@ class GameInfo {
 /// Online version of a one-device game, using its look. [max] caps the room size where
 /// the online version supports fewer players than the one-device one.
 GameInfo _local(String id, GameCategory category, {int? max}) {
-  final g = localGames.firstWhere((x) => x.id == id);
+  final g = allLocalGames.firstWhere((x) => x.id == id);
   return GameInfo(id, g.title,
       playable: true, emoji: g.emoji, color: g.color, tagline: g.tagline, minPlayers: g.minPlayers, maxPlayers: max ?? g.maxPlayers, category: category);
 }
@@ -47,6 +47,7 @@ final List<GameInfo> gameCatalog = [
   const GameInfo('raja_mantri', 'Raja Mantri Chor Sipahi',
       playable: true, minPlayers: 4, maxPlayers: 4, emoji: '👑', color: Color(0xFF8A1C3A), tagline: 'Can the Mantri catch the Chor?', category: GameCategory.cards),
   _local('ludo', GameCategory.board),
+  _local('ludo_teams', GameCategory.board),
   _local('snakes_ladders', GameCategory.board),
   _local('dots_boxes', GameCategory.board),
   _local('connect_four', GameCategory.board),

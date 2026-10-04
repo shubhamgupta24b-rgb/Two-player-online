@@ -11,21 +11,31 @@ import 'ludo_logic.dart';
 
 export 'ludo_logic.dart';
 
-final ludoInfo = LocalGameInfo(
-  id: 'ludo',
-  title: 'Ludo',
-  emoji: '🎲',
+/// Ludo: everyone for themselves.
+final ludoInfo = _ludo(teams: false);
+
+/// Ludo 2 vs 2 (in rooms as its own game; on one phone it's the TEAMS switch on Ludo).
+final ludoTeamsInfo = _ludo(teams: true);
+
+LocalGameInfo _ludo({required bool teams}) => LocalGameInfo(
+  id: teams ? 'ludo_teams' : 'ludo',
+  title: teams ? 'Ludo 2 vs 2' : 'Ludo',
+  emoji: teams ? '🤝' : '🎲',
   color: const Color(0xFF1E7BE0),
-  tagline: 'Race all four tokens home!',
-  rules: const [
+  tagline: teams ? 'Team up with your partner across the board!' : 'Race all four tokens home!',
+  rules: [
     'Roll a 6 to bring a token out of your base. Move round the board and up your coloured path to the centre.',
     'Land on a rival token to send it back to base (not on ★ safe squares).',
     'A 6, a capture or getting a token home gives you another roll. Three 6s in a row lose your turn.',
-    'First to bring all four tokens home wins. 2 to 4 players.',
+    if (!teams) 'First to bring all four tokens home wins. 2 to 4 players. With 4 players you can play in teams.',
+    if (teams) 'Teams: Player 1 + 3 against Player 2 + 4. Partners never capture each other.',
+    if (teams) 'All your tokens home? Your turns now move your partner\'s. Both partners home and the team wins!',
   ],
   scoreUnit: 'wins',
   splitScreen: false,
+  minPlayers: teams ? 4 : 2,
   maxPlayers: 4,
+  teamVariant: teams ? null : ludoTeamsInfo,
   bot: botFor<LudoLogic>((g, b, now) {
     if (g.finished || g.turn != b.seat) return;
     if (!b.thinkFirst((g.rolls, g.phase), now, 700, 1300)) return;
@@ -36,14 +46,15 @@ final ludoInfo = LocalGameInfo(
     final moves = g.movable;
     if (moves.isEmpty) return;
     final r = g.lastRoll!;
+    final me = g.mover; // the bot's tokens, or its partner's once its own are home
     int value(int t) {
-      final p = g.tokens[b.seat][t];
+      final p = g.tokens[me][t];
       final np = p == -1 ? 0 : p + r;
-      final cell = g.trackIndex(b.seat, np);
+      final cell = g.trackIndex(me, np);
       var v = np; // further along is better
       if (cell != null && !LudoLogic.safeCells.contains(cell)) {
         for (var o = 0; o < g.players; o++) {
-          if (o != b.seat && g.tokens[o].any((x) => g.trackIndex(o, x) == cell)) v += 200; // capture!
+          if (o != me && !g.sameTeam(o, me) && g.tokens[o].any((x) => g.trackIndex(o, x) == cell)) v += 200; // capture!
         }
       }
       if (np == LudoLogic.home) v += 150;
@@ -55,7 +66,7 @@ final ludoInfo = LocalGameInfo(
     g.move(moves.reduce((a, c) => value(a) >= value(c) ? a : c));
   }),
   online: RelaySpec<LudoLogic>(
-    create: (n) => LudoLogic(players: n),
+    create: (n) => LudoLogic(players: n, teams: teams),
     save: (g) => {
       'tokens': [for (final t in g.tokens) ...t],
       'turn': g.turn,
@@ -87,7 +98,7 @@ final ludoInfo = LocalGameInfo(
     view: (context, g, players, me) => _LudoTable(players: players, g: g),
   ),
   play: (players, onFinished) => TickingPlay<LudoLogic>(
-    create: () => LudoLogic(players: players.length),
+    create: () => LudoLogic(players: players.length, teams: teams),
     onFinished: onFinished,
     builder: (context, g) => _LudoTable(players: players, g: g),
   ),
@@ -113,7 +124,8 @@ class _LudoTable extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(color: i == g.turn ? players[i].color : Colors.white10, borderRadius: BorderRadius.circular(12), border: Border.all(color: players[i].color, width: 2)),
-                  child: Text('${players[i].name} · 🏠${g.tokens[i].where((t) => t == LudoLogic.home).length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
+                  child: Text('${g.teams ? (i.isEven ? '🅰 ' : '🅱 ') : ''}${players[i].name} · 🏠${g.tokens[i].where((t) => t == LudoLogic.home).length}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
                 ),
             ]),
           ),
@@ -125,7 +137,10 @@ class _LudoTable extends StatelessWidget {
         const SizedBox(height: 8),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Flexible(
-            child: Text(g.phase == LudoPhase.move ? '${current.name.toUpperCase()}: MOVE ${g.lastRoll}' : '${current.whose} ROLL',
+            child: Text(
+                g.phase == LudoPhase.move
+                    ? '${current.name.toUpperCase()}: MOVE ${g.lastRoll}${g.mover != g.turn ? ' (FOR ${players[g.mover].name.toUpperCase()})' : ''}'
+                    : '${current.whose} ROLL',
                 overflow: TextOverflow.ellipsis, style: TextStyle(color: current.color, fontWeight: FontWeight.w900, fontSize: 18)),
           ),
           const SizedBox(width: 14),

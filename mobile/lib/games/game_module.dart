@@ -20,7 +20,7 @@ Widget? gameScreenFor(String gameType){
   case 'raja_mantri': return const RajaMantriScreen();
  }
  // Everything else runs the one-device game on the host's phone and mirrors it.
- for (final g in localGames) {
+ for (final g in allLocalGames) {
   if (g.id == gameType && g.online != null) return RelayPlay(game: g);
  }
  return null;

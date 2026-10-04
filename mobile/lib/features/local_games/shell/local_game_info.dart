@@ -87,8 +87,11 @@ class LocalGameInfo {
   final PlayBuilder play;
   final RelayGame? online; // how to play it over the internet, if it can be
   final BotTurn? bot; // how the computer plays a seat, if it can
+  /// A 2 vs 2 version (4 players), offered as a TEAMS switch on this game's start screen.
+  final LocalGameInfo? teamVariant;
   const LocalGameInfo({
     this.bot,
+    this.teamVariant,
     this.minPlayers = 2,
     this.maxPlayers = 2,
     this.online,
