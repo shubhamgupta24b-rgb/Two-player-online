@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'tokens.dart';
 
 /// Which app this build is. The second app ("Party Games Flat") is built from the same
 /// code with `--dart-define=APP_STYLE=flat`: Guess the Person, Memory and the word games
@@ -13,17 +14,18 @@ const flatGames = {'memory', 'charades', 'heads_up', 'find_spy', 'undercover', '
 
 bool isFlatGame(String id) => flatStyle && flatGames.contains(id);
 
+/// Thin aliases to the flat token palette (tokens.dart); new code reads `context.tk`.
 class FlatColors {
-  static const sky = Color(0xFF4FA3D1);
-  static const skyLight = Color(0xFF6BB8E0);
-  static const board = Color(0xFF2B6488);
-  static const strip = Color(0xFF3A3846);
-  static const ink = Color(0xFF22212B);
-  static const tile = Colors.white;
-  static const tileShade = Color(0xFFD9DEE6);
-  static const option = Color(0xFFE8EAEE);
-  static const mark = Color(0x1FFFFFFF);
-  static const close = Color(0xFFD9534F);
+  static const sky = FlatPalette.sky;
+  static const skyLight = FlatPalette.skyLight;
+  static const board = FlatPalette.board;
+  static const strip = FlatPalette.strip;
+  static const ink = FlatPalette.ink;
+  static const tile = FlatPalette.tile;
+  static const tileShade = FlatPalette.tileShade;
+  static const option = FlatPalette.option;
+  static const mark = FlatPalette.mark;
+  static const close = FlatPalette.close;
 }
 
 /// Sky-blue background scattered with big faint question marks, like a board-game box.

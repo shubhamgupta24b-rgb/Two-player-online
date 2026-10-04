@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/app_flavor.dart';
+import '../../../core/ui/tokens.dart';
 
+/// Guess the Person's colours, now aliases to the design tokens.
 class GpColors {
   static const bgTop = Color(0xFF241A5C);
   static const bgBottom = Color(0xFF120D33);
   static const card = Color(0xFFFFF8EC);
-  static const ink = Color(0xFF1E1B3A);
-  static const accent = Color(0xFFFFC93C);
-  static const yes = Color(0xFF2ECC71);
-  static const no = Color(0xFFFF5E5B);
-  static const muted = flatStyle ? Color(0xFFE6F3FB) : Color(0xFFB9B3E0);
+  static const ink = Brand.ink;
+  static const accent = Brand.gold;
+  static const yes = StatusColors.success;
+  static const no = StatusColors.danger;
+  static const muted = flatStyle ? Color(0xFFEAF4FB) : NeonPalette.textMuted;
   static const panel = Color(0x26FFFFFF);
   static const portraitBgs = [
     Color(0xFFFFD6A5), Color(0xFFCAFFBF), Color(0xFF9BF6FF), Color(0xFFBDB2FF),

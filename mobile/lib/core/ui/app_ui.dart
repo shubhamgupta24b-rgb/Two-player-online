@@ -1,25 +1,31 @@
 import 'package:flutter/material.dart';
 import 'app_flavor.dart';
+import 'app_theme_ext.dart';
 import 'party_logo.dart';
 
+export 'app_theme_ext.dart';
 export 'party_logo.dart';
 
 /// Colours taken from the app logo: deep navy, neon blue vs red, and gold.
 /// The flat app swaps the navy for board-game blues (sky background, dark-blue panels).
+/// Thin aliases to the design tokens (tokens.dart); new code reads `context.tk` instead.
 class AppColors {
-  static const navy = flatStyle ? Color(0xFF2B6488) : Color(0xFF14207A);
-  static const night = flatStyle ? Color(0xFF22577A) : Color(0xFF0A0F3D);
-  static const deep = flatStyle ? Color(0xFF1B4A6B) : Color(0xFF060827);
-  static const blue = Color(0xFF2E8BFF);
-  static const red = Color(0xFFFF3B5C);
-  static const gold = Color(0xFFFFC93C);
-  static const purple = Color(0xFF7B4DFF);
-  static const green = Color(0xFF2ECC71);
+  static const navy = flatStyle ? FlatPalette.board : Brand.navy;
+  static const night = flatStyle ? Color(0xFF1D5276) : Brand.night;
+  static const deep = flatStyle ? Color(0xFF17435F) : Brand.deep;
+  static const blue = Brand.blue;
+  static const red = Brand.red;
+  static const gold = Brand.gold;
+  static const purple = Brand.purple;
+  static const green = Brand.green;
   static const text = Colors.white;
-  static const muted = flatStyle ? Color(0xFFE6F3FB) : Color(0xFFAAB2E8);
+  static const muted = flatStyle ? Color(0xFFEAF4FB) : NeonPalette.textMuted;
   static const glass = flatStyle ? Color(0x2EFFFFFF) : Color(0x1AFFFFFF);
-  static const stroke = flatStyle ? Color(0x4DFFFFFF) : Color(0x26FFFFFF);
+  static const stroke = flatStyle ? Color(0x4DFFFFFF) : NeonPalette.stroke;
 }
+
+/// The token set for app screens in this build.
+final appTokens = flatStyle ? GameTokens.flatSet : GameTokens.neon;
 
 ThemeData buildAppTheme() {
   final scheme = ColorScheme.fromSeed(seedColor: AppColors.purple, brightness: Brightness.dark).copyWith(
@@ -31,6 +37,7 @@ ThemeData buildAppTheme() {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
+    extensions: [appTokens],
     scaffoldBackgroundColor: AppColors.deep,
     appBarTheme: const AppBarTheme(backgroundColor: AppColors.night, foregroundColor: Colors.white, centerTitle: true),
     snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating, backgroundColor: AppColors.navy, contentTextStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
