@@ -76,6 +76,7 @@ void main() {
       await tester.scrollUntilVisible(find.text(t), 100);
       expect(find.text(t), findsOneWidget);
     }
+    await tester.scrollUntilVisible(find.text('🧍 SOLO GAMES'), -100); // the list is long: scroll back up to it
     expect(find.text('🧍 SOLO GAMES'), findsOneWidget);
     expect(find.text('🧍 SOLO').evaluate(), isNotEmpty);
   });
