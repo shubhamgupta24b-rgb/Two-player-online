@@ -8,6 +8,7 @@ import 'package:multiplayer_game/features/create_room/create_room_screen.dart';
 import 'package:multiplayer_game/features/home/home_screen.dart';
 import 'package:multiplayer_game/features/join_room/join_room_screen.dart';
 import 'package:multiplayer_game/features/privacy/privacy_screen.dart';
+import 'package:multiplayer_game/features/quick_play/quick_play_screen.dart';
 import 'package:multiplayer_game/features/records/records_screen.dart';
 import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dart';
 import 'package:multiplayer_game/features/local_games/shell/local_game_shell.dart';
@@ -157,7 +158,7 @@ void main() {
       await openAndBack(find.text('Raja Mantri'), RmcsMenuScreen);
       await openAndBack(find.text('SEE ALL'), LocalGamesHubScreen);
       await tester.scrollUntilVisible(find.text('Privacy'), 120, scrollable: find.byType(Scrollable).first);
-      expect(find.text('QUICK PLAY'), findsOneWidget);
+      await openAndBack(find.text('⚡ QUICK PLAY'), QuickPlayScreen);
       await openAndBack(find.text('🏆 MY RECORDS'), RecordsScreen);
       await openAndBack(find.text('Privacy'), PrivacyScreen);
       // No server addresses on screen: just Online / Same Wi-Fi.

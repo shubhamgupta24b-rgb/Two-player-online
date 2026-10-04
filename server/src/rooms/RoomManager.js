@@ -48,6 +48,26 @@ class RoomManager extends EventEmitter {
     return room;
   }
 
+  /// Quick Play: join a random open public room (for [gameType] if given), or open a new
+  /// public room that the next quick player will find. Rooms made with a code stay private.
+  quickPlay(user, { gameType } = {}) {
+    if (this.userRoom.has(user.userId)) throw new GameError('ALREADY_IN_ROOM');
+    if (gameType !== undefined && (!registry.get(gameType) || NOT_IN_ROOMS.has(gameType))) throw new GameError('INVALID_PAYLOAD', 'unknown gameType');
+    const open = [...this.store.values()].filter(r =>
+      r.isPublic && r.status === 'lobby' && r.players.length < r.maxPlayers && r.players.some(p => p.connected) &&
+      (gameType === undefined || r.gameType === gameType));
+    if (open.length) {
+      // Fullest first, so groups fill up and start sooner; random among equals.
+      const most = Math.max(...open.map(r => r.players.length));
+      const best = open.filter(r => r.players.length === most);
+      return this.joinRoom(user, best[crypto.randomInt(best.length)].code);
+    }
+    const pool = registry.list().filter(g => g.implemented && !NOT_IN_ROOMS.has(g.id) && g.minPlayers <= 2).map(g => g.id);
+    const room = this.createRoom(user, { gameType: gameType ?? pool[crypto.randomInt(pool.length)], maxPlayers: 6 });
+    room.isPublic = true;
+    return room;
+  }
+
   joinRoom(user, code) {
     if (this.userRoom.has(user.userId)) throw new GameError('ALREADY_IN_ROOM');
     const room = this.store.get(code);
@@ -266,7 +286,7 @@ class RoomManager extends EventEmitter {
   publicRoom(room) {
     return {
       code: room.code, gameType: room.gameType, maxPlayers: room.maxPlayers, hostId: room.hostId, status: room.status,
-      party: this._publicParty(room), playable: this._fits(room),
+      isPublic: !!room.isPublic, party: this._publicParty(room), playable: this._fits(room),
       players: room.players.map(({ userId, username, avatar, ready, connected }) => ({ userId, username, avatar, ready, connected })),
     };
   }

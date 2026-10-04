@@ -33,12 +33,14 @@ class Room {
   final List<RoomPlayer> players;
   final Party? party;
   final Set<String> playable; // games that fit the players in the room right now
-  Room(this.code, this.gameType, this.hostId, this.status, this.maxPlayers, this.players, {this.party, this.playable = const {}});
+  final bool isPublic; // a Quick Play room: strangers can be matched into it
+  Room(this.code, this.gameType, this.hostId, this.status, this.maxPlayers, this.players, {this.party, this.playable = const {}, this.isPublic = false});
   factory Room.fromJson(Map j) => Room(
         j['code'], j['gameType'], j['hostId'], j['status'], j['maxPlayers'],
         (j['players'] as List).map((p) => RoomPlayer.fromJson(p as Map)).toList(),
         party: j['party'] == null ? null : Party.fromJson(j['party'] as Map),
         playable: {...((j['playable'] as List?) ?? const []).cast<String>()},
+        isPublic: j['isPublic'] == true,
       );
   bool get allReady => players.length >= 2 && players.every((p) => p.ready && p.connected);
 }
@@ -109,6 +111,9 @@ class RoomManager extends ChangeNotifier {
 
   Future<String?> create(String gameType, int maxPlayers) => _roomCall('create_room', {'gameType': gameType, 'maxPlayers': maxPlayers});
   Future<String?> join(String code) => _roomCall('join_room', {'code': code.trim().toUpperCase()});
+
+  /// Quick Play: matched into a random open room (for [gameType], or any game).
+  Future<String?> quickPlay([String? gameType]) => _roomCall('quick_play', {if (gameType != null) 'gameType': gameType});
   Future<String?> setReady(bool ready) => _roomCall(ready ? 'player_ready' : 'player_unready');
   Future<String?> start() => _roomCall('start_game');
   Future<String?> returnToLobby() => _roomCall('return_to_lobby');

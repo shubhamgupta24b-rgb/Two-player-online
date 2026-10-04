@@ -87,7 +87,7 @@ class LobbyScreen extends StatelessWidget {
               ),
               Expanded(
                 child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 16), children: [
-                  _CodeCard(code: room.code),
+                  _CodeCard(code: room.code, quickPlay: room.isPublic),
                   const SizedBox(height: 14),
                   _GameCard(game: game, fits: fits, playerCount: n, isHost: isHost, onChange: pick),
                   SectionTitle('PLAYERS · $n / ${room.maxPlayers}'),
@@ -138,7 +138,8 @@ class LobbyScreen extends StatelessWidget {
 
 class _CodeCard extends StatelessWidget {
   final String code;
-  const _CodeCard({required this.code});
+  final bool quickPlay; // an open room: players are matched in, no code needed
+  const _CodeCard({required this.code, this.quickPlay = false});
   @override
   Widget build(BuildContext context) => PressableCard(
         semanticLabel: 'Room code $code. Tap to copy',
@@ -148,8 +149,14 @@ class _CodeCard extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code copied')));
         },
         child: Column(children: [
+          if (quickPlay) ...[
+            const Text('⚡ QUICK PLAY ROOM', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 15)),
+            const SizedBox(height: 2),
+            const Text('Open to everyone: new players are matched in automatically', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12)),
+            const SizedBox(height: 6),
+          ],
           const Text('ROOM CODE', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12)),
-          FittedBox(child: Text(code, style: const TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w900, letterSpacing: 8))),
+          FittedBox(child: Text(code, style: TextStyle(color: Colors.white, fontSize: quickPlay ? 30 : 44, fontWeight: FontWeight.w900, letterSpacing: 8))),
           const Text('Friends tap JOIN ROOM and enter this code · tap to copy', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12)),
         ]),
       );

@@ -13,6 +13,7 @@ import '../lobby/lobby_screen.dart';
 import '../local_games/local_games_hub_screen.dart';
 import '../local_games/shell/local_game_shell.dart';
 import '../privacy/privacy_screen.dart';
+import '../quick_play/quick_play_screen.dart';
 import '../raja_mantri/rmcs_screen.dart';
 import '../records/records_screen.dart';
 
@@ -133,7 +134,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(child: _SoonTile(icon: Icons.bolt_rounded, title: 'QUICK PLAY', subtitle: 'Coming soon')),
+                  Expanded(
+                    child: _ActionCard(
+                      title: '⚡ QUICK PLAY',
+                      subtitle: 'Join a random room',
+                      icon: Icons.bolt_rounded,
+                      colors: const [Color(0xFF00C9A7), Color(0xFF0E8C7B)],
+                      onTap: () => _open(const QuickPlayScreen()),
+                    ),
+                  ),
                 ]),
                 const SizedBox(height: 14),
                 Center(
@@ -461,30 +470,5 @@ class _ActionCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(subtitle, maxLines: 2, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12)),
         ]),
-      );
-}
-
-class _SoonTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  const _SoonTile({required this.icon, required this.title, required this.subtitle});
-  @override
-  Widget build(BuildContext context) => Semantics(
-        label: '$title, coming later',
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: AppColors.glass, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.stroke)),
-          child: Row(children: [
-            Icon(icon, color: Colors.white38),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.w900, fontSize: 12.5)),
-                Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white38, fontSize: 11)),
-              ]),
-            ),
-          ]),
-        ),
       );
 }

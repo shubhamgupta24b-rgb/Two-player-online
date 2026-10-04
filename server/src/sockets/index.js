@@ -74,6 +74,11 @@ function attachSockets(io, rooms) {
       socket.join(room.code);
       return { room: rooms.publicRoom(room) };
     });
+    on('quick_play', p => {
+      const room = rooms.quickPlay(user, { gameType: p.gameType === undefined || p.gameType === null ? undefined : String(p.gameType) });
+      socket.join(room.code);
+      return { room: rooms.publicRoom(room) };
+    });
     on('join_room', p => {
       const code = typeof p.code === 'string' ? p.code.trim().toUpperCase() : '';
       if (!CODE_RE.test(code)) throw new GameError('INVALID_PAYLOAD', 'bad room code');
