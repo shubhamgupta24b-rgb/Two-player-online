@@ -1,10 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
+import '../party/party_widgets.dart' show HoldToReveal;
 import '../shell/ticking_play.dart';
 import 'colour_clash_logic.dart';
 
@@ -16,6 +18,15 @@ const clashColors = {
   ClashColor.green: Color(0xFF2EAA4F),
   ClashColor.blue: Color(0xFF1E7BE0),
   ClashColor.wild: Color(0xFF1C1C24),
+};
+
+/// A suit per colour, printed on the cards, so colour is never the only way to tell them apart.
+const clashSymbols = {
+  ClashColor.red: '♥',
+  ClashColor.yellow: '★',
+  ClashColor.green: '♣',
+  ClashColor.blue: '♦',
+  ClashColor.wild: '',
 };
 
 final colourClashInfo = LocalGameInfo(
@@ -207,7 +218,10 @@ class ClashCardView extends StatelessWidget {
   Widget _face(ClashCard c) {
     final bg = clashColors[c.color]!;
     final big = c.kind == ClashKind.number ? 30.0 : (c.label.length > 1 ? 24.0 : 28.0);
-    final corner = Text(c.label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, height: 1));
+    final corner = Column(mainAxisSize: MainAxisSize.min, children: [
+      Text(c.label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, height: 1)),
+      if (!c.isWild) Text(clashSymbols[c.color]!, style: const TextStyle(color: Colors.white, fontSize: 10, height: 1.1)),
+    ]);
     return Container(
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
       child: Stack(children: [
@@ -277,27 +291,19 @@ class _ClashTable extends StatelessWidget {
       Padding(
         padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
         child: Column(children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const PauseButton(),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Wrap(spacing: 6, runSpacing: 6, children: [
-                for (var i = 0; i < players.length; i++) _OpponentChip(player: players[i], cards: g.hands[i].length, active: i == g.turn),
-              ]),
-            ),
-          ]),
+          GameHud(players: players, turn: g.turn, extra: (i) => '🂠 ${g.hands[i].length}${g.hands[i].length == 1 ? ' ONE!' : ''}'),
           const SizedBox(height: 6),
           Expanded(child: _Centre(g: g, canAct: myTurn, waitingFor: myTurn ? null : players[g.turn].name)),
           if (botTurn)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 18),
-              child: Text('🤖 ${players[g.turn].name} is playing…', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+              child: Text('🤖 ${players[g.turn].name} is playing…', style: context.tk.styles.title),
             )
           else if (online || g.phase != ClashPhase.handoff) ...[
             Row(children: [
               Expanded(
                 child: Text(online ? 'YOUR HAND · ${hand.length} cards' : '${player.whose} HAND · ${hand.length} cards',
-                    style: TextStyle(color: player.color, fontWeight: FontWeight.w900)),
+                    style: context.tk.styles.label.copyWith(color: Color.lerp(player.color, Colors.white, 0.4))),
               ),
               if (myTurn && hand.length == 2 && g.phase == ClashPhase.play)
                 _SmallButton(
@@ -306,7 +312,8 @@ class _ClashTable extends StatelessWidget {
                   onTap: g.calledOne
                       ? null
                       : () {
-                          HapticFeedback.mediumImpact().ignore();
+                          haptic(HapticWeight.medium);
+                          GameAudio.sfx('coin');
                           g.callOne();
                         },
                 ),
@@ -324,29 +331,6 @@ class _ClashTable extends StatelessWidget {
       if (!online && g.phase == ClashPhase.handoff) _Handoff(player: player, g: g),
     ]);
   }
-}
-
-class _OpponentChip extends StatelessWidget {
-  final GpPlayer player;
-  final int cards;
-  final bool active;
-  const _OpponentChip({required this.player, required this.cards, required this.active});
-  @override
-  Widget build(BuildContext context) => AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration: BoxDecoration(
-          color: active ? player.color : Colors.white10,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: player.color, width: 2),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Flexible(child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12))),
-          const SizedBox(width: 5),
-          Text('🂠 $cards', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
-          if (cards == 1) const Text(' ONE!', style: TextStyle(color: Color(0xFFFFE066), fontWeight: FontWeight.w900, fontSize: 12)),
-        ]),
-      );
 }
 
 class _Centre extends StatelessWidget {
@@ -378,7 +362,7 @@ class _Centre extends StatelessWidget {
             child: GestureDetector(
               onTap: canDraw
                   ? () {
-                      HapticFeedback.selectionClick().ignore();
+                      haptic(HapticWeight.selection);
                       g.draw();
                     }
                   : null,
@@ -447,7 +431,8 @@ class _Hand extends StatelessWidget {
             child: GestureDetector(
               onTap: ok
                   ? () {
-                      HapticFeedback.lightImpact().ignore();
+                      haptic(HapticWeight.light);
+                      GameAudio.sfx('tap');
                       g.play(card.id);
                     }
                   : null,
@@ -470,15 +455,7 @@ class _SmallButton extends StatelessWidget {
   final VoidCallback? onTap;
   const _SmallButton({required this.label, required this.color, this.onTap});
   @override
-  Widget build(BuildContext context) => Material(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
-        ),
-      );
+  Widget build(BuildContext context) => AppButton(label, compact: true, color: color == Colors.white24 ? null : color, variant: color == Colors.white24 ? ButtonVariant.secondary : ButtonVariant.primary, onPressed: onTap);
 }
 
 class _ColorPicker extends StatelessWidget {
@@ -492,7 +469,7 @@ class _ColorPicker extends StatelessWidget {
             child: Container(
               margin: const EdgeInsets.all(24),
               padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(color: GpColors.bgTop, borderRadius: BorderRadius.circular(24)),
+              decoration: BoxDecoration(color: context.tk.card, borderRadius: Radii.rXl, boxShadow: context.tk.shadowLg),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 const Text('PICK A COLOUR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1.5)),
                 const SizedBox(height: 14),
@@ -502,12 +479,21 @@ class _ColorPicker extends StatelessWidget {
                       button: true,
                       label: c.name,
                       child: GestureDetector(
-                        onTap: () => g.chooseColor(c),
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(color: clashColors[c], shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3)),
-                        ),
+                        onTap: () {
+                          haptic(HapticWeight.selection);
+                          g.chooseColor(c);
+                        },
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(color: clashColors[c], shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3)),
+                            child: Text(clashSymbols[c]!, style: const TextStyle(color: Colors.white, fontSize: 28)),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(c.name.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                        ]),
                       ),
                     ),
                 ]),
@@ -518,30 +504,38 @@ class _ColorPicker extends StatelessWidget {
       );
 }
 
-/// Hides the hands while the phone changes hands.
+/// Hides the hands while the phone changes hands (the table stays visible above it).
 class _Handoff extends StatelessWidget {
   final GpPlayer player;
   final ColourClashLogic g;
   const _Handoff({required this.player, required this.g});
   @override
-  Widget build(BuildContext context) => Positioned(
-        left: 0,
-        right: 0,
-        bottom: 0,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
-          decoration: BoxDecoration(
-            color: GpColors.bgBottom,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(top: BorderSide(color: player.color, width: 4)),
-          ),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('📱 Pass to ${player.name}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
-            const SizedBox(height: 4),
-            const Text('Everyone else, no peeking at the cards!', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 14),
-            GpButton('SHOW MY CARDS', icon: Icons.visibility_rounded, color: player.color, textColor: Colors.white, onPressed: g.reveal),
-          ]),
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(Space.xl, Space.l, Space.xl, Space.xl),
+        decoration: BoxDecoration(
+          color: t.bgBottom,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border(top: BorderSide(color: player.color, width: 4)),
+          boxShadow: t.shadowLg,
         ),
-      );
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            PlayerAvatar(name: player.name, color: player.color, size: 44),
+            const SizedBox(width: Space.m),
+            Flexible(child: Text('📱 Pass to ${player.name}', style: t.styles.title.copyWith(fontSize: 20))),
+          ]),
+          const SizedBox(height: Space.xs),
+          Text('Everyone else, no peeking at the cards!', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
+          const SizedBox(height: Space.m),
+          HoldToReveal(label: 'HOLD TO SEE MY CARDS', color: player.color, onRevealed: g.reveal),
+        ]),
+      ),
+    );
+  }
 }

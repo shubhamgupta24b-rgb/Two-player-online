@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../../../core/ui/app_flavor.dart';
 import '../../guess_person/data/person_data.dart';
 import '../../guess_person/models/gp_player.dart';
@@ -9,7 +10,7 @@ import '../../guess_person/widgets/gp_theme.dart';
 import '../../guess_person/widgets/person_portrait.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
 import '../shell/ticking_play.dart';
 
 class MemoryCard {
@@ -139,36 +140,15 @@ class _MemoryBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final current = players[g.turn];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
       child: Column(children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const PauseButton(),
-          const SizedBox(width: 4),
-          // 2 players side by side; 3-6 wrap into rows of three.
-          Expanded(
-            child: LayoutBuilder(builder: (context, c) {
-              final perRow = players.length <= 2 ? 2 : 3;
-              const gap = 8.0;
-              final w = (c.maxWidth - gap * (perRow - 1)) / perRow;
-              return Wrap(spacing: gap, runSpacing: 6, children: [
-                for (var i = 0; i < players.length; i++)
-                  SizedBox(width: w, child: _ScorePill(player: players[i], pairs: g.pairs[i], active: g.turn == i && !g.finished)),
-              ]);
-            }),
-          ),
-        ]),
-        const SizedBox(height: 10),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          child: Text(
-            g.finished ? 'BOARD CLEAR!' : (g.showingMismatch ? 'NO MATCH…' : '${current.whose} TURN'),
-            key: ValueKey('${g.turn}${g.showingMismatch}${g.finished}'),
-            style: flatStyle
-                ? const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 1, shadows: [Shadow(color: Color(0x66000000), offset: Offset(0, 2), blurRadius: 3)])
-                : TextStyle(color: g.showingMismatch ? Colors.white70 : current.color, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1),
-          ),
+        GameHud(players: players, scores: g.pairs, turn: g.finished ? null : g.turn),
+        GameStatus(
+          player: current,
+          turnText: g.showingMismatch ? null : '${current.whose} TURN',
+          message: g.finished ? '🎉 BOARD CLEAR!' : (g.showingMismatch ? 'NO MATCH…' : null),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: Space.xs),
         Expanded(
           child: _board(LayoutBuilder(builder: (context, c) {
             // 4 columns x 6 rows on phones; 6 x 4 when the space is wide.
@@ -193,8 +173,12 @@ class _MemoryBoard extends StatelessWidget {
                   faceUp: g.isFaceUp(card),
                   symbol: card.symbol,
                   ownerColor: card.matched ? players[card.matchedBy!].color : null,
+                  ownerSeat: card.matched ? PlayerPalette.indexOf(players[card.matchedBy!].color) : null,
                   onTap: () {
-                    if (g.flip(card.id)) HapticFeedback.selectionClick().ignore();
+                    if (g.flip(card.id)) {
+                      haptic(HapticWeight.selection);
+                      GameAudio.sfx('tap');
+                    }
                   },
                 );
               },
@@ -216,30 +200,6 @@ const _faceIds = [11, 16, 1, 12, 5, 3, 2, 4, 9, 19, 15, 28];
 Person _faceFor(String symbol) {
   final id = _faceIds[MemoryLogic.symbols.indexOf(symbol) % _faceIds.length];
   return allPeople.firstWhere((p) => p.id == id);
-}
-
-class _ScorePill extends StatelessWidget {
-  final GpPlayer player;
-  final int pairs;
-  final bool active;
-  const _ScorePill({required this.player, required this.pairs, required this.active});
-  @override
-  Widget build(BuildContext context) => AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? player.color : player.color.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: player.color, width: 2),
-        ),
-        child: Row(children: [
-          Expanded(
-            child: Text(player.name.toUpperCase(),
-                overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
-          ),
-          Text('$pairs', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22)),
-        ]),
-      );
 }
 
 /// Diagonal lattice on the card backs.
@@ -268,14 +228,16 @@ class _FlipCard extends StatelessWidget {
   final bool faceUp;
   final String symbol;
   final Color? ownerColor;
+  final int? ownerSeat; // matched: the owner's shape in the corner
   final VoidCallback onTap;
-  const _FlipCard({super.key, required this.faceUp, required this.symbol, required this.ownerColor, required this.onTap});
+  const _FlipCard({super.key, required this.faceUp, required this.symbol, required this.ownerColor, this.ownerSeat, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: !faceUp,
       label: faceUp ? 'Card $symbol' : 'Hidden card',
+      excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
         child: TweenAnimationBuilder<double>(
@@ -289,7 +251,17 @@ class _FlipCard extends StatelessWidget {
               transform: Matrix4.identity()
                 ..setEntry(3, 2, 0.002)
                 ..rotateY(showFace ? angle - pi : angle),
-              child: flatStyle ? (showFace ? _flatFace() : _flatBack()) : (showFace ? _face() : _back()),
+              child: Stack(fit: StackFit.expand, children: [
+                flatStyle ? (showFace ? _flatFace() : _flatBack()) : (showFace ? _face() : _back()),
+                if (showFace && ownerSeat != null)
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    width: 16,
+                    height: 16,
+                    child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(ownerSeat!), ownerColor!, outline: Colors.white)),
+                  ),
+              ]),
             );
           },
         ),

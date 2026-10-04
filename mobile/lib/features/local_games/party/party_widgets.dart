@@ -124,6 +124,53 @@ class PassAndReveal extends StatelessWidget {
   }
 }
 
+/// Covers a private screen (a card, a fleet) until the player whose turn it is holds the
+/// button: the same hand-off as [PassAndReveal], over a whole game screen.
+class PassCover extends StatelessWidget {
+  final GpPlayer player;
+  final VoidCallback onReveal;
+  final String holdLabel;
+  final String note;
+  const PassCover({super.key, required this.player, required this.onReveal, this.holdLabel = 'HOLD TO SEE YOUR CARDS', this.note = 'Everyone else, look away! 🙈'});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    return Positioned.fill(
+      child: ColoredBox(
+        color: t.bgBottom, // fully opaque: nothing of the last player's screen shows through
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(Space.xl),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Align(alignment: Alignment.centerLeft, child: PauseButton()),
+                  Stack(clipBehavior: Clip.none, children: [
+                    PlayerAvatar(name: player.name, color: player.color, size: 96),
+                    const Positioned(right: -12, bottom: -4, child: ExcludeSemantics(child: Text('📲', style: TextStyle(fontSize: 32)))),
+                  ]),
+                  const SizedBox(height: Space.l),
+                  Text('PASS THE PHONE TO', style: t.styles.label),
+                  const SizedBox(height: Space.xs),
+                  Semantics(
+                    liveRegion: true,
+                    child: FittedBox(child: Text(player.name.toUpperCase(), style: t.styles.display.copyWith(color: Color.lerp(player.color, Colors.white, 0.35), fontSize: 32))),
+                  ),
+                  const SizedBox(height: Space.s),
+                  Text(note, textAlign: TextAlign.center, style: t.styles.bodyStrong),
+                  const SizedBox(height: Space.xl),
+                  HoldToReveal(label: holdLabel, color: player.color, onRevealed: onReveal),
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 /// A button you hold down: it fills up, and when full [onRevealed] runs. Letting go early
 /// empties it again. Screen readers get a plain "activate" instead.
 class HoldToReveal extends StatefulWidget {

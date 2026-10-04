@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../core/audio/game_audio.dart';
+import '../../core/ui/components.dart';
 import '../guess_person/models/gp_player.dart';
 import '../guess_person/widgets/gp_theme.dart';
 import 'rmcs_game.dart';
@@ -42,10 +43,11 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
       body: RmcsBackground(
         child: SafeArea(
           child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 24), children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(tooltip: 'Back', onPressed: () => Navigator.maybePop(context), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70)),
-            ),
+            Row(children: [
+              AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
+              const Spacer(),
+              AppIconButton(icon: Icons.tune_rounded, tooltip: 'Settings', onPressed: () => showSettingsSheet(context)),
+            ]),
             const Text('RAJA MANTRI\nCHOR SIPAHI',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: RmcsColors.gold, fontSize: 32, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: 1, shadows: [Shadow(color: Color(0xFF8A1C3A), offset: Offset(0, 4))])),
@@ -74,7 +76,7 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
                     counterText: '',
                     hintText: 'Player ${i + 1}',
                     hintStyle: const TextStyle(color: Colors.white38),
-                    prefixIcon: Icon(Icons.person_rounded, color: gpPlayerColors[i]),
+                    prefixIcon: Padding(padding: const EdgeInsets.all(8), child: PlayerAvatar(name: 'Player ${i + 1}', color: gpPlayerColors[i], seat: i, size: 28)),
                     filled: true,
                     fillColor: Colors.white10,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
@@ -99,26 +101,7 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
           const SizedBox(height: 10),
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final n in roundChoices)
-              Semantics(
-                button: true,
-                selected: n == _rounds,
-                label: '$n rounds',
-                child: GestureDetector(
-                  onTap: () => setState(() => _rounds = n),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 54,
-                    height: 44,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: n == _rounds ? RmcsColors.gold : Colors.white10,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: n == _rounds ? Colors.white : Colors.white24, width: 2),
-                    ),
-                    child: Text('$n', style: TextStyle(color: n == _rounds ? GpColors.ink : Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
-                  ),
-                ),
-              ),
+              AppChip(label: '$n', selected: n == _rounds, semanticLabel: '$n rounds', onTap: () => setState(() => _rounds = n)),
           ]),
           const SizedBox(height: 8),
           Text(_rounds <= 5 ? 'Quick game · about 5 minutes' : _rounds >= 30 ? 'Marathon · about 30 minutes' : 'About $_rounds minutes', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700, fontSize: 12)),
@@ -186,9 +169,12 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
         _mantriTimer = Timer(const Duration(milliseconds: 1100), () {
           if (mounted) setState(() => _mantriShown = true);
         });
-        HapticFeedback.mediumImpact().ignore();
+        haptic(HapticWeight.medium);
       }
-      if (g.phase == RmcsPhase.reveal) HapticFeedback.heavyImpact().ignore();
+      if (g.phase == RmcsPhase.reveal) {
+        haptic(HapticWeight.heavy);
+        GameAudio.sfx(g.caught ? 'coin' : 'lose');
+      }
     }
     if (mounted) setState(() {});
   }
@@ -202,18 +188,8 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
   }
 
   Future<void> _leave() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Leave the game?'),
-        content: const Text('Scores for this game will be lost.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('STAY')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('LEAVE')),
-        ],
-      ),
-    );
-    if (ok == true && mounted) Navigator.pop(context);
+    final ok = await confirmAction(context, title: 'Leave the game?', message: 'Scores for this game will be lost.', confirm: 'LEAVE', cancel: 'STAY', emoji: '🚪');
+    if (ok && mounted) Navigator.pop(context);
   }
 
   @override
@@ -238,11 +214,11 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
       padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
       child: Column(children: [
         Row(children: [
-          IconButton(tooltip: 'Leave game', onPressed: _leave, icon: const Icon(Icons.close_rounded, color: Colors.white70)),
+          AppIconButton(icon: Icons.close_rounded, tooltip: 'Leave game', onPressed: _leave),
           Expanded(
             child: Text('ROUND ${g.round} / ${g.totalRounds}', textAlign: TextAlign.center, style: const TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 2)),
           ),
-          const SizedBox(width: 48),
+          AppIconButton(icon: Icons.tune_rounded, tooltip: 'Settings', onPressed: () => showSettingsSheet(context)),
         ]),
         const SizedBox(height: 4),
         _headline(),
@@ -321,7 +297,7 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
           badge = 'TAP TO ACCUSE';
           badgeColor = GpColors.no;
           onTap = () {
-            HapticFeedback.selectionClick().ignore();
+            haptic(HapticWeight.selection);
             g.accuse(i);
           };
         } else {
@@ -400,10 +376,10 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
           child: Row(children: [
             Text(['🥇', '🥈', '🥉', '4️⃣'][rank], style: const TextStyle(fontSize: 26)),
             const SizedBox(width: 12),
-            CircleAvatar(radius: 8, backgroundColor: g.players[order[rank]].color),
-            const SizedBox(width: 8),
+            PlayerAvatar(name: _n(order[rank]), color: g.players[order[rank]].color, seat: order[rank], size: 34),
+            const SizedBox(width: 10),
             Expanded(child: Text(_n(order[rank]), overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18))),
-            Text('${g.scores[order[rank]]}', style: const TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, fontSize: 20)),
+            Text('${g.scores[order[rank]]}', style: const TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, fontSize: 20, fontFeatures: [FontFeature.tabularFigures()])),
           ]),
         ),
       const SizedBox(height: 12),

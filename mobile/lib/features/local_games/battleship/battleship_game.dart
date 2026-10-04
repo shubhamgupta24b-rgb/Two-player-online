@@ -1,11 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
+import '../party/party_widgets.dart' show PassCover;
 import '../shell/ticking_play.dart';
 
 /// Battleship for 2 on an 8x8 sea. Fleets are placed at random. Take turns firing at the
@@ -190,6 +191,11 @@ final battleshipInfo = LocalGameInfo(
   ),
 );
 
+// Board palette: open sea, grey hulls.
+const _sea = [Color(0xFF0B3C7A), Color(0xFF125AA8)];
+const _hull = Color(0xFF8C9BA5);
+const _wreck = Color(0xFF4E3B31);
+
 class _BattleTable extends StatelessWidget {
   final BattleshipLogic g;
   final List<GpPlayer> players;
@@ -199,6 +205,7 @@ class _BattleTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
     final passing = me == null;
     // Whose seas are shown: this phone's player, or (passing the phone) the player whose turn it is.
     final viewer = me ?? (bots.contains(g.turn) ? g.other(g.turn) : g.turn);
@@ -208,23 +215,17 @@ class _BattleTable extends StatelessWidget {
     final current = players[g.turn];
     return Stack(children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
+        padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.s),
         child: Column(children: [
-          Row(children: [
-            const PauseButton(),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                g.finished ? '🏆 ${players[g.scores[0] == 1 ? 0 : 1].name.toUpperCase()} WINS!' : (myTurn ? (passing ? '${current.whose} TURN: FIRE!' : 'YOUR TURN: FIRE!') : '${current.name} is aiming…'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: current.color, fontWeight: FontWeight.w900, fontSize: 17),
-              ),
-            ),
-          ]),
-          const SizedBox(height: 4),
-          Text(g.message, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 6),
+          GameHud(players: players, turn: g.finished ? null : g.turn, extra: (i) => '🚢${g.shipsLeft(i)}'),
+          GameStatus(
+            player: current,
+            height: 44,
+            turnText: myTurn ? (passing ? '${current.whose} TURN: FIRE!' : 'YOUR TURN: FIRE!') : '${current.name} is aiming…',
+            message: g.finished ? '🏆 ${players[g.scores[0] == 1 ? 0 : 1].name.toUpperCase()} WINS!' : null,
+          ),
+          if (g.message.isNotEmpty) Semantics(liveRegion: true, child: Text(g.message, textAlign: TextAlign.center, style: t.styles.bodyStrong)),
+          const SizedBox(height: Space.xs),
           _SeaLabel('🎯 ENEMY SEA · ${g.shipsLeft(enemy)} ships left', players[enemy].color),
           Expanded(
             flex: 3,
@@ -235,12 +236,12 @@ class _BattleTable extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.s),
           _SeaLabel('🛡 YOUR FLEET · ${g.shipsLeft(viewer)} ships left', players[viewer].color),
           Expanded(flex: 2, child: Center(child: AspectRatio(aspectRatio: 1, child: _Sea(g: g, owner: viewer, showShips: true)))),
         ]),
       ),
-      if (covered) _PassCover(player: current, onReveal: () => g.reveal(g.turn)),
+      if (covered) PassCover(player: current, holdLabel: 'HOLD TO SEE YOUR SEA', note: 'No peeking at the other fleet! 🙈', onReveal: () => g.reveal(g.turn)),
     ]);
   }
 }
@@ -251,8 +252,8 @@ class _SeaLabel extends StatelessWidget {
   const _SeaLabel(this.text, this.color);
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Text(text, style: TextStyle(color: Color.lerp(color, Colors.white, 0.4), fontWeight: FontWeight.w900, fontSize: 12.5, letterSpacing: 1)),
+        padding: const EdgeInsets.only(bottom: Space.xs),
+        child: Text(text, style: context.tk.styles.label.copyWith(color: Color.lerp(color, Colors.white, 0.45))),
       );
 }
 
@@ -268,72 +269,86 @@ class _Sea extends StatelessWidget {
   Widget build(BuildContext context) {
     final shotsHere = g.shots[g.other(owner)];
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(Space.xs),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF0D47A1), Color(0xFF1565C0)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: onFire != null ? GpColors.accent : Colors.white24, width: onFire != null ? 3 : 1.5),
+        gradient: const LinearGradient(colors: _sea, begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: Radii.rMd,
+        border: Border.all(color: onFire != null ? Brand.gold : Colors.white24, width: onFire != null ? 3 : 1.5),
+        boxShadow: onFire != null ? [BoxShadow(color: Brand.gold.withValues(alpha: 0.35), blurRadius: 14)] : null,
       ),
-      child: GridView.count(
-        crossAxisCount: BattleshipLogic.size,
-        mainAxisSpacing: 2,
-        crossAxisSpacing: 2,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          for (var cell = 0; cell < 64; cell++)
-            Builder(builder: (context) {
-              final shot = shotsHere.contains(cell);
-              final ship = g.isShip(owner, cell);
-              final sunkShip = ship && g.sunk(owner, g.ships[owner].firstWhere((s) => s.contains(cell)));
-              final color = sunkShip
-                  ? const Color(0xFF5D4037)
-                  : ship && (showShips || shot)
-                      ? const Color(0xFF90A4AE)
-                      : Colors.white.withValues(alpha: 0.08);
-              return GestureDetector(
-                onTap: onFire == null || shot
-                    ? null
-                    : () {
-                        HapticFeedback.mediumImpact().ignore();
-                        onFire!(cell);
-                      },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(3),
-                    border: cell == g.lastShot && shot ? Border.all(color: GpColors.accent, width: 2) : null,
+      child: CustomPaint(
+        painter: const _Waves(),
+        child: GridView.count(
+          crossAxisCount: BattleshipLogic.size,
+          mainAxisSpacing: 2,
+          crossAxisSpacing: 2,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            for (var cell = 0; cell < 64; cell++)
+              Builder(builder: (context) {
+                final shot = shotsHere.contains(cell);
+                final ship = g.isShip(owner, cell);
+                final sunkShip = ship && g.sunk(owner, g.ships[owner].firstWhere((s) => s.contains(cell)));
+                final visible = ship && (showShips || shot);
+                return Semantics(
+                  button: onFire != null && !shot,
+                  label: '${String.fromCharCode(65 + cell ~/ 8)}${cell % 8 + 1}: ${shot ? (ship ? (sunkShip ? 'sunk' : 'hit') : 'miss') : (visible ? 'ship' : 'water')}',
+                  excludeSemantics: true,
+                  child: GestureDetector(
+                    onTap: onFire == null || shot
+                        ? null
+                        : () {
+                            haptic(HapticWeight.medium);
+                            final hit = g.isShip(owner, cell);
+                            onFire!(cell);
+                            GameAudio.sfx(hit ? 'boom' : 'pop');
+                          },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: sunkShip ? _wreck : (visible ? _hull : Colors.white.withValues(alpha: 0.06)),
+                        gradient: visible && !sunkShip ? const LinearGradient(colors: [Color(0xFFB0BEC5), _hull], begin: Alignment.topCenter, end: Alignment.bottomCenter) : null,
+                        borderRadius: BorderRadius.circular(visible ? 6 : 3),
+                        border: cell == g.lastShot && shot ? Border.all(color: Brand.gold, width: 2) : null,
+                      ),
+                      alignment: Alignment.center,
+                      child: shot
+                          ? (ship
+                              ? FittedBox(child: Text(sunkShip ? '💥' : '🔥', style: const TextStyle(fontSize: 18)))
+                              : FractionallySizedBox(
+                                  widthFactor: 0.5,
+                                  heightFactor: 0.5,
+                                  child: DecoratedBox(decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.75), width: 2))),
+                                ))
+                          : null,
+                    ),
                   ),
-                  alignment: Alignment.center,
-                  child: shot ? FittedBox(child: Text(ship ? (sunkShip ? '💥' : '🔥') : '•', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 18))) : null,
-                ),
-              );
-            }),
-        ],
+                );
+              }),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _PassCover extends StatelessWidget {
-  final GpPlayer player;
-  final VoidCallback onReveal;
-  const _PassCover({required this.player, required this.onReveal});
+/// Faint wave lines behind the sea grid.
+class _Waves extends CustomPainter {
+  const _Waves();
   @override
-  Widget build(BuildContext context) => Positioned.fill(
-        child: Container(
-          color: GpColors.bgBottom.withValues(alpha: 0.98),
-          alignment: Alignment.center,
-          padding: const EdgeInsets.all(24),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('📲', style: TextStyle(fontSize: 56)),
-            const SizedBox(height: 8),
-            const Text('PASS THE PHONE TO', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900, letterSpacing: 2)),
-            Text(player.name.toUpperCase(), style: TextStyle(color: player.color, fontWeight: FontWeight.w900, fontSize: 32)),
-            const SizedBox(height: 6),
-            const Text('No peeking at the other fleet! 🙈', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 18),
-            GpButton('SHOW MY SEA', icon: Icons.visibility_rounded, color: player.color, textColor: Colors.white, onPressed: onReveal),
-          ]),
-        ),
-      );
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = Colors.white.withValues(alpha: 0.08)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    for (var y = size.height / 10; y < size.height; y += size.height / 7) {
+      final path = Path()..moveTo(0, y);
+      for (var x = 0.0; x <= size.width; x += size.width / 12) {
+        path.quadraticBezierTo(x + size.width / 24, y - 4, x + size.width / 12, y);
+      }
+      canvas.drawPath(path, p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

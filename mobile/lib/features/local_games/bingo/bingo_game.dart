@@ -1,11 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
+import '../party/party_widgets.dart' show PassCover;
 import '../shell/ticking_play.dart';
 
 /// Bingo: everyone has a 5x5 card with 1-25 in a different order. Players take turns
@@ -138,6 +139,10 @@ final bingoInfo = LocalGameInfo(
   ),
 );
 
+// Board palette: a paper bingo ticket and a dabber.
+const _ticket = Color(0xFFFFF8EC);
+const _ticketInk = Color(0xFF1E1B3A);
+
 class _BingoTable extends StatelessWidget {
   final BingoLogic g;
   final List<GpPlayer> players;
@@ -147,6 +152,7 @@ class _BingoTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
     // One phone, several people: the card on screen is the caller's, after the phone is passed.
     final passing = me == null;
     final holder = me ?? (bots.contains(g.turn) ? _lastPerson() : g.turn);
@@ -155,38 +161,46 @@ class _BingoTable extends StatelessWidget {
     final current = players[g.turn];
     return Stack(children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(10, 6, 10, 12),
+        padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
         child: Column(children: [
-          Row(children: [
-            const PauseButton(),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Wrap(spacing: 6, runSpacing: 6, children: [
-                for (var i = 0; i < players.length; i++) _ProgressChip(player: players[i], lines: g.lineCount(i), active: i == g.turn && !g.finished),
+          GameHud(
+            players: players,
+            turn: g.finished ? null : g.turn,
+            extra: (i) => g.lineCount(i) == 0 ? '—' : BingoLogic.word.substring(0, min(g.lineCount(i), 5)),
+          ),
+          const SizedBox(height: Space.m),
+          _Letters(lines: g.lineCount(holder), color: players[holder].color),
+          GameStatus(
+            player: current,
+            height: 46,
+            turnText: myTurn ? (passing ? '${current.whose} TURN: CALL A NUMBER' : 'YOUR TURN: CALL A NUMBER') : '${current.name} is calling…',
+            message: g.finished ? '🎉 BINGO!' : null,
+          ),
+          Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Card(g: g, player: holder, color: players[holder].color, canCall: myTurn && !covered)))),
+          const SizedBox(height: Space.s),
+          if (g.called.isNotEmpty)
+            SizedBox(
+              height: 40,
+              child: Row(children: [
+                Text('CALLED', style: t.styles.label),
+                const SizedBox(width: Space.s),
+                Expanded(
+                  child: ListView(scrollDirection: Axis.horizontal, children: [
+                    for (final n in g.called.reversed.take(12))
+                      Container(
+                        margin: const EdgeInsets.only(right: 6),
+                        width: 36,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: n == g.called.last ? Brand.gold : t.glassStrong),
+                        child: Text('$n', style: TextStyle(color: n == g.called.last ? Brand.ink : t.onBg, fontWeight: FontWeight.w900, fontFeatures: const [FontFeature.tabularFigures()])),
+                      ),
+                  ]),
+                ),
               ]),
             ),
-          ]),
-          const SizedBox(height: 10),
-          _Letters(lines: g.lineCount(holder), color: players[holder].color),
-          const SizedBox(height: 8),
-          Text(
-            g.finished
-                ? '🎉 BINGO!'
-                : myTurn
-                    ? (passing ? '${current.whose} TURN: CALL A NUMBER' : 'YOUR TURN: CALL A NUMBER')
-                    : '${current.name} is calling…',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: g.finished ? GpColors.accent : current.color, fontWeight: FontWeight.w900, fontSize: 17),
-          ),
-          const SizedBox(height: 10),
-          Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Card(g: g, player: holder, color: players[holder].color, canCall: myTurn && !covered)))),
-          const SizedBox(height: 10),
-          if (g.called.isNotEmpty)
-            Text('Called: ${g.called.reversed.take(8).join(' · ')}${g.called.length > 8 ? ' …' : ''}',
-                maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
         ]),
       ),
-      if (covered) _PassCover(player: current, onReveal: () => g.reveal(g.turn)),
+      if (covered) PassCover(player: current, holdLabel: 'HOLD TO SEE YOUR CARD', onReveal: () => g.reveal(g.turn)),
     ]);
   }
 
@@ -204,41 +218,27 @@ class _Letters extends StatelessWidget {
   final Color color;
   const _Letters({required this.lines, required this.color});
   @override
-  Widget build(BuildContext context) => Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        for (var i = 0; i < BingoLogic.word.length; i++)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            width: 46,
-            height: 46,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: i < lines ? color : Colors.white10,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: i < lines ? Colors.white : Colors.white24, width: 2),
-              boxShadow: [if (i < lines) BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 12)],
+  Widget build(BuildContext context) => Semantics(
+        label: lines == 0 ? 'No lines yet' : '${BingoLogic.word.substring(0, min(lines, 5))}: $lines lines',
+        excludeSemantics: true,
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          for (var i = 0; i < BingoLogic.word.length; i++)
+            AnimatedContainer(
+              duration: Motion.of(context, Motion.slow),
+              curve: Motion.emphasized,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: i < lines ? fillFor(color) : context.tk.glass,
+                borderRadius: Radii.rMd,
+                border: Border.all(color: i < lines ? Colors.white : context.tk.stroke, width: 2),
+                boxShadow: [if (i < lines) BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 12)],
+              ),
+              child: Text(BingoLogic.word[i], style: TextStyle(color: i < lines ? Colors.white : context.tk.onBgMuted, fontWeight: FontWeight.w900, fontSize: 24)),
             ),
-            child: Text(BingoLogic.word[i], style: TextStyle(color: i < lines ? Colors.white : Colors.white38, fontWeight: FontWeight.w900, fontSize: 24)),
-          ),
-      ]);
-}
-
-class _ProgressChip extends StatelessWidget {
-  final GpPlayer player;
-  final int lines;
-  final bool active;
-  const _ProgressChip({required this.player, required this.lines, required this.active});
-  @override
-  Widget build(BuildContext context) => AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: active ? player.color : Colors.white10,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: player.color, width: 2),
-        ),
-        child: Text('${player.name} · ${lines == 0 ? '—' : BingoLogic.word.substring(0, min(lines, 5))}',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
+        ]),
       );
 }
 
@@ -253,9 +253,15 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     final done = {for (final l in g.doneLines(player)) ...l};
     final last = g.called.isEmpty ? null : g.called.last;
+    final dab = fillFor(color);
     return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: GpColors.card, borderRadius: BorderRadius.circular(22), boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 18)]),
+      padding: const EdgeInsets.all(Space.s),
+      decoration: BoxDecoration(
+        color: _ticket,
+        borderRadius: Radii.rXl,
+        border: Border.all(color: dab, width: 3),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 18), const BoxShadow(color: Colors.black45, offset: Offset(0, 6))],
+      ),
       child: GridView.count(
         crossAxisCount: BingoLogic.size,
         mainAxisSpacing: 6,
@@ -273,26 +279,38 @@ class _Card extends StatelessWidget {
                 child: GestureDetector(
                   onTap: canCall && !isMarked
                       ? () {
-                          HapticFeedback.selectionClick().ignore();
+                          haptic(HapticWeight.selection);
+                          GameAudio.sfx('pop');
                           g.call(n);
                         }
                       : null,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                  child: Container(
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: inLine ? color : (isMarked ? color.withValues(alpha: 0.35) : Colors.white),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: n == last ? GpColors.ink : color.withValues(alpha: 0.5), width: n == last ? 3 : 1.5),
+                      color: inLine ? dab : Colors.white,
+                      borderRadius: Radii.rSm,
+                      border: Border.all(color: n == last ? Brand.ink : dab.withValues(alpha: 0.35), width: n == last ? 3 : 1.5),
                     ),
                     child: Stack(alignment: Alignment.center, children: [
+                      // The dabber's ink blot over a called number.
+                      if (isMarked && !inLine)
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: Motion.reduced(context) ? 1 : 0.4, end: 1),
+                          duration: Motion.of(context, Motion.normal),
+                          curve: Curves.easeOutBack,
+                          builder: (_, s, child) => Transform.scale(scale: s, child: child),
+                          child: FractionallySizedBox(
+                            widthFactor: 0.82,
+                            heightFactor: 0.82,
+                            child: DecoratedBox(decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.45))),
+                          ),
+                        ),
                       FittedBox(
                         child: Padding(
                           padding: const EdgeInsets.all(6),
-                          child: Text('$n', style: TextStyle(color: inLine ? Colors.white : GpColors.ink, fontWeight: FontWeight.w900, fontSize: 26)),
+                          child: Text('$n', style: TextStyle(color: inLine ? Colors.white : _ticketInk, fontWeight: FontWeight.w900, fontSize: 26, fontFeatures: const [FontFeature.tabularFigures()])),
                         ),
                       ),
-                      if (isMarked && !inLine) const FittedBox(child: Text('✕', style: TextStyle(color: Color(0x99E5484D), fontSize: 40, fontWeight: FontWeight.w900))),
                     ]),
                   ),
                 ),
@@ -302,27 +320,4 @@ class _Card extends StatelessWidget {
       ),
     );
   }
-}
-
-/// One phone, several people: hides the card until the player whose turn it is taps.
-class _PassCover extends StatelessWidget {
-  final GpPlayer player;
-  final VoidCallback onReveal;
-  const _PassCover({required this.player, required this.onReveal});
-  @override
-  Widget build(BuildContext context) => Positioned.fill(
-        child: Container(
-          color: GpColors.bgBottom.withValues(alpha: 0.97),
-          alignment: Alignment.center,
-          padding: const EdgeInsets.all(24),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('📲', style: TextStyle(fontSize: 56)),
-            const SizedBox(height: 8),
-            const Text('PASS THE PHONE TO', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900, letterSpacing: 2)),
-            Text(player.name.toUpperCase(), style: TextStyle(color: player.color, fontWeight: FontWeight.w900, fontSize: 32)),
-            const SizedBox(height: 18),
-            GpButton('SHOW MY CARD', icon: Icons.visibility_rounded, color: player.color, textColor: Colors.white, onPressed: onReveal),
-          ]),
-        ),
-      );
 }
