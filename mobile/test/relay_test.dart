@@ -18,7 +18,7 @@ const relayIds = [
   'colour_clash', 'ludo', 'snakes_ladders', 'dots_boxes', 'tic_tac_toe', 'connect_four', 'truth_dare', //
   'math_duel', 'reaction_tap', 'air_hockey', 'ping_pong', 'snake_duel', 'penalty', //
   'find_spy', 'undercover', 'mafia', 'charades', 'heads_up', 'draw_guess', 'most_likely', 'would_rather', 'hand_cricket', 'quiz_battle', //
-  'basketball_hoops', 'rock_paper_scissors', 'fruit_merge_battle', 'ludo_teams', 'bingo', 'battleship', 'checkers',
+  'basketball_hoops', 'rock_paper_scissors', 'fruit_merge_battle', 'ludo_teams', 'bingo', 'battleship', 'checkers', 'smash_karts',
 ];
 
 /// Applies an action the way the host does: with forwarding switched off.
@@ -38,7 +38,7 @@ void phone(WidgetTester tester, [Size size = const Size(411, 914)]) {
 Map<String, dynamic> roundTrip(Map<String, dynamic> s) => jsonDecode(jsonEncode(s)) as Map<String, dynamic>;
 
 void main() {
-  test('the 30 relay games all have an online version, matching the server list', () {
+  test('the 31 relay games all have an online version, matching the server list', () {
     final online = [for (final g in allLocalGames) if (g.online != null) g.id];
     expect(online.toSet(), relayIds.toSet());
   });
