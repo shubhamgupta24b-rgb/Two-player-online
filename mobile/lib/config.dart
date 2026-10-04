@@ -13,6 +13,9 @@ class AppConfig {
   /// The server in use: the built-in one online, or the one found on the Wi-Fi.
   static String serverUrl = defaultServerUrl;
 
+  /// Same Wi-Fi, with this phone running the game server for the others.
+  static bool hosting = false;
+
   static Future<void> load() async {
     try {
       final p = await SharedPreferences.getInstance();
@@ -20,9 +23,11 @@ class AppConfig {
       // Online always uses the server this app was built with (older saved addresses are ignored).
       mode = p.getString('server_mode') == 'wifi' && wifiUrl != null ? ServerMode.wifi : ServerMode.online;
       serverUrl = mode == ServerMode.wifi ? wifiUrl! : defaultServerUrl;
+      hosting = mode == ServerMode.wifi && p.getBool('hosting') == true;
     } catch (_) {
       mode = ServerMode.online;
       serverUrl = defaultServerUrl;
+      hosting = false;
     }
   }
 
@@ -39,16 +44,20 @@ class AppConfig {
   static Future<void> useOnline() async {
     mode = ServerMode.online;
     serverUrl = defaultServerUrl;
+    hosting = false;
     final p = await SharedPreferences.getInstance();
     await p.setString('server_mode', 'online');
+    await p.setBool('hosting', false);
   }
 
-  /// Same Wi-Fi: remember the laptop's address for next time.
-  static Future<void> useWifi(String url) async {
+  /// Same Wi-Fi: remember the server's address for next time ([hosting]: it's this phone).
+  static Future<void> useWifi(String url, {bool hosting = false}) async {
     mode = ServerMode.wifi;
     serverUrl = url;
+    AppConfig.hosting = hosting;
     final p = await SharedPreferences.getInstance();
     await p.setString('server_mode', 'wifi');
     await p.setString('wifi_server_url', url);
+    await p.setBool('hosting', hosting);
   }
 }

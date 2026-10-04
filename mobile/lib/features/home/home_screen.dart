@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config.dart';
 import '../../core/auth/authentication_manager.dart';
+import '../../core/lan/lan_host.dart';
 import '../../core/network/lan_discovery.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/room/room_manager.dart';
@@ -70,33 +71,71 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       messenger.showSnackBar(SnackBar(
           content: Text(wifi
-              ? 'The laptop on this Wi-Fi is not answering. Is the game server still running?'
+              ? 'The host isn\'t answering. Is their app still open, on the same hotspot or Wi-Fi?'
               : 'Not connected yet. The server may be waking up (up to a minute): it keeps trying by itself.')));
     }
   }
 
   Future<void> _useOnline() async {
     if (AppConfig.mode == ServerMode.online && _socket.connected.value) return;
+    if (AppConfig.hosting) await LanHost.stop();
     await AppConfig.useOnline();
     if (!mounted) return;
     setState(() {});
     await _connect(done: 'Online: play with friends anywhere');
   }
 
-  /// Same Wi-Fi: look for a laptop running the game server on this Wi-Fi or hotspot.
+  /// Same Wi-Fi / hotspot, no internet: host the games on this phone, or join a phone
+  /// (or laptop) that hosts them.
   Future<void> _useWifi() async {
-    final url = await showModalBottomSheet<String>(
+    final choice = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.night,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
       builder: (_) => const _WifiSearchSheet(),
     );
-    if (url == null || !mounted) return;
-    await AppConfig.useWifi(url);
+    if (choice == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (choice == _WifiSearchSheet.host) {
+      try {
+        await LanHost.start();
+      } catch (_) {
+        messenger.showSnackBar(const SnackBar(content: Text('Could not start hosting on this phone. Close other game apps and try again.')));
+        return;
+      }
+      await AppConfig.useWifi(LanHost.selfUrl, hosting: true);
+      if (!mounted) return;
+      setState(() {});
+      await _connect(done: '📡 This phone is hosting: create a room!');
+      if (mounted) await _showHostHelp();
+      return;
+    }
+    if (AppConfig.hosting) await LanHost.stop();
+    await AppConfig.useWifi(choice);
     if (!mounted) return;
     setState(() {});
-    await _connect(done: 'Connected on this Wi-Fi');
+    await _connect(done: 'Connected to the host on this Wi-Fi');
+  }
+
+  /// What the host tells their friends.
+  Future<void> _showHostHelp() async {
+    final ips = await LanHost.addresses();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('📡 Hosting on this phone'),
+        content: Text(
+          '1. Turn on this phone\'s HOTSPOT (or stay on the same Wi-Fi as your friends).\n'
+          '2. Friends connect to it, open Party Games and tap 📶 SAME WI-FI → JOIN A FRIEND.\n'
+          '3. Create a room here and share the code (or use Quick Play).\n\n'
+          'No internet needed. Keep this app open while you play.'
+          '${ips.isEmpty ? '' : '\n\nThis phone: ${ips.join(' · ')}'}',
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('GOT IT'))],
+      ),
+    );
   }
 
   @override
@@ -334,15 +373,16 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(children: [
         option('🌐', 'ONLINE', 'Friends anywhere', !wifi, _useOnline),
         const SizedBox(width: 4),
-        option('📶', 'SAME WI-FI', wifi ? 'Laptop found ✓ · tap to search again' : 'Hotspot, no internet', wifi, _useWifi),
+        option('📶', 'SAME WI-FI', wifi ? (AppConfig.hosting ? '📡 Hosting on this phone' : 'Joined a host ✓ · change') : 'Hotspot, no internet', wifi, _useWifi),
       ]),
     );
   }
 }
 
-/// Searches this Wi-Fi/hotspot for a laptop running the game server; pops its URL when found.
-/// If none answers, explains how to start one and offers typing the address.
+/// Same Wi-Fi / hotspot: HOST ON THIS PHONE (pops [host]) or JOIN A FRIEND, which searches
+/// this Wi-Fi/hotspot for a phone or laptop hosting games and pops its URL when found.
 class _WifiSearchSheet extends StatefulWidget {
+  static const host = 'host';
   const _WifiSearchSheet();
   @override
   State<_WifiSearchSheet> createState() => _WifiSearchSheetState();
@@ -350,14 +390,40 @@ class _WifiSearchSheet extends StatefulWidget {
 
 class _WifiSearchSheetState extends State<_WifiSearchSheet> {
   double progress = 0;
-  bool searching = true;
+  bool choosing = true; // host or join?
+  bool searching = false;
   final _ctrl = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _search();
-  }
+  Widget _choice(String emoji, String title, String text, List<Color> colors, VoidCallback onTap) => PressableCard(
+        semanticLabel: title,
+        colors: colors,
+        onTap: onTap,
+        padding: const EdgeInsets.all(14),
+        child: Row(children: [
+          Text(emoji, style: const TextStyle(fontSize: 34)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+              const SizedBox(height: 2),
+              Text(text, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12.5)),
+            ]),
+          ),
+        ]),
+      );
+
+  Widget _chooser() => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const Text('Play together with no internet: one phone hosts, the others join it.',
+            textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 14),
+        _choice('📡', 'HOST ON THIS PHONE', 'Turn on your hotspot. Friends join it and play here.', const [Color(0xFF7B4DFF), Color(0xFF4D2BD6)],
+            () => Navigator.pop(context, _WifiSearchSheet.host)),
+        const SizedBox(height: 12),
+        _choice('🔍', 'JOIN A FRIEND', 'Connect to the host\'s hotspot (or same Wi-Fi), then search.', const [Color(0xFF00C9A7), Color(0xFF0E8C7B)], () {
+          setState(() => choosing = false);
+          _search();
+        }),
+      ]);
 
   @override
   void dispose() {
@@ -390,23 +456,25 @@ class _WifiSearchSheetState extends State<_WifiSearchSheet> {
   Widget build(BuildContext context) => Padding(
         padding: EdgeInsets.fromLTRB(22, 18, 22, 22 + MediaQuery.viewInsetsOf(context).bottom),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const Text('📶 SAME WI-FI', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: 1)),
+          const Text('📶 SAME WI-FI · NO INTERNET', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19, letterSpacing: 1)),
           const SizedBox(height: 14),
-          if (searching) ...[
-            const Text('Looking for the game server on this Wi-Fi or hotspot…', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
+          if (choosing)
+            _chooser()
+          else if (searching) ...[
+            const Text('Looking for the host on this Wi-Fi or hotspot…', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
             const SizedBox(height: 16),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(value: progress == 0 ? null : progress, minHeight: 8, color: AppColors.gold, backgroundColor: AppColors.glass),
             ),
           ] else ...[
-            const Text('No game server found on this Wi-Fi.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+            const Text('No host found on this Wi-Fi yet.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
             const SizedBox(height: 10),
             const Text(
-              '1. Connect a laptop to the same Wi-Fi or hotspot.\n'
-              '2. On it, open the server folder and run: npm start\n'
+              '1. One friend taps 📶 SAME WI-FI → HOST ON THIS PHONE and turns on their hotspot.\n'
+              '2. Connect this phone to that hotspot (Settings → Wi-Fi).\n'
               '3. Tap SEARCH AGAIN.\n\n'
-              'Have internet? Just use 🌐 ONLINE instead: no laptop needed.',
+              'Have internet? Just use 🌐 ONLINE instead.',
               style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600, height: 1.4),
             ),
             const SizedBox(height: 14),
@@ -422,7 +490,7 @@ class _WifiSearchSheetState extends State<_WifiSearchSheet> {
                   controller: _ctrl,
                   keyboardType: TextInputType.url,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(hintText: 'or type the laptop address, e.g. 192.168.43.20'),
+                  decoration: const InputDecoration(hintText: 'or type the host\'s address, e.g. 192.168.43.1'),
                   onSubmitted: (_) => _typed(),
                 ),
               ),

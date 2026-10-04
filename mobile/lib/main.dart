@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config.dart';
 import 'core/auth/authentication_manager.dart';
+import 'core/lan/lan_host.dart';
 import 'core/network/socket_manager.dart';
 import 'core/room/room_manager.dart';
 import 'core/session/game_session_manager.dart';
@@ -12,6 +13,14 @@ import 'features/splash/splash_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
+  // This phone was hosting games for the others (hotspot, no internet): start its server again.
+  if (AppConfig.hosting) {
+    try {
+      await LanHost.start();
+    } catch (_) {
+      await AppConfig.useOnline(); // the port is busy or the network is gone: fall back to online
+    }
+  }
   runApp(const App());
 }
 

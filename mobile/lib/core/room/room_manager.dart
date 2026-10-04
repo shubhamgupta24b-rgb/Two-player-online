@@ -55,6 +55,7 @@ const _errorText = {
   'TOO_MANY_PLAYERS': 'Too many players for this game. Pick another one.',
   'PLAYERS_NOT_READY': 'Everyone must be ready.',
   'GAME_NOT_AVAILABLE': 'This game is not implemented yet.',
+  'NEEDS_INTERNET': 'This game needs 🌐 Online mode (internet). Pick another game for hotspot play.',
   'INVALID_PAYLOAD': 'Invalid input.',
   'OFFLINE': 'Not connected yet. The server may be waking up (up to a minute): try again shortly.',
   'TIMEOUT': 'Server did not respond. Check your internet and try again.',

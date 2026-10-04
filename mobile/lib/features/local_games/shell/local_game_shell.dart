@@ -119,8 +119,8 @@ class _LocalGameShellState extends State<LocalGameShell> {
   int turnMinutes = 1;
   bool get _turnsOn => takeTurns && _game.turns != null && players.length > 1;
 
-  // Take turns: every turn has its own START, so skip the 3-2-1.
-  void _start() => _turnsOn ? _go() : setState(() => phase = _ShellPhase.countdown);
+  // No 3-2-1 for solo games (you start when you're ready) or take turns (each turn has its START).
+  void _start() => _turnsOn || widget.game.solo ? _go() : setState(() => phase = _ShellPhase.countdown);
 
   void _go() => setState(() {
         matchNo++;

@@ -29,6 +29,7 @@ class SocketManager {
       io.OptionBuilder()
           .setTransports(['websocket'])
           .setAuth({'token': token})
+          .enableForceNew() // a fresh connection each time, never a cached one for the same address
           .enableReconnection()
           .setReconnectionDelay(500)
           .setReconnectionDelayMax(5000)
