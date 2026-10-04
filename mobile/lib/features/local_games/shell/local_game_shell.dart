@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/records/records.dart';
 import 'game_style.dart';
 import 'local_game_info.dart';
+import 'turns_play.dart';
 
 export 'game_style.dart';
 
@@ -114,7 +115,12 @@ class _LocalGameShellState extends State<LocalGameShell> {
   LocalGameInfo get _game => teams && players.length == 4 && widget.game.teamVariant != null ? widget.game.teamVariant! : widget.game;
   bool get _teamsOn => !identical(_game, widget.game);
 
-  void _start() => setState(() => phase = _ShellPhase.countdown);
+  bool takeTurns = true; // full screen, one player at a time (games that offer it)
+  int turnMinutes = 1;
+  bool get _turnsOn => takeTurns && _game.turns != null && players.length > 1;
+
+  // Take turns: every turn has its own START, so skip the 3-2-1.
+  void _start() => _turnsOn ? _go() : setState(() => phase = _ShellPhase.countdown);
 
   void _go() => setState(() {
         matchNo++;
@@ -124,6 +130,15 @@ class _LocalGameShellState extends State<LocalGameShell> {
       });
 
   Widget _play(LocalGameInfo g) {
+    if (_turnsOn) {
+      return TurnsPlay(
+        spec: g.turns!,
+        players: players,
+        botSeats: vsComputer ? {for (var i = players.length - botCount; i < players.length; i++) i} : const {},
+        durationMs: turnMinutes * 60000,
+        onFinished: _finished,
+      );
+    }
     final game = g.play(players, _finished);
     if (_bots.isEmpty) return game;
     return BotScope(seats: _bots, turn: g.bot!, people: players.length - botCount, child: game);
@@ -218,6 +233,11 @@ class _LocalGameShellState extends State<LocalGameShell> {
             teams = on;
             wins = List.filled(players.length, 0); // a new kind of match: fresh tally
           }),
+          turns: g.turns != null && players.length > 1 ? (takeTurns, turnMinutes) : null,
+          onTurns: (on, minutes) => setState(() {
+            takeTurns = on;
+            turnMinutes = minutes;
+          }),
         ),
       _ShellPhase.countdown => _Countdown(onDone: _go, color: g.color),
       // A new key per match guarantees fresh game state on Play Again.
@@ -263,6 +283,8 @@ class _Intro extends StatelessWidget {
   final ValueChanged<int>? onBotCount;
   final bool? teams; // null: no team version for this game / player count
   final ValueChanged<bool>? onTeams;
+  final (bool, int)? turns; // (take turns?, minutes each); null: not offered
+  final void Function(bool on, int minutes)? onTurns;
   const _Intro(
       {required this.game,
       required this.onPlay,
@@ -272,7 +294,9 @@ class _Intro extends StatelessWidget {
       this.onVsComputer,
       this.onBotCount,
       this.teams,
-      this.onTeams});
+      this.onTeams,
+      this.turns,
+      this.onTurns});
 
   bool get vsComputer => botCount > 0;
 
@@ -385,6 +409,67 @@ class _Intro extends StatelessWidget {
                   ),
               ]),
             ],
+            if (turns != null && onTurns != null) ...[
+              const SizedBox(height: 18),
+              sectionLabel('MODE'),
+              Row(children: [
+                for (final (on, emoji, title, hint) in const [
+                  (true, '👤', 'TAKE TURNS', 'Whole screen, one at a time'),
+                  (false, '⚔️', 'SPLIT SCREEN', 'Everyone at once'),
+                ]) ...[
+                  if (!on) const SizedBox(width: 10),
+                  Expanded(
+                    child: Semantics(
+                      button: true,
+                      selected: turns!.$1 == on,
+                      label: title,
+                      child: GestureDetector(
+                        onTap: () => onTurns!(on, turns!.$2),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: turns!.$1 == on ? c : Colors.white.withValues(alpha: 0.07),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: turns!.$1 == on ? Colors.white : Colors.white24, width: 2),
+                          ),
+                          child: Column(children: [
+                            Text('$emoji $title', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
+                            const SizedBox(height: 2),
+                            Text(hint, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 11.5)),
+                          ]),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ]),
+              if (turns!.$1) ...[
+                const SizedBox(height: 14),
+                sectionLabel('TIME EACH'),
+                Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 8, children: [
+                  for (final m in turnMinuteOptions)
+                    Semantics(
+                      button: true,
+                      selected: m == turns!.$2,
+                      label: '$m minutes each',
+                      child: GestureDetector(
+                        onTap: () => onTurns!(true, m),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18),
+                            color: m == turns!.$2 ? c : Colors.white.withValues(alpha: 0.08),
+                            border: Border.all(color: m == turns!.$2 ? Colors.white : Colors.white24, width: 2),
+                          ),
+                          child: Text('⏱ $m min', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+                        ),
+                      ),
+                    ),
+                ]),
+              ],
+            ],
             if (teams != null && onTeams != null) ...[
               const SizedBox(height: 14),
               Material(
@@ -444,7 +529,7 @@ class _Intro extends StatelessWidget {
                   ),
               ]),
             ],
-            if (game.splitScreen && playerCount - botCount > 1 && !game.solo) ...[
+            if (game.splitScreen && playerCount - botCount > 1 && !game.solo && !(turns?.$1 ?? false)) ...[
               const SizedBox(height: 12),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 const Icon(Icons.screen_rotation_alt_rounded, color: Colors.white60, size: 18),

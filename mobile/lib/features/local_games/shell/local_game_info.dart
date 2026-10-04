@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../guess_person/models/gp_player.dart';
 import 'bots.dart';
@@ -71,6 +72,30 @@ int? nInt(Object? v) => (v as num?)?.toInt();
 int asInt(Object? v) => (v as num).toInt();
 double asDouble(Object? v) => (v as num).toDouble();
 
+/// Minutes each player can choose for a "take turns" match.
+const turnMinuteOptions = [1, 2, 3, 5];
+
+/// "Take turns" on one phone: instead of a shrunken split screen, each player gets the whole
+/// screen for the chosen time, one after another. Highest score wins.
+class TurnsSpec {
+  /// One player's turn, full screen, lasting [durationMs]; calls [onDone] with the score.
+  final Widget Function(GpPlayer player, int durationMs, void Function(int score) onDone) play;
+
+  /// A computer player's turn, played instantly without a screen; returns its score.
+  final int Function(int durationMs, Random rng) simulate;
+  const TurnsSpec({required this.play, required this.simulate});
+}
+
+/// Plays one seat of [g] with [bot] for [durationMs] of game time, as fast as possible.
+int simulateTurn(LocalGameLogic g, BotTurn bot, int durationMs, Random rng) {
+  final seat = BotSeat(0, rng);
+  for (var t = 0; t <= durationMs && !g.finished; t += 50) {
+    g.update(t);
+    bot(g, seat, t);
+  }
+  return g.scores.first;
+}
+
 /// Everything the shared shell needs to present one game.
 class LocalGameInfo {
   final String id;
@@ -89,9 +114,12 @@ class LocalGameInfo {
   final BotTurn? bot; // how the computer plays a seat, if it can
   /// A 2 vs 2 version (4 players), offered as a TEAMS switch on this game's start screen.
   final LocalGameInfo? teamVariant;
+  /// Offers "take turns" (full screen, one player at a time) instead of a split screen.
+  final TurnsSpec? turns;
   const LocalGameInfo({
     this.bot,
     this.teamVariant,
+    this.turns,
     this.minPlayers = 2,
     this.maxPlayers = 2,
     this.online,

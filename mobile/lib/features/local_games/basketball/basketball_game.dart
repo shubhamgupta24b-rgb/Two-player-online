@@ -7,6 +7,7 @@ import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
 import '../shell/ticking_play.dart';
+import '../shell/turns_play.dart';
 
 class Shot {
   final int points;
@@ -72,7 +73,7 @@ class BasketballLogic extends TimedDuel {
   }
 }
 
-final basketballInfo = LocalGameInfo(
+final LocalGameInfo basketballInfo = LocalGameInfo(
   id: 'basketball_hoops',
   title: 'Basketball Hoops',
   emoji: '🏀',
@@ -81,7 +82,7 @@ final basketballInfo = LocalGameInfo(
   rules: const [
     'Swipe up on your side to throw the ball. The direction of your swipe is where it goes.',
     'Clean through the middle = 3 pts (swish), anywhere in the rim = 2 pts.',
-    'After 5 seconds the hoop starts sliding, so aim where it will be. Most points in 30s wins. 2 to 4 players.',
+    'After 5 seconds the hoop starts sliding, so aim where it will be. Most points wins: take turns on the whole court (1-5 minutes each) or split the screen (30s). 2 to 4 players.',
   ],
   scoreUnit: 'points',
   splitScreen: true,
@@ -137,6 +138,18 @@ final basketballInfo = LocalGameInfo(
       ),
       Expanded(child: _HoopZone(player: players[me], index: me, g: g)),
     ]),
+  ),
+  // One phone: each player gets the whole court for the chosen time.
+  turns: TurnsSpec(
+    play: (player, ms, onDone) => TickingPlay<BasketballLogic>(
+      create: () => BasketballLogic(players: 1, durationMs: ms),
+      onFinished: (s) => onDone(s.first),
+      builder: (context, g) => Column(children: [
+        TurnBar(player: player, score: g.score.first, secondsLeft: g.secondsLeft),
+        Expanded(child: _HoopZone(player: player, index: 0, g: g)),
+      ]),
+    ),
+    simulate: (ms, rng) => simulateTurn(BasketballLogic(players: 1, durationMs: ms), basketballInfo.bot!, ms, rng),
   ),
   play: (players, onFinished) => TickingPlay<BasketballLogic>(
     create: () => BasketballLogic(players: players.length),

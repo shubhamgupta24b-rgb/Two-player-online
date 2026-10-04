@@ -5,6 +5,7 @@ import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/split_screen.dart';
 import '../shell/ticking_play.dart';
+import '../shell/turns_play.dart';
 import '../solo/solo_common.dart';
 import 'fruit_merge_logic.dart';
 
@@ -44,7 +45,7 @@ final fruitMergeInfo = LocalGameInfo(
   ),
 );
 
-final fruitBattleInfo = LocalGameInfo(
+final LocalGameInfo fruitBattleInfo = LocalGameInfo(
   id: 'fruit_merge_battle',
   title: 'Fruit Merge Battle',
   emoji: '🍓',
@@ -52,7 +53,7 @@ final fruitBattleInfo = LocalGameInfo(
   tagline: 'Everyone merges at once. Biggest score wins!',
   rules: [
     ..._rules,
-    'Everyone has their own box and 2 minutes. Overflow and your score is frozen. Highest score wins! 2 to 4 players.',
+    'Take turns (the whole box for 1-5 minutes each) or split the screen and play at once (2 minutes). Overflow and your score is frozen. Highest score wins! 2 to 4 players.',
   ],
   scoreUnit: 'points',
   splitScreen: true,
@@ -77,6 +78,23 @@ final fruitBattleInfo = LocalGameInfo(
       if (name == 'drop' && asInt(a[0]) == from) g.drop(from, asDouble(a[1]));
     },
     view: (context, g, players, me) => _BattleOnline(g: g, players: players, me: me),
+  ),
+  // One phone: each player gets the whole box for the chosen time.
+  turns: TurnsSpec(
+    play: (player, ms, onDone) => TickingPlay<FruitMergeBattle>(
+      create: () => FruitMergeBattle(players: 1, durationMs: ms),
+      onFinished: (s) => onDone(s.first),
+      builder: (context, g) => Column(children: [
+        TurnBar(player: player, score: g.boxes.first.score, secondsLeft: g.secondsLeft),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
+            child: FruitBoxView(box: g.boxes.first, showNext: true, enabled: !g.finished, onAim: (x) => g.aim(0, x), onDrop: (x) => g.drop(0, x)),
+          ),
+        ),
+      ]),
+    ),
+    simulate: (ms, rng) => simulateTurn(FruitMergeBattle(players: 1, durationMs: ms, random: rng), fruitBattleInfo.bot!, ms, rng),
   ),
   play: (players, onFinished) => TickingPlay<FruitMergeBattle>(
     create: () => FruitMergeBattle(players: players.length),

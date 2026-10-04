@@ -7,6 +7,7 @@ import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
 import '../shell/ticking_play.dart';
+import '../shell/turns_play.dart';
 
 class Slash {
   final int fruit;
@@ -86,7 +87,7 @@ class FruitDuelLogic extends TimedDuel {
   }
 }
 
-final fruitDuelInfo = LocalGameInfo(
+final LocalGameInfo fruitDuelInfo = LocalGameInfo(
   id: 'fruit_duel',
   title: 'Fruit Duel',
   emoji: '🍉',
@@ -95,7 +96,7 @@ final fruitDuelInfo = LocalGameInfo(
   rules: const [
     'A fruit pops up in one of three lanes on both sides.',
     'Tap the lane with the fruit to slice it. One try per fruit!',
-    'First to slice gets +2, everyone else who gets it +1. Fruits get faster. 20 seconds. 2 to 4 players.',
+    'First to slice gets +2, everyone else who gets it +1. Fruits get faster. Take turns (1-5 minutes each) or split the screen (20 seconds). 2 to 4 players.',
   ],
   scoreUnit: 'points',
   splitScreen: true,
@@ -106,6 +107,18 @@ final fruitDuelInfo = LocalGameInfo(
     final lane = b.chance(0.85) ? g.fruitLane : (g.fruitLane + 1 + b.rng.nextInt(FruitDuelLogic.lanes - 1)) % FruitDuelLogic.lanes;
     g.slash(b.seat, lane);
   }),
+  // One phone: each player gets the whole screen for the chosen time.
+  turns: TurnsSpec(
+    play: (player, ms, onDone) => TickingPlay<FruitDuelLogic>(
+      create: () => FruitDuelLogic(players: 1, durationMs: ms),
+      onFinished: (s) => onDone(s.first),
+      builder: (context, g) => Column(children: [
+        TurnBar(player: player, score: g.scores.first, secondsLeft: g.secondsLeft),
+        Expanded(child: _FruitHalf(player: player, index: 0, g: g)),
+      ]),
+    ),
+    simulate: (ms, rng) => simulateTurn(FruitDuelLogic(players: 1, durationMs: ms, random: rng), fruitDuelInfo.bot!, ms, rng),
+  ),
   play: (players, onFinished) => TickingPlay<FruitDuelLogic>(
     create: () => FruitDuelLogic(players: players.length),
     onFinished: onFinished,

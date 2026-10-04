@@ -31,6 +31,11 @@ Future<void> playThrough(WidgetTester tester, LocalGameInfo game, Size size, int
     await tapText(tester, '$players');
     await tester.pump();
   }
+  // Games with a take-turns mode: these play-throughs cover the split screen (turns have their own test).
+  if (find.text('⚔️ SPLIT SCREEN').evaluate().isNotEmpty) {
+    await tapText(tester, '⚔️ SPLIT SCREEN');
+    await tester.pump();
+  }
   await tapText(tester, 'PLAY');
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 2500)); // 3-2-1
@@ -97,6 +102,8 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(MaterialApp(home: LocalGameShell(game: localGames.firstWhere((g) => g.id == 'basketball_hoops'))));
       if (players > 2) await tapText(tester, '$players');
+      await tester.pump();
+      await tapText(tester, '⚔️ SPLIT SCREEN'); // this test is about the split screen
       await tester.pump();
       await tapText(tester, 'PLAY');
       await tester.pump();
