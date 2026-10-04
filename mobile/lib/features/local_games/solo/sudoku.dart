@@ -186,10 +186,13 @@ final sudokuInfo = LocalGameInfo(
                               },
                               child: SizedBox(
                                 height: 52,
-                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                  const Text('✏️', style: TextStyle(fontSize: 18)),
-                                  Text(g.notes ? 'NOTES ON' : 'NOTES', style: const TextStyle(color: Brand.ink, fontWeight: FontWeight.w900, fontSize: 10.5)),
-                                ]),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                                    const Text('✏️', style: TextStyle(fontSize: 18)),
+                                    Text(g.notes ? 'NOTES ON' : 'NOTES', style: const TextStyle(color: Brand.ink, fontWeight: FontWeight.w900, fontSize: 10.5)),
+                                  ]),
+                                ),
                               ),
                             ),
                           ),
@@ -212,10 +215,13 @@ final sudokuInfo = LocalGameInfo(
                                     },
                               child: SizedBox(
                                 height: 52,
-                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                  Text('$v', style: TextStyle(color: g.remaining(v) == 0 ? Colors.white24 : Colors.white, fontWeight: FontWeight.w900, fontSize: 22)),
-                                  Text('${g.remaining(v)}', style: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w700)),
-                                ]),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                                    Text('$v', style: TextStyle(color: g.remaining(v) == 0 ? Colors.white24 : Colors.white, fontWeight: FontWeight.w900, fontSize: 22)),
+                                    Text('${g.remaining(v)}', style: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w700)),
+                                  ]),
+                                ),
                               ),
                             ),
                           ),

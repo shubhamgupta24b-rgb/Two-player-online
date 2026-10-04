@@ -222,10 +222,13 @@ class _PenaltyHalf extends StatelessWidget {
                                   : null,
                               child: SizedBox(
                                 height: 78,
-                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                  Text(_zoneIcon(toAbsolute(shown), kick, kicking), style: const TextStyle(fontSize: 24)),
-                                  Text(labels[shown], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, shadows: [Shadow(color: Colors.black45, blurRadius: 2)])),
-                                ]),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                                    Text(_zoneIcon(toAbsolute(shown), kick, kicking), style: const TextStyle(fontSize: 24)),
+                                    Text(labels[shown], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, shadows: [Shadow(color: Colors.black45, blurRadius: 2)])),
+                                  ]),
+                                ),
                               ),
                             ),
                           ),

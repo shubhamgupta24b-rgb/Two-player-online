@@ -355,7 +355,8 @@ class _Centre extends StatelessWidget {
           boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 18, offset: Offset(0, 8))],
         ),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        // Scales down (never overflows) with large text.
+        FittedBox(fit: BoxFit.scaleDown, child: Row(mainAxisSize: MainAxisSize.min, children: [
           Semantics(
             button: true,
             label: 'Draw a card',
@@ -391,7 +392,7 @@ class _Centre extends StatelessWidget {
             const SizedBox(height: 4),
             Text('COLOUR: ${g.color.name.toUpperCase()}', style: TextStyle(color: col == clashColors[ClashColor.wild] ? Colors.white : col, fontWeight: FontWeight.w900, fontSize: 11)),
           ]),
-        ]),
+        ])),
         const SizedBox(height: 8),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(g.direction == 1 ? Icons.rotate_right_rounded : Icons.rotate_left_rounded, color: Colors.white54, size: 18),
