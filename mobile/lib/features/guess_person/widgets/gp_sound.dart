@@ -1,22 +1,26 @@
-import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart' show haptic, HapticWeight;
 import '../logic/guess_person_controller.dart';
 
-/// The app has no audio package, so feedback uses the platform click sound and
-/// haptics. Every call is fire-and-forget and failures are swallowed.
+/// Guess the Person's sounds go through the app's audio (so the sound switch applies) and
+/// its haptics through the vibration setting. Fire-and-forget.
 void playGpSfx(GpSfx s) {
   switch (s) {
     case GpSfx.select:
     case GpSfx.question:
-      SystemSound.play(SystemSoundType.click).ignore();
+      GameAudio.sfx('tap');
     case GpSfx.eliminate:
-      HapticFeedback.selectionClick().ignore();
+      haptic(HapticWeight.selection);
     case GpSfx.timerWarning:
-      HapticFeedback.lightImpact().ignore();
+      haptic(HapticWeight.light);
     case GpSfx.correct:
+      GameAudio.sfx('coin');
+      haptic(HapticWeight.medium);
     case GpSfx.gameOver:
-      SystemSound.play(SystemSoundType.click).ignore();
-      HapticFeedback.mediumImpact().ignore();
+      GameAudio.sfx('win');
+      haptic(HapticWeight.medium);
     case GpSfx.wrong:
-      HapticFeedback.heavyImpact().ignore();
+      GameAudio.sfx('lose');
+      haptic(HapticWeight.heavy);
   }
 }

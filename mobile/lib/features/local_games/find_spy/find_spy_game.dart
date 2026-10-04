@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../party/party_widgets.dart';
@@ -256,8 +256,8 @@ class _SpyViewState extends State<_SpyView> {
                   for (final (name, emoji) in FindSpyLogic.places)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                      decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(12)),
-                      child: Text('$emoji $name', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5)),
+                      decoration: BoxDecoration(color: context.tk.glassStrong, borderRadius: Radii.rMd),
+                      child: Text('$emoji $name', style: TextStyle(color: context.tk.onBg, fontWeight: FontWeight.w700, fontSize: 13)),
                     ),
                 ]),
               ),
@@ -297,7 +297,7 @@ class _SpyViewState extends State<_SpyView> {
                   children: [
                     for (final o in options)
                       GpButton('${FindSpyLogic.places[o].$2} ${FindSpyLogic.places[o].$1}', color: Colors.white, onPressed: () {
-                        HapticFeedback.mediumImpact().ignore();
+                        haptic(HapticWeight.medium);
                         g.guess(o);
                       }),
                   ],

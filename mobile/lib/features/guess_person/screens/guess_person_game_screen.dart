@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:provider/provider.dart';
 import '../logic/gp_settings.dart';
 import '../logic/guess_person_controller.dart';
@@ -33,19 +34,8 @@ class _GameView extends StatelessWidget {
   const _GameView();
 
   Future<void> _confirmLeave(BuildContext context) async {
-    final leave = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: GpCoral.panel,
-        title: const Text('Leave game?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-        content: const Text('Scores for this match will be lost.', style: TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('STAY')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('LEAVE', style: TextStyle(color: GpColors.no))),
-        ],
-      ),
-    );
-    if (leave == true && context.mounted) Navigator.pop(context);
+    final leave = await confirmAction(context, title: 'Leave game?', message: 'Scores for this match will be lost.', confirm: 'LEAVE', cancel: 'STAY', emoji: '🚪');
+    if (leave && context.mounted) Navigator.pop(context);
   }
 
   @override

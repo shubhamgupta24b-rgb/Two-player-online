@@ -4,15 +4,15 @@ import '../../../core/ui/components.dart';
 
 /// Guess the Person's colours, now aliases to the design tokens.
 class GpColors {
-  static const bgTop = Color(0xFF241A5C);
-  static const bgBottom = Color(0xFF120D33);
+  static const bgTop = NeonPalette.bgTop;
+  static const bgBottom = NeonPalette.bgBottom;
   static const card = Color(0xFFFFF8EC);
   static const ink = Brand.ink;
   static const accent = Brand.gold;
   static const yes = StatusColors.success;
   static const no = StatusColors.danger;
   static const muted = flatStyle ? Color(0xFFEAF4FB) : NeonPalette.textMuted;
-  static const panel = Color(0x26FFFFFF);
+  static const panel = NeonPalette.glassStrong;
   static const portraitBgs = [
     Color(0xFFFFD6A5), Color(0xFFCAFFBF), Color(0xFF9BF6FF), Color(0xFFBDB2FF),
     Color(0xFFFFC6FF), Color(0xFFFDFFB6), Color(0xFFA0C4FF), Color(0xFFFFADAD),

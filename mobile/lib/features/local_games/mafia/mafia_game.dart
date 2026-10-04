@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../party/party_widgets.dart';
@@ -289,7 +290,7 @@ class _MafiaViewState extends State<_MafiaView> {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       Text('${role.emoji} ${role.title}', style: TextStyle(color: role.color, fontWeight: FontWeight.w900, fontSize: 22)),
       const SizedBox(height: 6),
-      Text(prompt, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+      Text(prompt, textAlign: TextAlign.center, style: context.tk.styles.bodyStrong.copyWith(fontSize: 16)),
       const SizedBox(height: 14),
       if (role != MafiaRole.villager)
         PlayerPicker(players: players, disabled: disabled, highlight: _pick, onPick: (i) => setState(() => _pick = i)),
