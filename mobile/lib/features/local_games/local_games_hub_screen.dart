@@ -40,6 +40,11 @@ import 'undercover/undercover_game.dart';
 import 'would_rather/would_rather_game.dart';
 import 'rps/rps_game.dart';
 import 'solo/ball_sort.dart';
+import 'solo/block_drop.dart';
+import 'solo/bubble_shooter.dart';
+import 'solo/color_switch.dart';
+import 'solo/sky_jumper.dart';
+import 'solo/space_shooter.dart';
 import 'solo/brick_breaker.dart';
 import 'solo/dino_run.dart';
 import 'solo/hangman.dart';
@@ -63,7 +68,8 @@ final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafia
   mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo, bingoInfo, battleshipInfo, checkersInfo, smashKartsInfo,
   // Solo games (shown in their own section).
   fruitMergeInfo, game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo,
-  ballSortInfo, slidingInfo, sudokuInfo, hangmanInfo, dinoInfo];
+  ballSortInfo, slidingInfo, sudokuInfo, hangmanInfo, dinoInfo,
+  blockDropInfo, bubbleInfo, skyInfo, spaceInfo, colorSwitchInfo];
 
 /// The hub's games plus their team versions (e.g. Ludo 2 vs 2), for online rooms.
 List<LocalGameInfo> get allLocalGames => [...localGames, for (final g in localGames) if (g.teamVariant != null) g.teamVariant!];
