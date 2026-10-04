@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
@@ -192,7 +192,7 @@ class _CricketHalf extends StatelessWidget {
                   onTap: picked || g.showingBall || g.over
                       ? null
                       : () {
-                          HapticFeedback.selectionClick().ignore();
+                          haptic(HapticWeight.selection);
                           g.pick(index, n);
                         },
                   child: SizedBox(width: 50, height: 50, child: Center(child: Text('$n', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22)))),

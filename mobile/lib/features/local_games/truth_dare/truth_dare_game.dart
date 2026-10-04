@@ -1,11 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
 import '../shell/ticking_play.dart';
 
 enum TodPhase { spin, spinning, choose, prompt, finished }
@@ -177,6 +178,13 @@ final truthDareInfo = LocalGameInfo(
   ),
 );
 
+// Palette: truth blue, dare red, party pink, and a round wooden table with a felt top.
+const _truthBlue = Color(0xFF2F6FE0);
+const _dareRed = Color(0xFFE5484D);
+const _pink = Color(0xFFE0328A);
+const _tableWood = [Color(0xFF8A5530), Color(0xFF4B2B16)];
+const _felt = [Color(0xFF2E7D4F), Color(0xFF1B5434)];
+
 class _TodTable extends StatefulWidget {
   final List<GpPlayer> players;
   final TruthDareLogic g;
@@ -206,12 +214,7 @@ class _TodTableState extends State<_TodTable> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 16),
       child: Column(children: [
-        Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 6),
-          Expanded(child: Text('SPIN ${min(g.spins + 1, g.totalSpins)} / ${g.totalSpins}', textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFFF4FA3), fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1.5))),
-          const SizedBox(width: 44),
-        ]),
+        GameHud(players: players, scores: g.points, turn: g.chosen, trailing: HudLabel('SPIN ${min(g.spins + 1, g.totalSpins)}/${g.totalSpins}')),
         Expanded(
           child: LayoutBuilder(builder: (context, c) {
             final r = min(c.maxWidth, c.maxHeight) / 2 - 40;
@@ -222,26 +225,43 @@ class _TodTableState extends State<_TodTable> {
                 top: centre.dy - r - 20,
                 width: 2 * r + 40,
                 height: 2 * r + 40,
-                child: DecoratedBox(decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.05), border: Border.all(color: Colors.white12, width: 2))),
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(colors: _tableWood, begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    boxShadow: [BoxShadow(color: Colors.black54, offset: Offset(0, 10), blurRadius: 12)],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: DecoratedBox(decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: _felt), border: Border.all(color: Colors.black26, width: 2))),
+                  ),
+                ),
               ),
               for (var i = 0; i < players.length; i++)
                 Positioned(
-                  left: centre.dx + cos(_angleFor(i)) * r - 46,
+                  left: centre.dx + cos(_angleFor(i)) * r - 58,
                   top: centre.dy + sin(_angleFor(i)) * r - 22,
-                  width: 92,
+                  width: 116,
                   child: AnimatedScale(
                     duration: const Duration(milliseconds: 300),
                     scale: g.chosen == i && g.phase != TodPhase.spinning && g.phase != TodPhase.spin ? 1.2 : 1,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
                       decoration: BoxDecoration(
-                        color: players[i].color,
-                        borderRadius: BorderRadius.circular(16),
+                        color: fillFor(players[i].color),
+                        borderRadius: Radii.rLg,
+                        border: Border.all(color: Colors.white, width: g.chosen == i ? 2.5 : 1),
                         boxShadow: [if (g.chosen == i && g.phase != TodPhase.spinning) BoxShadow(color: players[i].color, blurRadius: 16, spreadRadius: 2)],
                       ),
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        Text(players[i].name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
-                        Text('⭐ ${g.points[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        PlayerAvatar(name: players[i].name, color: players[i].color, size: 24),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(players[i].name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                            Text('⭐ ${g.points[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11)),
+                          ]),
+                        ),
                       ]),
                     ),
                   ),
@@ -257,7 +277,7 @@ class _TodTableState extends State<_TodTable> {
                   child: GestureDetector(
                     onTap: g.phase == TodPhase.spin
                         ? () {
-                            HapticFeedback.mediumImpact().ignore();
+                            haptic(HapticWeight.medium);
                             g.spin();
                           }
                         : null,
@@ -268,7 +288,8 @@ class _TodTableState extends State<_TodTable> {
                       onEnd: () {
                         if (g.phase == TodPhase.spinning) {
                           _angle = target % (2 * pi);
-                          HapticFeedback.heavyImpact().ignore();
+                          haptic(HapticWeight.heavy);
+                          GameAudio.sfx('pop');
                           g.landed();
                         }
                       },
@@ -288,22 +309,22 @@ class _TodTableState extends State<_TodTable> {
   Widget _bottom(TruthDareLogic g, List<GpPlayer> players) {
     switch (g.phase) {
       case TodPhase.spin:
-        return GpButton('SPIN THE BOTTLE', icon: Icons.refresh_rounded, color: const Color(0xFFFF4FA3), textColor: Colors.white, onPressed: g.spin);
+        return GpButton('SPIN THE BOTTLE', icon: Icons.refresh_rounded, color: _pink, textColor: Colors.white, onPressed: g.spin);
       case TodPhase.spinning:
-        return const SizedBox(height: 54, child: Center(child: Text('Spinning…', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, fontSize: 16))));
+        return SizedBox(height: 54, child: Center(child: Text('Spinning…', style: context.tk.styles.bodyStrong.copyWith(color: context.tk.onBgMuted))));
       case TodPhase.choose:
         final p = players[g.chosen!];
         return Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('${p.name.toUpperCase()}, PICK ONE!', style: TextStyle(color: p.color, fontWeight: FontWeight.w900, fontSize: 18)),
+          TurnBanner(text: '${p.name.toUpperCase()}, PICK ONE!', color: p.color),
           const SizedBox(height: 10),
           Row(children: [
-            Expanded(child: GpButton('TRUTH', color: const Color(0xFF4D96FF), textColor: Colors.white, onPressed: () => g.choose(truth: true))),
+            Expanded(child: GpButton('TRUTH', color: _truthBlue, textColor: Colors.white, onPressed: () => g.choose(truth: true))),
             const SizedBox(width: 12),
-            Expanded(child: GpButton('DARE', color: const Color(0xFFFF5E5B), textColor: Colors.white, onPressed: () => g.choose(truth: false))),
+            Expanded(child: GpButton('DARE', color: _dareRed, textColor: Colors.white, onPressed: () => g.choose(truth: false))),
           ]),
         ]);
       case TodPhase.prompt:
-        final color = g.truth ? const Color(0xFF4D96FF) : const Color(0xFFFF5E5B);
+        final color = g.truth ? _truthBlue : _dareRed;
         return TweenAnimationBuilder<double>(
           key: ValueKey(g.prompt),
           tween: Tween(begin: 0.7, end: 1),
@@ -320,7 +341,7 @@ class _TodTableState extends State<_TodTable> {
               Text(g.prompt, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.ink, fontWeight: FontWeight.w800, fontSize: 16)),
               const SizedBox(height: 14),
               Row(children: [
-                Expanded(child: GpButton('SKIP', color: Colors.black26, textColor: GpColors.ink, onPressed: () => g.complete(done: false))),
+                Expanded(child: AppButton('SKIP', color: FlatPalette.option, onPressed: () => g.complete(done: false))),
                 const SizedBox(width: 10),
                 Expanded(child: GpButton('DONE +1', color: GpColors.yes, textColor: Colors.white, onPressed: () => g.complete(done: true))),
               ]),

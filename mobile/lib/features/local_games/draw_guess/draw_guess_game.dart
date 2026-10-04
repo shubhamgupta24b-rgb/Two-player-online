@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../party/party_widgets.dart';
@@ -316,17 +317,18 @@ class _DrawViewState extends State<_DrawView> {
                           side: BorderSide.none,
                           label: Text(players[i].name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
                           onPressed: () {
-                            HapticFeedback.mediumImpact().ignore();
+                            haptic(HapticWeight.medium);
+                        GameAudio.sfx('coin');
                             g.correct(i);
                           },
                         ),
                       ),
-                  TextButton(onPressed: g.giveUp, child: const Text('NOBODY · SKIP', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900))),
+                  AppButton('NOBODY · SKIP', variant: ButtonVariant.ghost, compact: true, onPressed: g.giveUp),
                 ]),
               ),
             ] else if (isArtist) ...[
               Text(g.wrongGuesses.isEmpty ? 'Guesses will appear here' : 'Guesses: ${g.wrongGuesses.join(', ')}', textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
-              TextButton(onPressed: g.giveUp, child: const Text('GIVE UP', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900))),
+              AppButton('GIVE UP', variant: ButtonVariant.ghost, compact: true, onPressed: g.giveUp),
             ] else ...[
               if (g.wrongGuesses.isNotEmpty) Text('Wrong: ${g.wrongGuesses.join(', ')}', textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
               Row(children: [
@@ -334,8 +336,14 @@ class _DrawViewState extends State<_DrawView> {
                   child: TextField(
                     controller: _guess,
                     textInputAction: TextInputAction.send,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
-                    decoration: const InputDecoration(hintText: 'Type your guess', filled: true, fillColor: Colors.white10, border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(16)))),
+                    style: TextStyle(color: context.tk.onBg, fontWeight: FontWeight.w800),
+                    decoration: InputDecoration(
+                      hintText: 'Type your guess',
+                      hintStyle: TextStyle(color: context.tk.onBgMuted),
+                      filled: true,
+                      fillColor: context.tk.glassStrong,
+                      border: const OutlineInputBorder(borderSide: BorderSide.none, borderRadius: Radii.rLg),
+                    ),
                     onSubmitted: (t) => _send(me),
                   ),
                 ),
@@ -370,6 +378,11 @@ class _DrawViewState extends State<_DrawView> {
   }
 }
 
+// Palette: sketchpad paper and pencil.
+const _paper = Color(0xFFFFFCF3);
+const _dots = Color(0xFFDCD6C6);
+const _pencil = Color(0xFF1E1B3A);
+
 class _Canvas extends StatelessWidget {
   final DrawGuessLogic g;
   final bool canDraw;
@@ -378,13 +391,19 @@ class _Canvas extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
         final size = c.biggest;
         Offset norm(Offset p) => Offset(p.dx / size.width, p.dy / size.height);
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(18),
+        return Container(
+          decoration: BoxDecoration(borderRadius: Radii.rLg, boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 6), blurRadius: 8)]),
+          child: ClipRRect(
+          borderRadius: Radii.rLg,
           child: GestureDetector(
             onPanStart: canDraw ? (d) => g.addPoint(norm(d.localPosition).dx, norm(d.localPosition).dy, newStroke: true) : null,
             onPanUpdate: canDraw ? (d) => g.addPoint(norm(d.localPosition).dx, norm(d.localPosition).dy) : null,
             onPanEnd: canDraw ? (_) => g.flushInk() : null,
-            child: CustomPaint(size: size, painter: _InkPainter(g.strokes, g.pointCount)),
+            child: Semantics(
+              label: canDraw ? 'Drawing pad. Draw with your finger.' : 'The drawing',
+              child: RepaintBoundary(child: CustomPaint(size: size, painter: _InkPainter(g.strokes, g.pointCount))),
+            ),
+          ),
           ),
         );
       });
@@ -396,9 +415,17 @@ class _InkPainter extends CustomPainter {
   _InkPainter(this.strokes, this.count);
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white);
+    // Sketchpad paper with a faint dot grid.
+    canvas.drawRect(Offset.zero & size, Paint()..color = _paper);
+    final dot = Paint()..color = _dots;
+    final step = size.width / 16;
+    for (var y = step / 2; y < size.height; y += step) {
+      for (var x = step / 2; x < size.width; x += step) {
+        canvas.drawCircle(Offset(x, y), 1.1, dot);
+      }
+    }
     final pen = Paint()
-      ..color = const Color(0xFF1E1B3A)
+      ..color = _pencil
       ..strokeWidth = size.width * 0.012
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
@@ -418,5 +445,5 @@ class _InkPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_InkPainter old) => true;
+  bool shouldRepaint(_InkPainter old) => old.count != count || old.strokes.length != strokes.length;
 }

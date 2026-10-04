@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
@@ -243,7 +244,10 @@ class _QuizHalf extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                           onTap: () {
                             final r = g.answer(index, v);
-                            if (r != null) (r ? HapticFeedback.lightImpact() : HapticFeedback.heavyImpact()).ignore();
+                            if (r != null) {
+                        haptic(r ? HapticWeight.light : HapticWeight.heavy);
+                        GameAudio.sfx(r ? 'coin' : 'lose');
+                      }
                           },
                           child: SizedBox(
                             height: 46,

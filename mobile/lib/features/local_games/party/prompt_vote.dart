@@ -6,6 +6,10 @@ import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import 'party_widgets.dart';
 
+// Option colours (the options are also lettered A/B, so colour isn't the only clue).
+const _optionA = Color(0xFF2F6FE0);
+const _optionB = Color(0xFFE5484D);
+
 enum VoteMode { mostLikely, wouldRather }
 
 enum PromptPhase { vote, reveal, done }
@@ -134,7 +138,7 @@ class _PromptVoteViewState extends State<PromptVoteView> {
       for (var o = 0; o < 2; o++)
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: GpButton('${o == 0 ? 'A' : 'B'}: ${options[o]}', color: o == 0 ? const Color(0xFF4D96FF) : const Color(0xFFFF6B6B), textColor: Colors.white, onPressed: () {
+          child: GpButton('${o == 0 ? 'A' : 'B'}: ${options[o]}', color: o == 0 ? _optionA : _optionB, textColor: Colors.white, onPressed: () {
             g.vote(voter, o);
             after();
           }),
@@ -193,7 +197,7 @@ class _PromptVoteViewState extends State<PromptVoteView> {
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: (o == 0 ? const Color(0xFF4D96FF) : const Color(0xFFFF6B6B)).withValues(alpha: g.lastWinners.contains(o) ? 1 : 0.4),
+                  color: (o == 0 ? _optionA : _optionB).withValues(alpha: g.lastWinners.contains(o) ? 1 : 0.4),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Row(children: [

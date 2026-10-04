@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
@@ -179,7 +179,7 @@ class WordTurnsView extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: GpButton('GOT IT ✓', color: GpColors.yes, textColor: Colors.white, onPressed: () {
-                    HapticFeedback.mediumImpact().ignore();
+                    haptic(HapticWeight.medium);
                     g.gotIt();
                   }),
                 ),

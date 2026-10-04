@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
@@ -163,7 +163,7 @@ class _RpsZone extends StatelessWidget {
                   textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 12)),
             ),
         ] else ...[
-          Text(picked ? 'LOCKED IN ✓' : 'PICK ONE!', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+          Text(picked ? '🔒 LOCKED IN' : 'PICK ONE!', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
           const SizedBox(height: 10),
           FittedBox(
             child: Row(children: [
@@ -174,17 +174,22 @@ class _RpsZone extends StatelessWidget {
                     button: true,
                     label: RpsLogic.names[c],
                     child: Material(
-                      color: picked ? Colors.white10 : player.color,
+                      color: picked ? Colors.white10 : fillFor(player.color),
+                      elevation: picked ? 0 : 3,
                       shape: const CircleBorder(),
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         onTap: picked
                             ? null
                             : () {
-                                HapticFeedback.selectionClick().ignore();
+                                haptic(HapticWeight.selection);
                                 g.pick(index, c);
                               },
-                        child: SizedBox(width: 72, height: 72, child: Center(child: Text(RpsLogic.emoji[c], style: const TextStyle(fontSize: 36)))),
+                        child: SizedBox(
+                          width: 84,
+                          height: 84,
+                          child: Center(child: Opacity(opacity: picked ? 0.35 : 1, child: Text(RpsLogic.emoji[c], style: const TextStyle(fontSize: 44)))),
+                        ),
                       ),
                     ),
                   ),
