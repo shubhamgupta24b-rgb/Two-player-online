@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,7 +39,8 @@ LocalGameInfo _ludo({required bool teams}) => LocalGameInfo(
   teamVariant: teams ? null : ludoTeamsInfo,
   bot: botFor<LudoLogic>((g, b, now) {
     if (g.finished || g.turn != b.seat) return;
-    if (!b.thinkFirst((g.rolls, g.phase), now, 700, 1300)) return;
+    // Slow enough to watch: a roll, a pause, then the token walks (about 0.2 s a square).
+    if (!b.thinkFirst((g.rolls, g.phase), now, 1100, 1800)) return;
     if (g.phase == LudoPhase.roll) {
       g.roll();
       return;
@@ -162,16 +164,86 @@ class _LudoTable extends StatelessWidget {
   }
 }
 
-class _Board extends StatelessWidget {
+class _Board extends StatefulWidget {
   final List<GpPlayer> players;
   final LudoLogic g;
   const _Board({required this.players, required this.g});
 
+  @override
+  State<_Board> createState() => _BoardState();
+}
+
+/// Tokens walk to their new square one square at a time, so everyone can follow a move.
+/// A captured token goes back to base once the attacker has landed.
+class _BoardState extends State<_Board> {
+  static const stepMs = 200;
   static const _baseOrigins = [(0, 0), (9, 0), (9, 9), (0, 9)];
   static const _homeOffsets = [Offset(-0.35, 0), Offset(0, -0.35), Offset(0.35, 0), Offset(0, 0.35)];
 
+  LudoLogic get g => widget.g;
+  List<GpPlayer> get players => widget.players;
+  late List<List<int>> shown = [for (final t in g.tokens) List.of(t)];
+  Timer? _timer;
+
+  @override
+  void didUpdateWidget(_Board old) {
+    super.didUpdateWidget(old);
+    if (shown.length != g.tokens.length) shown = [for (final t in g.tokens) List.of(t)];
+    _walk();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  bool get _settled {
+    for (var p = 0; p < g.tokens.length; p++) {
+      for (var t = 0; t < LudoLogic.tokensEach; t++) {
+        if (shown[p][t] != g.tokens[p][t]) return false;
+      }
+    }
+    return true;
+  }
+
+  void _walk() {
+    if (_timer != null || _settled) return;
+    _timer = Timer.periodic(const Duration(milliseconds: stepMs), (_) {
+      if (!mounted) return;
+      setState(_step);
+      if (_settled) {
+        _timer?.cancel();
+        _timer = null;
+      }
+    });
+  }
+
+  /// One step: walking tokens move a square; sent-home tokens wait for the walkers to land.
+  void _step() {
+    var walking = false;
+    for (var p = 0; p < g.tokens.length; p++) {
+      for (var t = 0; t < LudoLogic.tokensEach; t++) {
+        final want = g.tokens[p][t], now = shown[p][t];
+        if (want > now) {
+          shown[p][t] = now + 1; // out of base onto the start square, then square by square
+          walking = true;
+        } else if (want < now && want >= 0) {
+          shown[p][t] = want; // (only if the state jumped, e.g. online catching up)
+        }
+      }
+    }
+    if (walking) return;
+    for (var p = 0; p < g.tokens.length; p++) {
+      for (var t = 0; t < LudoLogic.tokensEach; t++) {
+        if (g.tokens[p][t] == -1 && shown[p][t] != -1) shown[p][t] = -1; // captured: back to base
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    _walk();
     final seatColors = List<Color?>.filled(4, null);
     for (var p = 0; p < players.length; p++) {
       seatColors[g.seats[p]] = players[p].color;
@@ -183,7 +255,7 @@ class _Board extends StatelessWidget {
       for (var p = 0; p < players.length; p++) {
         final seat = g.seats[p];
         for (var t = 0; t < LudoLogic.tokensEach; t++) {
-          final prog = g.tokens[p][t];
+          final prog = shown[p][t];
           Offset at;
           if (prog == -1) {
             final (bx, by) = _baseOrigins[seat];
@@ -202,14 +274,15 @@ class _Board extends StatelessWidget {
       for (final (p, t, at) in placed) {
         final same = placed.where((o) => (o.$3 - at).distance < 0.01).toList();
         final k = same.indexWhere((o) => o.$1 == p && o.$2 == t);
-        final spread = same.length > 1 && g.tokens[p][t] >= 0 ? Offset(cos(k * 2 * pi / same.length), sin(k * 2 * pi / same.length)) * 0.22 : Offset.zero;
+        final spread = same.length > 1 && shown[p][t] >= 0 ? Offset(cos(k * 2 * pi / same.length), sin(k * 2 * pi / same.length)) * 0.22 : Offset.zero;
         final pos = (at + spread) * s;
         final movable = g.canMove(p, t);
-        final size = s * (g.tokens[p][t] == LudoLogic.home ? 0.55 : 0.8);
-        (movable ? onTop : widgets).add(AnimatedPositioned(
+        final moving = shown[p][t] != g.tokens[p][t];
+        final size = s * (shown[p][t] == LudoLogic.home ? 0.55 : (moving ? 0.95 : 0.8)); // a walking token is lifted a little
+        (movable || moving ? onTop : widgets).add(AnimatedPositioned(
           key: ValueKey('tok$p-$t'),
-          duration: const Duration(milliseconds: 380),
-          curve: Curves.easeOutBack,
+          duration: const Duration(milliseconds: stepMs - 30),
+          curve: Curves.easeOut,
           left: pos.dx - size / 2,
           top: pos.dy - size / 2,
           width: size,

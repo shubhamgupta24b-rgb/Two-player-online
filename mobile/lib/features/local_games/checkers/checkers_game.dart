@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,6 +33,9 @@ class CheckersLogic extends LocalGameLogic {
   int quietMoves = 0;
   bool draw = false;
   (int, int)? lastMove;
+  int moveNo = 0; // counts moves, so the board knows when to animate a new one
+  List<int> lastPath = const []; // the last move: squares landed on, in order
+  List<int> lastCaptured = const []; // and the pieces it jumped, in order
 
   CheckersLogic() {
     for (var sq = 0; sq < 64; sq++) {
@@ -130,6 +134,9 @@ class CheckersLogic extends LocalGameLogic {
     quietMoves = m.captured.isEmpty ? quietMoves + 1 : 0;
     if (quietMoves >= drawAfter) draw = true;
     lastMove = (m.from, m.to);
+    lastPath = List.of(m.path);
+    lastCaptured = List.of(m.captured);
+    moveNo++;
     selected = null;
     turn = 1 - turn;
     notifyListeners();
@@ -176,7 +183,7 @@ final checkersInfo = LocalGameInfo(
   splitScreen: false,
   bot: botFor<CheckersLogic>((g, b, now) {
     if (g.finished || g.turn != b.seat) return;
-    if (!b.thinkFirst((g.turn, g.lastMove), now, 700, 1500)) return;
+    if (!b.thinkFirst((g.turn, g.lastMove), now, 1300, 2000)) return; // slow enough to watch the previous move finish
     g.play(checkersBotPick(g, b.rng));
   }),
   online: RelaySpec<CheckersLogic>(
@@ -188,6 +195,9 @@ final checkersInfo = LocalGameInfo(
       'quiet': g.quietMoves,
       'draw': g.draw,
       'last': g.lastMove == null ? null : [g.lastMove!.$1, g.lastMove!.$2],
+      'no': g.moveNo,
+      'path': g.lastPath,
+      'caps': g.lastCaptured,
     },
     load: (g, s, me) {
       g.board.setAll(0, ints(s['board']));
@@ -196,6 +206,9 @@ final checkersInfo = LocalGameInfo(
       g.draw = s['draw'] == true;
       final last = s['last'] == null ? null : ints(s['last']);
       g.lastMove = last == null ? null : (last[0], last[1]);
+      g.moveNo = asInt(s['no']);
+      g.lastPath = ints(s['path']);
+      g.lastCaptured = ints(s['caps']);
       g.selected = g.turn == me ? nInt(s['sel']) : null; // a picked piece is only shown to its player
     },
     apply: (g, from, name, a) {
@@ -267,72 +280,177 @@ class _Status extends StatelessWidget {
   Widget build(BuildContext context) => Text(text, textAlign: TextAlign.center, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 16));
 }
 
-class _Board extends StatelessWidget {
+/// The board. Pieces sit in a layer above the squares so a move can be shown: the piece
+/// slides square by square along its path and every piece it jumps fades away as it passes.
+class _Board extends StatefulWidget {
   final CheckersLogic g;
   final List<GpPlayer> players;
   final bool flipped;
   const _Board({required this.g, required this.players, required this.flipped});
 
   @override
+  State<_Board> createState() => _BoardState();
+}
+
+class _BoardState extends State<_Board> {
+  static const stepMs = 320;
+  CheckersLogic get g => widget.g;
+  late int _seen = g.moveNo; // the last move already shown
+  int? _step; // while showing a move: how many landing squares it has reached
+  Timer? _timer;
+
+  @override
+  void didUpdateWidget(_Board old) {
+    super.didUpdateWidget(old);
+    _maybeAnimate();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _maybeAnimate() {
+    if (g.moveNo == _seen || g.lastPath.isEmpty) return;
+    _seen = g.moveNo;
+    _timer?.cancel();
+    _step = 0;
+    // Start sliding on the next frame, then one landing square every [stepMs].
+    _timer = Timer.periodic(const Duration(milliseconds: stepMs), (t) {
+      if (!mounted) return t.cancel();
+      setState(() {
+        _step = _step! + 1;
+        if (_step! > g.lastPath.length) {
+          _step = null;
+          t.cancel();
+        }
+      });
+    });
+    // The first slide begins straight away.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _step == 0) setState(() => _step = 0);
+    });
+  }
+
+  Offset _cell(int sq, double cell) {
+    final d = widget.flipped ? 63 - sq : sq;
+    return Offset((d % 8) * cell, (d ~/ 8) * cell);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    _maybeAnimate();
     final legal = g.finished ? const <CheckersMove>[] : g.legal;
     final movable = {for (final m in legal) m.from};
     final targets = g.selected == null ? const <int>{} : {for (final m in legal) if (m.from == g.selected) m.to};
+    final showing = _step != null && g.lastMove != null;
+    final from = g.lastMove?.$1, to = g.lastMove?.$2;
+
     return Container(
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(color: const Color(0xFF4E342E), borderRadius: BorderRadius.circular(12)),
-      child: GridView.count(
-        crossAxisCount: 8,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          for (var i = 0; i < 64; i++)
-            Builder(builder: (context) {
-              final sq = flipped ? 63 - i : i;
-              final dark = (sq ~/ 8 + sq % 8).isOdd;
-              final piece = g.board[sq];
-              final owner = CheckersLogic.ownerOf(piece);
-              final isLast = g.lastMove != null && (g.lastMove!.$1 == sq || g.lastMove!.$2 == sq);
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick().ignore();
-                  g.tap(sq);
-                },
-                child: Container(
-                  color: dark ? (isLast ? const Color(0xFF8D6E63) : const Color(0xFF6D4C41)) : const Color(0xFFF3E0C0),
-                  child: Stack(alignment: Alignment.center, children: [
-                    if (targets.contains(sq))
-                      FractionallySizedBox(
-                        widthFactor: 0.35,
-                        heightFactor: 0.35,
-                        child: Container(decoration: const BoxDecoration(color: Color(0xCCFFC93C), shape: BoxShape.circle)),
-                      ),
-                    if (piece != 0)
-                      FractionallySizedBox(
-                        widthFactor: 0.8,
-                        heightFactor: 0.8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              center: const Alignment(-0.3, -0.3),
-                              colors: [Color.lerp(players[owner].color, Colors.white, 0.35)!, players[owner].color, Color.lerp(players[owner].color, Colors.black, 0.35)!],
-                            ),
-                            border: Border.all(
-                              color: g.selected == sq ? GpColors.accent : (movable.contains(sq) && owner == g.turn ? Colors.white : Colors.black26),
-                              width: g.selected == sq ? 4 : 2,
-                            ),
-                            boxShadow: const [BoxShadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 2)],
-                          ),
-                          alignment: Alignment.center,
-                          child: CheckersLogic.isKing(piece) ? const FittedBox(child: Padding(padding: EdgeInsets.all(4), child: Text('👑', style: TextStyle(fontSize: 22)))) : null,
-                        ),
-                      ),
-                  ]),
+      child: LayoutBuilder(builder: (context, c) {
+        final cell = c.maxWidth / 8;
+        Widget piece(int value, {bool selected = false, bool canMove = false}) {
+          final owner = CheckersLogic.ownerOf(value);
+          final col = widget.players[owner].color;
+          return Padding(
+            padding: EdgeInsets.all(cell * 0.1),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(center: const Alignment(-0.3, -0.3), colors: [Color.lerp(col, Colors.white, 0.35)!, col, Color.lerp(col, Colors.black, 0.35)!]),
+                border: Border.all(color: selected ? GpColors.accent : (canMove ? Colors.white : Colors.black26), width: selected ? 4 : 2),
+                boxShadow: const [BoxShadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 2)],
+              ),
+              alignment: Alignment.center,
+              child: CheckersLogic.isKing(value) ? const FittedBox(child: Padding(padding: EdgeInsets.all(4), child: Text('👑', style: TextStyle(fontSize: 22)))) : null,
+            ),
+          );
+        }
+
+        final pieces = <Widget>[];
+        for (var sq = 0; sq < 64; sq++) {
+          final v = g.board[sq];
+          if (v == 0 || (showing && sq == to)) continue; // the moving piece is drawn on its way
+          final at = _cell(sq, cell);
+          pieces.add(Positioned(
+            key: ValueKey('p$sq'),
+            left: at.dx,
+            top: at.dy,
+            width: cell,
+            height: cell,
+            child: IgnorePointer(child: piece(v, selected: g.selected == sq, canMove: movable.contains(sq) && CheckersLogic.ownerOf(v) == g.turn)),
+          ));
+        }
+        if (showing) {
+          // Jumped pieces stay until the mover passes them, then fade out.
+          final mover = g.board[to!];
+          for (var k = 0; k < g.lastCaptured.length; k++) {
+            final at = _cell(g.lastCaptured[k], cell);
+            pieces.add(Positioned(
+              key: ValueKey('cap$k'),
+              left: at.dx,
+              top: at.dy,
+              width: cell,
+              height: cell,
+              child: IgnorePointer(
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: stepMs),
+                  opacity: _step! > k ? 0 : 1,
+                  child: piece(CheckersLogic.ownerOf(mover) == 0 ? 2 : 1),
                 ),
-              );
-            }),
-        ],
-      ),
+              ),
+            ));
+          }
+          final where = _step == 0 ? from! : g.lastPath[min(_step!, g.lastPath.length) - 1];
+          final at = _cell(where, cell);
+          pieces.add(AnimatedPositioned(
+            key: const ValueKey('mover'),
+            duration: const Duration(milliseconds: stepMs - 40),
+            curve: Curves.easeInOut,
+            left: at.dx - cell * 0.06,
+            top: at.dy - cell * 0.06,
+            width: cell * 1.12, // lifted while it moves
+            height: cell * 1.12,
+            child: IgnorePointer(child: piece(mover)),
+          ));
+        }
+
+        return Stack(children: [
+          GridView.count(
+            crossAxisCount: 8,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              for (var i = 0; i < 64; i++)
+                Builder(builder: (context) {
+                  final sq = widget.flipped ? 63 - i : i;
+                  final dark = (sq ~/ 8 + sq % 8).isOdd;
+                  final isLast = !showing && (from == sq || to == sq);
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick().ignore();
+                      g.tap(sq);
+                    },
+                    child: Container(
+                      color: dark ? (isLast ? const Color(0xFF8D6E63) : const Color(0xFF6D4C41)) : const Color(0xFFF3E0C0),
+                      alignment: Alignment.center,
+                      child: targets.contains(sq)
+                          ? FractionallySizedBox(
+                              widthFactor: 0.35,
+                              heightFactor: 0.35,
+                              child: Container(decoration: const BoxDecoration(color: Color(0xCCFFC93C), shape: BoxShape.circle)),
+                            )
+                          : null,
+                    ),
+                  );
+                }),
+            ],
+          ),
+          ...pieces,
+        ]);
+      }),
     );
   }
 }
