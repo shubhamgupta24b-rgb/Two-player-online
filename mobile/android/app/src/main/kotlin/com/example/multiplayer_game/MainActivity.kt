@@ -35,8 +35,27 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private var hapticsOn = true
+
+    /// Every view in the window (Flutter's included) stops vibrating when [hapticsOn] is off;
+    /// HapticFeedback calls from Dart go through View.performHapticFeedback, which honours it.
+    private fun applyHaptics(v: android.view.View = window.decorView) {
+        v.isHapticFeedbackEnabled = hapticsOn
+        if (v is android.view.ViewGroup) for (i in 0 until v.childCount) applyHaptics(v.getChildAt(i))
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "party/device").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "haptics" -> {
+                    hapticsOn = call.argument<Boolean>("on") ?: true
+                    applyHaptics()
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "party/audio").setMethodCallHandler { call, result ->
             try {
                 when (call.method) {
@@ -105,6 +124,7 @@ class MainActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         music?.start()
+        applyHaptics()
     }
 
     override fun onDestroy() {

@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/room/room_manager.dart';
 import '../../core/ui/app_ui.dart';
-import '../guess_person/widgets/gp_theme.dart' show GpButton, GpColors;
+import '../../core/ui/components.dart';
+import '../guess_person/widgets/gp_theme.dart' show GpButton;
 import '../lobby/lobby_screen.dart';
 
 const _codeLength = 6;
@@ -18,6 +19,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
   final ctrl = TextEditingController();
   final focus = FocusNode();
   bool busy = false;
+  int _fails = 0; // bumps the shake on a failed join
 
   @override
   void initState() {
@@ -38,13 +40,16 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
     if (!_complete || busy) return;
     final rm = context.read<RoomManager>();
     final nav = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => busy = true);
     final err = await rm.join(ctrl.text);
     if (!mounted) return;
     if (err != null) {
-      setState(() => busy = false);
-      messenger.showSnackBar(SnackBar(content: Text(err)));
+      haptic(HapticWeight.heavy);
+      setState(() {
+        busy = false;
+        _fails++;
+      });
+      showToast(context, friendlyError(err), tone: Tone.danger, duration: const Duration(seconds: 3));
       return;
     }
     nav.pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LobbyScreen()), (r) => r.isFirst);
@@ -59,7 +64,8 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 4, 16, 10),
               child: Row(children: [
-                IconButton(tooltip: 'Back', onPressed: () => Navigator.maybePop(context), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70)),
+                AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
+                const SizedBox(width: Space.xs),
                 const Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('JOIN A ROOM', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1)),
@@ -78,9 +84,9 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
                   const SizedBox(height: 4),
                   const Text('Ask the host for the 6-letter code on their screen', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 20),
-                  _CodeBoxes(ctrl: ctrl, focus: focus, onChanged: () => setState(() {}), onSubmit: _join),
+                  Shake(trigger: _fails == 0 ? null : _fails, child: _CodeBoxes(ctrl: ctrl, focus: focus, onChanged: () => setState(() {}), onSubmit: _join)),
                   const SizedBox(height: 24),
-                  GpButton(busy ? 'JOINING…' : 'JOIN ROOM', icon: Icons.login_rounded, color: GpColors.accent, onPressed: _complete && !busy ? _join : null),
+                  GpButton(busy ? 'JOINING…' : 'JOIN ROOM', icon: Icons.login_rounded, onPressed: _complete && !busy ? _join : null),
                   const SizedBox(height: 28),
                   const _Tip(icon: Icons.wifi_rounded, text: 'Everyone needs the same server (shown at the bottom of the home screen).'),
                   const SizedBox(height: 10),

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/room/room_manager.dart';
 import '../../core/ui/app_ui.dart';
+import '../../core/ui/components.dart';
 import '../../games/game_catalog.dart';
 import '../create_room/game_grid.dart';
-import '../guess_person/widgets/gp_theme.dart' show GpButton, GpColors;
+import '../guess_person/widgets/gp_theme.dart' show GpButton;
 import '../lobby/lobby_screen.dart';
 
 /// Quick Play: be matched into a random open room with other players, for any game or one
@@ -22,13 +23,12 @@ class _QuickPlayScreenState extends State<QuickPlayScreen> {
   Future<void> _go() async {
     final rm = context.read<RoomManager>();
     final nav = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => busy = true);
     final err = await rm.quickPlay(gameId);
     if (!mounted) return;
     if (err != null) {
       setState(() => busy = false);
-      messenger.showSnackBar(SnackBar(content: Text(err)));
+      showToast(context, friendlyError(err), tone: Tone.danger, duration: const Duration(seconds: 3));
       return;
     }
     nav.pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LobbyScreen()), (r) => r.isFirst);
@@ -44,7 +44,8 @@ class _QuickPlayScreenState extends State<QuickPlayScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 4, 16, 6),
               child: Row(children: [
-                IconButton(tooltip: 'Back', onPressed: () => Navigator.maybePop(context), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70)),
+                AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
+                const SizedBox(width: Space.xs),
                 const Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('⚡ QUICK PLAY', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1)),
@@ -90,7 +91,7 @@ class _QuickPlayScreenState extends State<QuickPlayScreen> {
                 Text(game == null ? '🎲 Any game · rooms of up to 6' : '${game.emoji} ${game.name} · ${game.playersLabel} players',
                     textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
                 const SizedBox(height: 10),
-                GpButton(busy ? 'FINDING PLAYERS…' : 'FIND A ROOM', icon: Icons.bolt_rounded, color: GpColors.accent, onPressed: busy ? null : _go),
+                GpButton(busy ? 'FINDING PLAYERS…' : 'FIND A ROOM', icon: Icons.bolt_rounded, onPressed: busy ? null : _go),
               ]),
             ),
           ]),

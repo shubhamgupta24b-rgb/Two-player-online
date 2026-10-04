@@ -4,6 +4,10 @@ import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../../core/audio/game_audio.dart';
 import '../../../core/auth/authentication_manager.dart';
+import '../../../core/network/socket_manager.dart';
+import '../../../core/room/room_manager.dart';
+import '../../../core/ui/components.dart';
+import '../party/party_widgets.dart' show WaitingNote;
 import '../../../core/session/game_session_manager.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
@@ -196,42 +200,80 @@ class _RelayPlayState extends State<RelayPlay> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     final g = _g;
     if (g == null || (!_host && _version == 0)) {
-      return const GpBackground(
-        child: Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            CircularProgressIndicator(color: GpColors.accent),
-            SizedBox(height: 14),
-            Text('Waiting for the host to start…', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-          ]),
-        ),
+      return GpBackground(
+        child: Column(children: [
+          _OnlineBanners(myId: _myId),
+          const Expanded(child: WaitingNote('Waiting for the host to start…')),
+        ]),
       );
     }
+    final me = _players[_me];
     return GpBackground(
       child: Column(children: [
+        // Who you are in this game (your colour and shape), and settings.
         Container(
           width: double.infinity,
-          color: _players[_me].color,
-          child: Stack(alignment: Alignment.center, children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 40),
-              child: Text('YOU: ${_players[_me].name.toUpperCase()}${_host ? ' · HOST' : ''}',
-                  textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
-            ),
-            Positioned(
-              right: 4,
-              child: InkWell(
-                onTap: () => showModalBottomSheet<void>(
-                  context: context,
-                  backgroundColor: GpColors.bgTop,
-                  builder: (_) => SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(20, 16, 12, 16), child: SoundControls(color: widget.game.color))),
-                ),
-                child: const Padding(padding: EdgeInsets.symmetric(horizontal: 6), child: Text('🎵', style: TextStyle(fontSize: 14))),
+          color: fillFor(me.color),
+          padding: const EdgeInsets.only(left: Space.s),
+          child: Row(children: [
+            Expanded(
+              child: Semantics(
+                label: 'You are ${me.name}${_host ? ', the host' : ''}',
+                excludeSemantics: true,
+                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  if (PlayerPalette.indexOf(me.color) case final s?) ...[
+                    SizedBox(width: 12, height: 12, child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(s), Colors.white))),
+                    const SizedBox(width: 6),
+                  ],
+                  Flexible(
+                    child: Text('YOU: ${me.name.toUpperCase()}${_host ? ' · HOST' : ''}',
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12.5, letterSpacing: 1)),
+                  ),
+                ]),
               ),
+            ),
+            IconButton(
+              tooltip: 'Sound and settings',
+              constraints: const BoxConstraints(minWidth: kTouchTarget, minHeight: 40),
+              onPressed: () => showAppSheet<void>(context, title: '⚙️ Settings', builder: (_) => SettingsPanel(color: widget.game.color)),
+              icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
             ),
           ]),
         ),
+        _OnlineBanners(myId: _myId),
         Expanded(child: ListenableBuilder(listenable: g, builder: (context, _) => _spec.view(context, g, _players, _me))),
       ]),
     );
+  }
+}
+
+/// Non-blocking connection states over an online game: our own connection, and players
+/// (or the host) who dropped out. Shown as a strip; the game underneath stays usable.
+class _OnlineBanners extends StatelessWidget {
+  final String myId;
+  const _OnlineBanners({required this.myId});
+
+  @override
+  Widget build(BuildContext context) {
+    final socket = context.read<SocketManager?>();
+    final room = context.watch<RoomManager?>()?.room;
+    final away = room?.players.where((p) => !p.connected && p.userId != myId).toList() ?? const <RoomPlayer>[];
+    final hostAway = room != null && away.any((p) => p.userId == room.hostId);
+    Widget banners(bool online) {
+      final list = <Widget>[
+        if (!online) const AppBanner(text: 'Connection lost · reconnecting…', tone: Tone.warn),
+        if (online && hostAway) AppBanner(text: 'The host lost connection. The game continues when they are back…', tone: Tone.info),
+        if (online && !hostAway && away.isNotEmpty) AppBanner(text: '${away.map((p) => p.username).join(', ')} lost connection. Waiting for them…', tone: Tone.info),
+      ];
+      return AnimatedSize(
+        duration: Motion.of(context, Motion.normal),
+        child: list.isEmpty
+            ? const SizedBox(width: double.infinity)
+            : Padding(padding: const EdgeInsets.fromLTRB(Space.s, Space.s, Space.s, 0), child: Column(children: list)),
+      );
+    }
+
+    if (socket == null) return banners(true);
+    return ValueListenableBuilder<bool>(valueListenable: socket.connected, builder: (_, on, __) => banners(on));
   }
 }

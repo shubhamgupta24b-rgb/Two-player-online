@@ -1,10 +1,11 @@
-﻿import 'dart:io' show Platform;
+import 'dart:io' show Platform;
 import 'dart:isolate';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../ui/components.dart';
 
 /// Background music and sound effects. There is no audio package: the tunes are
 /// chiptunes synthesised here (melody, bass and drums rendered to WAV off the UI thread)
@@ -317,32 +318,36 @@ class SoundControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AudioSettings>(
       valueListenable: GameAudio.settings,
-      builder: (context, s, _) => Column(mainAxisSize: MainAxisSize.min, children: [
-        _row('ðŸŽµ', 'Music', s.music, (v) => GameAudio.update(s.copyWith(music: v))),
-        if (s.music)
-          Row(children: [
-            const SizedBox(width: 36, child: Icon(Icons.volume_down_rounded, color: Colors.white54, size: 20)),
-            Expanded(
-              child: Slider(
-                value: s.volume,
-                activeColor: color,
-                onChanged: (v) => GameAudio.settings.value = s.copyWith(volume: v),
-                onChangeEnd: (v) => GameAudio.update(s.copyWith(volume: v)),
+      builder: (context, s, _) {
+        final muted = context.tk.textMuted;
+        return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SettingSwitch(emoji: '🎵', label: 'Music', value: s.music, color: color, onChanged: (v) => GameAudio.update(s.copyWith(music: v))),
+          if (s.music)
+            Row(children: [
+              SizedBox(width: 34, child: Icon(Icons.volume_down_rounded, color: muted, size: 20)),
+              Expanded(
+                child: Slider(
+                  value: s.volume,
+                  activeColor: fillFor(color),
+                  semanticFormatterCallback: (v) => 'Music volume ${(v * 100).round()}%',
+                  onChanged: (v) => GameAudio.settings.value = s.copyWith(volume: v),
+                  onChangeEnd: (v) => GameAudio.update(s.copyWith(volume: v)),
+                ),
               ),
-            ),
-            const Icon(Icons.volume_up_rounded, color: Colors.white54, size: 20),
-          ]),
-        _row('ðŸ”Š', 'Sound effects', s.sfx, (v) {
-          GameAudio.update(s.copyWith(sfx: v));
-          if (v) GameAudio.sfx('tap');
-        }),
-      ]),
+              Icon(Icons.volume_up_rounded, color: muted, size: 20),
+            ]),
+          SettingSwitch(
+            emoji: '🔊',
+            label: 'Sound effects',
+            value: s.sfx,
+            color: color,
+            onChanged: (v) {
+              GameAudio.update(s.copyWith(sfx: v));
+              if (v) GameAudio.sfx('tap');
+            },
+          ),
+        ]);
+      },
     );
   }
-
-  Widget _row(String emoji, String label, bool on, ValueChanged<bool> onChanged) => Row(children: [
-        SizedBox(width: 36, child: Text(emoji, style: const TextStyle(fontSize: 20))),
-        Expanded(child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15))),
-        Switch(value: on, activeTrackColor: color, onChanged: onChanged),
-      ]);
 }

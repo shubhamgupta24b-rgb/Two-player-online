@@ -177,8 +177,8 @@ class _PenaltyHalf extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             child: Column(children: [
               Row(children: [
-                PlayerTagSmall(player: player),
-                const Spacer(),
+                Flexible(child: PlayerTagSmall(player: player)),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(10)),

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import 'local_game_shell.dart' show PauseButton;
 
 /// Phone lies flat between two players: player 1 (index 0) plays the bottom half,
-/// player 2 (index 1) the top half, rotated to face them.
+/// player 2 (index 1) the top half, rotated to face them. [middle] sits between the
+/// halves and never overlaps either player's touch area.
 class SplitScreen extends StatelessWidget {
   final Widget Function(int playerIndex) half;
   final Widget middle;
@@ -13,9 +14,9 @@ class SplitScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      Expanded(child: RotatedBox(quarterTurns: 2, child: half(1))),
+      Expanded(child: RotatedBox(quarterTurns: 2, child: RepaintBoundary(child: half(1)))),
       middle,
-      Expanded(child: half(0)),
+      Expanded(child: RepaintBoundary(child: half(0))),
     ]);
   }
 }
@@ -40,7 +41,7 @@ class PlayerZones extends StatelessWidget {
     final left = leftCount(count);
     Widget column(Iterable<int> ids, int turns) => Column(children: [
           for (final i in ids)
-            Expanded(child: Padding(padding: const EdgeInsets.all(3), child: RotatedBox(quarterTurns: turns, child: zone(i)))),
+            Expanded(child: Padding(padding: const EdgeInsets.all(3), child: RotatedBox(quarterTurns: turns, child: RepaintBoundary(child: zone(i))))),
         ]);
     return Stack(children: [
       Row(children: [
@@ -57,25 +58,61 @@ class ZoneCenterChip extends StatelessWidget {
   final String text;
   const ZoneCenterChip(this.text, {super.key});
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.only(left: 12, right: 2),
-        decoration: BoxDecoration(color: GpColors.bgBottom, borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white24)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-          const PauseButton(),
-        ]),
-      );
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    return Container(
+      padding: const EdgeInsets.only(left: Space.m, right: 2),
+      decoration: BoxDecoration(color: t.bgBottom, borderRadius: BorderRadius.circular(Radii.pill), border: Border.all(color: t.strokeStrong), boxShadow: t.shadowMd),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Semantics(liveRegion: true, child: Text(text, style: t.styles.score.copyWith(fontSize: 16))),
+        const PauseButton(),
+      ]),
+    );
+  }
 }
 
+/// A player's name on their colour, with their shape.
 class PlayerTagSmall extends StatelessWidget {
   final GpPlayer player;
   const PlayerTagSmall({super.key, required this.player});
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(color: player.color, borderRadius: BorderRadius.circular(14)),
-        child: Text(player.name.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
-      );
+  Widget build(BuildContext context) {
+    final seat = PlayerPalette.indexOf(player.color);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: Space.xs),
+      decoration: BoxDecoration(color: fillFor(player.color), borderRadius: Radii.rMd),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (seat != null) ...[SizedBox(width: 11, height: 11, child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(seat), Colors.white))), const SizedBox(width: 5)],
+        Flexible(
+          child: Text(player.name.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+        ),
+      ]),
+    );
+  }
+}
+
+/// A player's score as a badge: their shape and the number (never colour alone).
+class _ScoreBadge extends StatelessWidget {
+  final GpPlayer player;
+  final int score;
+  const _ScoreBadge(this.player, this.score);
+  @override
+  Widget build(BuildContext context) {
+    final seat = PlayerPalette.indexOf(player.color);
+    return Semantics(
+      label: '${player.name} $score',
+      excludeSemantics: true,
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 52),
+        padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: 3),
+        decoration: BoxDecoration(color: fillFor(player.color), borderRadius: Radii.rMd),
+        child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
+          if (seat != null) ...[SizedBox(width: 12, height: 12, child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(seat), Colors.white))), const SizedBox(width: 5)],
+          Text('$score', style: context.tk.styles.score.copyWith(fontSize: 18, color: Colors.white)),
+        ]),
+      ),
+    );
+  }
 }
 
 /// Centre strip for "first to N" games: both scores (player 2's upside down) and the target.
@@ -87,23 +124,17 @@ class ScoreMiddleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget score(int i) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          decoration: BoxDecoration(color: players[i].color, borderRadius: BorderRadius.circular(12)),
-          child: Text('${scores[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
-        );
+    final t = context.tk;
     return Container(
-      height: 50,
-      color: GpColors.bgBottom,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 52,
+      decoration: BoxDecoration(color: t.bgBottom, border: Border.symmetric(horizontal: BorderSide(color: t.stroke))),
+      padding: const EdgeInsets.symmetric(horizontal: Space.m),
       child: Row(children: [
-        RotatedBox(quarterTurns: 2, child: score(1)),
-        Expanded(
-          child: Text(label, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-        ),
+        RotatedBox(quarterTurns: 2, child: _ScoreBadge(players[1], scores[1])),
+        Expanded(child: Text(label, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.styles.label)),
         const PauseButton(),
-        const SizedBox(width: 6),
-        score(0),
+        const SizedBox(width: Space.xs),
+        _ScoreBadge(players[0], scores[0]),
       ]),
     );
   }
@@ -119,48 +150,50 @@ class DuelMiddleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
     final total = scores[0] + scores[1];
     final share = total == 0 ? 0.5 : scores[0] / total; // player 1's share
     final urgent = secondsLeft <= 3;
     return Container(
-      height: 50,
-      color: GpColors.bgBottom,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 52,
+      decoration: BoxDecoration(color: t.bgBottom, border: Border.symmetric(horizontal: BorderSide(color: t.stroke))),
+      padding: const EdgeInsets.symmetric(horizontal: Space.m),
       child: Row(children: [
         // Player 2's score is upside down so they can read it from their side.
-        RotatedBox(quarterTurns: 2, child: _score(players[1], scores[1])),
-        const SizedBox(width: 10),
+        RotatedBox(quarterTurns: 2, child: _ScoreBadge(players[1], scores[1])),
+        const SizedBox(width: Space.s),
         Expanded(
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: SizedBox(
-                height: 10,
-                child: Row(children: [
-                  Expanded(flex: (share * 1000).round().clamp(1, 999), child: Container(color: players[0].color)),
-                  Expanded(flex: ((1 - share) * 1000).round().clamp(1, 999), child: Container(color: players[1].color)),
-                ]),
+          child: ExcludeSemantics(
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  height: 10,
+                  child: Row(children: [
+                    Expanded(flex: (share * 1000).round().clamp(1, 999), child: Container(color: players[0].color)),
+                    Container(width: 2, color: Colors.white),
+                    Expanded(flex: ((1 - share) * 1000).round().clamp(1, 999), child: Container(color: players[1].color)),
+                  ]),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(3),
-              child: LinearProgressIndicator(value: 1 - progress, minHeight: 4, color: urgent ? GpColors.no : GpColors.accent, backgroundColor: Colors.white12),
-            ),
-          ]),
+              const SizedBox(height: Space.xs),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: LinearProgressIndicator(value: 1 - progress, minHeight: 4, color: urgent ? t.danger : t.accent, backgroundColor: t.stroke),
+              ),
+            ]),
+          ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: Space.xs),
         const PauseButton(),
-        Text('${secondsLeft}s', style: TextStyle(color: urgent ? GpColors.no : Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
-        const SizedBox(width: 10),
-        _score(players[0], scores[0]),
+        Semantics(
+          label: '$secondsLeft seconds left',
+          excludeSemantics: true,
+          child: Text('${secondsLeft}s', style: t.styles.score.copyWith(fontSize: 18, color: urgent ? t.danger : t.onBg)),
+        ),
+        const SizedBox(width: Space.s),
+        _ScoreBadge(players[0], scores[0]),
       ]),
     );
   }
-
-  Widget _score(GpPlayer p, int s) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-        decoration: BoxDecoration(color: p.color, borderRadius: BorderRadius.circular(12)),
-        child: Text('$s', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
-      );
 }

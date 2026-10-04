@@ -44,7 +44,7 @@ void main() {
     expect(find.text('PLAYER 1'), findsOneWidget);
     expect(find.textContaining('1 min on the whole screen'), findsOneWidget);
     await tapText(tester, 'START');
-    expect(find.text('⏱ 1:00'), findsOneWidget, reason: 'a full-screen turn with its clock');
+    expect(find.text('1:00'), findsOneWidget, reason: 'a full-screen turn with its clock');
     for (var i = 0; i < 5; i++) {
       await tester.tapAt(const Offset(200, 500)); // drop fruit
       await tester.pump(const Duration(milliseconds: 600));
@@ -82,7 +82,7 @@ void main() {
     await tapText(tester, 'PLAY');
     expect(find.textContaining('3 min on the whole screen'), findsOneWidget);
     await tapText(tester, 'START');
-    expect(find.text('⏱ 3:00'), findsOneWidget);
+    expect(find.text('3:00'), findsOneWidget);
     expect(find.text('SWIPE UP TO SHOOT'), findsOneWidget, reason: 'one big court, not two halves');
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));

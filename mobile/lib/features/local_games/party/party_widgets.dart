@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/app_flavor.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_shell.dart' show PauseButton, GameTheme;
@@ -14,16 +15,16 @@ class PartyFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(12, 6, 12, 14),
+        padding: const EdgeInsets.fromLTRB(Space.m, 6, Space.m, Space.l),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           GameTopBar(title: title, subtitle: subtitle, trailing: trailing),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.m),
           Expanded(child: child),
         ]),
       );
 }
 
-/// Frosted header used by most games: pause, a bold title (and line under it), extras on the right.
+/// The header most games use: pause, a bold title (and a line under it), extras on the right.
 class GameTopBar extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -32,43 +33,28 @@ class GameTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
     final c = GameTheme.colorOf(context);
-    if (GameTheme.flatOf(context)) {
-      return Container(
-        padding: const EdgeInsets.fromLTRB(6, 6, 10, 6),
-        decoration: flatTile(radius: 22),
-        child: Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 8),
-          Container(width: 5, height: 30, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(3))),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-              Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: FlatColors.ink, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.6)),
-              if (subtitle != null) Text(subtitle!, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: _flatMuted, fontWeight: FontWeight.w700, fontSize: 12.5)),
-            ]),
-          ),
-          if (trailing != null) ...[const SizedBox(width: 6), trailing!],
-        ]),
-      );
-    }
+    final ink = t.flat ? t.text : t.onBg;
+    final muted = t.flat ? t.textMuted : t.onBgMuted;
     return Container(
-      padding: const EdgeInsets.fromLTRB(6, 6, 10, 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
+      padding: const EdgeInsets.fromLTRB(2, 2, Space.m, 2),
+      decoration: t.flat
+          ? flatTile(radius: Radii.xl)
+          : BoxDecoration(color: t.glass, borderRadius: Radii.rXl, border: Border.all(color: t.stroke)),
       child: Row(children: [
         const PauseButton(),
-        const SizedBox(width: 8),
+        const SizedBox(width: Space.xs),
         Container(width: 4, height: 30, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(2))),
-        const SizedBox(width: 8),
+        const SizedBox(width: Space.s),
         Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-            Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: 0.6)),
-            if (subtitle != null) Text(subtitle!, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700, fontSize: 12.5)),
-          ]),
+          child: Semantics(
+            header: true,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.styles.title.copyWith(color: ink, fontSize: 17)),
+              if (subtitle != null) Text(subtitle!, maxLines: 2, overflow: TextOverflow.ellipsis, style: t.styles.caption.copyWith(color: muted)),
+            ]),
+          ),
         ),
         if (trailing != null) ...[const SizedBox(width: 6), trailing!],
       ]),
@@ -76,7 +62,8 @@ class GameTopBar extends StatelessWidget {
   }
 }
 
-/// "Pass to NAME" -> tap -> the secret -> "hide" and pass on. Used for every secret card.
+/// "Pass to NAME" -> hold to see -> the secret -> "hide" and pass on. Used for every secret card.
+/// Seeing the secret needs a press-and-hold, so a stray tap never shows it to the table.
 class PassAndReveal extends StatelessWidget {
   final GpPlayer player;
   final bool revealed;
@@ -88,100 +75,135 @@ class PassAndReveal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!revealed && GameTheme.flatOf(context)) return _flatPass();
+    final t = context.tk;
     if (!revealed) {
       final c = player.color;
       return Center(
         child: SingleChildScrollView(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(20, 26, 20, 22),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [c.withValues(alpha: 0.28), Colors.white.withValues(alpha: 0.04)]),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: c.withValues(alpha: 0.5), width: 2),
-            ),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Stack(clipBehavior: Clip.none, children: [
-                Container(
-                  width: 112,
-                  height: 112,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: [Color.lerp(c, Colors.white, 0.25)!, c, Color.lerp(c, Colors.black, 0.3)!], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                    border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: [BoxShadow(color: c.withValues(alpha: 0.7), blurRadius: 30)],
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(Space.xl, Space.xl, Space.xl, Space.xl),
+              decoration: t.flat
+                  ? flatTile(radius: 28)
+                  : BoxDecoration(
+                      gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [c.withValues(alpha: 0.28), t.glass]),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: c.withValues(alpha: 0.55), width: 2),
+                    ),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Stack(clipBehavior: Clip.none, children: [
+                  PlayerAvatar(name: player.name, color: c, size: 104),
+                  const Positioned(right: -12, bottom: -4, child: ExcludeSemantics(child: Text('📲', style: TextStyle(fontSize: 34)))),
+                ]),
+                const SizedBox(height: Space.l),
+                Text('PASS THE PHONE TO', style: (t.flat ? t.cardStyles : t.styles).label),
+                const SizedBox(height: Space.xs),
+                Semantics(
+                  liveRegion: true,
+                  child: FittedBox(
+                    child: Text(player.name.toUpperCase(),
+                        style: (t.flat ? t.cardStyles : t.styles).display.copyWith(color: t.flat ? fillFor(c) : Color.lerp(c, Colors.white, 0.35), fontSize: 32)),
                   ),
-                  child: Text(player.name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 52, fontWeight: FontWeight.w900)),
                 ),
-                const Positioned(right: -8, bottom: -4, child: Text('📲', style: TextStyle(fontSize: 34))),
+                const SizedBox(height: Space.s),
+                Text('Everyone else, look away! 🙈', textAlign: TextAlign.center, style: (t.flat ? t.cardStyles : t.styles).bodyStrong),
+                const SizedBox(height: Space.xl),
+                HoldToReveal(label: 'HOLD TO SEE YOUR SECRET', color: c, onRevealed: onReveal),
               ]),
-              const SizedBox(height: 18),
-              const Text('PASS THE PHONE TO', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12)),
-              const SizedBox(height: 4),
-              FittedBox(child: Text(player.name.toUpperCase(), style: TextStyle(color: Color.lerp(c, Colors.white, 0.35), fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 1))),
-              const SizedBox(height: 6),
-              const Text('Everyone else, look away! 🙈', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 22),
-              GpButton('TAP TO SEE YOUR SECRET', icon: Icons.visibility_rounded, color: c, textColor: Colors.white, onPressed: onReveal),
-            ]),
+            ),
           ),
         ),
       );
     }
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Expanded(child: Center(child: SingleChildScrollView(child: secret))),
-      const SizedBox(height: 10),
+      const SizedBox(height: Space.s),
       GpButton(doneLabel, icon: Icons.visibility_off_rounded, onPressed: onDone),
     ]);
   }
+}
 
-  /// Flat look: a white card like a character tile, the name on a dark strip.
-  Widget _flatPass() {
-    final c = player.color;
-    return Center(
-      child: SingleChildScrollView(
-        child: Container(
-          decoration: flatTile(radius: 28),
-          clipBehavior: Clip.antiAlias,
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            const SizedBox(height: 24),
-            Center(
-              child: Stack(clipBehavior: Clip.none, children: [
-                Container(
-                  width: 110,
-                  height: 110,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: c, border: Border.all(color: FlatColors.tileShade, width: 5)),
-                  child: Text(player.name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 54, fontWeight: FontWeight.w900)),
+/// A button you hold down: it fills up, and when full [onRevealed] runs. Letting go early
+/// empties it again. Screen readers get a plain "activate" instead.
+class HoldToReveal extends StatefulWidget {
+  final String label;
+  final Color color;
+  final VoidCallback onRevealed;
+  final Duration hold;
+  const HoldToReveal({super.key, required this.label, required this.color, required this.onRevealed, this.hold = const Duration(milliseconds: 650)});
+  @override
+  State<HoldToReveal> createState() => _HoldToRevealState();
+}
+
+class _HoldToRevealState extends State<HoldToReveal> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: widget.hold)
+    ..addStatusListener((s) {
+      if (s == AnimationStatus.completed) {
+        haptic(HapticWeight.medium);
+        widget.onRevealed();
+      }
+    });
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _start() {
+    haptic(HapticWeight.selection);
+    _c.forward();
+  }
+
+  void _cancel() {
+    if (_c.status != AnimationStatus.completed) _c.animateBack(0, duration: Motion.fast);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fill = fillFor(widget.color);
+    return Semantics(
+      button: true,
+      label: widget.label.replaceFirst('HOLD TO', 'TAP TO'),
+      hint: 'Shows your secret',
+      onTap: widget.onRevealed,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTapDown: (_) => _start(),
+        onTapUp: (_) => _cancel(),
+        onTapCancel: _cancel,
+        child: AnimatedBuilder(
+          animation: _c,
+          builder: (_, __) => Container(
+            constraints: const BoxConstraints(minHeight: 56),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [BoxShadow(color: Color.lerp(fill, Colors.black, 0.42)!, offset: Offset(0, _c.value > 0 ? 1 : 4))],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: Stack(alignment: Alignment.center, children: [
+                Positioned.fill(child: ColoredBox(color: Color.lerp(fill, Colors.black, 0.3)!)),
+                Positioned.fill(child: FractionallySizedBox(alignment: Alignment.centerLeft, widthFactor: _c.value, child: ColoredBox(color: fill))),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Space.l, vertical: Space.m),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.touch_app_rounded, color: Colors.white),
+                    const SizedBox(width: Space.s),
+                    Flexible(child: Text(widget.label, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15.5, letterSpacing: 0.6))),
+                  ]),
                 ),
-                const Positioned(right: -10, bottom: -4, child: Text('📲', style: TextStyle(fontSize: 36))),
               ]),
             ),
-            const SizedBox(height: 16),
-            const Text('PASS THE PHONE TO', textAlign: TextAlign.center, style: TextStyle(color: _flatMuted, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13)),
-            const SizedBox(height: 8),
-            Container(
-              color: FlatColors.strip,
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              child: FittedBox(child: Text(player.name.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 1))),
-            ),
-            const SizedBox(height: 12),
-            const Text('Everyone else, look away! 🙈', textAlign: TextAlign.center, style: TextStyle(color: FlatColors.ink, fontWeight: FontWeight.w800, fontSize: 15)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-              child: GpButton('TAP TO SEE YOUR SECRET', icon: Icons.visibility_rounded, color: c, textColor: Colors.white, onPressed: onReveal),
-            ),
-          ]),
+          ),
         ),
       ),
     );
   }
 }
 
-const _flatMuted = Color(0xFF6B7280);
-
-/// A big white card with a coloured header, for words, prompts and secrets.
+/// The one card style for words, prompts, roles and secrets: white, coloured header band.
 class PromptCard extends StatelessWidget {
   final String header;
   final String text;
@@ -191,36 +213,48 @@ class PromptCard extends StatelessWidget {
   const PromptCard({super.key, required this.header, required this.text, this.emoji, this.footer, this.color = const Color(0xFF7B4DFF)});
 
   @override
-  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-        key: ValueKey(header + text),
-        tween: Tween(begin: 0.8, end: 1),
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutBack,
-        builder: (_, s, child) => Transform.scale(scale: s, child: child),
+  Widget build(BuildContext context) {
+    final band = fillFor(color);
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(header + text),
+      tween: Tween(begin: Motion.reduced(context) ? 1 : 0.85, end: 1),
+      duration: Motion.of(context, Motion.slow),
+      curve: Curves.easeOutBack,
+      builder: (_, s, child) => Transform.scale(scale: s, child: child),
+      child: Semantics(
+        label: '$header: $text${footer != null ? '. $footer' : ''}',
+        excludeSemantics: true,
         child: Container(
           width: double.infinity,
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: color, width: 4), boxShadow: [BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 18)]),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: Radii.rXl,
+            border: Border.all(color: band, width: 4),
+            boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 18), BoxShadow(color: Color.lerp(band, Colors.black, 0.4)!, offset: const Offset(0, 5))],
+          ),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(color: color, borderRadius: const BorderRadius.vertical(top: Radius.circular(19))),
+              padding: const EdgeInsets.symmetric(vertical: Space.s),
+              decoration: BoxDecoration(color: band, borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.xl - 5))),
               child: Text(header, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 2)),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+              padding: const EdgeInsets.fromLTRB(Space.l, Space.l, Space.l, Space.l),
               child: Column(children: [
                 if (emoji != null) Text(emoji!, style: const TextStyle(fontSize: 56)),
-                Text(text, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.ink, fontWeight: FontWeight.w900, fontSize: 26, height: 1.15)),
+                Text(text, textAlign: TextAlign.center, style: const TextStyle(color: Brand.ink, fontWeight: FontWeight.w900, fontSize: 26, height: 1.15)),
                 if (footer != null) ...[
-                  const SizedBox(height: 8),
-                  Text(footer!, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF6B6785), fontWeight: FontWeight.w700, fontSize: 13)),
+                  const SizedBox(height: Space.s),
+                  Text(footer!, textAlign: TextAlign.center, style: const TextStyle(color: FlatPalette.inkMuted, fontWeight: FontWeight.w700, fontSize: 13.5)),
                 ],
               ]),
             ),
           ]),
         ),
-      );
+      ),
+    );
+  }
 }
 
 /// Players as tappable chips, e.g. for voting. [disabled] players can't be picked;
@@ -235,99 +269,71 @@ class PlayerPicker extends StatelessWidget {
   const PlayerPicker({super.key, required this.players, this.disabled = const {}, this.counts = const {}, this.highlight, this.onPick, this.notes = const {}});
 
   @override
-  Widget build(BuildContext context) => GameTheme.flatOf(context) ? _flat() : Wrap(alignment: WrapAlignment.center, spacing: 10, runSpacing: 10, children: [
-        for (var i = 0; i < players.length; i++)
-          Semantics(
-            button: onPick != null && !disabled.contains(i),
-            label: players[i].name,
-            child: GestureDetector(
-              onTap: onPick == null || disabled.contains(i) ? null : () => onPick!(i),
-              child: Opacity(
-                opacity: disabled.contains(i) ? 0.35 : 1,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 96,
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-                  decoration: BoxDecoration(
-                    color: highlight == i ? players[i].color : Colors.white10,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: players[i].color, width: 3),
-                  ),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Stack(clipBehavior: Clip.none, children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: players[i].color,
-                        child: Text(players[i].name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-                      ),
-                      if ((counts[i] ?? 0) > 0)
-                        Positioned(
-                          right: -10,
-                          top: -6,
-                          child: CircleAvatar(radius: 11, backgroundColor: GpColors.no, child: Text('${counts[i]}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900))),
-                        ),
-                    ]),
-                    const SizedBox(height: 6),
-                    Text(players[i].name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
-                    if (notes[i] != null) Text(notes[i]!, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, fontSize: 10.5)),
-                  ]),
-                ),
-              ),
-            ),
-          ),
-      ]);
-
-  /// Flat look: white player tiles with the name on a dark strip, like character cards.
-  Widget _flat() => Wrap(alignment: WrapAlignment.center, spacing: 10, runSpacing: 12, children: [
-        for (var i = 0; i < players.length; i++)
-          Semantics(
-            button: onPick != null && !disabled.contains(i),
-            label: players[i].name,
-            child: GestureDetector(
-              onTap: onPick == null || disabled.contains(i) ? null : () => onPick!(i),
-              child: Opacity(
-                opacity: disabled.contains(i) ? 0.45 : 1,
-                child: AnimatedScale(
-                  duration: const Duration(milliseconds: 180),
-                  scale: highlight == i ? 1.07 : 1,
-                  child: Stack(clipBehavior: Clip.none, children: [
-                    Container(
-                      width: 92,
-                      decoration: flatTile(radius: 14).copyWith(border: Border.all(color: highlight == i ? players[i].color : Colors.white, width: highlight == i ? 4 : 2)),
-                      clipBehavior: Clip.antiAlias,
-                      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 10, 0, 8),
-                          child: Center(
-                            child: CircleAvatar(
-                              radius: 22,
-                              backgroundColor: players[i].color,
-                              child: Text(players[i].name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
-                            ),
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    return Wrap(alignment: WrapAlignment.center, spacing: Space.s, runSpacing: Space.m, children: [
+      for (var i = 0; i < players.length; i++)
+        Semantics(
+          button: onPick != null && !disabled.contains(i),
+          enabled: !disabled.contains(i),
+          selected: highlight == i,
+          label: '${players[i].name}${notes[i] != null ? ', ${notes[i]}' : ''}${(counts[i] ?? 0) > 0 ? ', ${counts[i]} votes' : ''}',
+          excludeSemantics: true,
+          child: GestureDetector(
+            onTap: onPick == null || disabled.contains(i)
+                ? null
+                : () {
+                    haptic(HapticWeight.selection);
+                    onPick!(i);
+                  },
+            child: Opacity(
+              opacity: disabled.contains(i) ? 0.4 : 1,
+              child: AnimatedScale(
+                duration: Motion.of(context, Motion.fast),
+                scale: highlight == i ? 1.06 : 1,
+                child: Stack(clipBehavior: Clip.none, children: [
+                  AnimatedContainer(
+                    duration: Motion.of(context, Motion.normal),
+                    width: 96,
+                    constraints: const BoxConstraints(minHeight: 96),
+                    padding: const EdgeInsets.fromLTRB(6, Space.m, 6, Space.s),
+                    decoration: t.flat
+                        ? flatTile(radius: Radii.lg).copyWith(border: Border.all(color: highlight == i ? fillFor(players[i].color) : FlatPalette.tileShade, width: highlight == i ? 4 : 2))
+                        : BoxDecoration(
+                            color: highlight == i ? fillFor(players[i].color) : t.glass,
+                            borderRadius: Radii.rLg,
+                            border: Border.all(color: players[i].color, width: 3),
                           ),
-                        ),
-                        Container(
-                          color: FlatColors.strip,
-                          padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
-                          child: Column(children: [
-                            Text(players[i].name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
-                            if (notes[i] != null) Text(notes[i]!, maxLines: 1, style: const TextStyle(color: Color(0xFFFFC93C), fontWeight: FontWeight.w900, fontSize: 10.5)),
-                          ]),
-                        ),
-                      ]),
-                    ),
-                    if ((counts[i] ?? 0) > 0)
-                      Positioned(
-                        right: -8,
-                        top: -8,
-                        child: CircleAvatar(radius: 13, backgroundColor: FlatColors.close, child: Text('${counts[i]}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900))),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      PlayerAvatar(name: players[i].name, color: players[i].color, size: 42),
+                      const SizedBox(height: 6),
+                      Text(players[i].name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: t.flat ? t.text : (highlight == i ? Colors.white : t.onBg), fontWeight: FontWeight.w900, fontSize: 13)),
+                      if (notes[i] != null)
+                        Text(notes[i]!, maxLines: 1, style: TextStyle(color: t.flat ? t.textMuted : (highlight == i ? Colors.white : t.onBgMuted), fontWeight: FontWeight.w900, fontSize: 11)),
+                    ]),
+                  ),
+                  if ((counts[i] ?? 0) > 0)
+                    Positioned(
+                      right: -8,
+                      top: -8,
+                      child: Container(
+                        width: 26,
+                        height: 26,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(color: fillFor(t.danger), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                        child: Text('${counts[i]}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900)),
                       ),
-                  ]),
-                ),
+                    ),
+                ]),
               ),
             ),
           ),
-      ]);
+        ),
+    ]);
+  }
 }
 
 /// Seconds-left chip that turns red near the end.
@@ -336,14 +342,18 @@ class TimeChip extends StatelessWidget {
   const TimeChip(this.msLeft, {super.key});
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
     final s = (msLeft / 1000).ceil();
     final urgent = s <= 10;
-    final flat = GameTheme.flatOf(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: urgent ? GpColors.no : (flat ? FlatColors.option : Colors.white12), borderRadius: BorderRadius.circular(14)),
-      child: Text(s >= 60 ? '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}' : '${s}s',
-          style: TextStyle(color: flat && !urgent ? FlatColors.ink : Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+    final text = s >= 60 ? '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}' : '${s}s';
+    return Semantics(
+      label: '$s seconds left',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: Space.m, vertical: 5),
+        decoration: BoxDecoration(color: urgent ? fillFor(t.danger) : (t.flat ? FlatPalette.option : t.glassStrong), borderRadius: Radii.rMd),
+        child: Text(text, style: t.styles.score.copyWith(fontSize: 16, color: urgent ? Colors.white : (t.flat ? t.text : t.onBg))),
+      ),
     );
   }
 }
@@ -353,13 +363,19 @@ class WaitingNote extends StatelessWidget {
   final String text;
   const WaitingNote(this.text, {super.key});
   @override
-  Widget build(BuildContext context) => Center(
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    return Center(
+      child: Semantics(
+        liveRegion: true,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const SizedBox(width: 36, height: 36, child: CircularProgressIndicator(color: GpColors.accent, strokeWidth: 3)),
-          const SizedBox(height: 14),
-          Text(text, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+          SizedBox(width: 36, height: 36, child: CircularProgressIndicator(color: t.accent, strokeWidth: 3)),
+          const SizedBox(height: Space.m),
+          Text(text, textAlign: TextAlign.center, style: (t.flat ? t.cardStyles : t.styles).bodyStrong.copyWith(fontSize: 16, color: t.flat ? t.onBg : null)),
         ]),
-      );
+      ),
+    );
+  }
 }
 
 /// The player with the most votes, or -1 for no votes or a tie.

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/ui/app_flavor.dart';
+import '../../../core/ui/components.dart';
 
 /// The colour (and emoji) of the game being played, for backgrounds, bars and buttons.
 class GameTheme extends InheritedWidget {
@@ -60,7 +61,7 @@ class _Glow extends CustomPainter {
   bool shouldRepaint(_Glow old) => old.color != color;
 }
 
-/// A round frosted button (pause, back).
+/// A round frosted button (pause, back): the shared [AppIconButton].
 class GlassIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
@@ -69,22 +70,7 @@ class GlassIconButton extends StatelessWidget {
   const GlassIconButton({super.key, required this.icon, required this.tooltip, required this.onPressed, this.size = 40});
 
   @override
-  Widget build(BuildContext context) => Tooltip(
-        message: tooltip,
-        child: Semantics(
-          button: true,
-          label: tooltip,
-          child: Material(
-            color: Colors.white.withValues(alpha: 0.12),
-            shape: CircleBorder(side: BorderSide(color: Colors.white.withValues(alpha: 0.18))),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: onPressed,
-              child: SizedBox(width: size, height: size, child: Icon(icon, color: Colors.white, size: size * 0.55)),
-            ),
-          ),
-        ),
-      );
+  Widget build(BuildContext context) => AppIconButton(icon: icon, tooltip: tooltip, onPressed: onPressed, size: size);
 }
 
 /// A pill showing a number in the game's colour (scores, timers).

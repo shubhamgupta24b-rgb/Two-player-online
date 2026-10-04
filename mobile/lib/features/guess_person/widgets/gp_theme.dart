@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/app_flavor.dart';
-import '../../../core/ui/tokens.dart';
+import '../../../core/ui/components.dart';
 
 /// Guess the Person's colours, now aliases to the design tokens.
 class GpColors {
@@ -121,7 +121,8 @@ class GpBackground extends StatelessWidget {
         );
 }
 
-/// Chunky rounded party-game button with a pressed-down shadow.
+/// Chunky rounded party-game button with a pressed-down shadow. Kept for its many callers;
+/// it is the shared [AppButton] underneath (outlined = the ghost variant).
 class GpButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -133,49 +134,14 @@ class GpButton extends StatelessWidget {
       {super.key, this.onPressed, this.color = GpColors.accent, this.textColor = GpColors.ink, this.icon, this.outlined = false});
 
   @override
-  Widget build(BuildContext context) {
-    final enabled = onPressed != null;
-    final bg = outlined ? Colors.transparent : (enabled ? color : Colors.white24);
-    final fg = outlined ? Colors.white : (enabled ? textColor : Colors.white54);
-    return Semantics(
-      button: true,
-      enabled: enabled,
-      label: label,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: enabled ? 1 : 0.7,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 54),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: outlined || !enabled ? null : [BoxShadow(color: Color.lerp(color, Colors.black, 0.45)!, offset: const Offset(0, 4))],
-          ),
-          child: Material(
-            color: bg,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-              side: outlined ? const BorderSide(color: Colors.white54, width: 2) : BorderSide.none,
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(28),
-              onTap: onPressed,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
-                  if (icon != null) ...[Icon(icon, color: fg, size: 22), const SizedBox(width: 8)],
-                  Flexible(
-                    child: Text(label,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: fg, fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: 0.8)),
-                  ),
-                ]),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AppButton(
+        label,
+        icon: icon,
+        onPressed: onPressed,
+        variant: outlined ? ButtonVariant.ghost : ButtonVariant.primary,
+        color: color == GpColors.accent ? null : color,
+        textColor: color == GpColors.accent && textColor == GpColors.ink ? null : textColor,
+      );
 }
 
 /// Coloured pill showing a player and what they are doing (not colour-only: the name is always shown).

@@ -1,9 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
-import 'game_style.dart';
 import 'local_game_info.dart';
 import 'local_game_shell.dart' show PauseButton;
 
@@ -23,6 +22,15 @@ class TurnsPlay extends StatefulWidget {
 }
 
 enum _Step { ready, playing, scored }
+
+/// The length of each turn, for [TurnBar]'s timer ring.
+class _TurnLength extends InheritedWidget {
+  final int ms;
+  const _TurnLength({required this.ms, required super.child});
+  static int? of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<_TurnLength>()?.ms;
+  @override
+  bool updateShouldNotify(_TurnLength old) => old.ms != ms;
+}
 
 class _TurnsPlayState extends State<TurnsPlay> {
   late final List<int?> scores = List.filled(widget.players.length, null);
@@ -51,7 +59,7 @@ class _TurnsPlayState extends State<TurnsPlay> {
 
   void _done(int score) {
     if (!mounted || step != _Step.playing) return;
-    HapticFeedback.mediumImpact().ignore();
+    haptic(HapticWeight.medium);
     setState(() {
       scores[index] = score;
       step = _Step.scored;
@@ -68,31 +76,38 @@ class _TurnsPlayState extends State<TurnsPlay> {
   Widget build(BuildContext context) {
     if (index >= widget.players.length) return const SizedBox.shrink();
     final p = widget.players[index];
-    return switch (step) {
-      _Step.playing => KeyedSubtree(key: ValueKey('turn$index'), child: widget.spec.play(p, widget.durationMs, _done)),
-      _Step.ready => _Card(
-          emoji: '📲',
-          title: index == 0 ? '${p.whose} TURN FIRST' : 'PASS THE PHONE TO',
-          name: p.name,
-          color: p.color,
-          line: '${_time(widget.durationMs)} on the whole screen. Everyone else, just watch! 👀',
-          button: 'START',
-          onTap: () => setState(() => step = _Step.playing),
-          scores: scores,
-          players: widget.players,
-        ),
-      _Step.scored => _Card(
-          emoji: '⭐',
-          title: '${p.whose} SCORE',
-          name: '${scores[index]}',
-          color: p.color,
-          line: _nextLine(),
-          button: _hasNextPerson() ? 'NEXT PLAYER' : 'SEE RESULTS',
-          onTap: _next,
-          scores: scores,
-          players: widget.players,
-        ),
-    };
+    return AnimatedSwitcher(
+      duration: Motion.of(context, Motion.normal),
+      child: switch (step) {
+        _Step.playing => _TurnLength(ms: widget.durationMs, child: KeyedSubtree(key: ValueKey('turn$index'), child: widget.spec.play(p, widget.durationMs, _done))),
+        // The hand-off card: only who's next and the scores so far, nothing from the last turn's screen.
+        _Step.ready => _Card(
+            key: ValueKey('ready$index'),
+            player: p,
+            title: index == 0 ? '${p.whose} TURN FIRST' : 'PASS THE PHONE TO',
+            big: p.name,
+            line: '${_time(widget.durationMs)} on the whole screen. Everyone else, just watch! 👀',
+            button: 'START',
+            onTap: () => setState(() => step = _Step.playing),
+            scores: scores,
+            players: widget.players,
+            current: index,
+          ),
+        _Step.scored => _Card(
+            key: ValueKey('scored$index'),
+            player: p,
+            title: '${p.whose} SCORE',
+            big: '${scores[index]}',
+            line: _nextLine(),
+            button: _hasNextPerson() ? 'NEXT PLAYER' : 'SEE RESULTS',
+            onTap: _next,
+            scores: scores,
+            players: widget.players,
+            current: index,
+            scored: true,
+          ),
+      },
+    );
   }
 
   bool _hasNextPerson() => [for (var i = index + 1; i < widget.players.length; i++) i].any((i) => !widget.botSeats.contains(i));
@@ -111,85 +126,120 @@ class _TurnsPlayState extends State<TurnsPlay> {
 }
 
 class _Card extends StatelessWidget {
-  final String emoji, title, name, line, button;
-  final Color color;
+  final GpPlayer player;
+  final String title, big, line, button;
   final VoidCallback onTap;
   final List<int?> scores;
   final List<GpPlayer> players;
+  final int current;
+  final bool scored;
   const _Card({
-    required this.emoji,
+    super.key,
+    required this.player,
     required this.title,
-    required this.name,
-    required this.color,
+    required this.big,
     required this.line,
     required this.button,
     required this.onTap,
     required this.scores,
     required this.players,
+    required this.current,
+    this.scored = false,
   });
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(children: [
-          const Align(alignment: Alignment.centerLeft, child: PauseButton()),
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text(emoji, style: const TextStyle(fontSize: 60)),
-                  const SizedBox(height: 6),
-                  Text(title, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900, letterSpacing: 1.6)),
-                  const SizedBox(height: 4),
-                  FittedBox(child: Text(name.toUpperCase(), style: TextStyle(color: color, fontSize: 44, fontWeight: FontWeight.w900))),
-                  const SizedBox(height: 8),
-                  Text(line, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
-                  const SizedBox(height: 22),
-                  GpButton(button, icon: Icons.play_arrow_rounded, color: color, textColor: Colors.white, onPressed: onTap),
-                  const SizedBox(height: 22),
-                  // Scores so far.
-                  Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 8, children: [
-                    for (var i = 0; i < players.length; i++)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: scores[i] == null ? Colors.white10 : players[i].color,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: players[i].color, width: 2),
-                        ),
-                        child: Text('${players[i].name} · ${scores[i] ?? '—'}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    final c = player.color;
+    return Padding(
+      padding: const EdgeInsets.all(Space.m),
+      child: Column(children: [
+        const Align(alignment: Alignment.centerLeft, child: PauseButton()),
+        Expanded(
+          child: Center(
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: AppCard(
+                  tint: c,
+                  padding: const EdgeInsets.fromLTRB(Space.xl, Space.xl, Space.xl, Space.l),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Stack(clipBehavior: Clip.none, children: [
+                      PlayerAvatar(name: player.name, color: c, size: 96),
+                      Positioned(right: -14, bottom: -6, child: ExcludeSemantics(child: Text(scored ? '⭐' : '📲', style: const TextStyle(fontSize: 34)))),
+                    ]),
+                    const SizedBox(height: Space.l),
+                    Text(title, textAlign: TextAlign.center, style: t.styles.label),
+                    const SizedBox(height: Space.xs),
+                    Semantics(
+                      liveRegion: true,
+                      child: FittedBox(
+                        child: Text(big.toUpperCase(), style: (scored ? t.styles.scoreLarge : t.styles.display).copyWith(color: Color.lerp(c, Colors.white, 0.35), fontSize: scored ? 60 : 40)),
                       ),
+                    ),
+                    const SizedBox(height: Space.s),
+                    Text(line, textAlign: TextAlign.center, style: t.styles.body),
+                    const SizedBox(height: Space.xl),
+                    GpButton(button, icon: Icons.play_arrow_rounded, color: c, textColor: Colors.white, onPressed: onTap),
+                    const SizedBox(height: Space.xl),
+                    // Scores so far.
+                    Wrap(alignment: WrapAlignment.center, spacing: Space.s, runSpacing: Space.s, children: [
+                      for (var i = 0; i < players.length; i++)
+                        PlayerChip(
+                          name: players[i].name,
+                          color: players[i].color,
+                          score: scores[i],
+                          suffix: scores[i] == null ? '—' : null,
+                          active: i == current,
+                        ),
+                    ]),
                   ]),
-                ]),
+                ),
               ),
             ),
           ),
-        ]),
-      );
+        ),
+      ]),
+    );
+  }
 }
 
-/// Top bar for a player's full-screen turn: who's playing, score and time left.
+/// Top bar for a player's full-screen turn: who's playing, score and a timer ring.
 class TurnBar extends StatelessWidget {
   final GpPlayer player;
   final int score;
   final int secondsLeft;
   const TurnBar({super.key, required this.player, required this.score, required this.secondsLeft});
+
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
-        child: Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(color: player.color, borderRadius: BorderRadius.circular(12)),
-            child: Text(player.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    final total = (_TurnLength.of(context) ?? 60000) / 1000;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Space.xs, Space.xs, Space.s, Space.xs),
+      child: Row(children: [
+        const PauseButton(),
+        const SizedBox(width: Space.xs),
+        Flexible(child: PlayerChip(name: player.name, color: player.color, active: true)),
+        const Spacer(),
+        Semantics(
+          label: 'Score $score',
+          excludeSemantics: true,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: Space.m, vertical: Space.xs),
+            decoration: BoxDecoration(color: t.glassStrong, borderRadius: Radii.rMd),
+            child: Text('$score', style: t.styles.score),
           ),
-          const Spacer(),
-          ScorePill('$score', color: player.color),
-          const SizedBox(width: 8),
-          Text('⏱ ${secondsLeft ~/ 60}:${(secondsLeft % 60).toString().padLeft(2, '0')}',
-              style: TextStyle(color: secondsLeft <= 10 ? GpColors.no : Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
-        ]),
-      );
+        ),
+        const SizedBox(width: Space.s),
+        TimerRing(
+          fraction: secondsLeft / total,
+          label: secondsLeft >= 60 ? '${secondsLeft ~/ 60}:${(secondsLeft % 60).toString().padLeft(2, '0')}' : '$secondsLeft',
+          urgent: secondsLeft <= 10,
+          color: player.color,
+          size: 46,
+        ),
+      ]),
+    );
+  }
 }
