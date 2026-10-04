@@ -20,6 +20,36 @@ class GameRecord {
 /// wins and best score per game. Solo games also keep their older `best_<id>` value.
 class Records {
   static const _key = 'records';
+  static const _recentKey = 'recent_games';
+  static const _favKey = 'favourite_games';
+
+  /// Games played most recently on this phone, newest first.
+  static Future<List<String>> recent() async {
+    try {
+      return (await SharedPreferences.getInstance()).getStringList(_recentKey) ?? const [];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Games starred in the games list.
+  static Future<Set<String>> favourites() async {
+    try {
+      return {...(await SharedPreferences.getInstance()).getStringList(_favKey) ?? const <String>[]};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// Stars or unstars a game; returns the new set.
+  static Future<Set<String>> toggleFavourite(String id) async {
+    final favs = await favourites();
+    if (!favs.remove(id)) favs.add(id);
+    try {
+      await (await SharedPreferences.getInstance()).setStringList(_favKey, favs.toList());
+    } catch (_) {}
+    return favs;
+  }
 
   static Future<Map<String, GameRecord>> all() async {
     try {
@@ -50,6 +80,9 @@ class Records {
       final next = GameRecord(played: r.played + 1, wins: r.wins + (won ? 1 : 0), best: score > r.best ? score : r.best);
       map[gameId] = next.toJson();
       await p.setString(_key, jsonEncode(map));
+      // Recently played, newest first.
+      final recent = (p.getStringList(_recentKey) ?? [])..remove(gameId);
+      await p.setStringList(_recentKey, [gameId, ...recent].take(10).toList());
       return next;
     } catch (_) {
       return null;
@@ -60,6 +93,8 @@ class Records {
   static Future<void> clear() async {
     final p = await SharedPreferences.getInstance();
     await p.remove(_key);
+    await p.remove(_recentKey);
+    await p.remove(_favKey);
     for (final k in p.getKeys().where((k) => k.startsWith('best_')).toList()) {
       await p.remove(k);
     }

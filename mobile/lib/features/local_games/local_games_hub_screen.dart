@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../core/records/records.dart';
+import '../../games/game_catalog.dart';
 import '../guess_person/screens/guess_person_menu_screen.dart';
 import '../guess_person/widgets/gp_theme.dart';
 import '../raja_mantri/rmcs_screen.dart';
@@ -62,63 +65,168 @@ List<LocalGameInfo> get allLocalGames => [...localGames, for (final g in localGa
 /// Everything in the hub: the shell games plus Guess the Person and Raja Mantri.
 int get totalGameCount => localGames.length + 2;
 
+
+/// A game in the list: one of the shell games, or Guess the Person / Raja Mantri.
+class _Entry {
+  final String id, emoji, title, tagline, players;
+  final Color color;
+  final GameCategory category;
+  final bool solo;
+  final WidgetBuilder open;
+  const _Entry({
+    required this.id,
+    required this.emoji,
+    required this.title,
+    required this.tagline,
+    required this.players,
+    required this.color,
+    required this.category,
+    required this.open,
+    this.solo = false,
+  });
+}
+
+List<_Entry> _entries() {
+  GameCategory categoryOf(String id) => gameCatalog.where((g) => g.id == id).firstOrNull?.category ?? GameCategory.party;
+  return [
+    _Entry(
+      id: 'guess_person',
+      emoji: '🕵️',
+      title: 'Guess the Person',
+      tagline: 'Ask questions, find the secret person',
+      players: '2–6',
+      color: const Color(0xFFFFC93C),
+      category: GameCategory.party,
+      open: (_) => const GuessPersonMenuScreen(),
+    ),
+    _Entry(
+      id: 'raja_mantri',
+      emoji: '👑',
+      title: 'Raja Mantri Chor Sipahi',
+      tagline: 'Can the Mantri catch the Chor?',
+      players: '4',
+      color: const Color(0xFF8A1C3A),
+      category: GameCategory.cards,
+      open: (_) => const RmcsMenuScreen(),
+    ),
+    for (final g in localGames)
+      _Entry(
+        id: g.id,
+        emoji: g.emoji,
+        title: g.title,
+        tagline: g.tagline,
+        players: g.solo ? 'SOLO' : (g.maxPlayers > g.minPlayers ? '${g.minPlayers}–${g.maxPlayers}' : '${g.maxPlayers}'),
+        color: g.color,
+        category: categoryOf(g.id),
+        solo: g.solo,
+        open: (_) => LocalGameShell(game: g),
+      ),
+  ];
+}
+
+enum _Filter { all, favourites, cards, board, action, party, solo }
+
+const _filterLabels = {
+  _Filter.all: '✨ All',
+  _Filter.favourites: '⭐ Favourites',
+  _Filter.cards: '🃏 Cards',
+  _Filter.board: '🎲 Board',
+  _Filter.action: '⚡ Action',
+  _Filter.party: '🎉 Party',
+  _Filter.solo: '🧍 Solo',
+};
+
 /// Every game that runs on one device, no server needed: together, or solo.
-class LocalGamesHubScreen extends StatelessWidget {
+/// Search, categories, favourites (long-press a game) and recently played.
+class LocalGamesHubScreen extends StatefulWidget {
   const LocalGamesHubScreen({super.key});
+  @override
+  State<LocalGamesHubScreen> createState() => _LocalGamesHubScreenState();
+}
+
+class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
+  final _entriesList = _entries();
+  final _search = TextEditingController();
+  var filter = _Filter.all;
+  Set<String> favourites = {};
+  List<String> recent = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _search.addListener(() => setState(() {}));
+    _load();
+  }
+
+  Future<void> _load() async {
+    final f = await Records.favourites(), r = await Records.recent();
+    if (mounted) {
+      setState(() {
+        favourites = f;
+        recent = r;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  Future<void> _open(_Entry e) async {
+    await Navigator.push(context, MaterialPageRoute(builder: e.open));
+    _load(); // a game may have just been played
+  }
+
+  Future<void> _toggleFavourite(_Entry e) async {
+    HapticFeedback.mediumImpact().ignore();
+    final f = await Records.toggleFavourite(e.id);
+    if (!mounted) return;
+    setState(() => favourites = f);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(f.contains(e.id) ? '⭐ ${e.title} added to favourites' : '${e.title} removed from favourites'), duration: const Duration(milliseconds: 1400)));
+  }
+
+  bool _matches(_Entry e) {
+    final q = _search.text.trim().toLowerCase();
+    if (q.isNotEmpty && !e.title.toLowerCase().contains(q) && !e.tagline.toLowerCase().contains(q)) return false;
+    return switch (filter) {
+      _Filter.all => true,
+      _Filter.favourites => favourites.contains(e.id),
+      _Filter.solo => e.solo,
+      _Filter.cards => !e.solo && e.category == GameCategory.cards,
+      _Filter.board => !e.solo && e.category == GameCategory.board,
+      _Filter.action => !e.solo && e.category == GameCategory.action,
+      _Filter.party => !e.solo && e.category == GameCategory.party,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
-    final tiles = <Widget>[
-      _Tile(
-        emoji: '🕵️',
-        title: 'Guess the Person',
-        tagline: 'Ask questions, find the secret person',
-        players: '2–6',
-        color: const Color(0xFFFFC93C),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GuessPersonMenuScreen())),
-      ),
-      _Tile(
-        emoji: '👑',
-        title: 'Raja Mantri Chor Sipahi',
-        tagline: 'Can the Mantri catch the Chor?',
-        players: '4',
-        color: const Color(0xFF8A1C3A),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RmcsMenuScreen())),
-      ),
-      for (final g in localGames.where((g) => !g.solo))
-        _Tile(
-          emoji: g.emoji,
-          title: g.title,
-          tagline: g.tagline,
-          players: g.maxPlayers > g.minPlayers ? '${g.minPlayers}–${g.maxPlayers}' : '${g.maxPlayers}',
-          color: g.color,
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LocalGameShell(game: g))),
-        ),
-    ];
-    final solo = [
-      for (final g in localGames.where((g) => g.solo))
-        _Tile(
-          emoji: g.emoji,
-          title: g.title,
-          tagline: g.tagline,
-          players: 'SOLO',
-          color: g.color,
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LocalGameShell(game: g))),
-        ),
-    ];
+    final shown = _entriesList.where(_matches).toList();
+    final together = shown.where((e) => !e.solo).toList(), solo = shown.where((e) => e.solo).toList();
+    final browsing = filter == _Filter.all && _search.text.trim().isEmpty;
+    final recentEntries = [for (final id in recent) ..._entriesList.where((e) => e.id == id)];
+
     Widget header(String text) => SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
-            child: Text(text, style: const TextStyle(color: GpColors.accent, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.5)),
+            padding: const EdgeInsets.fromLTRB(18, 6, 18, 10),
+            child: Text(text, style: const TextStyle(color: GpColors.accent, fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1.4)),
           ),
         );
-    Widget grid(List<Widget> items) => SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+    Widget grid(List<_Entry> items) => SliverPadding(
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 18),
           sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 240, mainAxisSpacing: 14, crossAxisSpacing: 14, childAspectRatio: 0.82),
-            delegate: SliverChildListDelegate(items),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 150, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.78),
+            delegate: SliverChildBuilderDelegate(
+              (_, i) => _Tile(entry: items[i], favourite: favourites.contains(items[i].id), onTap: () => _open(items[i]), onLongPress: () => _toggleFavourite(items[i])),
+              childCount: items.length,
+            ),
           ),
         );
+
     return Scaffold(
       body: GpBackground(
         child: SafeArea(
@@ -133,23 +241,93 @@ class LocalGamesHubScreen extends StatelessWidget {
                     icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
                     constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                   ),
+                  const Expanded(
+                    child: Text('PARTY GAMES', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: 0.5, shadows: [Shadow(color: Color(0xFF6C5CE7), offset: Offset(0, 3))])),
+                  ),
+                  Text('$totalGameCount GAMES', style: const TextStyle(color: GpColors.accent, fontWeight: FontWeight.w900, fontSize: 12.5, letterSpacing: 1)),
                 ]),
               ),
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(children: [
-                  const Text('PARTY GAMES', style: TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0xFF6C5CE7), offset: Offset(0, 4))])),
-                  Text('$totalGameCount GAMES · ONE DEVICE · NO INTERNET',
-                      textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-                ]),
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+                child: TextField(
+                  controller: _search,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                  decoration: InputDecoration(
+                    hintText: 'Search games…',
+                    prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
+                    suffixIcon: _search.text.isEmpty
+                        ? null
+                        : IconButton(tooltip: 'Clear', onPressed: _search.clear, icon: const Icon(Icons.close_rounded, color: Colors.white54)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
               ),
             ),
-            header('👥 PLAY TOGETHER'),
-            grid(tiles),
-            header('🧍 SOLO GAMES'),
-            grid(solo),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  children: [
+                    for (final f in _Filter.values)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(_filterLabels[f]!),
+                          selected: filter == f,
+                          onSelected: (_) => setState(() => filter = f),
+                          showCheckmark: false,
+                          labelStyle: TextStyle(color: filter == f ? GpColors.ink : Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
+                          selectedColor: GpColors.accent,
+                          backgroundColor: Colors.white.withValues(alpha: 0.08),
+                          side: BorderSide(color: filter == f ? GpColors.accent : Colors.white24),
+                          shape: const StadiumBorder(),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            if (browsing && recentEntries.isNotEmpty) ...[
+              header('▶ RECENTLY PLAYED'),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 92,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    itemCount: recentEntries.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (_, i) => _RecentTile(entry: recentEntries[i], onTap: () => _open(recentEntries[i])),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 14)),
+            ],
+            if (shown.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Text(
+                    filter == _Filter.favourites && _search.text.isEmpty ? '⭐ No favourites yet.\nLong-press any game to add it here.' : 'No games match "${_search.text.trim()}".',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700, fontSize: 15, height: 1.4),
+                  ),
+                ),
+              ),
+            if (together.isNotEmpty) ...[header('👥 PLAY TOGETHER'), grid(together)],
+            if (solo.isNotEmpty) ...[header('🧍 SOLO GAMES'), grid(solo)],
+            if (browsing)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  child: Text('Tip: long-press a game to ⭐ it', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontSize: 12.5)),
+                ),
+              ),
           ]),
         ),
       ),
@@ -157,54 +335,87 @@ class LocalGamesHubScreen extends StatelessWidget {
   }
 }
 
+/// A compact game tile: emoji, name and player count; ⭐ when it's a favourite.
 class _Tile extends StatelessWidget {
-  final String emoji;
-  final String title;
-  final String tagline;
-  final String players;
-  final Color color;
-  final VoidCallback onTap;
-  const _Tile({required this.emoji, required this.title, required this.tagline, required this.players, required this.color, required this.onTap});
+  final _Entry entry;
+  final bool favourite;
+  final VoidCallback onTap, onLongPress;
+  const _Tile({required this.entry, required this.favourite, required this.onTap, required this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
+    final color = entry.color;
     return Semantics(
       button: true,
-      label: title,
+      label: entry.title,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           onTap: onTap,
+          onLongPress: onLongPress,
           child: Ink(
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [color, Color.lerp(color, Colors.black, 0.25)!], begin: Alignment.topLeft, end: Alignment.bottomRight),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [BoxShadow(color: Color.lerp(color, Colors.black, 0.5)!, offset: const Offset(0, 5))],
+              gradient: LinearGradient(colors: [Color.lerp(color, Colors.white, 0.08)!, Color.lerp(color, Colors.black, 0.3)!], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+              boxShadow: [BoxShadow(color: Color.lerp(color, Colors.black, 0.55)!, offset: const Offset(0, 4))],
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  const Spacer(),
+            child: Stack(children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(9, 8, 9, 9),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(10)),
-                    child: Text(players == 'SOLO' ? '🧍 SOLO' : '👥 $players', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(8)),
+                    child: Text(entry.players == 'SOLO' ? '🧍 SOLO' : '👥 ${entry.players}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10.5)),
                   ),
+                  Expanded(child: Center(child: FittedBox(child: Text(entry.emoji, style: const TextStyle(fontSize: 46))))),
+                  Text(entry.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13.5, height: 1.1, shadows: [Shadow(color: Colors.black38, offset: Offset(0, 1))])),
                 ]),
-                Expanded(child: Center(child: FittedBox(child: Text(emoji, style: const TextStyle(fontSize: 64))))),
-                Text(title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, height: 1.1, shadows: [Shadow(color: Colors.black26, offset: Offset(0, 1))])),
-                const SizedBox(height: 4),
-                Text(tagline, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-              ]),
-            ),
+              ),
+              if (favourite) const Positioned(top: 6, right: 7, child: Text('⭐', style: TextStyle(fontSize: 15))),
+            ]),
           ),
         ),
       ),
     );
   }
+}
+
+class _RecentTile extends StatelessWidget {
+  final _Entry entry;
+  final VoidCallback onTap;
+  const _RecentTile({required this.entry, required this.onTap});
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        label: 'Play ${entry.title} again',
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 150,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: entry.color, width: 2),
+            ),
+            child: Row(children: [
+              Text(entry.emoji, style: const TextStyle(fontSize: 30)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(entry.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12.5, height: 1.1)),
+                  const SizedBox(height: 3),
+                  Text('▶ PLAY', style: TextStyle(color: Color.lerp(entry.color, Colors.white, 0.4), fontWeight: FontWeight.w900, fontSize: 11)),
+                ]),
+              ),
+            ]),
+          ),
+        ),
+      );
 }

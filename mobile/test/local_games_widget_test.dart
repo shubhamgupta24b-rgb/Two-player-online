@@ -78,10 +78,10 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: LocalGamesHubScreen()));
     expect(find.text('👥 2–6').evaluate(), isNotEmpty, reason: 'player counts on the tiles');
     for (final t in ['Guess the Person', ...localGames.map((g) => g.title)]) {
-      await tester.scrollUntilVisible(find.text(t), 100);
+      await tester.scrollUntilVisible(find.text(t), 100, scrollable: find.byType(Scrollable).first);
       expect(find.text(t), findsOneWidget);
     }
-    await tester.scrollUntilVisible(find.text('🧍 SOLO GAMES'), -100); // the list is long: scroll back up to it
+    await tester.scrollUntilVisible(find.text('🧍 SOLO GAMES'), -100, scrollable: find.byType(Scrollable).first); // the list is long: scroll back up to it
     expect(find.text('🧍 SOLO GAMES'), findsOneWidget);
     expect(find.text('🧍 SOLO').evaluate(), isNotEmpty);
   });

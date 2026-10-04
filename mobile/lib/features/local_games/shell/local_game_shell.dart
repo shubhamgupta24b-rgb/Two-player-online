@@ -603,6 +603,47 @@ class _CountdownState extends State<_Countdown> with SingleTickerProviderStateMi
   }
 }
 
+/// The end-of-game card: a soft panel in the game's colour with a glowing badge on top.
+class _ResultCard extends StatelessWidget {
+  final Color color;
+  final String badge;
+  final List<Widget> children;
+  const _ResultCard({required this.color, required this.badge, required this.children});
+
+  @override
+  Widget build(BuildContext context) => Stack(clipBehavior: Clip.none, alignment: Alignment.topCenter, children: [
+        Container(
+          margin: const EdgeInsets.only(top: 48),
+          padding: const EdgeInsets.fromLTRB(18, 62, 18, 20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [color.withValues(alpha: 0.32), Colors.white.withValues(alpha: 0.05)]),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: color.withValues(alpha: 0.6), width: 2),
+            boxShadow: [BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 30, offset: const Offset(0, 12))],
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+        ),
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.4, end: 1),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.elasticOut,
+          builder: (_, s, child) => Transform.scale(scale: s, child: child),
+          child: Container(
+            width: 100,
+            height: 100,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(colors: [Color.lerp(color, Colors.white, 0.25)!, color, Color.lerp(color, Colors.black, 0.3)!], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              border: Border.all(color: Colors.white, width: 4),
+              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.7), blurRadius: 26)],
+            ),
+            child: Text(badge, style: const TextStyle(fontSize: 50)),
+          ),
+        ),
+      ]);
+}
+
 class _SoloResult extends StatelessWidget {
   final LocalGameInfo game;
   final int score;
@@ -619,8 +660,7 @@ class _SoloResult extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
-              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Text(newBest ? '🏆' : game.emoji, textAlign: TextAlign.center, style: const TextStyle(fontSize: 72)),
+              child: _ResultCard(color: game.color, badge: newBest ? '🏆' : game.emoji, children: [
                 Text(newBest ? 'NEW BEST!' : 'GAME OVER',
                     textAlign: TextAlign.center, style: TextStyle(color: newBest ? GpColors.accent : Colors.white, fontSize: 34, fontWeight: FontWeight.w900)),
                 Text('${game.emoji} ${game.title}', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontSize: 15, fontWeight: FontWeight.w700)),
@@ -667,8 +707,7 @@ class _Result extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text(draw ? '🤝' : '🏆', textAlign: TextAlign.center, style: const TextStyle(fontSize: 72)),
+            child: _ResultCard(color: draw ? game.color : leaders.first.color, badge: draw ? '🤝' : '🏆', children: [
               Text(title, textAlign: TextAlign.center, style: TextStyle(color: draw ? Colors.white : leaders.first.color, fontSize: 34, fontWeight: FontWeight.w900)),
               const SizedBox(height: 4),
               Text('${game.emoji} ${game.title}', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontSize: 15, fontWeight: FontWeight.w700)),

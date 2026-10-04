@@ -95,7 +95,7 @@ void main() {
   testWidgets('hub', (tester) async {
     final (key, _, _) = await show(tester, const LocalGamesHubScreen());
     await snap(tester, key, 'app_4hub_shot');
-    await tester.scrollUntilVisible(find.text('🧍 SOLO GAMES'), 300);
+    await tester.scrollUntilVisible(find.text('🧍 SOLO GAMES'), 300, scrollable: find.byType(Scrollable).first);
     await tester.pump();
     await snap(tester, key, 'app_5hubsolo_shot');
     await done(tester);

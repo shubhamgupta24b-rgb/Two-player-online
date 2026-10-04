@@ -66,7 +66,10 @@ final ticTacToeInfo = LocalGameInfo(
   splitScreen: false,
   bot: botFor<TicTacToeLogic>((g, b, now) {
     if (g.finished || g.turn != b.seat) return;
-    final empty = [for (var i = 0; i < 9; i++) if (g.cells[i] < 0) i];
+    final empty = [
+      for (var i = 0; i < 9; i++)
+        if (g.cells[i] < 0) i
+    ];
     if (!b.thinkFirst(empty.length, now, 500, 1100)) return;
     int? finishing(int who) {
       for (final l in TicTacToeLogic.lines) {
@@ -78,7 +81,9 @@ final ticTacToeInfo = LocalGameInfo(
     }
 
     // Win, else block, else centre, else a corner, else anything. Sometimes it slips up.
-    final int move = b.chance(0.12) ? b.pick(empty) : finishing(b.seat) ?? finishing(1 - b.seat) ?? (g.cells[4] < 0 ? 4 : null) ?? [0, 2, 6, 8].where(empty.contains).firstOrNull ?? b.pick<int>(empty);
+    final int move = b.chance(0.12)
+        ? b.pick(empty)
+        : finishing(b.seat) ?? finishing(1 - b.seat) ?? (g.cells[4] < 0 ? 4 : null) ?? [0, 2, 6, 8].where(empty.contains).firstOrNull ?? b.pick<int>(empty);
     g.play(move);
   }),
   online: RelaySpec<TicTacToeLogic>(
@@ -182,8 +187,7 @@ class _Who extends StatelessWidget {
         ),
         child: Row(children: [
           Expanded(
-            child: Text(player.name.toUpperCase(),
-                overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
+            child: Text(player.name.toUpperCase(), overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
           ),
           Text(mark, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22)),
         ]),
@@ -204,27 +208,40 @@ class _Cell extends StatelessWidget {
       button: owner < 0,
       label: label,
       child: Material(
-        color: highlight ? GpColors.accent.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
           onTap: owner < 0 ? onTap : null,
-          child: owner < 0
-              ? const SizedBox.expand()
-              : TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.3, end: 1),
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutBack,
-                  builder: (_, s, child) => Transform.scale(scale: s, child: child),
-                  child: Center(
-                    child: FittedBox(
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Text(owner == 0 ? 'X' : 'O', style: TextStyle(color: players[owner].color, fontSize: 80, fontWeight: FontWeight.w900, height: 1)),
+          // Clear squares: a light tile with an edge, so the empty ones read well on the dark board.
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: highlight
+                    ? [GpColors.accent.withValues(alpha: 0.55), GpColors.accent.withValues(alpha: 0.3)]
+                    : [Colors.white.withValues(alpha: 0.2), Colors.white.withValues(alpha: 0.09)],
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: highlight ? GpColors.accent : Colors.white.withValues(alpha: 0.28), width: 2),
+            ),
+            child: owner < 0
+                ? const SizedBox.expand()
+                : TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.3, end: 1),
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutBack,
+                    builder: (_, s, child) => Transform.scale(scale: s, child: child),
+                    child: Center(
+                      child: FittedBox(
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Text(owner == 0 ? 'X' : 'O', style: TextStyle(color: players[owner].color, fontSize: 80, fontWeight: FontWeight.w900, height: 1)),
+                        ),
                       ),
                     ),
                   ),
-                ),
+          ),
         ),
       ),
     );
