@@ -9,7 +9,8 @@ const { privacyHtml } = require('./pages/privacy');
 
 function createServer({ graceMs = config.graceMs } = {}) {
   const app = express();
-  app.get('/health', (_req, res) => res.json({ ok: true }));
+  // `app` lets phones on the same Wi-Fi recognise this server when they search for it.
+  app.get('/health', (_req, res) => res.json({ ok: true, app: 'party-games' }));
   app.get(['/privacy', '/privacy-policy'], (_req, res) => res.type('html').send(privacyHtml()));
   const httpServer = http.createServer(app);
   const io = new Server(httpServer, { cors: { origin: '*' } });

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config.dart';
 import '../../core/auth/authentication_manager.dart';
+import '../../core/network/lan_discovery.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/room/room_manager.dart';
 import '../../core/ui/app_ui.dart';
@@ -55,27 +56,44 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _open(Widget page) => Navigator.push(context, MaterialPageRoute(builder: (_) => page));
 
-  /// Lets players point the app at their PC on the same Wi-Fi, or at a hosted server.
-  Future<void> _editServer() async {
-    final url = await showDialog<String>(context: context, builder: (_) => const _ServerDialog());
-    if (url == null || !mounted) return;
-    final normalised = AppConfig.normalise(url);
+  /// (Re)connects to the server for the current mode and says how it went.
+  Future<void> _connect({String? done}) async {
     final messenger = ScaffoldMessenger.of(context);
-    if (normalised == null) {
-      messenger.showSnackBar(const SnackBar(content: Text('That is not a valid server address.')));
-      return;
+    final token = context.read<AuthenticationManager>().token;
+    final wifi = AppConfig.mode == ServerMode.wifi;
+    try {
+      await _socket.connect(AppConfig.serverUrl, token);
+      messenger.showSnackBar(SnackBar(content: Text(done ?? 'Connected!')));
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(
+          content: Text(wifi
+              ? 'The laptop on this Wi-Fi is not answering. Is the game server still running?'
+              : 'Not connected yet. The server may be waking up (up to a minute): it keeps trying by itself.')));
     }
-    await AppConfig.save(normalised);
+  }
+
+  Future<void> _useOnline() async {
+    if (AppConfig.mode == ServerMode.online && _socket.connected.value) return;
+    await AppConfig.useOnline();
     if (!mounted) return;
     setState(() {});
-    final token = context.read<AuthenticationManager>().token;
-    messenger.showSnackBar(SnackBar(content: Text('Connecting to $normalised…')));
-    try {
-      await _socket.connect(normalised, token);
-      messenger.showSnackBar(const SnackBar(content: Text('Connected!')));
-    } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text('No answer from $normalised yet. Still trying: a sleeping server can take a minute to wake up.')));
-    }
+    await _connect(done: 'Online: play with friends anywhere');
+  }
+
+  /// Same Wi-Fi: look for a laptop running the game server on this Wi-Fi or hotspot.
+  Future<void> _useWifi() async {
+    final url = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.night,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
+      builder: (_) => const _WifiSearchSheet(),
+    );
+    if (url == null || !mounted) return;
+    await AppConfig.useWifi(url);
+    if (!mounted) return;
+    setState(() {});
+    await _connect(done: 'Connected on this Wi-Fi');
   }
 
   @override
@@ -92,6 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 18),
                 _hero(),
                 SectionTitle('PLAY ONLINE', trailing: _status(compact: true)),
+                _modeSwitch(),
+                const SizedBox(height: 12),
                 _online(),
                 SectionTitle('FEATURED GAMES',
                     trailing: TextButton(
@@ -105,8 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(width: 12),
                   Expanded(child: _SoonTile(icon: Icons.emoji_events_rounded, title: 'PROFILE', subtitle: 'Stats & trophies')),
                 ]),
-                const SizedBox(height: 22),
-                _serverRow(),
               ]),
             ),
           ),
@@ -143,10 +161,10 @@ class _HomeScreenState extends State<HomeScreen> {
         valueListenable: _socket.connected,
         builder: (context, online, _) => Semantics(
           button: true,
-          label: online ? 'Online. Change server' : 'Offline. Change server',
+          label: online ? 'Connected' : 'Not connected. Tap to try again',
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
-            onTap: _editServer,
+            onTap: online ? null : _connect,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
@@ -258,24 +276,61 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _serverRow() => Center(
-        child: TextButton.icon(
-          onPressed: _editServer,
-          icon: const Icon(Icons.dns_rounded, size: 18, color: AppColors.muted),
-          label: Text('Server: ${AppConfig.serverUrl}', overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.muted)),
-        ),
-      );
+  /// Online (internet server) or Same Wi-Fi (a laptop on this Wi-Fi/hotspot).
+  Widget _modeSwitch() {
+    final wifi = AppConfig.mode == ServerMode.wifi;
+    Widget option(String emoji, String label, String hint, bool selected, VoidCallback onTap) => Expanded(
+          child: Semantics(
+            button: true,
+            selected: selected,
+            label: label,
+            child: GestureDetector(
+              onTap: onTap,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.gold : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(children: [
+                  Text('$emoji $label', style: TextStyle(color: selected ? AppColors.night : Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
+                  Text(hint, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: selected ? AppColors.night.withValues(alpha: 0.75) : AppColors.muted, fontWeight: FontWeight.w700, fontSize: 11)),
+                ]),
+              ),
+            ),
+          ),
+        );
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: AppColors.glass, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.stroke)),
+      child: Row(children: [
+        option('🌐', 'ONLINE', 'Friends anywhere', !wifi, _useOnline),
+        const SizedBox(width: 4),
+        option('📶', 'SAME WI-FI', wifi ? 'Laptop found ✓ · tap to search again' : 'Hotspot, no internet', wifi, _useWifi),
+      ]),
+    );
+  }
 }
 
-/// Owns its text controller so it lives until the dialog has finished closing.
-class _ServerDialog extends StatefulWidget {
-  const _ServerDialog();
+/// Searches this Wi-Fi/hotspot for a laptop running the game server; pops its URL when found.
+/// If none answers, explains how to start one and offers typing the address.
+class _WifiSearchSheet extends StatefulWidget {
+  const _WifiSearchSheet();
   @override
-  State<_ServerDialog> createState() => _ServerDialogState();
+  State<_WifiSearchSheet> createState() => _WifiSearchSheetState();
 }
 
-class _ServerDialogState extends State<_ServerDialog> {
-  final _ctrl = TextEditingController(text: AppConfig.serverUrl);
+class _WifiSearchSheetState extends State<_WifiSearchSheet> {
+  double progress = 0;
+  bool searching = true;
+  final _ctrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _search();
+  }
 
   @override
   void dispose() {
@@ -283,21 +338,72 @@ class _ServerDialogState extends State<_ServerDialog> {
     super.dispose();
   }
 
+  Future<void> _search() async {
+    setState(() {
+      searching = true;
+      progress = 0;
+    });
+    final url = await LanDiscovery.find(onProgress: (p) {
+      if (mounted) setState(() => progress = p);
+    });
+    if (!mounted) return;
+    if (url != null) {
+      Navigator.pop(context, url);
+    } else {
+      setState(() => searching = false);
+    }
+  }
+
+  void _typed() {
+    final url = AppConfig.normalise(_ctrl.text.contains(':') || _ctrl.text.startsWith('http') ? _ctrl.text : '${_ctrl.text}:${LanDiscovery.port}');
+    if (url != null) Navigator.pop(context, url);
+  }
+
   @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Game server'),
-        content: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Same Wi-Fi: your PC\'s address, e.g. 192.168.1.20:3000\nOnline: your hosted URL, e.g. https://my-game.onrender.com'),
-            const SizedBox(height: 12),
-            TextField(controller: _ctrl, autofocus: true, keyboardType: TextInputType.url, decoration: const InputDecoration(border: OutlineInputBorder())),
-          ]),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, AppConfig.defaultServerUrl), child: const Text('RESET')),
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
-          FilledButton(onPressed: () => Navigator.pop(context, _ctrl.text), child: const Text('SAVE')),
-        ],
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.fromLTRB(22, 18, 22, 22 + MediaQuery.viewInsetsOf(context).bottom),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          const Text('📶 SAME WI-FI', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: 1)),
+          const SizedBox(height: 14),
+          if (searching) ...[
+            const Text('Looking for the game server on this Wi-Fi or hotspot…', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(value: progress == 0 ? null : progress, minHeight: 8, color: AppColors.gold, backgroundColor: AppColors.glass),
+            ),
+          ] else ...[
+            const Text('No game server found on this Wi-Fi.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+            const SizedBox(height: 10),
+            const Text(
+              '1. Connect a laptop to the same Wi-Fi or hotspot.\n'
+              '2. On it, open the server folder and run: npm start\n'
+              '3. Tap SEARCH AGAIN.\n\n'
+              'Have internet? Just use 🌐 ONLINE instead: no laptop needed.',
+              style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600, height: 1.4),
+            ),
+            const SizedBox(height: 14),
+            ElevatedButton.icon(
+              onPressed: _search,
+              icon: const Icon(Icons.wifi_find_rounded),
+              label: const Text('SEARCH AGAIN', style: TextStyle(fontWeight: FontWeight.w900)),
+            ),
+            const SizedBox(height: 14),
+            Row(children: [
+              Expanded(
+                child: TextField(
+                  controller: _ctrl,
+                  keyboardType: TextInputType.url,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(hintText: 'or type the laptop address, e.g. 192.168.43.20'),
+                  onSubmitted: (_) => _typed(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton(onPressed: _typed, child: const Text('USE', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900))),
+            ]),
+          ],
+        ]),
       );
 }
 

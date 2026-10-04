@@ -156,12 +156,11 @@ void main() {
       await openAndBack(find.text('SEE ALL'), LocalGamesHubScreen);
       await tester.scrollUntilVisible(find.text('QUICK PLAY'), 120, scrollable: find.byType(Scrollable).first);
       expect(find.text('PROFILE'), findsOneWidget);
-      await tester.scrollUntilVisible(find.textContaining('Server: '), 120, scrollable: find.byType(Scrollable).first);
-      await tester.tap(find.textContaining('Server: '));
-      await tester.pumpAndSettle();
-      expect(find.text('Game server'), findsOneWidget);
-      await tester.tap(find.text('CANCEL'));
-      await tester.pumpAndSettle();
+      // No server addresses on screen: just Online / Same Wi-Fi.
+      expect(find.textContaining('Server: '), findsNothing);
+      await tester.scrollUntilVisible(find.text('🌐 ONLINE'), -120, scrollable: find.byType(Scrollable).first);
+      expect(find.text('📶 SAME WI-FI'), findsOneWidget);
+      expect(find.text('Friends anywhere'), findsOneWidget);
     });
   }
 }
