@@ -127,7 +127,7 @@ void main() {
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 200));
     }
-    expect(find.textContaining('CPU 1 ·'), findsOneWidget);
+    expect(find.text('CPU 1'), findsOneWidget, reason: 'the computer has its own seat in the HUD');
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));
   });

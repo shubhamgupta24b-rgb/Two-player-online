@@ -92,3 +92,55 @@ class GameStatus extends StatelessWidget {
     );
   }
 }
+
+/// The bottom tray of the dice games: the last event, whose roll it is, and the dice.
+class DiceTray extends StatelessWidget {
+  final String message;
+  final GpPlayer player;
+  final String turnText;
+  final Widget dice;
+  const DiceTray({super.key, required this.message, required this.player, required this.turnText, required this.dice});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(Space.m, Space.s, Space.s, Space.s),
+      decoration: BoxDecoration(color: t.glass, borderRadius: Radii.rXl, border: Border.all(color: player.color.withValues(alpha: 0.6), width: 2)),
+      child: Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            if (message.isNotEmpty)
+              Semantics(
+                liveRegion: true,
+                child: Text(message, maxLines: 2, overflow: TextOverflow.ellipsis, style: t.styles.caption.copyWith(color: t.onBgMuted)),
+              ),
+            const SizedBox(height: Space.xs),
+            Align(alignment: Alignment.centerLeft, child: TurnBanner(text: turnText, color: player.color, compact: true)),
+          ]),
+        ),
+        const SizedBox(width: Space.s),
+        dice,
+      ]),
+    );
+  }
+}
+/// A raised rim around a game board (wood by default) so it sits on the table, not the screen.
+class BoardFrame extends StatelessWidget {
+  final Widget child;
+  final List<Color> colors;
+  final double rim;
+  const BoardFrame({super.key, required this.child, this.colors = const [Color(0xFF7A4A28), Color(0xFF452814)], this.rim = 7});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: EdgeInsets.all(rim),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: colors, begin: Alignment.topLeft, end: Alignment.bottomRight),
+          borderRadius: Radii.rLg,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          boxShadow: const [BoxShadow(color: Colors.black54, offset: Offset(0, 8), blurRadius: 8)],
+        ),
+        child: ClipRRect(borderRadius: Radii.rSm, child: child),
+      );
+}

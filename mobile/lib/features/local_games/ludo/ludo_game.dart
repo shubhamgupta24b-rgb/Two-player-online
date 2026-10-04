@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
 import '../shell/ticking_play.dart';
 import '../widgets/dice.dart';
 import 'ludo_logic.dart';
@@ -115,55 +115,40 @@ class _LudoTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final current = players[g.turn];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 6, 10, 12),
+      padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
       child: Column(children: [
-        Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Wrap(spacing: 6, runSpacing: 6, children: [
-              for (var i = 0; i < players.length; i++)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: i == g.turn ? players[i].color : Colors.white10, borderRadius: BorderRadius.circular(12), border: Border.all(color: players[i].color, width: 2)),
-                  child: Text('${g.teams ? (i.isEven ? '🅰 ' : '🅱 ') : ''}${players[i].name} · 🏠${g.tokens[i].where((t) => t == LudoLogic.home).length}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
-                ),
-            ]),
-          ),
-        ]),
-        const SizedBox(height: 8),
-        Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Board(players: players, g: g)))),
-        const SizedBox(height: 8),
-        Text(g.message, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Flexible(
-            child: Text(
-                g.phase == LudoPhase.move
-                    ? '${current.name.toUpperCase()}: MOVE ${g.lastRoll}${g.mover != g.turn ? ' (FOR ${players[g.mover].name.toUpperCase()})' : ''}'
-                    : '${current.whose} ROLL',
-                overflow: TextOverflow.ellipsis, style: TextStyle(color: current.color, fontWeight: FontWeight.w900, fontSize: 18)),
-          ),
-          const SizedBox(width: 14),
-          RollingDice(
+        GameHud(
+          players: players,
+          turn: g.finished ? null : g.turn,
+          nameOf: (i) => '${g.teams ? (i.isEven ? '🅰 ' : '🅱 ') : ''}${players[i].name}',
+          extra: (i) => '🏠${g.tokens[i].where((t) => t == LudoLogic.home).length}',
+        ),
+        const SizedBox(height: Space.s),
+        Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: BoardFrame(child: RepaintBoundary(child: _Board(players: players, g: g)))))),
+        const SizedBox(height: Space.s),
+        DiceTray(
+          message: g.message,
+          player: current,
+          turnText: g.phase == LudoPhase.move
+              ? '${current.name.toUpperCase()}: MOVE ${g.lastRoll}${g.mover != g.turn ? ' (FOR ${players[g.mover].name.toUpperCase()})' : ''}'
+              : '${current.whose} ROLL',
+          dice: RollingDice(
             value: g.lastRoll ?? 6,
             rollId: g.rolls,
             color: current.color,
             size: 64,
             onTap: g.phase == LudoPhase.roll
                 ? () {
-                    HapticFeedback.mediumImpact().ignore();
+                    haptic(HapticWeight.medium);
                     g.roll();
                   }
                 : null,
           ),
-        ]),
+        ),
       ]),
     );
   }
 }
-
 class _Board extends StatefulWidget {
   final List<GpPlayer> players;
   final LudoLogic g;

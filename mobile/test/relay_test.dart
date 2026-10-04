@@ -188,7 +188,7 @@ void main() {
       expect(s.calls.where((c) => c.$1 == 'relay:state'), isNotEmpty, reason: 'publishes the start position');
 
       // My own tap goes through the same checks: it's my turn (X), so it counts.
-      await tester.tap(find.bySemanticsLabel('Empty square').first);
+      await tester.tap(find.bySemanticsLabel(RegExp(r': empty$')).first);
       await tester.pump(const Duration(milliseconds: 100));
       var last = s.calls.lastWhere((c) => c.$1 == 'relay:state').$2;
       expect((last['state'] as Map)['cells'][0], 0);
@@ -223,12 +223,12 @@ void main() {
       expect(find.text('YOU: ME'), findsOneWidget);
       expect(find.text('O'), findsWidgets, reason: "the host's O is shown");
 
-      await tester.tap(find.bySemanticsLabel('Empty square').first);
+      await tester.tap(find.bySemanticsLabel(RegExp(r': empty$')).first);
       await tester.pump();
       expect(s.calls.single.$1, 'relay:input');
       expect(s.calls.single.$2, {'name': 'play', 'args': [1]});
       // Nothing changes until the host says so.
-      expect(find.bySemanticsLabel('Empty square'), findsNWidgets(8));
+      expect(find.bySemanticsLabel(RegExp(r': empty$')), findsNWidgets(8));
       await disposeGame(tester);
     });
 
@@ -238,7 +238,7 @@ void main() {
       await pumpGame(tester, RelayPlay(game: ticTacToeInfo), s);
       for (final (from, cell) in [('me', 0), ('op', 3), ('me', 1), ('op', 4), ('me', 2)]) {
         if (from == 'me') {
-          await tester.tap(find.bySemanticsLabel('Empty square').at(cell == 0 ? 0 : (cell == 1 ? 0 : 0)));
+          await tester.tap(find.bySemanticsLabel(RegExp(r': empty$')).at(cell == 0 ? 0 : (cell == 1 ? 0 : 0)));
         } else {
           s.push(st(host: 'me', inputs: [
             {'seq': cell, 'from': 'op', 'name': 'play', 'args': [cell]},

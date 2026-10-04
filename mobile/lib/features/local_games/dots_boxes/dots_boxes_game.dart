@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
 import '../shell/ticking_play.dart';
 
 /// Dots & Boxes on a 6x6 dot grid (25 boxes). Draw one line per turn; closing a box
@@ -123,6 +123,12 @@ final dotsBoxesInfo = LocalGameInfo(
   ),
 );
 
+// Board palette: a page of a school notebook.
+const _paper = Color(0xFFFBF8EE);
+const _rule = Color(0xFFB9D3EE);
+const _margin = Color(0xFFE8A0A0);
+const _ink = Color(0xFF2A2F45);
+
 class _DotsTable extends StatelessWidget {
   final List<GpPlayer> players;
   final DotsBoxesLogic g;
@@ -132,52 +138,46 @@ class _DotsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final current = players[g.turn];
     final scores = g.scores;
+    final top = scores.reduce((a, b) => a > b ? a : b);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 6, 10, 16),
+      padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.l),
       child: Column(children: [
-        Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(g.finished ? 'BOARD COMPLETE!' : '${current.whose} LINE',
-                textAlign: TextAlign.center, style: TextStyle(color: g.finished ? Colors.white : current.color, fontWeight: FontWeight.w900, fontSize: 20)),
-          ),
-          const SizedBox(width: 44),
-        ]),
-        const SizedBox(height: 10),
-        Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 6, children: [
-          for (var i = 0; i < players.length; i++)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(color: i == g.turn ? players[i].color : Colors.white10, borderRadius: BorderRadius.circular(14), border: Border.all(color: players[i].color, width: 2)),
-              child: Text('${players[i].name} · ${scores[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-            ),
-        ]),
-        const SizedBox(height: 10),
+        GameHud(players: players, scores: scores, turn: g.finished ? null : g.turn, trailing: HudLabel('${g.totalLines - g.drawn} LEFT')),
+        const SizedBox(height: Space.s),
+        GameStatus(
+          player: current,
+          turnText: '${current.whose} LINE',
+          message: g.finished ? (scores.where((s) => s == top).length > 1 ? '🤝 BOARD COMPLETE!' : '🏆 ${players[scores.indexOf(top)].name.toUpperCase()} WINS!') : null,
+        ),
+        const SizedBox(height: Space.s),
         Expanded(
           child: Center(
             child: AspectRatio(
               aspectRatio: 1,
               child: LayoutBuilder(builder: (context, c) {
                 final w = c.maxWidth;
-                final pad = w * 0.06;
+                final pad = w * 0.08;
                 final cell = (w - 2 * pad) / g.size;
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapUp: (d) {
-                    final u = (d.localPosition.dx - pad) / cell, v = (d.localPosition.dy - pad) / cell;
-                    final dh = (v - v.round()).abs(), dv = (u - u.round()).abs();
-                    final res = dh < dv ? g.drawLine(horizontal: true, row: v.round(), col: u.floor()) : g.drawLine(horizontal: false, row: v.floor(), col: u.round());
-                    if (res != null) (res > 0 ? HapticFeedback.mediumImpact() : HapticFeedback.selectionClick()).ignore();
-                  },
-                  child: CustomPaint(size: Size(w, w), painter: _DotsPainter(g, players, pad, cell)),
+                return Semantics(
+                  label: 'Dots and boxes board, ${g.totalLines - g.drawn} lines left. Tap between two dots to draw a line.',
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapUp: (d) {
+                      final u = (d.localPosition.dx - pad) / cell, v = (d.localPosition.dy - pad) / cell;
+                      final dh = (v - v.round()).abs(), dv = (u - u.round()).abs();
+                      final res = dh < dv ? g.drawLine(horizontal: true, row: v.round(), col: u.floor()) : g.drawLine(horizontal: false, row: v.floor(), col: u.round());
+                      if (res != null) {
+                        haptic(res > 0 ? HapticWeight.medium : HapticWeight.selection);
+                        GameAudio.sfx(res > 0 ? 'coin' : 'tap');
+                      }
+                    },
+                    child: RepaintBoundary(child: CustomPaint(size: Size(w, w), painter: _DotsPainter(g, players, pad, cell))),
+                  ),
                 );
               }),
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text('${g.totalLines - g.drawn} lines left', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
       ]),
     );
   }
@@ -187,42 +187,64 @@ class _DotsPainter extends CustomPainter {
   final DotsBoxesLogic g;
   final List<GpPlayer> players;
   final double pad, cell;
-  _DotsPainter(this.g, this.players, this.pad, this.cell);
+  final int drawn; // what was on the board when this painter was made
+  _DotsPainter(this.g, this.players, this.pad, this.cell) : drawn = g.drawn;
 
   @override
   void paint(Canvas canvas, Size size) {
     Offset dot(int r, int c) => Offset(pad + c * cell, pad + r * cell);
-    // Claimed boxes.
+    // The page: paper, blue rules, a red margin line, a soft shadow under it.
+    final page = RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(size.width * 0.04));
+    canvas.drawRRect(page.shift(const Offset(0, 6)), Paint()..color = Colors.black38);
+    canvas.drawRRect(page, Paint()..color = _paper);
+    canvas.save();
+    canvas.clipRRect(page);
+    final rule = Paint()
+      ..color = _rule
+      ..strokeWidth = 1;
+    for (var y = cell * 0.5; y < size.height; y += cell / 2) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), rule);
+    }
+    canvas.drawLine(Offset(pad * 0.45, 0), Offset(pad * 0.45, size.height), Paint()
+      ..color = _margin
+      ..strokeWidth = 1.5);
+    canvas.restore();
+    // Claimed boxes: the owner's colour, shape and initial.
     for (var r = 0; r < g.size; r++) {
       for (var c = 0; c < g.size; c++) {
         final o = g.boxes[r][c];
         if (o < 0) continue;
-        final rect = Rect.fromPoints(dot(r, c), dot(r + 1, c + 1)).deflate(cell * 0.08);
-        canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(cell * 0.12)), Paint()..color = players[o].color.withValues(alpha: 0.75));
+        final rect = Rect.fromPoints(dot(r, c), dot(r + 1, c + 1)).deflate(cell * 0.1);
+        canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(cell * 0.1)), Paint()..color = players[o].color.withValues(alpha: 0.32));
+        final seat = PlayerPalette.indexOf(players[o].color);
+        if (seat != null) {
+          final s = rect.deflate(rect.width * 0.26);
+          canvas.drawPath(PlayerShapePainter.pathFor(PlayerPalette.shape(seat), s), Paint()..color = fillFor(players[o].color));
+        }
         final tp = TextPainter(
-          text: TextSpan(text: players[o].name.characters.first.toUpperCase(), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: cell * 0.42)),
+          text: TextSpan(text: players[o].name.characters.first.toUpperCase(), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: cell * 0.24)),
           textDirection: TextDirection.ltr,
         )..layout();
         tp.paint(canvas, rect.center - Offset(tp.width / 2, tp.height / 2));
       }
     }
-    // Empty lines as faint guides, drawn lines in the player's colour.
+    // Empty lines as faint pencil guides, drawn lines in marker ink.
     void line(Offset a, Offset b, int owner, bool last) {
       if (owner < 0) {
         canvas.drawLine(a, b, Paint()
-          ..color = Colors.white12
-          ..strokeWidth = cell * 0.06
+          ..color = _ink.withValues(alpha: 0.08)
+          ..strokeWidth = cell * 0.05
           ..strokeCap = StrokeCap.round);
         return;
       }
       if (last) {
         canvas.drawLine(a, b, Paint()
-          ..color = Colors.white
-          ..strokeWidth = cell * 0.17
+          ..color = Brand.gold
+          ..strokeWidth = cell * 0.2
           ..strokeCap = StrokeCap.round);
       }
       canvas.drawLine(a, b, Paint()
-        ..color = players[owner].color
+        ..color = fillFor(players[owner].color)
         ..strokeWidth = cell * 0.11
         ..strokeCap = StrokeCap.round);
     }
@@ -239,11 +261,11 @@ class _DotsPainter extends CustomPainter {
     }
     for (var r = 0; r <= g.size; r++) {
       for (var c = 0; c <= g.size; c++) {
-        canvas.drawCircle(dot(r, c), cell * 0.09, Paint()..color = Colors.white);
+        canvas.drawCircle(dot(r, c), cell * 0.085, Paint()..color = _ink);
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(_DotsPainter old) => old.drawn != drawn || old.cell != cell || !identical(old.g, g);
 }

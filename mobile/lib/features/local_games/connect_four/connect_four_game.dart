@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
 import '../shell/ticking_play.dart';
 
 /// Classic Connect Four on a 7x6 board. Discs drop to the lowest free row; four in a
@@ -141,134 +141,175 @@ final connectFourInfo = LocalGameInfo(
   ),
 );
 
-class _Board extends StatelessWidget {
+// Board palette: the classic blue plastic frame.
+const _frame = [Color(0xFF3B6FF0), Color(0xFF2149C2)];
+const _hole = Color(0xFF0D1340);
+
+class _Board extends StatefulWidget {
   final List<GpPlayer> players;
   final ConnectFourLogic g;
   const _Board({required this.players, required this.g});
+  @override
+  State<_Board> createState() => _BoardState();
+}
+
+class _BoardState extends State<_Board> {
+  int _bumps = 0;
 
   /// The row a disc dropped in column [c] would land on, or null if the column is full.
   int? _landing(int c) {
     for (var r = ConnectFourLogic.rows - 1; r >= 0; r--) {
-      if (g.at(c, r) < 0) return r;
+      if (widget.g.at(c, r) < 0) return r;
     }
     return null;
   }
 
+  void _drop(int c) {
+    final g = widget.g;
+    if (g.finished) return;
+    if (_landing(c) == null) {
+      haptic(HapticWeight.heavy);
+      setState(() => _bumps++);
+      return;
+    }
+    if (g.drop(c) != null) {
+      haptic(HapticWeight.light);
+      GameAudio.sfx('tap');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final g = widget.g, players = widget.players;
     final current = players[g.turn];
-    final status = g.winner != null
-        ? '${players[g.winner!].name.toUpperCase()} WINS!'
-        : g.isDraw
-            ? "IT'S A DRAW!"
-            : '${current.whose} TURN';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.l),
       child: Column(children: [
-        Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(status,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: g.winner != null ? players[g.winner!].color : (g.isDraw ? Colors.white : current.color), fontSize: 22, fontWeight: FontWeight.w900)),
-          ),
-          const SizedBox(width: 44),
-        ]),
-        const SizedBox(height: 12),
-        // Drop arrows in the colour of whoever's turn it is.
-        if (!g.finished)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(children: [
-              for (var c = 0; c < ConnectFourLogic.cols; c++)
-                Expanded(child: Icon(Icons.arrow_drop_down_rounded, size: 34, color: _landing(c) == null ? Colors.white12 : current.color)),
-            ]),
-          ),
+        GameHud(players: players, turn: g.finished ? null : g.turn),
+        const SizedBox(height: Space.s),
+        GameStatus(
+          player: g.winner != null ? players[g.winner!] : current,
+          turnText: g.isDraw ? null : '${current.whose} TURN',
+          message: g.winner != null ? '🏆 ${players[g.winner!].name.toUpperCase()} WINS!' : (g.isDraw ? "🤝 IT'S A DRAW!" : null),
+        ),
+        const SizedBox(height: Space.s),
         Expanded(
           child: Center(
             child: AspectRatio(
-              aspectRatio: ConnectFourLogic.cols / (ConnectFourLogic.rows + 0.4),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: const Color(0xFF2E5BDB), borderRadius: BorderRadius.circular(22), boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 6))]),
-                child: Row(children: [
-                  for (var c = 0; c < ConnectFourLogic.cols; c++)
-                    Expanded(
-                      child: Semantics(
-                        button: true,
-                        label: 'Column ${c + 1}',
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            if (g.drop(c) != null) HapticFeedback.selectionClick().ignore();
-                          },
-                          child: Column(children: [
-                            for (var r = 0; r < ConnectFourLogic.rows; r++)
-                              Expanded(
-                                child: _Hole(
-                                  owner: g.at(c, r),
-                                  players: players,
-                                  win: g.winCells?.contains(r * ConnectFourLogic.cols + c) ?? false,
-                                  fresh: g.lastDrop == r * ConnectFourLogic.cols + c,
-                                  ghost: !g.finished && _landing(c) == r ? current.color : null,
+              aspectRatio: ConnectFourLogic.cols / (ConnectFourLogic.rows + 1.4),
+              child: Shake(
+                trigger: _bumps == 0 ? null : _bumps,
+                child: Column(children: [
+                  Expanded(
+                    child: Stack(clipBehavior: Clip.none, children: [
+                      // Feet.
+                      Positioned(left: 4, bottom: -2, child: _Foot()),
+                      Positioned(right: 4, bottom: -2, child: _Foot()),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: Container(
+                          padding: const EdgeInsets.all(Space.s),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(colors: _frame, begin: Alignment.topCenter, end: Alignment.bottomCenter),
+                            borderRadius: Radii.rXl,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 2),
+                            boxShadow: const [BoxShadow(color: Colors.black54, offset: Offset(0, 8), blurRadius: 6)],
+                          ),
+                          child: RepaintBoundary(
+                            child: Row(children: [
+                              for (var c = 0; c < ConnectFourLogic.cols; c++)
+                                Expanded(
+                                  child: Semantics(
+                                    button: _landing(c) != null && !g.finished,
+                                    label: 'Column ${c + 1}${_landing(c) == null ? ', full' : ''}',
+                                    excludeSemantics: true,
+                                    child: GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () => _drop(c),
+                                      child: Column(children: [
+                                        for (var r = 0; r < ConnectFourLogic.rows; r++)
+                                          Expanded(
+                                            child: _Hole(
+                                              owner: g.at(c, r),
+                                              players: players,
+                                              row: r,
+                                              win: g.winCells?.contains(r * ConnectFourLogic.cols + c) ?? false,
+                                              fresh: g.lastDrop == r * ConnectFourLogic.cols + c,
+                                              ghost: !g.finished && _landing(c) == r ? current.color : null,
+                                            ),
+                                          ),
+                                      ]),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                          ]),
+                            ]),
+                          ),
                         ),
                       ),
-                    ),
+                    ]),
+                  ),
                 ]),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        Wrap(alignment: WrapAlignment.center, spacing: 24, runSpacing: 6, children: [
-          for (var i = 0; i < 2; i++)
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              CircleAvatar(radius: 9, backgroundColor: players[i].color),
-              const SizedBox(width: 6),
-              Text(players[i].name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-            ]),
-        ]),
       ]),
     );
   }
 }
 
+class _Foot extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 46,
+        height: 18,
+        decoration: BoxDecoration(color: _frame.last, borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)), boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 3))]),
+      );
+}
+
 class _Hole extends StatelessWidget {
   final int owner;
   final List<GpPlayer> players;
+  final int row;
   final bool win;
   final bool fresh;
   final Color? ghost; // where the current player's disc would land
-  const _Hole({required this.owner, required this.players, required this.win, required this.fresh, this.ghost});
+  const _Hole({required this.owner, required this.players, required this.row, required this.win, required this.fresh, this.ghost});
 
   @override
   Widget build(BuildContext context) {
     final c = owner < 0 ? null : players[owner].color;
+    final seat = c == null ? null : PlayerPalette.indexOf(c);
     final disc = Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: c == null ? (ghost?.withValues(alpha: 0.22) ?? GpColors.bgBottom) : null,
+        color: c == null ? (ghost?.withValues(alpha: 0.25) ?? _hole) : null,
         // Discs get a shine so they look like plastic counters.
-        gradient: c == null ? null : RadialGradient(center: const Alignment(-0.3, -0.35), colors: [Color.lerp(c, Colors.white, 0.4)!, c, Color.lerp(c, Colors.black, 0.25)!]),
+        gradient: c == null ? null : RadialGradient(center: const Alignment(-0.3, -0.35), colors: [Color.lerp(c, Colors.white, 0.45)!, c, Color.lerp(c, Colors.black, 0.3)!]),
         border: win
-            ? Border.all(color: Colors.white, width: 4)
-            : (ghost != null && c == null ? Border.all(color: ghost!.withValues(alpha: 0.7), width: 2) : null),
-        boxShadow: c == null ? const [BoxShadow(color: Colors.black54, offset: Offset(0, -2), blurRadius: 2, spreadRadius: -1)] : null,
+            ? Border.all(color: Brand.gold, width: 4)
+            : (ghost != null && c == null ? Border.all(color: ghost!.withValues(alpha: 0.8), width: 2) : null),
+        boxShadow: c == null ? const [BoxShadow(color: Colors.black87, offset: Offset(0, -2), blurRadius: 3, spreadRadius: -1)] : const [BoxShadow(color: Colors.black38, offset: Offset(0, 2))],
       ),
+      // The player's shape pressed into the disc: colour is never the only clue.
+      child: seat == null
+          ? null
+          : FractionallySizedBox(
+              widthFactor: 0.38,
+              heightFactor: 0.38,
+              child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(seat), Colors.white.withValues(alpha: 0.45))),
+            ),
     );
     return Padding(
       padding: const EdgeInsets.all(3),
       child: AspectRatio(
         aspectRatio: 1,
-        child: fresh
+        child: fresh && !Motion.reduced(context)
             ? TweenAnimationBuilder<double>(
                 key: ValueKey(owner),
-                tween: Tween(begin: -3, end: 0),
-                duration: const Duration(milliseconds: 260),
+                // Falls from above the board down to its row.
+                tween: Tween(begin: -(row + 1.0) * 1.1, end: 0),
+                duration: Duration(milliseconds: 180 + 45 * row),
                 curve: Curves.bounceOut,
                 builder: (_, y, child) => FractionalTranslation(translation: Offset(0, y), child: child),
                 child: disc,

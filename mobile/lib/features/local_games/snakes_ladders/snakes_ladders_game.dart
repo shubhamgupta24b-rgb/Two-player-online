@@ -1,11 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
 import '../shell/ticking_play.dart';
 import '../widgets/dice.dart';
 
@@ -132,31 +131,17 @@ class _SnlTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final current = players[g.turn];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 6, 10, 12),
+      padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
       child: Column(children: [
-        Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Wrap(spacing: 6, runSpacing: 6, children: [
-              for (var i = 0; i < players.length; i++)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: i == g.turn ? players[i].color : Colors.white10, borderRadius: BorderRadius.circular(12), border: Border.all(color: players[i].color, width: 2)),
-                  child: Text('${players[i].name} · ${g.pos[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
-                ),
-            ]),
-          ),
-        ]),
-        const SizedBox(height: 8),
-        Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Board(players: players, g: g)))),
-        const SizedBox(height: 8),
-        Text(g.message, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Flexible(child: Text('${current.whose} ROLL', overflow: TextOverflow.ellipsis, style: TextStyle(color: current.color, fontWeight: FontWeight.w900, fontSize: 18))),
-          const SizedBox(width: 14),
-          RollingDice(
+        GameHud(players: players, turn: g.finished ? null : g.turn, extra: (i) => '📍${g.pos[i]}'),
+        const SizedBox(height: Space.s),
+        Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: BoardFrame(child: RepaintBoundary(child: _Board(players: players, g: g)))))),
+        const SizedBox(height: Space.s),
+        DiceTray(
+          message: g.message,
+          player: current,
+          turnText: '${current.whose} ROLL',
+          dice: RollingDice(
             value: g.lastRoll ?? 1,
             rollId: g.rolls,
             color: current.color,
@@ -164,16 +149,15 @@ class _SnlTable extends StatelessWidget {
             onTap: g.finished
                 ? null
                 : () {
-                    HapticFeedback.mediumImpact().ignore();
+                    haptic(HapticWeight.medium);
                     g.roll();
                   },
           ),
-        ]),
+        ),
       ]),
     );
   }
 }
-
 class _Board extends StatelessWidget {
   final List<GpPlayer> players;
   final SnakesLaddersLogic g;

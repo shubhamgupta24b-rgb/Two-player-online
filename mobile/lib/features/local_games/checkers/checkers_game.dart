@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/ui/components.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
-import '../shell/local_game_shell.dart' show PauseButton;
+import '../shell/game_hud.dart';
 import '../shell/ticking_play.dart';
 
 /// A move: from square, the squares landed on, and the pieces jumped.
@@ -239,47 +238,33 @@ class _CheckersTable extends StatelessWidget {
             : g.legal.first.captured.isNotEmpty
                 ? '${current.whose} TURN: YOU MUST CAPTURE!'
                 : '${current.whose} TURN';
+    final banner = GameStatus(
+      player: g.finished && g.winner != null ? players[g.winner!] : current,
+      turnText: g.finished ? null : status,
+      message: g.finished ? status : null,
+      height: 44,
+    );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 6, 10, 12),
+      padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
       child: Column(children: [
-        Row(children: [
-          const PauseButton(),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Wrap(spacing: 6, runSpacing: 6, children: [
-              for (var p = 0; p < 2; p++)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: p == g.turn && !g.finished ? players[p].color : Colors.white10,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: players[p].color, width: 2),
-                  ),
-                  child: Text('${players[p].name} · ${g.pieces(p)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12.5)),
-                ),
-            ]),
-          ),
-        ]),
-        const SizedBox(height: 10),
+        GameHud(players: players, turn: g.finished ? null : g.turn, extra: (p) => '● ${g.pieces(p)}'),
+        const SizedBox(height: Space.s),
         // Player 2's view of whose turn it is, upside down for the far side of the phone.
-        if (!flipped) RotatedBox(quarterTurns: 2, child: _Status(text: status, color: current.color)),
-        const SizedBox(height: 6),
+        if (!flipped) RotatedBox(quarterTurns: 2, child: banner),
+        const SizedBox(height: Space.xs),
         Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Board(g: g, players: players, flipped: flipped)))),
-        const SizedBox(height: 6),
-        _Status(text: status, color: current.color),
+        const SizedBox(height: Space.xs),
+        banner,
       ]),
     );
   }
 }
 
-class _Status extends StatelessWidget {
-  final String text;
-  final Color color;
-  const _Status({required this.text, required this.color});
-  @override
-  Widget build(BuildContext context) => Text(text, textAlign: TextAlign.center, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 16));
-}
-
+// Board palette: a wooden board with maple and walnut squares.
+const _frameWood = [Color(0xFF6B3F22), Color(0xFF3E2414)];
+const _lightSq = Color(0xFFF1DDB6);
+const _darkSq = Color(0xFF7A4B2E);
+const _lastSq = Color(0xFF9B6A45);
 /// The board. Pieces sit in a layer above the squares so a move can be shown: the piece
 /// slides square by square along its path and every piece it jumps fades away as it passes.
 class _Board extends StatefulWidget {
@@ -348,8 +333,12 @@ class _BoardState extends State<_Board> {
     final from = g.lastMove?.$1, to = g.lastMove?.$2;
 
     return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(color: const Color(0xFF4E342E), borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: _frameWood, begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: Radii.rMd,
+        boxShadow: const [BoxShadow(color: Colors.black54, offset: Offset(0, 6), blurRadius: 6)],
+      ),
       child: LayoutBuilder(builder: (context, c) {
         final cell = c.maxWidth / 8;
         Widget piece(int value, {bool selected = false, bool canMove = false}) {
@@ -361,11 +350,22 @@ class _BoardState extends State<_Board> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(center: const Alignment(-0.3, -0.3), colors: [Color.lerp(col, Colors.white, 0.35)!, col, Color.lerp(col, Colors.black, 0.35)!]),
-                border: Border.all(color: selected ? GpColors.accent : (canMove ? Colors.white : Colors.black26), width: selected ? 4 : 2),
-                boxShadow: const [BoxShadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 2)],
+                border: Border.all(color: selected ? Brand.gold : (canMove ? Colors.white : Colors.black26), width: selected ? 4 : 2),
+                boxShadow: [
+                  const BoxShadow(color: Colors.black45, offset: Offset(0, 3), blurRadius: 2),
+                  if (selected) BoxShadow(color: Brand.gold.withValues(alpha: 0.6), blurRadius: 10),
+                ],
               ),
               alignment: Alignment.center,
-              child: CheckersLogic.isKing(value) ? const FittedBox(child: Padding(padding: EdgeInsets.all(4), child: Text('👑', style: TextStyle(fontSize: 22)))) : null,
+              child: CheckersLogic.isKing(value)
+                  ? const FittedBox(child: Padding(padding: EdgeInsets.all(4), child: Text('👑', style: TextStyle(fontSize: 22))))
+                  : (PlayerPalette.indexOf(col) == null
+                      ? null
+                      : FractionallySizedBox(
+                          widthFactor: 0.34,
+                          heightFactor: 0.34,
+                          child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(PlayerPalette.indexOf(col)!), Colors.white.withValues(alpha: 0.45))),
+                        )),
             ),
           );
         }
@@ -430,17 +430,17 @@ class _BoardState extends State<_Board> {
                   final isLast = !showing && (from == sq || to == sq);
                   return GestureDetector(
                     onTap: () {
-                      HapticFeedback.selectionClick().ignore();
+                      haptic(HapticWeight.selection);
                       g.tap(sq);
                     },
                     child: Container(
-                      color: dark ? (isLast ? const Color(0xFF8D6E63) : const Color(0xFF6D4C41)) : const Color(0xFFF3E0C0),
+                      color: dark ? (isLast ? _lastSq : _darkSq) : _lightSq,
                       alignment: Alignment.center,
                       child: targets.contains(sq)
                           ? FractionallySizedBox(
                               widthFactor: 0.35,
                               heightFactor: 0.35,
-                              child: Container(decoration: const BoxDecoration(color: Color(0xCCFFC93C), shape: BoxShape.circle)),
+                              child: Container(decoration: BoxDecoration(color: Brand.gold.withValues(alpha: 0.85), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2))),
                             )
                           : null,
                     ),
