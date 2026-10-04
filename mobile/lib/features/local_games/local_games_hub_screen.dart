@@ -5,7 +5,12 @@ import '../../games/game_catalog.dart';
 import '../guess_person/screens/guess_person_menu_screen.dart';
 import '../guess_person/widgets/gp_theme.dart';
 import '../raja_mantri/rmcs_screen.dart';
+import 'archery/archery_game.dart';
 import 'basketball/basketball_game.dart';
+import 'bottle_smash/bottle_smash_game.dart';
+import 'mini_golf/mini_golf_game.dart';
+import 'shooting_gallery/shooting_gallery_game.dart';
+import 'slingshot/slingshot_game.dart';
 import 'crush_it/crush_it_game.dart';
 import 'fruit_duel/fruit_duel_game.dart';
 import 'memory/memory_game.dart';
@@ -66,6 +71,7 @@ final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafia
   drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo,
   ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo, dotsBoxesInfo,
   mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo, bingoInfo, battleshipInfo, checkersInfo, smashKartsInfo,
+  golfInfo, slingInfo, archeryInfo, galleryInfo, bottleInfo,
   // Solo games (shown in their own section).
   fruitMergeInfo, game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo,
   ballSortInfo, slidingInfo, sudokuInfo, hangmanInfo, dinoInfo,

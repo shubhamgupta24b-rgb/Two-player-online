@@ -39,7 +39,8 @@ void main() {
     final withBots = {for (final g in localGames) if (g.bot != null) g.id};
     expect(withBots, {
       'colour_clash', 'ludo', 'snakes_ladders', 'dots_boxes', 'tic_tac_toe', 'connect_four', 'hand_cricket', 'quiz_battle', 'math_duel', //
-      'reaction_tap', 'penalty', 'basketball_hoops', 'crush_it', 'fruit_duel', 'memory', 'paint_fight', 'air_hockey', 'ping_pong', 'snake_duel', 'rock_paper_scissors', 'fruit_merge_battle', 'bingo', 'battleship', 'checkers', 'smash_karts',
+      'reaction_tap', 'penalty', 'basketball_hoops', 'crush_it', 'fruit_duel', 'memory', 'paint_fight', 'air_hockey', 'ping_pong', 'snake_duel', 'rock_paper_scissors', 'fruit_merge_battle', 'bingo', 'battleship', 'checkers', 'smash_karts', //
+      'mini_golf', 'slingshot', 'archery', 'shooting_gallery', 'bottle_smash',
     });
   });
 
@@ -64,6 +65,11 @@ void main() {
       ('ping_pong', 2, 1200000),
       ('snake_duel', 2, 1200000),
       ('rock_paper_scissors', 4, 600000),
+      ('mini_golf', 2, 1200000),
+      ('slingshot', 3, 900000),
+      ('archery', 4, 600000),
+      ('shooting_gallery', 2, 200000),
+      ('bottle_smash', 3, 600000),
     ]) {
       test('$id with $players computer players', () {
         final g = simulate(id, players: players, limitMs: limit);

@@ -34,6 +34,11 @@ const RELAY_GAMES = [
   { id: 'battleship', min: 2, max: 2 },
   { id: 'checkers', min: 2, max: 2 },
   { id: 'smash_karts', min: 2, max: 4 },
+  { id: 'mini_golf', min: 2, max: 4 },
+  { id: 'slingshot', min: 2, max: 4 },
+  { id: 'archery', min: 2, max: 4 },
+  { id: 'shooting_gallery', min: 2, max: 4 },
+  { id: 'bottle_smash', min: 2, max: 4 },
 ];
 
 const MAX_STATE_BYTES = 64 * 1024;

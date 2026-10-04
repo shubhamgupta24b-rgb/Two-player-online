@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
+import '../../../core/audio/game_audio.dart';
 import '../../../core/auth/authentication_manager.dart';
 import '../../../core/session/game_session_manager.dart';
 import '../../guess_person/models/gp_player.dart';
@@ -51,6 +52,7 @@ class _RelayPlayState extends State<RelayPlay> with SingleTickerProviderStateMix
     _session.addListener(_onSession);
     _onSession();
     _ready = true;
+    GameAudio.music(GameAudio.musicFor(widget.game.id));
   }
 
   bool _ready = false; // initState finished, setState allowed
@@ -186,6 +188,7 @@ class _RelayPlayState extends State<RelayPlay> with SingleTickerProviderStateMix
     _sendTimer?.cancel();
     _flush?.cancel();
     _g?.dispose();
+    GameAudio.stopMusic();
     super.dispose();
   }
 
@@ -207,10 +210,25 @@ class _RelayPlayState extends State<RelayPlay> with SingleTickerProviderStateMix
       child: Column(children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 4),
           color: _players[_me].color,
-          child: Text('YOU: ${_players[_me].name.toUpperCase()}${_host ? ' · HOST' : ''}',
-              textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
+          child: Stack(alignment: Alignment.center, children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 40),
+              child: Text('YOU: ${_players[_me].name.toUpperCase()}${_host ? ' · HOST' : ''}',
+                  textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
+            ),
+            Positioned(
+              right: 4,
+              child: InkWell(
+                onTap: () => showModalBottomSheet<void>(
+                  context: context,
+                  backgroundColor: GpColors.bgTop,
+                  builder: (_) => SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(20, 16, 12, 16), child: SoundControls(color: widget.game.color))),
+                ),
+                child: const Padding(padding: EdgeInsets.symmetric(horizontal: 6), child: Text('🎵', style: TextStyle(fontSize: 14))),
+              ),
+            ),
+          ]),
         ),
         Expanded(child: ListenableBuilder(listenable: g, builder: (context, _) => _spec.view(context, g, _players, _me))),
       ]),

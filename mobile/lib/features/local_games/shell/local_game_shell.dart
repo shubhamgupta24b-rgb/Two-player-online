@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
 import '../../../core/ui/app_flavor.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../../guess_person/widgets/gp_theme.dart';
@@ -127,7 +128,14 @@ class _LocalGameShellState extends State<LocalGameShell> {
         // Fresh computer players every match (their memory and timing start over).
         _bots = vsComputer && _game.bot != null ? [for (var i = players.length - botCount; i < players.length; i++) BotSeat(i, null, players.length - botCount == 1)] : const [];
         phase = _ShellPhase.playing;
+        GameAudio.music(GameAudio.musicFor(widget.game.id));
       });
+
+  @override
+  void dispose() {
+    GameAudio.stopMusic();
+    super.dispose();
+  }
 
   Widget _play(LocalGameInfo g) {
     if (_turnsOn) {
@@ -147,6 +155,8 @@ class _LocalGameShellState extends State<LocalGameShell> {
   void _finished(List<int> scores) {
     if (!mounted) return;
     HapticFeedback.mediumImpact().ignore();
+    GameAudio.stopMusic();
+    GameAudio.sfx('win');
     setState(() {
       for (var i = 0; i < players.length; i++) {
         players[i].score = scores[i];
@@ -204,10 +214,16 @@ class _LocalGameShellState extends State<LocalGameShell> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: GpColors.bgTop,
-        title: const Text('Leave game?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-        content: const Text('This match will be lost.', style: TextStyle(color: Colors.white70)),
+        title: const Text('⏸ Paused', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+        content: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            SoundControls(color: widget.game.color),
+            const SizedBox(height: 8),
+            const Text('Leaving loses this match.', style: TextStyle(color: Colors.white70)),
+          ]),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('STAY')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('RESUME')),
           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('LEAVE', style: TextStyle(color: GpColors.no))),
         ],
       ),
