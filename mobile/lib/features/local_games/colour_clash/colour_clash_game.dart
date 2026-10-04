@@ -34,8 +34,12 @@ final colourClashInfo = LocalGameInfo(
   splitScreen: false,
   maxPlayers: 6,
   bot: botFor<ColourClashLogic>((g, b, now) {
-    // Against the computer nobody needs to pass the phone.
-    if (g.phase == ClashPhase.handoff) return g.reveal();
+    // One person against the computer never passes the phone; with several people, only
+    // the bots' own turns skip the pass-the-phone screen.
+    if (g.phase == ClashPhase.handoff) {
+      if (b.loneHuman || g.turn == b.seat) g.reveal();
+      return;
+    }
     if (g.finished || g.turn != b.seat) return;
     if (!b.thinkFirst((g.discard.length, g.phase, g.drewThisTurn, g.hand.length), now, 700, 1500)) return;
     final hand = g.hand;
@@ -137,8 +141,14 @@ final colourClashInfo = LocalGameInfo(
   play: (players, onFinished) => TickingPlay<ColourClashLogic>(
     create: () => ColourClashLogic(players: players.length),
     onFinished: onFinished,
-    // Against the computer, you only ever see your own hand (seat 0).
-    builder: (context, g) => _ClashTable(players: players, g: g, me: BotScope.humanSeat(context)),
+    // One person against the computer only ever sees their own hand; with several people the
+    // phone is passed and the bots' hands stay face down.
+    builder: (context, g) => _ClashTable(
+      players: players,
+      g: g,
+      me: BotScope.humanSeat(context),
+      botSeats: {for (var i = 0; i < players.length; i++) if (BotScope.isBot(context, i)) i},
+    ),
   ),
 );
 
@@ -251,12 +261,15 @@ class _ClashTable extends StatelessWidget {
   final List<GpPlayer> players;
   final ColourClashLogic g;
   final int? me; // online: whose phone this is (only their hand is shown)
-  const _ClashTable({required this.players, required this.g, this.me});
+  final Set<int> botSeats; // computer players sharing a pass-the-phone game
+  const _ClashTable({required this.players, required this.g, this.me, this.botSeats = const {}});
 
   @override
   Widget build(BuildContext context) {
     final online = me != null;
     final holder = me ?? g.turn; // whose hand is on screen
+    // People passing the phone with bots: nobody's cards show while a bot plays.
+    final botTurn = !online && botSeats.contains(g.turn);
     final myTurn = holder == g.turn;
     final player = players[holder];
     final hand = g.hands[holder];
@@ -275,7 +288,12 @@ class _ClashTable extends StatelessWidget {
           ]),
           const SizedBox(height: 6),
           Expanded(child: _Centre(g: g, canAct: myTurn, waitingFor: myTurn ? null : players[g.turn].name)),
-          if (online || g.phase != ClashPhase.handoff) ...[
+          if (botTurn)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              child: Text('🤖 ${players[g.turn].name} is playing…', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+            )
+          else if (online || g.phase != ClashPhase.handoff) ...[
             Row(children: [
               Expanded(
                 child: Text(online ? 'YOUR HAND · ${hand.length} cards' : '${player.whose} HAND · ${hand.length} cards',

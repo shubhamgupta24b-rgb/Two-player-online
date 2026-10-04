@@ -8,7 +8,9 @@ class BotSeat {
   final Random rng;
   int _readyAt = 0;
   final Map<String, Object?> memory = {}; // per-game notes (e.g. cards seen in Memory)
-  BotSeat(this.seat, [Random? random]) : rng = random ?? Random();
+  /// True when only one person plays (against bots only): no need to pass the phone.
+  final bool loneHuman;
+  BotSeat(this.seat, [Random? random, this.loneHuman = true]) : rng = random ?? Random();
 
   bool due(int now) => now >= _readyAt;
 
@@ -37,17 +39,25 @@ typedef BotTurn = void Function(LocalGameLogic g, BotSeat bot, int nowMs);
 /// Typed helper so each game writes its bot against its own logic class.
 BotTurn botFor<T extends LocalGameLogic>(void Function(T g, BotSeat bot, int nowMs) turn) => (g, b, n) => turn(g as T, b, n);
 
-/// Tells a game which seats the computer plays (seat 0 is always you).
+/// Tells a game which seats the computer plays. People sit in the first seats.
 class BotScope extends InheritedWidget {
   final List<BotSeat> seats;
   final BotTurn turn;
-  const BotScope({super.key, required this.seats, required this.turn, required super.child});
+  final int people; // how many people share the phone (the seats before the bots)
+  const BotScope({super.key, required this.seats, required this.turn, this.people = 1, required super.child});
 
   static BotScope? maybeOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<BotScope>();
 
-  /// The human's seat when playing against the computer, else null (everyone shares the phone).
-  static int? humanSeat(BuildContext context) => maybeOf(context) == null ? null : 0;
+  /// The one person's seat when they play alone against the computer, else null
+  /// (no bots, or several people passing the phone between them).
+  static int? humanSeat(BuildContext context) {
+    final s = maybeOf(context);
+    return s != null && s.people == 1 ? 0 : null;
+  }
+
+  /// True for seats the computer plays.
+  static bool isBot(BuildContext context, int seat) => maybeOf(context)?.seats.any((b) => b.seat == seat) ?? false;
 
   @override
-  bool updateShouldNotify(BotScope old) => old.seats != seats || old.turn != turn;
+  bool updateShouldNotify(BotScope old) => old.seats != seats || old.turn != turn || old.people != people;
 }

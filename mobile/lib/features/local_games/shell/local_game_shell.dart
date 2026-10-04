@@ -112,14 +112,14 @@ class _LocalGameShellState extends State<LocalGameShell> {
   void _go() => setState(() {
         matchNo++;
         // Fresh computer players every match (their memory and timing start over).
-        _bots = vsComputer && widget.game.bot != null ? [for (var i = players.length - botCount; i < players.length; i++) BotSeat(i)] : const [];
+        _bots = vsComputer && widget.game.bot != null ? [for (var i = players.length - botCount; i < players.length; i++) BotSeat(i, null, players.length - botCount == 1)] : const [];
         phase = _ShellPhase.playing;
       });
 
   Widget _play(LocalGameInfo g) {
     final game = g.play(players, _finished);
     if (_bots.isEmpty) return game;
-    return BotScope(seats: _bots, turn: g.bot!, child: game);
+    return BotScope(seats: _bots, turn: g.bot!, people: players.length - botCount, child: game);
   }
 
   void _finished(List<int> scores) {

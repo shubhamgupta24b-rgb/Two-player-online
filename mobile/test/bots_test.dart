@@ -39,7 +39,7 @@ void main() {
     final withBots = {for (final g in localGames) if (g.bot != null) g.id};
     expect(withBots, {
       'colour_clash', 'ludo', 'snakes_ladders', 'dots_boxes', 'tic_tac_toe', 'connect_four', 'hand_cricket', 'quiz_battle', 'math_duel', //
-      'reaction_tap', 'penalty', 'basketball_hoops', 'crush_it', 'fruit_duel', 'memory', 'paint_fight', 'air_hockey', 'ping_pong', 'snake_duel', 'rock_paper_scissors',
+      'reaction_tap', 'penalty', 'basketball_hoops', 'crush_it', 'fruit_duel', 'memory', 'paint_fight', 'air_hockey', 'ping_pong', 'snake_duel', 'rock_paper_scissors', 'fruit_merge_battle',
     });
   });
 

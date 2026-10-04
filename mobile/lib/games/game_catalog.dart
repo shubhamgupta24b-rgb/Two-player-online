@@ -66,6 +66,7 @@ final List<GameInfo> gameCatalog = [
   _local('math_duel', GameCategory.action),
   _local('hand_cricket', GameCategory.action),
   _local('quiz_battle', GameCategory.action),
+  _local('fruit_merge_battle', GameCategory.action),
   _local('find_spy', GameCategory.party),
   _local('mafia', GameCategory.party),
   _local('undercover', GameCategory.party),

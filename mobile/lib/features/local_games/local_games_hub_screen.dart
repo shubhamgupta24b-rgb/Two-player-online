@@ -17,6 +17,7 @@ import 'snake_duel/snake_duel_game.dart';
 import 'tic_tac_toe/tic_tac_toe_game.dart';
 import 'colour_clash/colour_clash_game.dart';
 import 'dots_boxes/dots_boxes_game.dart';
+import 'fruit_merge/fruit_merge_game.dart';
 import 'ludo/ludo_game.dart';
 import 'snakes_ladders/snakes_ladders_game.dart';
 import 'truth_dare/truth_dare_game.dart';
@@ -47,9 +48,9 @@ import 'shell/local_game_shell.dart';
 final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
   drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo,
   ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo, dotsBoxesInfo,
-  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo,
+  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo,
   // Solo games (shown in their own section).
-  game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo];
+  fruitMergeInfo, game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo];
 
 /// Everything in the hub: the shell games plus Guess the Person and Raja Mantri.
 int get totalGameCount => localGames.length + 2;
