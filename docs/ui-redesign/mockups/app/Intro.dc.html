@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Game intro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Nunito:wght@600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFC93C}a:hover{color:#FFE08A}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; background: linear-gradient(180deg, #151A4A 0%, #0B0E2E 45%, #060820 100%); font-family: 'Nunito', system-ui, sans-serif; color: #FFFFFF; overflow: hidden">
+
+  <div style="position: relative; height: 200px">
+    <svg width="390" height="200" viewBox="0 0 390 200" aria-hidden="true">
+      <defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#21458A"></stop><stop offset="0.6" stop-color="#BFD7EC"></stop><stop offset="0.8" stop-color="#F2D49B"></stop></linearGradient><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B0E2E" stop-opacity="0"></stop><stop offset="1" stop-color="#0B0E2E"></stop></linearGradient></defs>
+      <rect width="390" height="200" fill="url(#s)"></rect>
+      <circle cx="300" cy="140" r="18" fill="#FFF3C4"></circle>
+      <path d="M0 150 Q20 136 40 148 Q60 132 82 146 Q104 134 126 148 Q150 132 172 146 Q196 134 218 148 Q242 132 264 146 Q288 134 310 148 Q334 132 356 146 Q372 138 390 146 L390 170 L0 170 Z" fill="#2E5634"></path>
+      <rect y="166" width="390" height="34" fill="#5E9A3E"></rect>
+      <g transform="translate(320 140)"><line x1="-6" y1="10" x2="-14" y2="44" stroke="#7A5230" stroke-width="4"></line><line x1="6" y1="10" x2="14" y2="44" stroke="#7A5230" stroke-width="4"></line><ellipse cx="3" rx="13" ry="30" fill="#D8B169"></ellipse><ellipse rx="10" ry="23" fill="#F4F2EC"></ellipse><ellipse rx="8" ry="17" fill="#222222"></ellipse><ellipse rx="6" ry="12" fill="#1F7BD0"></ellipse><ellipse rx="4" ry="8" fill="#E12A2F"></ellipse><ellipse rx="2" ry="4" fill="#F7C51E"></ellipse></g>
+      <path d="M70 160 Q170 60 300 138" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round" opacity="0.7"></path>
+      <rect width="390" height="200" fill="url(#f)"></rect>
+    </svg>
+    <button aria-label="Back" style="position: absolute; left: 16px; top: 14px; width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.2); background: rgba(10,14,40,0.55); display: flex; align-items: center; justify-content: center; padding: 0">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 3L5 9l6 6"></path></svg>
+    </button>
+  </div>
+
+  <div style="flex: 1; padding: 0 16px; display: flex; flex-direction: column; gap: 14px; margin-top: -26px">
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-family: 'Lilita One', sans-serif; font-size: 38px; line-height: 1.05">Archery</span>
+      <span style="font-size: 15px; font-weight: 800; color: #D6DAF7">Draw, aim for the gold, mind the wind!</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 18px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10)">
+      <div style="display: flex; align-items: center; gap: 12px"><span style="flex: 0 0 34px; height: 34px; border-radius: 10px; background: rgba(46,139,255,0.2); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CC9FF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 4L8 16M8 16l-1 5-3-3 5-1z"></path><path d="M14 4h6v6"></path></svg></span><span style="font-size: 14px; font-weight: 800">Pull back anywhere and let go to shoot</span></div>
+      <div style="display: flex; align-items: center; gap: 12px"><span style="flex: 0 0 34px; height: 34px; border-radius: 10px; background: rgba(46,204,113,0.18); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#B5F0CD" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 7h10a2.5 2.5 0 1 0-2.5-2.5"></path><path d="M2 11h13a2.5 2.5 0 1 1-2.5 2.5"></path><path d="M2 15h6"></path></svg></span><span style="font-size: 14px; font-weight: 800">Wind pushes the arrow, the target moves</span></div>
+      <div style="display: flex; align-items: center; gap: 12px"><span style="flex: 0 0 34px; height: 34px; border-radius: 10px; background: rgba(255,201,60,0.18); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#F4F2EC"></circle><circle cx="10" cy="10" r="5.5" fill="#E12A2F"></circle><circle cx="10" cy="10" r="2.5" fill="#F7C51E"></circle></svg></span><span style="font-size: 14px; font-weight: 800">Gold = 10 points · 5 arrows each</span></div>
+      <a href="#" style="font-size: 13px; font-weight: 900; text-decoration: none; margin-left: 46px">All rules</a>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <span style="font-size: 13px; font-weight: 900; letter-spacing: 0.14em">PLAYERS</span>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <button aria-label="Fewer players" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.10); color: #FFFFFF; font-size: 22px; font-weight: 900; padding: 0">–</button>
+        <span style="font-family: 'Lilita One', sans-serif; font-size: 24px; width: 18px; text-align: center">2</span>
+        <button aria-label="More players" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.10); color: #FFFFFF; font-size: 22px; font-weight: 900; padding: 0">+</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 12px; border-radius: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10)">
+        <span style="width: 26px; height: 26px; border-radius: 13px; background: #2E8BFF; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 14px">A</span>
+        <input aria-label="Player 1 name" value="Aarav" style="flex: 1; min-width: 0; border: none; background: transparent; color: #FFFFFF; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900; outline: none">
+        <span style="font-size: 12px; font-weight: 800; color: #C3C9EE">Person</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 12px; border-radius: 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10)">
+        <span style="width: 26px; height: 26px; display: flex; align-items: center; justify-content: center"><span style="width: 19px; height: 19px; background: #FF8A1F; border-radius: 4px; transform: rotate(45deg); display: inline-block"></span></span>
+        <input aria-label="Player 2 name" value="Computer" style="flex: 1; min-width: 0; border: none; background: transparent; color: #FFFFFF; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900; outline: none">
+        <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 900; color: #FFD2A8">Computer<span style="width: 38px; height: 22px; border-radius: 11px; background: #FF8A1F; position: relative; display: inline-block"><span style="position: absolute; right: 3px; top: 3px; width: 16px; height: 16px; border-radius: 8px; background: #FFFFFF"></span></span></span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 12px 16px 22px">
+    <button style="width: 100%; height: 58px; border-radius: 18px; border: none; background: #FFC93C; color: #1A1440; font-family: 'Lilita One', sans-serif; font-size: 24px; box-shadow: 0 5px 0 #A87A12">Start</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
