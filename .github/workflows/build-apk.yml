@@ -1,31 +1,79 @@
-name: Build Android APK
+name: Build Android Release
+
 on:
   workflow_dispatch:
     inputs:
       server_url:
-        description: 'Server URL the app connects to (e.g. https://my-game.onrender.com)'
+        description: "Production HTTPS server URL (for example https://api.example.com)"
         required: true
+        type: string
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: '17' }
-      - uses: subosito/flutter-action@v2
-        with: { channel: stable }
-      - name: Generate Android project
-        working-directory: mobile
-        run: flutter create --platforms=android --org com.example.partygames . && flutter pub get
-      - name: Allow internet and http for testing
-        working-directory: mobile
-        run: |
-          M=android/app/src/main/AndroidManifest.xml
-          sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <application android:usesCleartextTraffic="true"#' $M
-      - name: Build APK
-        working-directory: mobile
-        run: flutter build apk --release --dart-define=SERVER_URL=${{ inputs.server_url }}
-      - uses: actions/upload-artifact@v4
         with:
-          name: party-games-apk
-          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Validate production server URL
+        shell: bash
+        run: |
+          case "${{ inputs.server_url }}" in
+            https://*) ;;
+            *) echo "server_url must use HTTPS for a Play Store release"; exit 1 ;;
+          esac
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Run Flutter tests
+        working-directory: mobile
+        run: flutter test
+
+      - name: Analyze Flutter project
+        working-directory: mobile
+        run: flutter analyze
+
+      - name: Configure release signing
+        working-directory: mobile/android
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "${ANDROID_KEYSTORE_BASE64}" || { echo "Missing ANDROID_KEYSTORE_BASE64"; exit 1; }
+          test -n "${ANDROID_KEY_ALIAS}" || { echo "Missing ANDROID_KEY_ALIAS"; exit 1; }
+          test -n "${ANDROID_KEY_PASSWORD}" || { echo "Missing ANDROID_KEY_PASSWORD"; exit 1; }
+          test -n "${ANDROID_STORE_PASSWORD}" || { echo "Missing ANDROID_STORE_PASSWORD"; exit 1; }
+
+          echo "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > release-key.jks
+          cat > key.properties <<EOF
+          storeFile=release-key.jks
+          keyAlias=${ANDROID_KEY_ALIAS}
+          keyPassword=${ANDROID_KEY_PASSWORD}
+          storePassword=${ANDROID_STORE_PASSWORD}
+          EOF
+
+      - name: Build signed Android App Bundle
+        working-directory: mobile
+        run: flutter build appbundle --release --dart-define=SERVER_URL=${{ inputs.server_url }}
+
+      - name: Upload Play Store bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: party-games-release-aab
+          path: mobile/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
