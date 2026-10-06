@@ -13,6 +13,18 @@ import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dar
 import 'package:multiplayer_game/features/local_games/shell/local_game_shell.dart';
 
 Future<void> loadFonts() async {
+  // The app's bundled fonts (Lilita One, Nunito) from assets/fonts.
+  Future<void> bundled(String family, List<String> files) async {
+    final loader = FontLoader(family);
+    for (final f in files) {
+      final file = File('assets/fonts/$f');
+      if (file.existsSync()) loader.addFont(Future.value(ByteData.view(file.readAsBytesSync().buffer)));
+    }
+    await loader.load();
+  }
+
+  await bundled('Lilita One', ['LilitaOne-Regular.ttf']);
+  await bundled('Nunito', ['Nunito-SemiBold.ttf', 'Nunito-Bold.ttf', 'Nunito-ExtraBold.ttf', 'Nunito-Black.ttf']);
   final family = FontLoader('Roboto');
   for (final f in ['segoeui.ttf', 'segoeuib.ttf', 'seguibl.ttf', 'seguisb.ttf']) {
     final file = File('C:\\Windows\\Fonts\\$f');

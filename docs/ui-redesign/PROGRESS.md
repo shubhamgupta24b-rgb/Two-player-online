@@ -39,3 +39,40 @@
   - `flutter build apk --debug --dart-define=APP_STYLE=flat`: built.
 - **Not tested on the emulator in this phase:** the PC was low on memory, and the last emulator
   start never finished booting. Tokens only change looks, which later phases screenshot.
+
+## App logo (between prompts 1 and 2, 2026-10-06)
+
+- **What:** the logo pack from `app-logo.zip` is in `docs/app-logo/`.
+  - Android launcher icons and adaptive foreground (all densities), background `#241A7A`.
+  - `PartyLogoPainter` redrawn from `render_logo.py` (same 1024 grid); its API is unchanged.
+  - `logo.png` is the new master.
+- **Check:** `tool/logo_render_test.dart` renders the in-app logo. It matches `store/icon_1024.png`.
+- **Results:** analyze clean; 816 tests passed.
+- **Not tested:** the launcher icon on a device or emulator (only 833 MB of RAM free; the emulator
+  can't boot).
+
+## Prompt 2 — Materials and icon set (2026-10-06)
+
+- **`core/ui/icons/svg_path.dart`:** a small SVG path-data parser (M L H V C S Q T A Z,
+  absolute and relative), so the mockups' drawings are ported as their original path strings.
+- **`core/ui/icons/game_icons.dart`:** `GameIcon` widget and `paintIcon()` for painters.
+  - Every icon in spec 2.13: wind, target, arrow, bow, hearts, shield, rocket, triple rocket,
+    mine, bolt, gun, mystery box, crown, trophy, star, coin, clock, dice 1–6, eye, skip, check,
+    cross, refresh, undo, flag, bomb, duck, rabbit, mole, golden mole, alien, ufo, tank, cactus,
+    bird, apple, ladder, snake, rock / paper / scissors, bat, balls, puck, mallet, football,
+    glove, bottle, wood / stone block, paint brush, pencil, lightbulb, lock, crown-king.
+  - The app icons the mockups use, plus a few the game specs need: magnifier, mask, scroll,
+    moon, sun, medical, clapper, speech, arrows.
+  - 15 fruit: the 12 in the Memory mockup ported path for path, plus orange, pear and melon in
+    the same style.
+- **`core/ui/materials/materials.dart`:** `FeltPainter`, `WoodPainter`, `PaperCard` /
+  `PaperCardPainter`, `CardBack` / `CardBackPainter` (ported from the mockup's card back),
+  `SkyPainter` (day / sunset / night + sun, clouds, hills, tree line helpers), `GrassPainter`,
+  `AsphaltPainter` (kerbs, skid marks), `WaterPainter`, `CourtPainter`.
+- **`core/ui/debug_gallery.dart`:** every material, badge, icon and fruit on one page. Reachable
+  from Settings in debug builds only.
+- **Tooling:** render tools now load the bundled fonts. `tool/gallery_render_test.dart` renders
+  the gallery; it was reviewed.
+- **Results:** analyze clean; 823 tests passed (+7 in `test/game_icons_test.dart`).
+- **Not tested:** the gallery on the emulator (not enough free memory); it was reviewed as a
+  render instead.

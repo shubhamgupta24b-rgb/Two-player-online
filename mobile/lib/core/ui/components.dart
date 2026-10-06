@@ -1,9 +1,11 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../audio/game_audio.dart';
 import '../settings/app_settings.dart';
 import 'app_theme_ext.dart';
+import 'debug_gallery.dart';
 
 export 'app_theme_ext.dart';
 
@@ -871,8 +873,19 @@ class _ProfileEditorState extends State<_ProfileEditor> {
 }
 
 /// Opens the settings sheet.
-Future<void> showSettingsSheet(BuildContext context, {bool profile = true}) =>
-    showAppSheet<void>(context, title: '⚙️ Settings', builder: (_) => SettingsPanel(showProfile: profile));
+Future<void> showSettingsSheet(BuildContext context, {bool profile = true}) => showAppSheet<void>(context,
+    title: 'Settings',
+    builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SettingsPanel(showProfile: profile),
+          // Debug builds only: the design gallery (materials and icons).
+          if (kDebugMode) ...[
+            const SizedBox(height: Space.m),
+            AppButton('Design gallery (debug)',
+                variant: ButtonVariant.ghost,
+                compact: true,
+                onPressed: () => Navigator.push(ctx, MaterialPageRoute(builder: (_) => const DebugGalleryScreen()))),
+          ],
+        ]));
 
 /// Haptic for an important moment, respecting the vibration setting.
 void haptic([HapticWeight w = HapticWeight.light]) {
