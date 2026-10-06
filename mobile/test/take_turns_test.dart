@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dart';
 import 'package:multiplayer_game/features/local_games/shell/local_game_shell.dart';
+import 'shell_helpers.dart';
 
 Future<void> tapText(WidgetTester tester, String text) async {
   final f = find.text(text).last;
@@ -33,12 +34,12 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(home: LocalGameShell(game: localGames.firstWhere((g) => g.id == 'fruit_merge_battle'))));
     // 3 players: 2 people and 1 computer player, 1 minute each.
-    await tapText(tester, '3');
-    await tapText(tester, '🤖 PLAY VS COMPUTER');
-    await tapText(tester, '🤖 1');
-    expect(find.text('👤 TAKE TURNS'), findsOneWidget);
-    expect(find.text('⏱ 1 min'), findsOneWidget);
-    await tapText(tester, 'PLAY');
+    await setPlayers(tester, 3);
+    await toggleComputer(tester, 2);
+    expect(find.text('CPU 1'), findsOneWidget);
+    expect(find.text('Take turns'), findsOneWidget);
+    expect(find.text('1 min'), findsOneWidget);
+    await tapStart(tester);
 
     // Player 1's turn: the pass screen, then the whole box.
     expect(find.text('PLAYER 1'), findsOneWidget);
@@ -67,7 +68,7 @@ void main() {
     // The computer's turn happens instantly, then the results.
     await tapText(tester, 'SEE RESULTS');
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.textContaining('WIN').evaluate().isNotEmpty || find.text('DRAW!').evaluate().isNotEmpty, isTrue);
+    expect(hasWinnerLine(), isTrue);
     expect(find.text('CPU 1'), findsWidgets);
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));
@@ -78,8 +79,8 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(home: LocalGameShell(game: localGames.firstWhere((g) => g.id == 'basketball_hoops'))));
-    await tapText(tester, '⏱ 3 min');
-    await tapText(tester, 'PLAY');
+    await tapText(tester, '3 min');
+    await tapStart(tester);
     expect(find.textContaining('3 min on the whole screen'), findsOneWidget);
     await tapText(tester, 'START');
     expect(find.text('3:00'), findsOneWidget);

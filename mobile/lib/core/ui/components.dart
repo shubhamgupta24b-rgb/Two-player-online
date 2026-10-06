@@ -6,8 +6,10 @@ import '../audio/game_audio.dart';
 import '../settings/app_settings.dart';
 import 'app_theme_ext.dart';
 import 'debug_gallery.dart';
+import 'game_kit.dart';
 
 export 'app_theme_ext.dart';
+export 'game_kit.dart';
 
 /// Shared building blocks. Every screen uses these instead of styling Material widgets
 /// inline, so both flavours (neon, flat) and accessibility rules apply everywhere.
@@ -300,7 +302,7 @@ class _AppDialog extends StatelessWidget {
 }
 
 /// Asks to confirm something destructive. True when confirmed.
-Future<bool> confirmAction(BuildContext context, {required String title, required String message, required String confirm, String cancel = 'CANCEL', String emoji = '⚠️'}) async {
+Future<bool> confirmAction(BuildContext context, {required String title, required String message, required String confirm, String cancel = 'CANCEL', String? emoji = '⚠️'}) async {
   final ok = await showAppDialog<bool>(context, title: title, message: message, emoji: emoji, actions: [
     Builder(builder: (ctx) => AppButton(confirm, variant: ButtonVariant.danger, onPressed: () => Navigator.pop(ctx, true))),
     Builder(builder: (ctx) => AppButton(cancel, variant: ButtonVariant.secondary, onPressed: () => Navigator.pop(ctx, false))),
@@ -681,31 +683,67 @@ class _RingPainter extends CustomPainter {
   bool shouldRepaint(_RingPainter o) => o.f != f || o.c != c || o.track != track;
 }
 
-/// "PLAYER 1'S TURN" in one place and one style, with the player's shape.
+/// The turn / moment panel under the HUD or scene (spec 2.4): a big Lilita line, a small
+/// Nunito line, the player's badge or an icon. [kind] picks the look: turn (the player's
+/// colour), success (gold), miss (red, with a draining bar for the reveal time), info.
 class TurnBanner extends StatelessWidget {
   final String text;
   final Color color;
   final int? seat;
   final bool compact;
-  const TurnBanner({super.key, required this.text, required this.color, this.seat, this.compact = false});
+  final String? sub; // the small line: what to do
+  final TurnBannerKind kind;
+  final GameIcons? icon; // instead of the badge
+  final double? drain; // miss: 1 -> 0 while the cards show
+  const TurnBanner({super.key, required this.text, required this.color, this.seat, this.compact = false, this.sub, this.kind = TurnBannerKind.turn, this.icon, this.drain});
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
     final s = seat ?? PlayerPalette.indexOf(color);
+    final (Color line, Color edge, Color fill) = switch (kind) {
+      TurnBannerKind.turn => (t.flat ? fillFor(color) : nameColor(color), color.withValues(alpha: 0.55), color.withValues(alpha: t.flat ? 0.12 : 0.10)),
+      TurnBannerKind.success => (t.flat ? const Color(0xFF8A5A00) : Brand.gold, Brand.gold.withValues(alpha: 0.7), Brand.gold.withValues(alpha: 0.14)),
+      TurnBannerKind.miss => (t.flat ? FlatPalette.close : const Color(0xFFFF8E8B), const Color(0xFFFF5E5B).withValues(alpha: 0.6), const Color(0xFFFF5E5B).withValues(alpha: 0.12)),
+      TurnBannerKind.info => (t.flat ? t.text : Colors.white, t.flat ? t.strokeStrong : t.stroke, t.flat ? Colors.white : t.surface),
+    };
+    final Widget? lead = icon != null
+        ? GameIcon(icon!, size: compact ? 20 : 24, color: line)
+        : (kind == TurnBannerKind.turn && s != null ? PlayerBadge(index: s, size: compact ? 20 : 24, color: color) : null);
     return Semantics(
       liveRegion: true,
-      label: text,
+      label: stripEmoji(sub == null ? text : '$text. $sub'),
       excludeSemantics: true,
       child: AnimatedSwitcher(
         duration: Motion.of(context, Motion.normal),
-        transitionBuilder: (child, a) => FadeTransition(opacity: a, child: ScaleTransition(scale: Tween(begin: 0.9, end: 1.0).animate(a), child: child)),
+        transitionBuilder: (child, a) => FadeTransition(opacity: a, child: ScaleTransition(scale: Tween(begin: 0.94, end: 1.0).animate(a), child: child)),
         child: Container(
-          key: ValueKey(text),
-          padding: EdgeInsets.symmetric(horizontal: compact ? Space.m : Space.l, vertical: compact ? 5 : Space.s),
-          decoration: BoxDecoration(color: fillFor(color), borderRadius: BorderRadius.circular(Radii.pill), boxShadow: [BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 14)]),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            if (s != null) ...[SizedBox(width: 14, height: 14, child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(s), Colors.white))), const SizedBox(width: 7)],
-            Flexible(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: compact ? 13.5 : 16, letterSpacing: 0.6))),
+          key: ValueKey('$kind$text${sub ?? ''}'),
+          constraints: BoxConstraints(minHeight: compact ? 36 : 44),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 14, vertical: compact ? 3 : 6),
+          decoration: BoxDecoration(
+            color: t.flat ? Color.alphaBlend(fill, Colors.white) : fill,
+            borderRadius: BorderRadius.circular(compact ? 14 : 18),
+            border: Border.all(color: edge, width: kind == TurnBannerKind.info ? 1 : 1.5),
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              if (lead != null) ...[lead, SizedBox(width: compact ? 8 : 10)],
+              Flexible(
+                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: lead == null ? CrossAxisAlignment.center : CrossAxisAlignment.start, children: [
+                  Text(stripEmoji(text), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: compact ? 16 : 20, height: 1.0, color: line)),
+                  if (sub != null)
+                    Text(stripEmoji(sub!), maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: compact ? 12 : 13, fontWeight: FontWeight.w700, color: t.flat ? t.textMuted : NeonPalette.textMuted)),
+                ]),
+              ),
+            ]),
+            if (drain != null) ...[
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(value: drain!.clamp(0, 1), minHeight: 3, color: line, backgroundColor: line.withValues(alpha: 0.2)),
+              ),
+            ],
           ]),
         ),
       ),

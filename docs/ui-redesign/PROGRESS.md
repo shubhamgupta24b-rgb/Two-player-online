@@ -76,3 +76,47 @@
 - **Results:** analyze clean; 823 tests passed (+7 in `test/game_icons_test.dart`).
 - **Not tested:** the gallery on the emulator (not enough free memory); it was reviewed as a
   render instead.
+
+## Prompt 3 — shared game components (done)
+
+**Changed**
+- New `core/ui/game_kit.dart` (exported from `components.dart`):
+  - `GoldButton`, `KitButton` (outline / ghost / soft / danger), `RoundButton` (44 px, glass or dark), `PillSwitch`, `EdgeTag`;
+  - `PlayerScoreCard` + `PlayerScoreRow` (2 / 3–4 compact / 5–6 grid), `RoundBoxes`, `Pips`;
+  - `OverlayChip` + `MeterBar`, `SceneFrame`;
+  - `CountdownOverlay` (3 · 2 · 1 · GO, ring, tick sound + haptic);
+  - `ConnectionBanner` (states only, no new logic);
+  - `FeedbackLayer` / `GameFeedback` (pop, announce, flash, shake ≤ 6 px, confetti ≤ 40; shake and confetti off with Reduce motion), `ConfettiBurst`;
+  - emoji → drawn icon helpers (`ruleSpan`, `leadingRuleIcon`, `stripEmoji`).
+- `TurnBanner` upgraded in place: panel with turn / success / miss (draining bar) / info kinds.
+- Shell:
+  - new `game_intro.dart`: Intro mockup, with art header, first 3 rules + All rules, players stepper, rows with editable names and per-seat Person / Computer switch (maps to the existing bot count), Teams, Play mode + minutes, Start pinned;
+  - `pause_sheet.dart`: Pause mockup;
+  - `how_to_play.dart`;
+  - `result_screen.dart`: `ResultScreen` replaces `_Result` / `_ResultCard` / `_SoloResult`, plus `ResultExtras` / `ResultScope` so games can add a score line, hero art and per-row detail in their batches;
+  - `game_art.dart`: icon per game id, plus a registry for game scene painters.
+- `PauseButton` is now a 44 px round button. New `HelpButton`. `LeaveGameScope` also carries help and the state line.
+- `GameTopBar` is now pause · small-caps name + Lilita state line · help.
+- Party widgets restyled:
+  - pass-the-phone hand-off with badge + hold button;
+  - paper `PromptCard`;
+  - `PlayerPicker` with check;
+  - `TimeChip` with clock;
+  - `WaitingNote`.
+- Split-screen kit:
+  - optional zone tints (`colors:`);
+  - `ControlStrip`, `SideTimer`;
+  - restyled middle bars and centre chip.
+
+**Decisions**
+- Hold-to-reveal kept as "hold until full, then shown until Hide & pass". Several secrets need taps (votes, choices), so "release hides" would block them.
+- The confirm dialogs for Restart and Quit have no emoji.
+
+**Tests**
+- `flutter analyze` is clean, and `flutter test` passes: 830 tests (+7 new in `test/game_kit_test.dart`).
+- Intro, vs-computer, teams, take-turns and text-scale tests were updated to the new labels: Start, the players stepper, Computer switches, Rematch / Play again. The new `test/shell_helpers.dart` holds the shared steps.
+- Debug APKs build for both flavors (default and `APP_STYLE=flat`).
+
+**Could not test**
+- The emulator still can't boot (not enough free RAM). Instead, the screens were rendered to PNG with `tool/shell_render_test.dart` (intro, how to play, pause, 2- and 4-player results, solo result) and compared with the mockups.
+- Not tested on a real phone: online play and Wi-Fi hosting.

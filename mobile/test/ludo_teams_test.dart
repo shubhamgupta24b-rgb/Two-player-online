@@ -5,6 +5,7 @@ import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dar
 import 'package:multiplayer_game/features/local_games/ludo/ludo_game.dart';
 import 'package:multiplayer_game/features/local_games/shell/bots.dart';
 import 'package:multiplayer_game/features/local_games/shell/local_game_shell.dart';
+import 'shell_helpers.dart';
 
 void main() {
   test('teams only with 4 players; 1+3 vs 2+4', () {
@@ -95,20 +96,11 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(home: LocalGameShell(game: localGames.firstWhere((g) => g.id == 'ludo'))));
-    expect(find.text('🤝 PLAY IN TEAMS (2 vs 2)'), findsNothing, reason: '2 players: no teams');
-    await tester.ensureVisible(find.text('4').last);
-    await tester.pump();
-    await tester.tap(find.text('4').last);
-    await tester.pump();
-    await tester.ensureVisible(find.text('🤝 PLAY IN TEAMS (2 vs 2)'));
-    await tester.pump();
-    await tester.tap(find.text('🤝 PLAY IN TEAMS (2 vs 2)'));
-    await tester.pump();
-    expect(find.text('🅰 Player 1 + Player 3  vs  🅱 Player 2 + Player 4'), findsOneWidget);
-    await tester.ensureVisible(find.text('PLAY').last);
-    await tester.pump();
-    await tester.tap(find.text('PLAY').last);
-    await tester.pump();
+    expect(find.text('Teams 2 vs 2'), findsNothing, reason: '2 players: no teams');
+    await setPlayers(tester, 4);
+    await tapFound(tester, find.text('Teams 2 vs 2'));
+    expect(find.text('Player 1 + Player 3 vs Player 2 + Player 4'), findsOneWidget);
+    await tapStart(tester);
     await tester.pump(const Duration(milliseconds: 2800));
     expect(find.textContaining('🅰 Player 1'), findsOneWidget, reason: 'team badges on the board');
     expect(find.textContaining('🅱 Player 2'), findsOneWidget);

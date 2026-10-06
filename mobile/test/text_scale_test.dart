@@ -23,7 +23,7 @@ Future<void> openAndPlay(WidgetTester tester, LocalGameInfo game) async {
   phone(tester);
   await tester.pumpWidget(scaled(LocalGameShell(game: game)));
   await tester.pump(const Duration(milliseconds: 400));
-  final play = find.text('PLAY');
+  final play = find.text('Start');
   await tester.ensureVisible(play);
   await tester.pump();
   await tester.tap(play);
@@ -49,15 +49,15 @@ void main() {
   testWidgets('pause menu at 1.3x text', (tester) async {
     phone(tester);
     await tester.pumpWidget(scaled(LocalGameShell(game: localGames.firstWhere((g) => g.id == 'tic_tac_toe'))));
-    await tester.ensureVisible(find.text('PLAY'));
+    await tester.ensureVisible(find.text('Start'));
     await tester.pump();
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.text('Start'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 2600));
     await tester.tap(find.byType(PauseButton).first);
     await tester.pumpAndSettle();
-    expect(find.text('RESUME'), findsOneWidget);
-    await tester.tap(find.text('RESUME'));
+    expect(find.text('Resume'), findsOneWidget);
+    await tester.tap(find.text('Resume'));
     await tester.pump(const Duration(milliseconds: 600)); // the game runs again: never settles
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 3));

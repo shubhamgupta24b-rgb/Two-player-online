@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'components.dart';
-import 'icons/game_icons.dart';
 import 'materials/materials.dart';
 
 /// Debug-only: every material and icon on one scrolling page, to check them on a device.

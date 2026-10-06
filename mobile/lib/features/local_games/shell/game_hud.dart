@@ -68,12 +68,15 @@ class GameStatus extends StatelessWidget {
     final t = context.tk;
     final Widget child;
     if (message != null) {
-      child = Text(message!,
-          key: ValueKey('m$message'), textAlign: TextAlign.center, maxLines: 2, style: t.styles.headline.copyWith(color: t.accent, fontSize: 22, shadows: const [Shadow(color: Colors.black45, blurRadius: 4)]));
+      child = Text(stripEmoji(message!),
+          key: ValueKey('m$message'),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          style: t.styles.h2.copyWith(color: t.flat ? const Color(0xFF8A5A00) : Brand.gold, shadows: t.flat ? null : const [Shadow(color: Color(0xFF7A4B00), offset: Offset(0, 3))]));
     } else if (player != null && turnText != null) {
       child = TurnBanner(key: ValueKey('t$turnText'), text: turnText!, color: player!.color);
     } else if (turnText != null) {
-      child = Text(turnText!, key: ValueKey('x$turnText'), textAlign: TextAlign.center, style: t.styles.bodyStrong.copyWith(color: t.onBgMuted));
+      child = Text(stripEmoji(turnText!), key: ValueKey('x$turnText'), textAlign: TextAlign.center, style: t.styles.bodyStrong.copyWith(color: t.onBgMuted));
     } else {
       child = const SizedBox.shrink();
     }
