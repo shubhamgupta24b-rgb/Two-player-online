@@ -36,6 +36,7 @@ ThemeData buildAppTheme() {
   );
   return ThemeData(
     useMaterial3: true,
+    fontFamily: Fonts.body,
     colorScheme: scheme,
     extensions: [appTokens],
     scaffoldBackgroundColor: AppColors.deep,

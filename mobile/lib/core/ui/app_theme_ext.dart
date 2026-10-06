@@ -3,90 +3,123 @@ import 'tokens.dart';
 
 export 'tokens.dart';
 
-/// One typography scale. Scores use tabular figures so they don't jiggle as they change.
+/// The type scale (spec 1.3). Display faces are Lilita One, the rest Nunito. Numbers that
+/// change (scores, timers) use tabular figures.
 @immutable
 class GameType {
-  final TextStyle display, headline, title, body, bodyStrong, label, caption, button, score, scoreLarge;
+  final TextStyle display, h1, h2, h3, score, scoreLarge, body, bodyStrong, bodySmall, label, micro, button, buttonSmall;
+
+  // Older names, still used across the app.
+  TextStyle get headline => h2;
+  TextStyle get title => h3;
+  TextStyle get caption => bodySmall;
+
   const GameType({
     required this.display,
-    required this.headline,
-    required this.title,
-    required this.body,
-    required this.bodyStrong,
-    required this.label,
-    required this.caption,
-    required this.button,
+    required this.h1,
+    required this.h2,
+    required this.h3,
     required this.score,
     required this.scoreLarge,
+    required this.body,
+    required this.bodyStrong,
+    required this.bodySmall,
+    required this.label,
+    required this.micro,
+    required this.button,
+    required this.buttonSmall,
   });
 
   static const _tabular = [FontFeature.tabularFigures()];
 
-  /// The scale in a given text colour.
-  factory GameType.of(Color text, Color muted) => GameType(
-        display: TextStyle(color: text, fontSize: 34, fontWeight: FontWeight.w900, height: 1.1, letterSpacing: 0.5),
-        headline: TextStyle(color: text, fontSize: 26, fontWeight: FontWeight.w900, height: 1.15),
-        title: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w900, height: 1.2, letterSpacing: 0.3),
-        body: TextStyle(color: text, fontSize: 15, fontWeight: FontWeight.w600, height: 1.35),
-        bodyStrong: TextStyle(color: text, fontSize: 15, fontWeight: FontWeight.w800, height: 1.3),
-        label: TextStyle(color: muted, fontSize: 12.5, fontWeight: FontWeight.w900, letterSpacing: 1.4),
-        caption: TextStyle(color: muted, fontSize: 12.5, fontWeight: FontWeight.w700, height: 1.3),
-        button: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.8),
-        score: TextStyle(color: text, fontSize: 20, fontWeight: FontWeight.w900, fontFeatures: _tabular),
-        scoreLarge: TextStyle(color: text, fontSize: 64, fontWeight: FontWeight.w900, height: 1, fontFeatures: _tabular),
+  /// The scale in a given text, muted and label colour.
+  factory GameType.of(Color text, Color muted, Color label) => GameType(
+        display: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 48, height: 1.0),
+        h1: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 38, height: 1.05),
+        h2: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 26, height: 1.1),
+        h3: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 20, height: 1.15),
+        score: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 28, height: 1.0, fontFeatures: _tabular),
+        scoreLarge: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 64, height: 1.0, fontFeatures: _tabular),
+        body: TextStyle(fontFamily: Fonts.body, color: text, fontSize: 15, fontWeight: FontWeight.w800, height: 1.35),
+        bodyStrong: TextStyle(fontFamily: Fonts.body, color: text, fontSize: 15, fontWeight: FontWeight.w900, height: 1.3),
+        bodySmall: TextStyle(fontFamily: Fonts.body, color: muted, fontSize: 13, fontWeight: FontWeight.w700, height: 1.3),
+        label: TextStyle(fontFamily: Fonts.body, color: label, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 11 * 0.16),
+        micro: TextStyle(fontFamily: Fonts.body, color: text, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.6),
+        button: const TextStyle(fontFamily: Fonts.display, fontSize: 22, height: 1.0),
+        buttonSmall: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900),
       );
 
-  static GameType lerp(GameType a, GameType b, double t) => GameType(
-        display: TextStyle.lerp(a.display, b.display, t)!,
-        headline: TextStyle.lerp(a.headline, b.headline, t)!,
-        title: TextStyle.lerp(a.title, b.title, t)!,
-        body: TextStyle.lerp(a.body, b.body, t)!,
-        bodyStrong: TextStyle.lerp(a.bodyStrong, b.bodyStrong, t)!,
-        label: TextStyle.lerp(a.label, b.label, t)!,
-        caption: TextStyle.lerp(a.caption, b.caption, t)!,
-        button: TextStyle.lerp(a.button, b.button, t)!,
-        score: TextStyle.lerp(a.score, b.score, t)!,
-        scoreLarge: TextStyle.lerp(a.scoreLarge, b.scoreLarge, t)!,
-      );
+  static GameType lerp(GameType a, GameType b, double t) {
+    TextStyle l(TextStyle x, TextStyle y) => TextStyle.lerp(x, y, t)!;
+    return GameType(
+      display: l(a.display, b.display),
+      h1: l(a.h1, b.h1),
+      h2: l(a.h2, b.h2),
+      h3: l(a.h3, b.h3),
+      score: l(a.score, b.score),
+      scoreLarge: l(a.scoreLarge, b.scoreLarge),
+      body: l(a.body, b.body),
+      bodyStrong: l(a.bodyStrong, b.bodyStrong),
+      bodySmall: l(a.bodySmall, b.bodySmall),
+      label: l(a.label, b.label),
+      micro: l(a.micro, b.micro),
+      button: l(a.button, b.button),
+      buttonSmall: l(a.buttonSmall, b.buttonSmall),
+    );
+  }
 }
 
-/// The flavour-aware design tokens. Two sets: [neon] (the default night look) and [flat]
-/// (the flat app's board-game look). Read them with `context.tk`.
+/// The flavour-aware design tokens (spec 1.1, 2.1). Two instances: [neon] (night, the
+/// default) and [flatSet] (the flat app). Read them with `context.tokens`.
 ///
-/// Text pairs: [onBg]/[onBgMuted] go straight on the background or on [glass];
+/// Text pairs: [onBg]/[onBgMuted] go straight on the background or on [surface];
 /// [text]/[textMuted] go on [card] surfaces.
 @immutable
 class GameTokens extends ThemeExtension<GameTokens> {
   final bool flat;
   final Color bgTop, bg, bgBottom;
-  final Color glass, glassStrong, card, cardRaised, sunken, stroke, strokeStrong, scrim;
-  final Color onBg, onBgMuted, text, textMuted;
-  final Color accent, onAccent, success, warn, danger, info;
+  final Color surface, surfaceStrong, stroke, overlay, sheet;
+  final Color card, cardRaised, sunken, strokeStrong, scrim;
+  final Color onBg, onBgMuted, text, textMuted, label;
+  final Color gold, goldDeep, onGold, success, warn, danger, info;
   final List<BoxShadow> shadowSm, shadowMd, shadowLg;
-  /// Text styles in [onBg]. (Not called 	ype: ThemeExtension uses that name as its key.)
+
+  /// Text styles in [onBg]. (Not called `type`: ThemeExtension uses that name as its key.)
   final GameType styles;
+
   /// Text styles in [text], for card surfaces.
   final GameType cardStyles;
+
+  // Older names, still used across the app.
+  Color get bgMid => bg;
+  Color get glass => surface;
+  Color get glassStrong => surfaceStrong;
+  Color get accent => gold;
+  Color get onAccent => onGold;
 
   const GameTokens({
     required this.flat,
     required this.bgTop,
     required this.bg,
     required this.bgBottom,
-    required this.glass,
-    required this.glassStrong,
+    required this.surface,
+    required this.surfaceStrong,
+    required this.stroke,
+    required this.overlay,
+    required this.sheet,
     required this.card,
     required this.cardRaised,
     required this.sunken,
-    required this.stroke,
     required this.strokeStrong,
     required this.scrim,
     required this.onBg,
     required this.onBgMuted,
     required this.text,
     required this.textMuted,
-    required this.accent,
-    required this.onAccent,
+    required this.label,
+    required this.gold,
+    required this.goldDeep,
+    required this.onGold,
     required this.success,
     required this.warn,
     required this.danger,
@@ -103,50 +136,60 @@ class GameTokens extends ThemeExtension<GameTokens> {
     bgTop: NeonPalette.bgTop,
     bg: NeonPalette.bg,
     bgBottom: NeonPalette.bgBottom,
-    glass: NeonPalette.glass,
-    glassStrong: NeonPalette.glassStrong,
+    surface: NeonPalette.surface,
+    surfaceStrong: NeonPalette.surfaceStrong,
+    stroke: NeonPalette.stroke,
+    overlay: NeonPalette.overlay,
+    sheet: NeonPalette.sheet,
     card: NeonPalette.card,
     cardRaised: NeonPalette.cardRaised,
     sunken: NeonPalette.sunken,
-    stroke: NeonPalette.stroke,
     strokeStrong: NeonPalette.strokeStrong,
-    scrim: const Color(0xB3060820),
+    scrim: const Color(0x9E060820), // rgba(6,8,32,0.62), as over the game in the Pause mockup
     onBg: NeonPalette.text,
     onBgMuted: NeonPalette.textMuted,
     text: NeonPalette.text,
     textMuted: NeonPalette.textMuted,
-    accent: Brand.gold,
-    onAccent: Brand.ink,
+    label: NeonPalette.label,
+    gold: Brand.gold,
+    goldDeep: Brand.goldDeep,
+    onGold: Brand.onGold,
     success: StatusColors.success,
     warn: StatusColors.warn,
     danger: StatusColors.danger,
     info: StatusColors.info,
-    shadowSm: const [BoxShadow(color: Color(0x4D000000), blurRadius: 6, offset: Offset(0, 2))],
-    shadowMd: const [BoxShadow(color: Color(0x59000000), blurRadius: 16, offset: Offset(0, 6))],
-    shadowLg: const [BoxShadow(color: Color(0x73000000), blurRadius: 30, offset: Offset(0, 12))],
-    styles: GameType.of(NeonPalette.text, NeonPalette.textMuted),
-    cardStyles: GameType.of(NeonPalette.text, NeonPalette.textMuted),
+    shadowSm: Shadows.small,
+    shadowMd: Shadows.small,
+    shadowLg: Shadows.large,
+    styles: GameType.of(NeonPalette.text, NeonPalette.textMuted, NeonPalette.label),
+    cardStyles: GameType.of(NeonPalette.text, NeonPalette.textMuted, NeonPalette.label),
   );
 
+  /// Flat app: sky background with ink text on it (white text on the spec's sky would fail
+  /// 4.5:1), white tiles, dark name strips.
   static final flatSet = GameTokens(
     flat: true,
     bgTop: FlatPalette.skyLight,
     bg: FlatPalette.sky,
     bgBottom: FlatPalette.skyDeep,
-    glass: const Color(0x24000000),
-    glassStrong: const Color(0x38000000),
-    card: FlatPalette.tile,
-    cardRaised: FlatPalette.tile,
+    surface: const Color(0xD9FFFFFF),
+    surfaceStrong: FlatPalette.surfaceStrong,
+    stroke: FlatPalette.stroke,
+    overlay: FlatPalette.overlay,
+    sheet: FlatPalette.surface,
+    card: FlatPalette.surface,
+    cardRaised: FlatPalette.surface,
     sunken: FlatPalette.option,
-    stroke: const Color(0x4DFFFFFF),
-    strokeStrong: FlatPalette.tileShade,
-    scrim: const Color(0x99173A52),
-    onBg: Colors.white,
-    onBgMuted: const Color(0xFFEAF4FB),
+    strokeStrong: FlatPalette.stroke,
+    scrim: const Color(0xB822212B),
+    onBg: FlatPalette.ink,
+    onBgMuted: FlatPalette.ink,
     text: FlatPalette.ink,
     textMuted: FlatPalette.inkMuted,
-    accent: Brand.gold,
-    onAccent: Brand.ink,
+    label: FlatPalette.label,
+    gold: Brand.gold,
+    goldDeep: Brand.goldDeep,
+    onGold: Brand.onGold,
     success: const Color(0xFF1E9E57),
     warn: StatusColors.warn,
     danger: FlatPalette.close,
@@ -154,8 +197,8 @@ class GameTokens extends ThemeExtension<GameTokens> {
     shadowSm: const [BoxShadow(color: Color(0x33000000), offset: Offset(0, 3))],
     shadowMd: const [BoxShadow(color: Color(0x38000000), offset: Offset(0, 4))],
     shadowLg: const [BoxShadow(color: Color(0x40000000), offset: Offset(0, 6))],
-    styles: GameType.of(Colors.white, const Color(0xFFEAF4FB)),
-    cardStyles: GameType.of(FlatPalette.ink, FlatPalette.inkMuted),
+    styles: GameType.of(FlatPalette.ink, FlatPalette.ink, FlatPalette.ink),
+    cardStyles: GameType.of(FlatPalette.ink, FlatPalette.inkMuted, FlatPalette.label),
   );
 
   @override
@@ -171,20 +214,24 @@ class GameTokens extends ThemeExtension<GameTokens> {
       bgTop: c(bgTop, o.bgTop),
       bg: c(bg, o.bg),
       bgBottom: c(bgBottom, o.bgBottom),
-      glass: c(glass, o.glass),
-      glassStrong: c(glassStrong, o.glassStrong),
+      surface: c(surface, o.surface),
+      surfaceStrong: c(surfaceStrong, o.surfaceStrong),
+      stroke: c(stroke, o.stroke),
+      overlay: c(overlay, o.overlay),
+      sheet: c(sheet, o.sheet),
       card: c(card, o.card),
       cardRaised: c(cardRaised, o.cardRaised),
       sunken: c(sunken, o.sunken),
-      stroke: c(stroke, o.stroke),
       strokeStrong: c(strokeStrong, o.strokeStrong),
       scrim: c(scrim, o.scrim),
       onBg: c(onBg, o.onBg),
       onBgMuted: c(onBgMuted, o.onBgMuted),
       text: c(text, o.text),
       textMuted: c(textMuted, o.textMuted),
-      accent: c(accent, o.accent),
-      onAccent: c(onAccent, o.onAccent),
+      label: c(label, o.label),
+      gold: c(gold, o.gold),
+      goldDeep: c(goldDeep, o.goldDeep),
+      onGold: c(onGold, o.onGold),
       success: c(success, o.success),
       warn: c(warn, o.warn),
       danger: c(danger, o.danger),
@@ -199,11 +246,14 @@ class GameTokens extends ThemeExtension<GameTokens> {
 }
 
 extension GameTokensX on BuildContext {
-  /// The design tokens in effect here (neon unless inside a flat-look subtree).
-  GameTokens get tk => Theme.of(this).extension<GameTokens>() ?? GameTokens.neon;
+  /// The design tokens in effect here (night unless inside a flat-look subtree).
+  GameTokens get tokens => Theme.of(this).extension<GameTokens>() ?? GameTokens.neon;
+
+  /// Short alias of [tokens].
+  GameTokens get tk => tokens;
 }
 
-/// Gives [child] the flat or neon token set (e.g. a word game's play screen in the flat app).
+/// Gives [child] the flat or night token set (e.g. a word game's play screen in the flat app).
 class TokenScope extends StatelessWidget {
   final bool flat;
   final Widget child;

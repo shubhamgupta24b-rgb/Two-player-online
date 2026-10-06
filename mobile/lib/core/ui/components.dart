@@ -486,7 +486,8 @@ class PlayerShapePainter extends CustomPainter {
   final PlayerShape shape;
   final Color color;
   final Color? outline;
-  const PlayerShapePainter(this.shape, this.color, {this.outline});
+  final double? outlineWidth; // absolute stroke width; default 10% of the size
+  const PlayerShapePainter(this.shape, this.color, {this.outline, this.outlineWidth});
 
   static Path pathFor(PlayerShape shape, Rect r) {
     final c = r.center, w = r.width / 2, h = r.height / 2;
@@ -505,7 +506,7 @@ class PlayerShapePainter extends CustomPainter {
     return switch (shape) {
       PlayerShape.circle => Path()..addOval(r.deflate(r.width * 0.06)),
       PlayerShape.triangle => poly(3, -math.pi / 2),
-      PlayerShape.square => Path()..addRRect(RRect.fromRectAndRadius(r.deflate(r.width * 0.12), Radius.circular(r.width * 0.12))),
+      PlayerShape.roundedSquare => Path()..addRRect(RRect.fromRectAndRadius(r.deflate(r.width * 0.14), Radius.circular(r.width * 0.2))),
       PlayerShape.diamond => poly(4, -math.pi / 2),
       PlayerShape.star => poly(5, -math.pi / 2, 0.48),
       PlayerShape.hexagon => poly(6, 0),
@@ -519,7 +520,7 @@ class PlayerShapePainter extends CustomPainter {
     if (outline != null) {
       canvas.drawPath(path, Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.1
+        ..strokeWidth = outlineWidth ?? size.width * 0.1
         ..strokeJoin = StrokeJoin.round
         ..color = outline!);
     }
@@ -905,6 +906,38 @@ class Shake extends StatelessWidget {
       duration: const Duration(milliseconds: 360),
       builder: (_, v, c) => Transform.translate(offset: Offset(math.sin(v * math.pi * 6) * 8 * v, 0), child: c),
       child: child,
+    );
+  }
+}
+
+/// A player's marker (spec 2.2): their shape filled with their colour and a 1.5 px white
+/// outline, optionally with an initial inside (Lilita One, dark ink on light colours).
+class PlayerBadge extends StatelessWidget {
+  final int index; // seat, 0-based
+  final double size;
+  final String? initial;
+  final Color? color; // defaults to the seat colour
+  const PlayerBadge({super.key, required this.index, this.size = 28, this.initial, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? PlayerPalette.color(index);
+    return Semantics(
+      label: 'Player ${index + 1}',
+      excludeSemantics: true,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(
+          painter: PlayerShapePainter(PlayerPalette.shape(index), c, outline: Colors.white, outlineWidth: 1.5),
+          child: initial == null
+              ? null
+              : Center(
+                  child: Text(initial!.characters.first.toUpperCase(),
+                      style: TextStyle(fontFamily: Fonts.display, fontSize: size * 0.5, height: 1, color: onColor(c))),
+                ),
+        ),
+      ),
     );
   }
 }
