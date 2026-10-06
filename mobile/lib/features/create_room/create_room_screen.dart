@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/room/room_manager.dart';
-import '../../core/ui/app_ui.dart';
+import '../../core/ui/app_ui.dart' show AppBackground;
 import '../../core/ui/components.dart';
 import '../../games/game_catalog.dart';
-import '../guess_person/widgets/gp_theme.dart' show GpButton, GpColors;
+import '../local_games/shell/game_art.dart';
 import '../lobby/lobby_screen.dart';
 import 'game_grid.dart';
 
@@ -41,32 +41,31 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
+    bool fits(GameInfo g) => players >= g.minPlayers && players <= g.maxPlayers;
+    final fitting = gameCatalog.where(fits).length;
+    final compact = MediaQuery.sizeOf(context).height < 700;
     return Scaffold(
       body: AppBackground(
         child: SafeArea(
-          child: Column(children: [
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(4, 4, 16, 10),
-              child: Row(children: [
-                AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('CREATE A ROOM', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                    if (MediaQuery.sizeOf(context).height >= 700)
-                      const Text('One room, any game: switch between rounds', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600, fontSize: 12.5)),
-                  ]),
-                ),
-                Text('${gameCatalog.length} GAMES', style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900, fontSize: 12)),
-              ]),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+              child: PageHeader(label: 'Create a room', title: compact ? null : 'One room, any game'),
             ),
-            Expanded(child: GameGrid(selectedId: gameId, onSelect: (g) => setState(() => gameId = g.id))),
-            _BottomPanel(
-              game: game,
-              players: players,
-              busy: busy,
-              onPlayers: (n) => setState(() => players = n),
-              onCreate: _create,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: _RoomSize(players: players, onPlayers: (n) => setState(() => players = n)),
             ),
+            Expanded(
+              child: GameGrid(
+                selectedId: gameId,
+                fits: fits,
+                onSelect: (g) => setState(() => gameId = g.id),
+                header: Text('$fitting games fit $players players · switch games between rounds', style: t.styles.label),
+              ),
+            ),
+            _BottomPanel(game: game, fits: fits(game), busy: busy, onCreate: _create),
           ]),
         ),
       ),
@@ -74,85 +73,92 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   }
 }
 
-class _BottomPanel extends StatelessWidget {
-  final GameInfo game;
+/// Room size: a - / + stepper and one badge per seat.
+class _RoomSize extends StatelessWidget {
   final int players;
-  final bool busy;
   final ValueChanged<int> onPlayers;
-  final VoidCallback onCreate;
-  const _BottomPanel({required this.game, required this.players, required this.busy, required this.onPlayers, required this.onCreate});
+  const _RoomSize({required this.players, required this.onPlayers});
 
   @override
   Widget build(BuildContext context) {
-    final fits = players >= game.minPlayers && players <= game.maxPlayers;
-    final compact = MediaQuery.sizeOf(context).height < 700; // small phones: leave room for the games
+    final t = context.tk;
+    Widget step(String key, GameIcons icon, String label, VoidCallback? onTap) => Semantics(
+          key: ValueKey(key),
+          button: true,
+          enabled: onTap != null,
+          label: label,
+          excludeSemantics: true,
+          child: Opacity(
+            opacity: onTap == null ? 0.35 : 1,
+            child: RoundButton(icon: icon, label: label, size: 40, onPressed: onTap),
+          ),
+        );
     return Container(
-      padding: EdgeInsets.fromLTRB(16, compact ? 10 : 14, 16, compact ? 10 : 16),
-      decoration: BoxDecoration(
-        color: AppColors.night,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-        border: Border(top: BorderSide(color: game.color, width: 3)),
-        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, -4))],
-      ),
-      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(children: [
-          Text(game.emoji, style: const TextStyle(fontSize: 30)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(game.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
-              Text(fits ? game.tagline : 'Needs ${game.playersLabel} players: you can switch games in the room',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: fits ? AppColors.muted : AppColors.gold, fontSize: 12.5, fontWeight: FontWeight.w600)),
-            ]),
+      padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+      decoration: BoxDecoration(color: t.flat ? Colors.white : t.surface, borderRadius: Radii.rLg, border: Border.all(color: t.flat ? FlatPalette.stroke : t.stroke)),
+      child: Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('ROOM SIZE', style: t.styles.label.copyWith(color: t.flat ? FlatPalette.label : null)),
+            const SizedBox(height: 4),
+            ExcludeSemantics(
+              child: Wrap(spacing: 4, runSpacing: 4, children: [for (var i = 0; i < players; i++) PlayerBadge(index: i, size: 18)]),
+            ),
+          ]),
+        ),
+        step('players-', GameIcons.minus, 'Fewer players', players > 2 ? () => onPlayers(players - 1) : null),
+        Semantics(
+          label: 'Room for $players players',
+          liveRegion: true,
+          excludeSemantics: true,
+          child: SizedBox(
+            width: 28,
+            child: Text('$players', key: const ValueKey('playerCount'), textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, fontSize: 26, color: t.flat ? FlatPalette.ink : Colors.white)),
           ),
-        ]),
-        SizedBox(height: compact ? 6 : 12),
-        Row(children: [
-          const Text('ROOM SIZE', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900, letterSpacing: 1.2, fontSize: 12.5)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: LayoutBuilder(builder: (context, c) {
-              final size = ((c.maxWidth - 4 * 6) / 5).clamp(28.0, 44.0);
-              return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                for (var n = 2; n <= 6; n++) _CountButton(n: n, size: size, selected: n == players, onTap: () => onPlayers(n)),
-              ]);
-            }),
-          ),
-        ]),
-        SizedBox(height: compact ? 8 : 14),
-        GpButton(busy ? 'CREATING…' : 'CREATE ROOM', icon: Icons.add_circle_rounded, color: GpColors.accent, onPressed: busy ? null : onCreate),
+        ),
+        step('players+', GameIcons.plus, 'More players', players < 6 ? () => onPlayers(players + 1) : null),
       ]),
     );
   }
 }
 
-class _CountButton extends StatelessWidget {
-  final int n;
-  final double size;
-  final bool selected;
-  final VoidCallback onTap;
-  const _CountButton({required this.n, required this.size, required this.selected, required this.onTap});
+class _BottomPanel extends StatelessWidget {
+  final GameInfo game;
+  final bool fits;
+  final bool busy;
+  final VoidCallback onCreate;
+  const _BottomPanel({required this.game, required this.fits, required this.busy, required this.onCreate});
+
   @override
-  Widget build(BuildContext context) => Semantics(
-        button: true,
-        selected: selected,
-        label: 'Room for $n players',
-        child: GestureDetector(
-          onTap: onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            width: size,
-            height: size,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: selected ? AppColors.gold : AppColors.glass,
-              border: Border.all(color: selected ? Colors.white : AppColors.stroke, width: 2),
-            ),
-            child: Text('$n', style: TextStyle(color: selected ? AppColors.night : Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    final compact = MediaQuery.sizeOf(context).height < 700; // small phones: leave room for the games
+    final ink = t.flat ? FlatPalette.ink : Colors.white;
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, compact ? 10 : 14, 16, compact ? 12 : 22),
+      decoration: BoxDecoration(
+        color: t.flat ? Colors.white : NeonPalette.sheet,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(top: BorderSide(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14))),
+        boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 32, offset: Offset(0, -12))],
+      ),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          GameThumb(id: game.id, color: game.color, size: compact ? 40 : 48, radius: 12),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(game.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 19, color: ink)),
+              Text(fits ? game.tagline : 'Needs ${game.playersLabel} players: you can switch games in the room',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w800, color: fits ? (t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted) : (t.flat ? FlatPalette.close : Brand.gold))),
+            ]),
           ),
-        ),
-      );
+        ]),
+        SizedBox(height: compact ? 8 : 14),
+        GoldButton(busy ? 'Creating…' : 'Create room', icon: GameIcons.plus, onPressed: busy ? null : onCreate),
+      ]),
+    );
+  }
 }

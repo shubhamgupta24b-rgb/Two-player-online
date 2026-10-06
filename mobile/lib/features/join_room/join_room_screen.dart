@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/room/room_manager.dart';
-import '../../core/ui/app_ui.dart';
+import '../../core/ui/app_ui.dart' show AppBackground;
 import '../../core/ui/components.dart';
-import '../guess_person/widgets/gp_theme.dart' show GpButton;
 import '../lobby/lobby_screen.dart';
 
 const _codeLength = 6;
@@ -20,6 +19,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
   final focus = FocusNode();
   bool busy = false;
   int _fails = 0; // bumps the shake on a failed join
+  String? _error; // shown under the boxes
 
   @override
   void initState() {
@@ -48,8 +48,8 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
       setState(() {
         busy = false;
         _fails++;
+        _error = friendlyError(err);
       });
-      showToast(context, friendlyError(err), tone: Tone.danger, duration: const Duration(seconds: 3));
       return;
     }
     nav.pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LobbyScreen()), (r) => r.isFirst);
@@ -57,41 +57,56 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
     return Scaffold(
       body: AppBackground(
         child: SafeArea(
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 4, 16, 10),
-              child: Row(children: [
-                AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
-                const SizedBox(width: Space.xs),
-                const Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('JOIN A ROOM', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                    Text("Play together on your friends' phones", style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600, fontSize: 12.5)),
-                  ]),
-                ),
-              ]),
-            ),
+            const Padding(padding: EdgeInsets.fromLTRB(16, 14, 16, 10), child: PageHeader(label: 'Join a room', title: 'Enter the code')),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const Center(child: Text('🔑', style: TextStyle(fontSize: 56))),
-                  const SizedBox(height: 10),
-                  const Text('ENTER ROOM CODE', textAlign: TextAlign.center, style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 14)),
-                  const SizedBox(height: 4),
-                  const Text('Ask the host for the 6-letter code on their screen', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontSize: 13, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 20),
-                  Shake(trigger: _fails == 0 ? null : _fails, child: _CodeBoxes(ctrl: ctrl, focus: focus, onChanged: () => setState(() {}), onSubmit: _join)),
-                  const SizedBox(height: 24),
-                  GpButton(busy ? 'JOINING…' : 'JOIN ROOM', icon: Icons.login_rounded, onPressed: _complete && !busy ? _join : null),
-                  const SizedBox(height: 28),
-                  const _Tip(icon: Icons.wifi_rounded, text: 'Everyone needs the same server (shown at the bottom of the home screen).'),
-                  const SizedBox(height: 10),
-                  const _Tip(icon: Icons.swap_horiz_rounded, text: 'The host picks the games: you stay in the room between rounds.'),
-                ]),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                      Center(child: GameIcon(GameIcons.lock, size: 52, color: t.flat ? FlatPalette.ink : Brand.gold)),
+                      const SizedBox(height: 10),
+                      Text('Ask the host for the 6-letter code on their screen', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
+                      const SizedBox(height: 20),
+                      Shake(
+                        trigger: _fails == 0 ? null : _fails,
+                        child: _CodeBoxes(
+                          ctrl: ctrl,
+                          focus: focus,
+                          error: _error != null,
+                          onChanged: () => setState(() => _error = null),
+                          onSubmit: _join,
+                        ),
+                      ),
+                      AnimatedSize(
+                        duration: Motion.of(context, Motion.normal),
+                        child: _error == null
+                            ? const SizedBox(width: double.infinity)
+                            : Padding(
+                                padding: const EdgeInsets.only(top: 10),
+                                child: Semantics(
+                                  liveRegion: true,
+                                  child: Text(_error!,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w900, color: t.flat ? FlatPalette.close : const Color(0xFFFF8E8B))),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 24),
+                      GoldButton(busy ? 'Joining…' : 'Join room', icon: GameIcons.forward, height: 58, onPressed: _complete && !busy ? _join : null),
+                      const SizedBox(height: 24),
+                      const _Tip(icon: GameIcons.wifi, text: 'Everyone plays on the same server: online, or the same Wi-Fi host.'),
+                      const SizedBox(height: 8),
+                      const _Tip(icon: GameIcons.restart, text: 'The host picks the games: you stay in the room between rounds.'),
+                    ]),
+                  ),
+                ),
               ),
             ),
           ]),
@@ -107,11 +122,16 @@ class _CodeBoxes extends StatelessWidget {
   final FocusNode focus;
   final VoidCallback onChanged;
   final VoidCallback onSubmit;
-  const _CodeBoxes({required this.ctrl, required this.focus, required this.onChanged, required this.onSubmit});
+  final bool error;
+  const _CodeBoxes({required this.ctrl, required this.focus, required this.onChanged, required this.onSubmit, this.error = false});
 
   @override
   Widget build(BuildContext context) {
     final text = ctrl.text;
+    final t = context.tk;
+    final ink = t.flat ? FlatPalette.ink : Colors.white;
+    final gold = t.flat ? FlatPalette.ink : Brand.gold;
+    final red = t.flat ? FlatPalette.close : const Color(0xFFFF5E5B);
     return LayoutBuilder(builder: (context, c) {
       final box = ((c.maxWidth - 5 * 8) / _codeLength).clamp(36.0, 58.0);
       return SizedBox(
@@ -127,14 +147,16 @@ class _CodeBoxes extends StatelessWidget {
                   height: box * 1.2,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: i < text.length ? const Color(0x33FFC93C) : AppColors.glass,
-                    borderRadius: BorderRadius.circular(14),
+                    color: t.flat ? Colors.white : (i < text.length ? Brand.gold.withValues(alpha: 0.14) : Colors.white.withValues(alpha: 0.10)),
+                    borderRadius: Radii.rCard,
                     border: Border.all(
-                      color: i == text.length && focus.hasFocus ? AppColors.gold : (i < text.length ? AppColors.gold.withValues(alpha: 0.6) : AppColors.stroke),
+                      color: error
+                          ? red
+                          : (i == text.length && focus.hasFocus ? gold : (i < text.length ? gold.withValues(alpha: 0.6) : (t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14)))),
                       width: 2,
                     ),
                   ),
-                  child: Text(i < text.length ? text[i] : '', style: TextStyle(color: Colors.white, fontSize: box * 0.55, fontWeight: FontWeight.w900)),
+                  child: Text(i < text.length ? text[i] : '', style: TextStyle(fontFamily: Fonts.display, color: ink, fontSize: (box * 0.55).clamp(20.0, 30.0))),
                 ),
               ],
             ]),
@@ -169,17 +191,21 @@ class _CodeBoxes extends StatelessWidget {
 }
 
 class _Tip extends StatelessWidget {
-  final IconData icon;
+  final GameIcons icon;
   final String text;
   const _Tip({required this.icon, required this.text});
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: AppColors.glass, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.stroke)),
-        child: Row(children: [
-          Icon(icon, color: AppColors.muted, size: 20),
-          const SizedBox(width: 10),
-          Expanded(child: Text(text, style: const TextStyle(color: AppColors.muted, fontSize: 12.5, fontWeight: FontWeight.w600))),
-        ]),
-      );
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    final muted = t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: t.flat ? Colors.white : t.surface, borderRadius: Radii.rChip, border: Border.all(color: t.flat ? FlatPalette.stroke : t.stroke)),
+      child: Row(children: [
+        GameIcon(icon, size: 18, color: muted),
+        const SizedBox(width: 10),
+        Expanded(child: Text(text, style: TextStyle(fontFamily: Fonts.body, color: muted, fontSize: 13, fontWeight: FontWeight.w700))),
+      ]),
+    );
+  }
 }

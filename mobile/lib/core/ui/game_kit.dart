@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../audio/game_audio.dart';
+import 'app_ui.dart' show AppBackground;
 import 'components.dart';
 
 export 'icons/game_icons.dart';
@@ -112,12 +114,14 @@ class KitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const danger = Color(0xFFFF8E8B);
-    final (Color fill, Border? border, Color ink) = switch (style) {
-      KitButtonStyle.outline => (Colors.transparent, Border.all(color: Colors.white.withValues(alpha: 0.28), width: 2), Colors.white),
-      KitButtonStyle.ghost => (Colors.white.withValues(alpha: 0.10), null, Colors.white),
-      KitButtonStyle.soft => (Colors.white.withValues(alpha: 0.08), Border.all(color: Colors.white.withValues(alpha: 0.14)), Colors.white),
-      KitButtonStyle.danger => (Colors.transparent, Border.all(color: const Color(0xFFFF5E5B).withValues(alpha: 0.55), width: 1.5), danger),
+    final flat = context.tk.flat;
+    final danger = flat ? FlatPalette.close : const Color(0xFFFF8E8B);
+    final ink = flat ? FlatPalette.ink : Colors.white;
+    final (Color fill, Border? border, Color fg) = switch (style) {
+      KitButtonStyle.outline => (flat ? Colors.white.withValues(alpha: 0.5) : Colors.transparent, Border.all(color: flat ? FlatPalette.ink.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.28), width: 2), ink),
+      KitButtonStyle.ghost => (flat ? Colors.white : Colors.white.withValues(alpha: 0.10), null, ink),
+      KitButtonStyle.soft => (flat ? Colors.white : Colors.white.withValues(alpha: 0.08), Border.all(color: flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14)), ink),
+      KitButtonStyle.danger => (flat ? Colors.white : Colors.transparent, Border.all(color: (flat ? FlatPalette.close : const Color(0xFFFF5E5B)).withValues(alpha: 0.55), width: 1.5), danger),
     };
     final enabled = onPressed != null;
     return Semantics(
@@ -143,11 +147,11 @@ class KitButton extends StatelessWidget {
               height: height,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Space.m),
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  if (icon != null) ...[GameIcon(icon!, size: 18, color: ink), const SizedBox(width: Space.s)],
+                child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
+                  if (icon != null) ...[GameIcon(icon!, size: 18, color: fg), const SizedBox(width: Space.s)],
                   Flexible(
                     child: Text(label,
-                        maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: ink)),
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: fg)),
                   ),
                 ]),
               ),
@@ -1059,4 +1063,174 @@ class ConfettiBurst extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The header of every app page (spec 4): back or close (44 px) · small caps label with an
+/// optional Lilita title under it · an optional button on the right.
+class PageHeader extends StatelessWidget {
+  final String label;
+  final String? title;
+  final GameIcons backIcon;
+  final VoidCallback? onBack; // default: pop
+  final Widget? trailing;
+  final bool showBack;
+  const PageHeader({super.key, required this.label, this.title, this.backIcon = GameIcons.back, this.onBack, this.trailing, this.showBack = true});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      if (showBack)
+        RoundButton(icon: backIcon, label: backIcon == GameIcons.close ? 'Close' : 'Back', onPressed: onBack ?? () => Navigator.maybePop(context))
+      else
+        const SizedBox(width: kTouchTarget),
+      Expanded(
+        child: Semantics(
+          header: true,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(label.toUpperCase(), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: context.tk.styles.label),
+            if (title != null) Text(title!, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 22, height: 1.15, color: context.tk.onBg)),
+          ]),
+        ),
+      ),
+      trailing ?? const SizedBox(width: kTouchTarget),
+    ]);
+  }
+}
+
+/// A section title with a short gold bar ("FEATURED GAMES"), and an optional link.
+class SectionHeader extends StatelessWidget {
+  final String text;
+  final String? action;
+  final VoidCallback? onAction;
+  const SectionHeader(this.text, {super.key, this.action, this.onAction});
+
+  @override
+  Widget build(BuildContext context) => Row(children: [
+        Container(width: 4, height: 16, decoration: BoxDecoration(color: Brand.gold, borderRadius: BorderRadius.circular(2))),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Semantics(
+            header: true,
+            child: Text(text.toUpperCase(), style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.82, color: context.tk.onBg)),
+          ),
+        ),
+        if (action != null)
+          TextButton(
+            onPressed: onAction,
+            style: TextButton.styleFrom(foregroundColor: context.tk.flat ? FlatPalette.ink : Brand.gold, minimumSize: const Size(kTouchTarget, kTouchTarget)),
+            child: Text(action!, style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900)),
+          ),
+      ]);
+}
+
+/// A selectable pill (categories: gold when picked; [outline] for the player-count row).
+class KitChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool outline;
+  const KitChip(this.label, {super.key, required this.selected, required this.onTap, this.outline = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final flat = context.tk.flat;
+    final ink = flat ? FlatPalette.ink : Colors.white;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          haptic(HapticWeight.selection);
+          onTap();
+        },
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: kTouchTarget),
+          child: Center(
+            widthFactor: 1,
+            child: AnimatedContainer(
+              duration: Motion.of(context, Motion.fast),
+              padding: outline ? const EdgeInsets.symmetric(horizontal: 10, vertical: 4) : const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: outline ? (flat ? (selected ? Colors.white : Colors.white.withValues(alpha: 0.5)) : Colors.transparent) : (selected ? Brand.gold : (flat ? Colors.white : Colors.white.withValues(alpha: 0.10))),
+                borderRadius: BorderRadius.circular(outline ? 10 : 14),
+                border: outline ? Border.all(color: selected ? (flat ? FlatPalette.ink : Brand.gold) : ink.withValues(alpha: 0.2), width: 1.5) : null,
+              ),
+              child: Text(label,
+                  style: TextStyle(fontFamily: Fonts.body, fontSize: outline ? 12 : 13, fontWeight: FontWeight.w900, color: !outline && selected ? Brand.onGold : ink)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The search / text field of the app pages: 48 px, radius 16, soft fill, gold focus ring.
+class KitField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final GameIcons? icon;
+  final ValueChanged<String>? onChanged;
+  final Widget? suffix;
+  final TextCapitalization capitalization;
+  final int? maxLength;
+  const KitField({super.key, required this.controller, required this.hint, this.icon, this.onChanged, this.suffix, this.capitalization = TextCapitalization.none, this.maxLength});
+
+  @override
+  Widget build(BuildContext context) {
+    final flat = context.tk.flat;
+    final ink = flat ? FlatPalette.ink : Colors.white;
+    OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(borderRadius: Radii.rLg, borderSide: BorderSide(color: c, width: w));
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      maxLength: maxLength,
+      textCapitalization: capitalization,
+      cursorColor: Brand.gold,
+      style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: ink),
+      decoration: InputDecoration(
+        hintText: hint,
+        counterText: '',
+        hintStyle: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: flat ? FlatPalette.inkMuted : NeonPalette.label),
+        filled: true,
+        fillColor: flat ? Colors.white : Colors.white.withValues(alpha: 0.10),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        prefixIcon: icon == null ? null : Padding(padding: const EdgeInsets.only(left: 14, right: 10), child: GameIcon(icon!, size: 18, color: flat ? FlatPalette.inkMuted : NeonPalette.textMuted)),
+        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+        suffixIcon: suffix,
+        enabledBorder: border(flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14)),
+        focusedBorder: border(flat ? FlatPalette.ink : Brand.gold, 2),
+        border: border(flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14)),
+      ),
+    );
+  }
+}
+
+/// An app page: the app background (night, or sky in the flat app) and the standard
+/// 16 px gutters (spec 1.4).
+class AppPage extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets padding;
+  const AppPage({super.key, required this.child, this.padding = Space.screen});
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: context.tk.bg,
+        body: AppBackground(child: SafeArea(child: Padding(padding: padding, child: child))),
+      );
+}
+
+/// Opens the system share sheet with [text] (Android). Elsewhere, or if that fails, the
+/// text is copied and a toast says so.
+Future<void> shareText(BuildContext context, String text, {String copied = 'Copied'}) async {
+  try {
+    final ok = await const MethodChannel('party/device').invokeMethod<bool>('share', {'text': text});
+    if (ok == true) return;
+  } catch (_) {}
+  await Clipboard.setData(ClipboardData(text: text));
+  if (context.mounted) showToast(context, copied, tone: Tone.success);
 }

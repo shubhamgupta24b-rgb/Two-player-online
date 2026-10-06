@@ -120,3 +120,50 @@
 **Could not test**
 - The emulator still can't boot (not enough free RAM). Instead, the screens were rendered to PNG with `tool/shell_render_test.dart` (intro, how to play, pause, 2- and 4-player results, solo result) and compared with the mockups.
 - Not tested on a real phone: online play and Wi-Fi hosting.
+
+## Prompt 4 — app pages (done)
+
+**Changed (spec 4.1–4.11)**
+- **Splash:** logo with glow, "Party Games" in Lilita, tagline. It fades in over 360 ms, and a spinner shows only after 1 s.
+- **Login:** "Who's playing?" with a live badge preview, a name field (gold focus ring), a row of 6 colour+shape choices (saved to the existing player-colour setting), the gold "Play as guest" button, and the Google note as plain muted text.
+- **Home (Main mockup):**
+  - greeting with the player badge and a connection pill (Online / Hosting / Wi-Fi host / Offline, tap to retry);
+  - indigo hero with drawn dice and cards, and "Play on one phone";
+  - 3 mode tiles: Play online opens a sheet with Create / Join / Quick play; Same Wi-Fi runs the existing host/join flow and then the same sheet; My records;
+  - "Continue: play X again" (from recent games), the Featured games row and a Privacy link;
+  - the Wi-Fi sheet is restyled.
+- **Games hub (Hub mockup):**
+  - header "62 games", search, category chips (All / Party / Board / Cards / Action / Solo / Favourites) and a players filter (Any / 2 / 3 / 4 / 5–6);
+  - recently played row; drawn `GameTile`s with a star button (long-press still works);
+  - empty state with a Clear button.
+- **Game art:** `shell/game_art.dart` gives each of the 62 games a small art painter: the surface it's played on (felt, wood, paper card, day / sunset / night sky, grass, court, ice, water, track) plus a glow in the game colour and its drawn icon. It is shared by the hub, home, create room, quick play, the lobby, records and the intro header.
+- **Create room:** room-size stepper with badge preview, a "N games fit P players" line, the hub-style grid (games that don't fit are dimmed but can still be picked, as before), a bottom sheet, and a gold Create button.
+- **Join room:** 6 Lilita letter boxes (paste and auto-advance as before). Errors now show inline under the boxes with a shake, not as a toast.
+- **Quick play:** gold "Any game" card, "Or pick a game" grid, and a "Finding a room" dots animation while it searches.
+- **Lobby (Lobby mockup):**
+  - Leave (danger) · GAME ROOM · settings;
+  - indigo code card with letter boxes, Copy and Share;
+  - player rows with badge, YOU · HOST tag, crown and READY / NOT READY / OFFLINE pills; dashed empty seats;
+  - next-game card with Change; a "Waiting for … to tap Ready" line;
+  - gold Start (host) or Ready / "Ready, tap to undo" (guests); Party mode as an outline button;
+  - an "Open to everyone" pill for Quick play rooms; `ConnectionBanner` for reconnecting / player left / host left.
+- **Records:** totals (games, wins, different), rows with game art, best score in Lilita and "played N · wins M", sorted last-played first; trophy empty state.
+- **Privacy:** drawn icons, 15 px body text, the danger-outline delete button, and a Delete / Keep confirm.
+- **Kit additions:** `PageHeader`, `SectionHeader`, `KitChip`, `KitField`, `AppPage`, `shareText`. Kit buttons and chips now follow the flat tokens: white tiles with ink text on sky.
+- **Share:** the lobby Share button uses a new `share` method on the existing `party/device` channel in `MainActivity` (Android `ACTION_SEND` chooser, no new package). If that fails it copies the code instead.
+- **Background:** the night `AppBackground` now uses the spec gradient (#151A4A → #0B0E2E → #060820) with very faint glows.
+
+**Not changed**
+- Navigation targets, room / socket / LAN calls, auth and records logic.
+- Guess the Person and Raja Mantri screens (spec 4.12–4.13); they are done with the game batches.
+
+**Decision**
+- Quick play has no Cancel button while it searches. Cancelling would need a leave-room call after a match lands, which counts as room logic.
+
+**Tests**
+- `flutter analyze` is clean and `flutter test` passes 830 tests. The hub, home, create room, lobby, quick play, records, raja hub-entry and login tests were updated to the new labels.
+- Debug APKs build for both flavors.
+
+**Could not test**
+- The emulator still can't boot (not enough free RAM). Instead, `tool/pages_render_test.dart` rendered all nine pages in both flavors and I compared them with the Main / Hub / Lobby mockups.
+- On a real phone: the share sheet, online rooms and Wi-Fi hosting are all untested.

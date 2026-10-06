@@ -33,13 +33,16 @@ void main() {
   testWidgets('categories: solo shows only solo games, cards only card games', (tester) async {
     await pumpHub(tester);
     // The chips scroll sideways: swipe to the last one.
-    await tester.scrollUntilVisible(find.text('🧍 Solo'), 150, scrollable: chips());
-    await tester.tap(find.text('🧍 Solo'));
+    await tester.ensureVisible(find.text('Solo'));
     await tester.pump();
-    expect(find.text('👥 PLAY TOGETHER'), findsNothing);
-    expect(find.text('🧍 SOLO GAMES'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('🃏 Cards'), -150, scrollable: chips());
-    await tester.tap(find.text('🃏 Cards'));
+    await tester.tap(find.text('Solo'));
+    await tester.pump();
+    expect(find.text('PLAY TOGETHER'), findsNothing);
+    expect(find.text('2048'), findsOneWidget);
+    expect(find.text('Ludo'), findsNothing);
+    await tester.ensureVisible(find.text('Cards'));
+    await tester.pump();
+    await tester.tap(find.text('Cards'));
     await tester.pump();
     expect(find.text('Colour Clash'), findsOneWidget);
     expect(find.text('Ludo'), findsNothing);
@@ -47,15 +50,25 @@ void main() {
 
   testWidgets('long-press stars a favourite; the Favourites chip lists it', (tester) async {
     await pumpHub(tester);
-    await tester.tap(find.text('⭐ Favourites'));
+    await tester.ensureVisible(find.text('Favourites'));
+    await tester.pump();
+    await tester.tap(find.text('Favourites'));
     await tester.pump();
     expect(find.textContaining('No favourites yet'), findsOneWidget);
-    await tester.tap(find.text('✨ All'));
+    await tester.ensureVisible(find.text('All'));
     await tester.pump();
+    await tester.tap(find.text('All'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Ludo'));
+    await tester.pumpAndSettle();
     await tester.longPress(find.text('Ludo'));
     await tester.pumpAndSettle();
-    expect(find.text('⭐'), findsOneWidget);
-    await tester.tap(find.text('⭐ Favourites'));
+    expect(find.bySemanticsLabel('Unstar Ludo'), findsOneWidget);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 2000));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Favourites'));
+    await tester.pump();
+    await tester.tap(find.text('Favourites'));
     await tester.pump();
     expect(find.text('Ludo'), findsOneWidget);
     expect(find.text('Colour Clash'), findsNothing);
@@ -63,7 +76,7 @@ void main() {
 
   testWidgets('recently played games come first', (tester) async {
     await pumpHub(tester, {'recent_games': ['bingo', 'ludo']});
-    expect(find.text('▶ RECENTLY PLAYED'), findsOneWidget);
-    expect(find.text('▶ PLAY'), findsNWidgets(2));
+    expect(find.text('RECENTLY PLAYED'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('^Play .* again\$')), findsNWidgets(2));
   });
 }

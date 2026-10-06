@@ -7,12 +7,16 @@ import '../../core/network/lan_discovery.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/room/room_manager.dart';
 import '../../core/ui/app_ui.dart';
+import '../../core/records/records.dart';
+import '../../core/settings/app_settings.dart';
 import '../../core/ui/components.dart';
+import '../../core/ui/materials/materials.dart';
 import '../create_room/create_room_screen.dart';
 import '../guess_person/screens/guess_person_menu_screen.dart';
 import '../join_room/join_room_screen.dart';
 import '../lobby/lobby_screen.dart';
 import '../local_games/local_games_hub_screen.dart';
+import '../local_games/shell/game_art.dart';
 import '../local_games/shell/local_game_shell.dart';
 import '../privacy/privacy_screen.dart';
 import '../quick_play/quick_play_screen.dart';
@@ -28,6 +32,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late final SocketManager _socket = context.read<SocketManager>();
   bool _rejoined = false;
+  String? _recent; // last game played on this phone
 
   @override
   void initState() {
@@ -35,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // The server connects in the background, so check both now and once it comes up.
     WidgetsBinding.instance.addPostFrameCallback((_) => _rejoinRoom());
     _socket.connected.addListener(_onConnection);
+    _loadRecent();
   }
 
   void _onConnection() {
@@ -94,8 +100,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final choice = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.night,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
+      backgroundColor: context.tk.flat ? Colors.white : NeonPalette.sheet,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (_) => const _WifiSearchSheet(),
     );
     if (choice == null || !mounted) return;
@@ -109,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await AppConfig.useWifi(LanHost.selfUrl, hosting: true);
       if (!mounted) return;
       setState(() {});
-      await _connect(done: '📡 This phone is hosting: create a room!');
+      await _connect(done: 'This phone is hosting: create a room!');
       if (mounted) await _showHostHelp();
       return;
     }
@@ -126,69 +132,112 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     await showAppDialog<void>(
       context,
-      emoji: '📡',
+      emoji: null,
       title: 'Hosting on this phone',
-      message: '1. Turn on this phone\'s HOTSPOT (or stay on the same Wi-Fi as your friends).\n'
-          '2. Friends connect to it, open Party Games and tap 📶 SAME WI-FI → JOIN A FRIEND.\n'
+      message: '1. Turn on this phone\'s hotspot (or stay on the same Wi-Fi as your friends).\n'
+          '2. Friends connect to it, open Party Games and tap Same Wi-Fi, then Join a friend.\n'
           '3. Create a room here and share the code (or use Quick Play).\n\n'
           'No internet needed. Keep this app open while you play.'
           '${ips.isEmpty ? '' : '\n\nThis phone: ${ips.join(' · ')}'}',
-      actions: [Builder(builder: (c) => AppButton('GOT IT', onPressed: () => Navigator.pop(c)))],
+      actions: [Builder(builder: (c) => GoldButton('Got it', onPressed: () => Navigator.pop(c)))],
     );
+  }
+
+  /// Create, join or quick play, on the server picked by the mode (online or the Wi-Fi host).
+  Future<void> _rooms() async {
+    final wifi = AppConfig.mode == ServerMode.wifi;
+    await showAppSheet<void>(
+      context,
+      title: wifi ? 'Rooms on this Wi-Fi' : 'Play online',
+      builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _SheetOption(icon: GameIcons.plus, tint: PlayerPalette.colors[0], title: 'Create room', text: 'Host a game and share the code', onTap: () {
+          Navigator.pop(ctx);
+          _open(const CreateRoomScreen());
+        }),
+        const SizedBox(height: 10),
+        _SheetOption(icon: GameIcons.forward, tint: PlayerPalette.colors[1], title: 'Join room', text: "Enter a friend's 6-letter code", onTap: () {
+          Navigator.pop(ctx);
+          _open(const JoinRoomScreen());
+        }),
+        const SizedBox(height: 10),
+        _SheetOption(icon: GameIcons.bolt, tint: PlayerPalette.colors[2], title: 'Quick play', text: 'Jump into an open room', onTap: () {
+          Navigator.pop(ctx);
+          _open(const QuickPlayScreen());
+        }),
+      ]),
+    );
+  }
+
+  Future<void> _playOnline() async {
+    if (AppConfig.mode == ServerMode.wifi) await _useOnline();
+    if (mounted) await _rooms();
+  }
+
+  Future<void> _sameWifi() async {
+    final before = AppConfig.mode;
+    await _useWifi();
+    if (mounted && AppConfig.mode == ServerMode.wifi && (before != ServerMode.wifi || _socket.connected.value)) await _rooms();
+  }
+
+  /// The last game played on this phone, for "Continue".
+  Future<void> _loadRecent() async {
+    try {
+      final r = await Records.recent();
+      if (mounted && r.isNotEmpty) setState(() => _recent = r.first);
+    } catch (_) {}
+  }
+
+  (String, Color, Widget)? _game(String id) {
+    if (id == 'guess_person') return ('Guess the Person', const Color(0xFFFFC93C), const GuessPersonMenuScreen());
+    if (id == 'raja_mantri') return ('Raja Mantri', const Color(0xFF8A1C3A), const RmcsMenuScreen());
+    for (final g in localGames) {
+      if (g.id == id) return (g.title, g.color, LocalGameShell(game: g));
+    }
+    return null;
+  }
+
+  Future<void> _openGame(Widget page) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    _loadRecent();
   }
 
   @override
   Widget build(BuildContext context) {
     final name = context.watch<AuthenticationManager>().displayName;
+    final t = context.tk;
+    final recent = _recent == null ? null : _game(_recent!);
     return Scaffold(
       body: AppBackground(
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 640),
-              child: ListView(padding: const EdgeInsets.fromLTRB(18, 12, 18, 24), children: [
+              child: ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 22), children: [
                 _header(name),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 _hero(),
-                SectionTitle('PLAY ONLINE', trailing: _status(compact: true)),
-                _modeSwitch(),
-                const SizedBox(height: 12),
-                _online(),
-                SectionTitle('FEATURED GAMES',
-                    trailing: TextButton(
-                      onPressed: () => _open(const LocalGamesHubScreen()),
-                      child: const Text('SEE ALL', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900)),
-                    )),
-                _featured(),
-                const SectionTitle('MORE'),
+                const SizedBox(height: 16),
                 Row(children: [
-                  Expanded(
-                    child: _ActionCard(
-                      title: '🏆 MY RECORDS',
-                      subtitle: 'Best scores & wins',
-                      icon: Icons.emoji_events_rounded,
-                      colors: const [Color(0xFFFFB300), Color(0xFFFF6F00)],
-                      onTap: () => _open(const RecordsScreen()),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ActionCard(
-                      title: '⚡ QUICK PLAY',
-                      subtitle: 'Join a random room',
-                      icon: Icons.bolt_rounded,
-                      colors: const [Color(0xFF00C9A7), Color(0xFF0E8C7B)],
-                      onTap: () => _open(const QuickPlayScreen()),
-                    ),
-                  ),
+                  Expanded(child: _ModeTile(icon: GameIcons.globe, tint: PlayerPalette.colors[0], ink: PlayerPalette.tints[0], label: 'Play online', onTap: _playOnline)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _ModeTile(icon: GameIcons.wifi, tint: PlayerPalette.colors[2], ink: PlayerPalette.tints[2], label: 'Same Wi-Fi', onTap: _sameWifi)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _ModeTile(icon: GameIcons.trophy, tint: Brand.gold, ink: const Color(0xFFFFE08A), label: 'My records', onTap: () => _open(const RecordsScreen()))),
                 ]),
-                const SizedBox(height: 14),
+                if (recent != null) ...[
+                  const SizedBox(height: 16),
+                  _ContinueChip(id: _recent!, title: recent.$1, color: recent.$2, onTap: () => _openGame(recent.$3)),
+                ],
+                const SizedBox(height: 16),
+                SectionHeader('Featured games', action: 'See all', onAction: () => _open(const LocalGamesHubScreen())),
+                const SizedBox(height: 8),
+                _featured(),
+                const SizedBox(height: 18),
                 Center(
-                  child: TextButton.icon(
-                    style: TextButton.styleFrom(minimumSize: const Size(kTouchTarget, kTouchTarget)),
+                  child: TextButton(
+                    style: TextButton.styleFrom(minimumSize: const Size(kTouchTarget, kTouchTarget), foregroundColor: t.onBgMuted),
                     onPressed: () => _open(const PrivacyScreen()),
-                    icon: const Icon(Icons.shield_outlined, size: 18, color: AppColors.muted),
-                    label: const Text('Privacy', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
+                    child: Text('Privacy', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: t.onBgMuted)),
                   ),
                 ),
               ]),
@@ -200,189 +249,318 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _header(String name) {
+    final t = context.tk;
+    final seat = AppSettings.playerColor.value;
     return Row(children: [
       Container(
-        width: 50,
-        height: 50,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const LinearGradient(colors: [AppColors.blue, AppColors.purple]),
-          border: Border.all(color: Colors.white24, width: 2),
-        ),
-        child: Text(name.isEmpty ? '🙂' : name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+        decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: PlayerPalette.color(seat).withValues(alpha: 0.25), spreadRadius: 3)]),
+        child: PlayerBadge(index: seat, size: 44, initial: name.isEmpty ? '?' : name),
       ),
-      const SizedBox(width: 12),
+      const SizedBox(width: 10),
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(name.isEmpty ? 'Hi there 👋' : 'Hi, $name 👋', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
-          const Text('Ready to play?', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
+          Text('Welcome back', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: t.flat ? t.onBg : NeonPalette.label)),
+          Text(name.isEmpty ? 'Hi there' : 'Hi, $name', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 22, height: 1.1, color: t.onBg)),
         ]),
       ),
-      AppIconButton(icon: Icons.tune_rounded, tooltip: 'Settings', onPressed: () => showSettingsSheet(context)),
+      _status(),
       const SizedBox(width: 4),
-      const AppLogo(size: 52),
+      RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
     ]);
   }
 
-  Widget _status({bool compact = false}) => ValueListenableBuilder<bool>(
+  /// Online / Hosting on this phone / On a Wi-Fi host / Offline. Tap to retry when offline.
+  Widget _status() => ValueListenableBuilder<bool>(
         valueListenable: _socket.connected,
-        builder: (context, online, _) => Semantics(
-          button: true,
-          label: online ? 'Connected' : 'Not connected. Tap to try again',
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: online ? null : _connect,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: (online ? AppColors.green : Colors.white).withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: online ? AppColors.green : Colors.white24),
+        builder: (context, online, _) {
+          final t = context.tk;
+          final wifi = AppConfig.mode == ServerMode.wifi;
+          final label = !online ? 'Offline' : (wifi ? (AppConfig.hosting ? 'Hosting' : 'Wi-Fi host') : 'Online');
+          final c = online ? (wifi ? PlayerPalette.colors[3] : StatusColors.success) : (t.flat ? FlatPalette.inkMuted : NeonPalette.label);
+          return Semantics(
+            button: !online,
+            label: online ? '$label: connected' : 'Offline. Tap to try again',
+            excludeSemantics: true,
+            child: InkWell(
+              borderRadius: Radii.rChip,
+              onTap: online ? null : _connect,
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 32),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: t.flat ? Colors.white : c.withValues(alpha: 0.14),
+                  borderRadius: Radii.rChip,
+                  border: Border.all(color: c.withValues(alpha: 0.5)),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+                  const SizedBox(width: 6),
+                  Text(label,
+                      style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w900, color: t.flat ? FlatPalette.ink : (online ? Color.lerp(c, Colors.white, 0.55) : NeonPalette.textMuted))),
+                ]),
               ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.circle, size: 9, color: online ? AppColors.green : Colors.white38),
-                const SizedBox(width: 6),
-                Text(online ? 'ONLINE' : 'OFFLINE', style: TextStyle(color: online ? AppColors.green : Colors.white60, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1)),
-              ]),
             ),
-          ),
-        ),
+          );
+        },
       );
 
   Widget _hero() {
-    return PressableCard(
-      semanticLabel: 'Play on one device',
-      colors: const [Color(0xFFFFC93C), Color(0xFFFF8A3D), Color(0xFFFF3B5C)],
-      padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
-      onTap: () => _open(const LocalGamesHubScreen()),
-      child: Row(children: [
-        Expanded(
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Brand.indigo, Brand.indigoDeep]),
+        borderRadius: Radii.rBoard,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        boxShadow: Shadows.large,
+      ),
+      child: Stack(children: [
+        const Positioned(right: -6, top: 6, child: ExcludeSemantics(child: SizedBox(width: 150, height: 120, child: CustomPaint(painter: _HeroArt())))),
+        Padding(
+          padding: const EdgeInsets.all(18),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('PLAY ON\nONE DEVICE', style: TextStyle(color: Colors.white, fontSize: 26, height: 1.05, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0x66000000), offset: Offset(0, 2))])),
+            const Text('PARTY GAMES', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.76, color: Brand.goldLine)),
+            const SizedBox(height: 6),
+            const SizedBox(width: 190, child: Text('Ready to play?', style: TextStyle(fontFamily: Fonts.display, fontSize: 30, height: 1.05, color: Colors.white))),
             const SizedBox(height: 8),
-            Text('$totalGameCount games · 2–6 players\nNo internet needed', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, height: 1.3)),
-            const SizedBox(height: 12),
-            const FittedBox(fit: BoxFit.scaleDown, child: _Pill('PLAY NOW', Icons.play_arrow_rounded)),
+            SizedBox(
+              width: 200,
+              child: Text('$totalGameCount games · 2–6 players · no internet needed',
+                  style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFFD6DAF7))),
+            ),
+            const SizedBox(height: 14),
+            IntrinsicWidth(child: GoldButton('Play on one phone', height: 50, fontSize: 19, onPressed: () => _open(const LocalGamesHubScreen()))),
           ]),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: MediaQuery.sizeOf(context).width < 360 ? 84 : 110,
-          height: 120,
-          child: FittedBox(
-            child: Column(children: [
-              for (final row in const [['👑', '🏀'], ['🏒', '🃏']])
-                Row(children: [
-                  for (final (i, e) in row.indexed)
-                    Transform.rotate(angle: i.isEven ? -0.15 : 0.15, child: Padding(padding: const EdgeInsets.all(4), child: Text(e, style: const TextStyle(fontSize: 40)))),
-                ]),
-            ]),
-          ),
         ),
       ]),
     );
   }
 
-  Widget _online() {
-    return IntrinsicHeight(
-        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Expanded(
-        child: _ActionCard(
-          title: 'CREATE ROOM',
-          subtitle: 'Host a game and share the code',
-          icon: Icons.add_circle_rounded,
-          colors: const [Color(0xFF2E8BFF), Color(0xFF1B4FD6)],
-          onTap: () => _open(const CreateRoomScreen()),
-        ),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: _ActionCard(
-          title: 'JOIN ROOM',
-          subtitle: "Enter a friend's room code",
-          icon: Icons.login_rounded,
-          colors: const [Color(0xFFFF3B5C), Color(0xFFC81E45)],
-          onTap: () => _open(const JoinRoomScreen()),
-        ),
-      ),
-    ]));
-  }
-
   Widget _featured() {
     final picks = [
-      for (final id in ['colour_clash', 'ludo'])
-        for (final g in localGames.where((g) => g.id == id)) (g.emoji, g.title, g.color, () => _open(LocalGameShell(game: g))),
-      ('👑', 'Raja Mantri', const Color(0xFF8A1C3A), () => _open(const RmcsMenuScreen())),
-      ('🕵️', 'Guess the Person', const Color(0xFFE0A800), () => _open(const GuessPersonMenuScreen())),
-      for (final id in ['truth_dare', 'snakes_ladders', 'basketball_hoops', 'air_hockey'])
-        for (final g in localGames.where((g) => g.id == id)) (g.emoji, g.title, g.color, () => _open(LocalGameShell(game: g))),
+      for (final id in ['smash_karts', 'memory', 'ludo', 'colour_clash', 'raja_mantri', 'archery', 'guess_person', 'air_hockey'])
+        if (_game(id) case final g?) (id, g),
     ];
+    final info = {for (final g in localGames) g.id: g};
     return SizedBox(
-      height: 132,
+      height: 178,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
         itemCount: picks.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, i) {
-          final (emoji, title, color, onTap) = picks[i];
+          final (id, (title, color, page)) = picks[i];
+          final g = info[id];
           return SizedBox(
-            width: 112,
-            child: PressableCard(
-              semanticLabel: title,
-              colors: [color, Color.lerp(color, Colors.black, 0.35)!],
-              padding: const EdgeInsets.all(10),
-              onTap: onTap,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(child: Center(child: FittedBox(child: Text(emoji, style: const TextStyle(fontSize: 46))))),
-                Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, height: 1.1)),
-              ]),
+            width: 150,
+            child: GameTile(
+              id: id,
+              title: title,
+              color: color,
+              minPlayers: g?.minPlayers ?? (id == 'raja_mantri' ? 4 : 2),
+              maxPlayers: g?.maxPlayers ?? (id == 'raja_mantri' ? 4 : 6),
+              onTap: () => _openGame(page),
             ),
           );
         },
       ),
     );
   }
+}
 
-  /// Online (internet server) or Same Wi-Fi (a laptop on this Wi-Fi/hotspot).
-  Widget _modeSwitch() {
-    final wifi = AppConfig.mode == ServerMode.wifi;
-    Widget option(String emoji, String label, String hint, bool selected, VoidCallback onTap) => Expanded(
-          child: Semantics(
-            button: true,
-            selected: selected,
-            label: label,
-            child: GestureDetector(
-              onTap: onTap,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.gold : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(children: [
-                  Text('$emoji $label', style: TextStyle(color: selected ? AppColors.night : Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
-                  Text(hint, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: selected ? AppColors.night.withValues(alpha: 0.75) : AppColors.muted, fontWeight: FontWeight.w700, fontSize: 11)),
-                ]),
+/// A big square choice on Home: icon in a colour, Lilita label.
+class _ModeTile extends StatelessWidget {
+  final GameIcons icon;
+  final Color tint, ink;
+  final String label;
+  final VoidCallback onTap;
+  const _ModeTile({required this.icon, required this.tint, required this.ink, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final flat = context.tk.flat;
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        color: flat ? Colors.white : tint.withValues(alpha: 0.15),
+        shape: RoundedRectangleBorder(borderRadius: Radii.rButton, side: BorderSide(color: flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.12))),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            haptic(HapticWeight.selection);
+            onTap();
+          },
+          child: SizedBox(
+            height: 104,
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              GameIcon(icon, size: 30, color: flat ? fillFor(tint) : ink),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: FittedBox(fit: BoxFit.scaleDown, child: Text(label, style: TextStyle(fontFamily: Fonts.display, fontSize: 15, color: flat ? FlatPalette.ink : Colors.white))),
               ),
-            ),
+            ]),
           ),
-        );
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: AppColors.glass, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.stroke)),
-      child: Row(children: [
-        option('🌐', 'ONLINE', 'Friends anywhere', !wifi, _useOnline),
-        const SizedBox(width: 4),
-        option('📶', 'SAME WI-FI', wifi ? (AppConfig.hosting ? '📡 Hosting on this phone' : 'Joined a host ✓ · change') : 'Hotspot, no internet', wifi, _useWifi),
-      ]),
+        ),
+      ),
     );
   }
 }
 
-/// Same Wi-Fi / hotspot: HOST ON THIS PHONE (pops [host]) or JOIN A FRIEND, which searches
-/// this Wi-Fi/hotspot for a phone or laptop hosting games and pops its URL when found.
+/// "Continue: play Archery again".
+class _ContinueChip extends StatelessWidget {
+  final String id, title;
+  final Color color;
+  final VoidCallback onTap;
+  const _ContinueChip({required this.id, required this.title, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final flat = context.tk.flat;
+    final ink = flat ? FlatPalette.ink : Colors.white;
+    return Semantics(
+      button: true,
+      label: 'Continue: play $title again',
+      excludeSemantics: true,
+      child: Material(
+        color: flat ? Colors.white : Colors.white.withValues(alpha: 0.06),
+        shape: RoundedRectangleBorder(borderRadius: Radii.rLg, side: BorderSide(color: flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.12))),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: 52,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(children: [
+                GameThumb(id: id, color: color, size: 32, radius: 9),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(children: [
+                      TextSpan(text: 'Continue: ', style: TextStyle(color: flat ? FlatPalette.inkMuted : const Color(0xFFD6DAF7), fontWeight: FontWeight.w800)),
+                      TextSpan(text: 'play $title again', style: TextStyle(color: ink, fontWeight: FontWeight.w900)),
+                    ]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontFamily: Fonts.body, fontSize: 14),
+                  ),
+                ),
+                GameIcon(GameIcons.forward, size: 18, color: flat ? FlatPalette.ink : Brand.gold),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// An option row in a sheet: icon tile, title, a line of help.
+class _SheetOption extends StatelessWidget {
+  final GameIcons icon;
+  final Color tint;
+  final String title, text;
+  final VoidCallback onTap;
+  const _SheetOption({required this.icon, required this.tint, required this.title, required this.text, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    return Semantics(
+      button: true,
+      label: title,
+      excludeSemantics: true,
+      child: Material(
+        color: t.flat ? FlatPalette.option : Colors.white.withValues(alpha: 0.06),
+        shape: RoundedRectangleBorder(borderRadius: Radii.rLg, side: BorderSide(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.12))),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            haptic(HapticWeight.selection);
+            onTap();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(children: [
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: tint.withValues(alpha: t.flat ? 0.9 : 0.22), borderRadius: Radii.rCard),
+                child: GameIcon(icon, size: 22, color: t.flat ? onColor(tint) : Color.lerp(tint, Colors.white, 0.5)!),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(title, style: TextStyle(fontFamily: Fonts.display, fontSize: 18, color: t.text)),
+                  Text(text, style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w700, color: t.textMuted)),
+                ]),
+              ),
+              GameIcon(GameIcons.forward, size: 16, color: t.textMuted),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The hero card picture: a die and two cards (Main mockup).
+class _HeroArt extends CustomPainter {
+  const _HeroArt();
+  @override
+  void paint(Canvas canvas, Size size) {
+    void card(Offset at, double angle, Color edge, {bool back = false}) {
+      canvas.save();
+      canvas.translate(at.dx, at.dy);
+      canvas.rotate(angle);
+      const r = Rect.fromLTWH(-24, -33, 48, 66);
+      canvas.drawRRect(RRect.fromRectAndRadius(r.shift(const Offset(1, 4)), const Radius.circular(8)), Paint()..color = Colors.black.withValues(alpha: 0.3));
+      if (back) {
+        canvas.translate(r.left, r.top);
+        const CardBackPainter(radius: 8).paint(canvas, r.size);
+      } else {
+        canvas.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(8)), Paint()..color = const Color(0xFFFFF8EC));
+        canvas.drawRRect(RRect.fromRectAndRadius(r.deflate(1.5), const Radius.circular(7)), Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5
+          ..color = edge);
+        paintIcon(canvas, GameIcons.cherry, Rect.fromCenter(center: Offset.zero, width: 32, height: 32));
+      }
+      canvas.restore();
+    }
+
+    card(const Offset(62, 64), -0.22, PlayerPalette.colors[0], back: true);
+    card(const Offset(100, 58), 0.16, PlayerPalette.colors[1]);
+    // A die.
+    canvas.save();
+    canvas.translate(46, 92);
+    canvas.rotate(0.2);
+    const d = Rect.fromLTWH(-15, -15, 30, 30);
+    canvas.drawRRect(RRect.fromRectAndRadius(d.shift(const Offset(0, 3)), const Radius.circular(7)), Paint()..color = Colors.black.withValues(alpha: 0.3));
+    canvas.drawRRect(RRect.fromRectAndRadius(d, const Radius.circular(7)), Paint()..color = Colors.white);
+    final pip = Paint()..color = Brand.onGold;
+    for (final p in const [Offset(-7, -7), Offset(7, -7), Offset(0, 0), Offset(-7, 7), Offset(7, 7)]) {
+      canvas.drawCircle(p, 2.8, pip);
+    }
+    canvas.restore();
+    // Sparkles.
+    final s = Paint()..color = Brand.gold;
+    for (final (x, y, r) in const [(20.0, 22.0, 2.5), (136.0, 18.0, 2.0), (130.0, 104.0, 2.4)]) {
+      canvas.drawCircle(Offset(x, y), r, s);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_HeroArt old) => false;
+}
+
+/// Same Wi-Fi / hotspot: Host on this phone (pops [host]) or Join a friend, which searches
+/// this Wi-Fi/hotspot for a phone or laptop hosting games and pops its URL when found;
+/// or type the host's address.
 class _WifiSearchSheet extends StatefulWidget {
   static const host = 'host';
   const _WifiSearchSheet();
@@ -395,37 +573,6 @@ class _WifiSearchSheetState extends State<_WifiSearchSheet> {
   bool choosing = true; // host or join?
   bool searching = false;
   final _ctrl = TextEditingController();
-
-  Widget _choice(String emoji, String title, String text, List<Color> colors, VoidCallback onTap) => PressableCard(
-        semanticLabel: title,
-        colors: colors,
-        onTap: onTap,
-        padding: const EdgeInsets.all(14),
-        child: Row(children: [
-          Text(emoji, style: const TextStyle(fontSize: 34)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
-              const SizedBox(height: 2),
-              Text(text, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12.5)),
-            ]),
-          ),
-        ]),
-      );
-
-  Widget _chooser() => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Text('Play together with no internet: one phone hosts, the others join it.',
-            textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 14),
-        _choice('📡', 'HOST ON THIS PHONE', 'Turn on your hotspot. Friends join it and play here.', const [Color(0xFF7B4DFF), Color(0xFF4D2BD6)],
-            () => Navigator.pop(context, _WifiSearchSheet.host)),
-        const SizedBox(height: 12),
-        _choice('🔍', 'JOIN A FRIEND', 'Connect to the host\'s hotspot (or same Wi-Fi), then search.', const [Color(0xFF00C9A7), Color(0xFF0E8C7B)], () {
-          setState(() => choosing = false);
-          _search();
-        }),
-      ]);
 
   @override
   void dispose() {
@@ -455,90 +602,74 @@ class _WifiSearchSheetState extends State<_WifiSearchSheet> {
   }
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.fromLTRB(22, 18, 22, 22 + MediaQuery.viewInsetsOf(context).bottom),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const Text('📶 SAME WI-FI · NO INTERNET', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19, letterSpacing: 1)),
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    final muted = TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, height: 1.4, color: t.textMuted);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 22 + MediaQuery.viewInsetsOf(context).bottom),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Center(child: Container(width: 44, height: 5, decoration: BoxDecoration(color: t.text.withValues(alpha: 0.25), borderRadius: BorderRadius.circular(3)))),
+        const SizedBox(height: 12),
+        Text('SAME WI-FI · NO INTERNET', textAlign: TextAlign.center, style: t.cardStyles.label),
+        const SizedBox(height: 2),
+        Text(choosing ? 'Play on one hotspot' : (searching ? 'Looking for the host…' : 'No host found yet'), textAlign: TextAlign.center, style: t.cardStyles.h2),
+        const SizedBox(height: 14),
+        if (choosing) ...[
+          Text('One phone hosts, the others join it. No internet needed.', textAlign: TextAlign.center, style: muted),
           const SizedBox(height: 14),
-          if (choosing)
-            _chooser()
-          else if (searching) ...[
-            const Text('Looking for the host on this Wi-Fi or hotspot…', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(value: progress == 0 ? null : progress, minHeight: 8, color: AppColors.gold, backgroundColor: AppColors.glass),
-            ),
-          ] else ...[
-            const Text('No host found on this Wi-Fi yet.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-            const SizedBox(height: 10),
-            const Text(
-              '1. One friend taps 📶 SAME WI-FI → HOST ON THIS PHONE and turns on their hotspot.\n'
-              '2. Connect this phone to that hotspot (Settings → Wi-Fi).\n'
-              '3. Tap SEARCH AGAIN.\n\n'
-              'Have internet? Just use 🌐 ONLINE instead.',
-              style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600, height: 1.4),
-            ),
-            const SizedBox(height: 14),
-            ElevatedButton.icon(
-              onPressed: _search,
-              icon: const Icon(Icons.wifi_find_rounded),
-              label: const Text('SEARCH AGAIN', style: TextStyle(fontWeight: FontWeight.w900)),
-            ),
-            const SizedBox(height: 14),
-            Row(children: [
-              Expanded(
-                child: TextField(
-                  controller: _ctrl,
-                  keyboardType: TextInputType.url,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(hintText: 'or type the host\'s address, e.g. 192.168.43.1'),
-                  onSubmitted: (_) => _typed(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              TextButton(onPressed: _typed, child: const Text('USE', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900))),
-            ]),
-          ],
-        ]),
-      );
-}
-
-class _Pill extends StatelessWidget {
-  final String text;
-  final IconData icon;
-  const _Pill(this.text, this.icon);
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.fromLTRB(10, 6, 14, 6),
-        decoration: BoxDecoration(color: AppColors.night, borderRadius: BorderRadius.circular(20)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, color: AppColors.gold, size: 20),
-          const SizedBox(width: 4),
-          Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
-        ]),
-      );
-}
-
-class _ActionCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final List<Color> colors;
-  final VoidCallback onTap;
-  const _ActionCard({required this.title, required this.subtitle, required this.icon, required this.colors, required this.onTap});
-  @override
-  Widget build(BuildContext context) => PressableCard(
-        semanticLabel: title,
-        colors: colors,
-        onTap: onTap,
-        padding: const EdgeInsets.all(14),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(icon, color: Colors.white, size: 34),
+          _SheetOption(
+              icon: GameIcons.wifi,
+              tint: PlayerPalette.colors[3],
+              title: 'Host on this phone',
+              text: 'Turn on your hotspot. Friends join it and play here.',
+              onTap: () => Navigator.pop(context, _WifiSearchSheet.host)),
           const SizedBox(height: 10),
-          FittedBox(fit: BoxFit.scaleDown, child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17))),
-          const SizedBox(height: 2),
-          Text(subtitle, maxLines: 2, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12)),
-        ]),
-      );
+          _SheetOption(
+              icon: GameIcons.search,
+              tint: PlayerPalette.colors[2],
+              title: 'Join a friend',
+              text: "Connect to the host's hotspot (or same Wi-Fi), then search.",
+              onTap: () {
+                setState(() => choosing = false);
+                _search();
+              }),
+        ] else if (searching) ...[
+          Text('Searching this Wi-Fi or hotspot…', textAlign: TextAlign.center, style: muted),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(value: progress == 0 ? null : progress, minHeight: 8, color: Brand.gold, backgroundColor: t.text.withValues(alpha: 0.12)),
+          ),
+        ] else ...[
+          Text(
+            '1. One friend taps Same Wi-Fi, then Host on this phone, and turns on their hotspot.\n'
+            '2. Connect this phone to that hotspot (Settings, Wi-Fi).\n'
+            '3. Tap Search again.\n\n'
+            'Have internet? Use Play online instead.',
+            style: muted,
+          ),
+          const SizedBox(height: 14),
+          GoldButton('Search again', icon: GameIcons.search, onPressed: _search),
+          const SizedBox(height: 14),
+          Row(children: [
+            Expanded(
+              child: TextField(
+                controller: _ctrl,
+                keyboardType: TextInputType.url,
+                style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w800, color: t.text),
+                decoration: InputDecoration(
+                  hintText: "Host's address, e.g. 192.168.43.1",
+                  hintStyle: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w700, color: t.textMuted),
+                  fillColor: t.flat ? FlatPalette.option : Colors.white.withValues(alpha: 0.08),
+                ),
+                onSubmitted: (_) => _typed(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            KitButton('Use', style: KitButtonStyle.outline, onPressed: _typed),
+          ]),
+        ],
+      ]),
+    );
+  }
 }

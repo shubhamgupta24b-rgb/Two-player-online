@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth/authentication_manager.dart';
 import '../../core/records/records.dart';
-import '../../core/ui/app_ui.dart';
+import '../../core/ui/app_ui.dart' show AppBackground;
 import '../../core/ui/components.dart';
 import '../../games/game_catalog.dart';
 import '../local_games/local_games_hub_screen.dart';
+import '../local_games/shell/game_art.dart';
 import '../privacy/privacy_screen.dart';
 
-/// My Records: best score, wins and games played per game, kept on this phone only.
+/// My Records (spec 4.10): best score, wins and games played per game, kept on this phone
+/// only, last played first.
 class RecordsScreen extends StatefulWidget {
   const RecordsScreen({super.key});
   @override
@@ -17,6 +19,7 @@ class RecordsScreen extends StatefulWidget {
 
 class _RecordsScreenState extends State<RecordsScreen> {
   Map<String, GameRecord>? records;
+  List<String> recent = const [];
 
   @override
   void initState() {
@@ -24,61 +27,70 @@ class _RecordsScreenState extends State<RecordsScreen> {
     Records.all().then((r) {
       if (mounted) setState(() => records = r);
     });
+    Records.recent().then((r) {
+      if (mounted) setState(() => recent = r);
+    });
   }
 
-  /// Name and emoji for a game id, from the one-device list or the online catalog.
-  (String, String) _game(String id) {
+  /// Name and colour for a game id, from the one-device list or the online catalog.
+  (String, Color) _game(String id) {
+    if (id == 'guess_person') return ('Guess the Person', const Color(0xFFFFC93C));
     for (final g in allLocalGames) {
-      if (g.id == id) return (g.title, g.emoji);
+      if (g.id == id) return (g.title, g.color);
     }
     for (final g in gameCatalog) {
-      if (g.id == id) return (g.name, g.emoji);
+      if (g.id == id) return (g.name, g.color);
     }
-    return (id, '🎮');
+    return (id, const Color(0xFF7B4DFF));
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
     final name = context.watch<AuthenticationManager>().displayName;
     final r = records;
-    final entries = r == null ? const <MapEntry<String, GameRecord>>[] : (r.entries.where((e) => e.value.played > 0 || e.value.best > 0).toList()..sort((a, b) => b.value.played - a.value.played));
+    final order = {for (var i = 0; i < recent.length; i++) recent[i]: i};
+    // Last played first (the recent list), then by how often.
+    final entries = r == null
+        ? const <MapEntry<String, GameRecord>>[]
+        : (r.entries.where((e) => e.value.played > 0 || e.value.best > 0).toList()
+          ..sort((a, b) {
+            final x = order[a.key] ?? 1 << 20, y = order[b.key] ?? 1 << 20;
+            return x != y ? x - y : b.value.played - a.value.played;
+          }));
     final played = entries.fold(0, (s, e) => s + e.value.played);
     final wins = entries.fold(0, (s, e) => s + e.value.wins);
+    final ink = t.flat ? FlatPalette.ink : Colors.white;
+    final muted = t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted;
     return Scaffold(
       body: AppBackground(
         child: SafeArea(
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const Padding(padding: EdgeInsets.fromLTRB(16, 14, 16, 10), child: PageHeader(label: 'Saved on this phone', title: 'My records')),
             Padding(
-              padding: const EdgeInsets.fromLTRB(4, 4, 16, 6),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Row(children: [
-                AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
-                const Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('🏆 MY RECORDS', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                    Text('Saved on this phone only', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600, fontSize: 12.5)),
-                  ]),
-                ),
-              ]),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-              child: Row(children: [
-                _Stat('🎮', '$played', 'GAMES'),
-                const SizedBox(width: 10),
-                _Stat('🥇', '$wins', 'WINS'),
-                const SizedBox(width: 10),
-                _Stat('🎯', '${entries.length}', 'DIFFERENT'),
+                _Stat(GameIcons.dice5, '$played', 'Games'),
+                const SizedBox(width: 8),
+                _Stat(GameIcons.crown, '$wins', 'Wins'),
+                const SizedBox(width: 8),
+                _Stat(GameIcons.star, '${entries.length}', 'Different'),
               ]),
             ),
             Expanded(
               child: r == null
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+                  ? const Center(child: CircularProgressIndicator(color: Brand.gold))
                   : entries.isEmpty
                       ? Center(
-                          child: Padding(
+                          child: SingleChildScrollView(
                             padding: const EdgeInsets.all(32),
-                            child: Text('No games yet${name.isEmpty ? '' : ', $name'}!\nPlay any game and your best scores show up here.',
-                                textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700, fontSize: 15, height: 1.4)),
+                            child: Column(mainAxisSize: MainAxisSize.min, children: [
+                              const GameIcon(GameIcons.trophy, size: 72, color: Brand.gold),
+                              const SizedBox(height: 12),
+                              Text('No games yet${name.isEmpty ? '' : ', $name'}!', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, fontSize: 22, color: t.onBg)),
+                              const SizedBox(height: 4),
+                              Text('Play any game and your best scores show up here.', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
+                            ]),
                           ),
                         )
                       : ListView.separated(
@@ -87,34 +99,45 @@ class _RecordsScreenState extends State<RecordsScreen> {
                           separatorBuilder: (_, __) => const SizedBox(height: 8),
                           itemBuilder: (_, i) {
                             final e = entries[i];
-                            final (title, emoji) = _game(e.key);
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(color: AppColors.glass, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.stroke)),
-                              child: Row(children: [
-                                Text(emoji, style: const TextStyle(fontSize: 30)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                    Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-                                    Text('${e.value.played} played${e.value.wins > 0 ? ' · ${e.value.wins} won' : ''}',
-                                        style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700, fontSize: 12.5)),
-                                  ]),
+                            final (title, color) = _game(e.key);
+                            return Semantics(
+                              label: '$title: best ${e.value.best}, played ${e.value.played}${e.value.wins > 0 ? ', ${e.value.wins} wins' : ''}',
+                              excludeSemantics: true,
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: t.flat ? Colors.white : t.surface,
+                                  borderRadius: Radii.rLg,
+                                  border: Border.all(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.10)),
                                 ),
-                                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                                  const Text('BEST', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900, fontSize: 10.5, letterSpacing: 1.2)),
-                                  Text('${e.value.best}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22)),
+                                child: Row(children: [
+                                  GameThumb(id: e.key, color: color, size: 46, radius: 12),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                      Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 17, color: ink)),
+                                      Text('played ${e.value.played}${e.value.wins > 0 ? ' · wins ${e.value.wins}' : ''}',
+                                          style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w800, color: muted)),
+                                    ]),
+                                  ),
+                                  Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                                    Text('BEST', style: TextStyle(fontFamily: Fonts.body, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: t.flat ? FlatPalette.label : NeonPalette.label)),
+                                    Text('${e.value.best}', style: TextStyle(fontFamily: Fonts.display, fontSize: 26, height: 1.05, color: ink, fontFeatures: const [FontFeature.tabularFigures()])),
+                                  ]),
                                 ]),
-                              ]),
+                              ),
                             );
                           },
                         ),
             ),
-            TextButton.icon(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyScreen())),
-              icon: const Icon(Icons.shield_outlined, size: 18, color: AppColors.muted),
-              label: const Text('Privacy & your data', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
+            Center(
+              child: TextButton(
+                style: TextButton.styleFrom(minimumSize: const Size(kTouchTarget, kTouchTarget)),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyScreen())),
+                child: Text('Privacy & your data', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: t.onBgMuted)),
+              ),
             ),
+            const SizedBox(height: 8),
           ]),
         ),
       ),
@@ -123,17 +146,29 @@ class _RecordsScreenState extends State<RecordsScreen> {
 }
 
 class _Stat extends StatelessWidget {
-  final String emoji, value, label;
-  const _Stat(this.emoji, this.value, this.label);
+  final GameIcons icon;
+  final String value, label;
+  const _Stat(this.icon, this.value, this.label);
   @override
-  Widget build(BuildContext context) => Expanded(
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    return Expanded(
+      child: Semantics(
+        label: '$value ${label.toLowerCase()}',
+        excludeSemantics: true,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(color: AppColors.night, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.stroke)),
+          decoration: BoxDecoration(color: t.flat ? Colors.white : t.surface, borderRadius: Radii.rLg, border: Border.all(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.10))),
           child: Column(children: [
-            Text('$emoji $value', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
-            Text(label, style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w800, fontSize: 10.5, letterSpacing: 1.2)),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              GameIcon(icon, size: 18, color: t.flat ? FlatPalette.ink : Brand.gold),
+              const SizedBox(width: 6),
+              Text(value, style: TextStyle(fontFamily: Fonts.display, fontSize: 22, color: t.flat ? FlatPalette.ink : Colors.white, fontFeatures: const [FontFeature.tabularFigures()])),
+            ]),
+            Text(label.toUpperCase(), style: TextStyle(fontFamily: Fonts.body, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: t.flat ? FlatPalette.label : NeonPalette.label)),
           ]),
         ),
-      );
+      ),
+    );
+  }
 }

@@ -60,7 +60,7 @@ class AppBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) => flatStyle ? FlatBackground(child: child) : DecoratedBox(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [AppColors.navy, AppColors.night, AppColors.deep]),
+          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, stops: [0, 0.45, 1], colors: [NeonPalette.bgTop, NeonPalette.bg, NeonPalette.bgBottom]),
         ),
         child: Stack(children: [
           const Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _Glows()))),
@@ -74,7 +74,7 @@ class _Glows extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     void glow(Offset c, double r, Color color) => canvas.drawCircle(
-        c, r, Paint()..shader = RadialGradient(colors: [color.withValues(alpha: 0.35), color.withValues(alpha: 0)]).createShader(Rect.fromCircle(center: c, radius: r)));
+        c, r, Paint()..shader = RadialGradient(colors: [color.withValues(alpha: 0.12), color.withValues(alpha: 0)]).createShader(Rect.fromCircle(center: c, radius: r)));
     glow(Offset(-size.width * 0.1, size.height * 0.12), size.width * 0.7, AppColors.blue);
     glow(Offset(size.width * 1.1, size.height * 0.35), size.width * 0.7, AppColors.red);
     glow(Offset(size.width * 0.5, size.height * 1.05), size.width * 0.8, AppColors.purple);

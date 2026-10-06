@@ -18,6 +18,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _intro = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..forward();
+  final _slow = Future<void>.delayed(const Duration(seconds: 1));
 
   @override
   void initState() {
@@ -54,37 +55,35 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    final logo = CurvedAnimation(parent: _intro, curve: const Interval(0, 0.7, curve: Curves.elasticOut));
-    final text = CurvedAnimation(parent: _intro, curve: const Interval(0.45, 1, curve: Curves.easeOut));
+    final fade = CurvedAnimation(parent: _intro, curve: const Interval(0, 0.33, curve: Curves.easeOut)); // 360 ms
+    final t = context.tk;
     return Scaffold(
       body: AppBackground(
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                ScaleTransition(scale: Tween(begin: 0.4, end: 1.0).animate(logo), child: const AppLogo(size: 220)),
-                const SizedBox(height: 28),
-                FadeTransition(
-                  opacity: text,
-                  child: SlideTransition(
-                    position: Tween(begin: const Offset(0, 0.4), end: Offset.zero).animate(text),
-                    child: const Column(children: [
-                      PartyWordmark(width: 280),
-                      SizedBox(height: 12),
-                      Text('One phone or many · play anywhere', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
-                    ]),
+              child: FadeTransition(
+                opacity: fade,
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  const AppLogo(size: 200),
+                  const SizedBox(height: 24),
+                  Text('Party Games', textAlign: TextAlign.center, style: t.styles.h1.copyWith(color: t.onBg)),
+                  const SizedBox(height: 6),
+                  Text('One phone or many · play anywhere', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
+                  const SizedBox(height: 28),
+                  // A spinner only when loading takes longer than a second.
+                  SizedBox(
+                    height: 24,
+                    child: FutureBuilder<void>(
+                      future: _slow,
+                      builder: (_, snap) => snap.connectionState == ConnectionState.done
+                          ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Brand.gold, backgroundColor: Brand.gold.withValues(alpha: 0.18)))
+                          : const SizedBox.shrink(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: 160,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: const LinearProgressIndicator(minHeight: 6, color: AppColors.gold, backgroundColor: AppColors.glass),
-                  ),
-                ),
-              ]),
+                ]),
+              ),
             ),
           ),
         ),

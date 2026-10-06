@@ -53,6 +53,15 @@ class MainActivity : FlutterActivity() {
                     applyHaptics()
                     result.success(null)
                 }
+                // Share a room code (or any text) with the system share sheet.
+                "share" -> {
+                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(android.content.Intent.EXTRA_TEXT, call.argument<String>("text") ?: "")
+                    }
+                    startActivity(android.content.Intent.createChooser(send, null))
+                    result.success(true)
+                }
                 else -> result.notImplemented()
             }
         }

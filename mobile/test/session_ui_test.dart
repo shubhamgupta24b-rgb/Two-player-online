@@ -64,55 +64,57 @@ Future<(RoomManager, RecordingSocket, GameSessionManager)> pumpLobby(WidgetTeste
 void main() {
   testWidgets('host lobby: code, next game card, change game, start and party mode', (tester) async {
     final (rm, socket, _) = await pumpLobby(tester, room());
-    expect(find.text('ABC234'), findsOneWidget);
+    expect(find.bySemanticsLabel('Room code A B C 2 3 4'), findsOneWidget);
     expect(find.text('Tic-Tac-Toe'), findsOneWidget);
-    expect(find.text('Asha (you) 👑'), findsOneWidget);
-    expect(find.text('START TIC-TAC-TOE'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('^Asha, you, host')), findsOneWidget);
+    expect(find.text('Start Tic-Tac-Toe'), findsOneWidget);
 
-    await tester.tap(find.text('🎲 PARTY MODE · 5 RANDOM GAMES'));
+    await tester.tap(find.text('Party mode · 5 random games'));
     await tester.pump();
     expectReq(socket, 'start_party', {'count': 5});
 
-    await tester.tap(find.text('START TIC-TAC-TOE'));
+    await tester.tap(find.text('Start Tic-Tac-Toe'));
     await tester.pump();
     expect(socket.requests.last.$1, 'start_game');
 
     // Change the game: the picker only lets you pick games that fit.
-    await tester.tap(find.text('CHANGE'));
-    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Change'));
+    await tester.pump(); await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('Change'));
+    await tester.pump(); await tester.pump(const Duration(seconds: 1));
     expect(find.byType(GamePickerScreen), findsOneWidget);
-    expect(find.text('3 games fit your 2 players'), findsOneWidget);
+    expect(find.text('3 games fit 2 players'), findsOneWidget);
     await tester.tap(find.text('Connect Four'));
-    await tester.pumpAndSettle();
+    await tester.pump(); await tester.pump(const Duration(seconds: 1));
     expect(find.byType(GamePickerScreen), findsOneWidget, reason: "doesn't fit: can't pick it");
     await tester.tap(find.text('Ludo'));
-    await tester.pumpAndSettle();
+    await tester.pump(); await tester.pump(const Duration(seconds: 1));
     expect(find.byType(GamePickerScreen), findsNothing);
     expectReq(socket, 'select_game', {'gameType': 'ludo'});
     rm.room = room(game: 'ludo');
     rm.notifyListeners();
     await tester.pump();
-    expect(find.text('START LUDO'), findsOneWidget);
+    expect(find.text('Start Ludo'), findsOneWidget);
   });
 
   testWidgets('host cannot start until everyone is ready, or if the game does not fit', (tester) async {
     final (rm, socket, _) = await pumpLobby(tester, room(guestReady: false));
-    expect(find.text('Waiting for everyone to join and tap READY…'), findsOneWidget);
-    await tester.tap(find.text('START TIC-TAC-TOE'));
+    expect(find.textContaining('to tap Ready'), findsOneWidget);
+    await tester.tap(find.text('Start Tic-Tac-Toe'));
     await tester.pump();
     expect(socket.requests.where((r) => r.$1 == 'start_game'), isEmpty);
     rm.room = room(game: 'raja_mantri');
     rm.notifyListeners();
     await tester.pump();
-    expect(find.text('⚠ Needs 4 players · you have 2'), findsOneWidget);
+    expect(find.text('Needs 4 players · you have 2'), findsOneWidget);
   });
 
   testWidgets('guest lobby: no game controls, just READY', (tester) async {
     final (_, socket, _) = await pumpLobby(tester, room(guestReady: false), uid: 'op');
-    expect(find.text('CHANGE'), findsNothing);
-    expect(find.textContaining('PARTY MODE'), findsNothing);
-    expect(find.text('The host picks the games. Get ready!'), findsOneWidget);
-    await tester.tap(find.text("I'M READY"));
+    expect(find.text('Change'), findsNothing);
+    expect(find.textContaining('Party mode'), findsNothing);
+    expect(find.text('Tap Ready when you are set'), findsOneWidget);
+    await tester.tap(find.text('Ready'));
     await tester.pump();
     expect(socket.requests.last.$1, 'player_ready');
   });

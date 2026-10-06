@@ -40,9 +40,9 @@ void main() {
     expect(find.text('Fruit Merge'), findsOneWidget);
     expect(find.text('340'), findsOneWidget);
     expect(find.text('Bingo'), findsOneWidget);
-    expect(find.text('3 played · 2 won'), findsOneWidget);
-    expect(find.text('🎮 8'), findsOneWidget, reason: 'games played in total');
-    expect(find.text('🥇 2'), findsOneWidget);
+    expect(find.text('played 3 · wins 2'), findsOneWidget);
+    expect(find.bySemanticsLabel('8 games'), findsOneWidget, reason: 'games played in total');
+    expect(find.bySemanticsLabel('2 wins'), findsOneWidget);
   });
 
   testWidgets('no games yet: a friendly empty screen', (tester) async {

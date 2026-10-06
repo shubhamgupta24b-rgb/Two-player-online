@@ -34,8 +34,8 @@ Future<RecordingSocket> pumpQuickPlay(WidgetTester tester) async {
 void main() {
   testWidgets('Quick Play: any game by default', (tester) async {
     final socket = await pumpQuickPlay(tester);
-    expect(find.text('ANY GAME'), findsOneWidget);
-    await tester.tap(find.text('FIND A ROOM'));
+    expect(find.text('Any game'), findsOneWidget);
+    await tester.tap(find.text('Find a room'));
     await tester.pump();
     expectReq(socket, 'quick_play', {});
   });
@@ -45,7 +45,7 @@ void main() {
     await tester.tap(find.text('Ludo').first);
     await tester.pump();
     expect(find.textContaining('Ludo · 2–4 players'), findsOneWidget);
-    await tester.tap(find.text('FIND A ROOM'));
+    await tester.tap(find.text('Find a room'));
     await tester.pump();
     expectReq(socket, 'quick_play', {'gameType': 'ludo'});
   });
@@ -59,6 +59,6 @@ void main() {
     });
     expect(r.isPublic, isTrue);
     await pumpLobby(tester, r);
-    expect(find.text('⚡ QUICK PLAY ROOM'), findsOneWidget);
+    expect(find.text('Open to everyone'), findsOneWidget);
   });
 }

@@ -139,7 +139,9 @@ void main() {
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.reset);
         await tester.pumpWidget(const MaterialApp(home: LocalGamesHubScreen()));
-        expect(find.text('$totalGameCount GAMES'), findsOneWidget);
+        expect(find.text('$totalGameCount games'), findsOneWidget);
+        await tester.ensureVisible(find.text('Raja Mantri Chor Sipahi'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Raja Mantri Chor Sipahi'));
         await tester.pumpAndSettle();
 
