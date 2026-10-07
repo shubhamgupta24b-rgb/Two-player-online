@@ -230,3 +230,37 @@
 **Also:** compact `TurnBanner` sub-lines are now one line.
 
 **Tests:** analyze clean, 830 tests pass.
+
+## B2 — part 2: Bingo, Colour Clash, Raja Mantri (B2 done)
+
+**Bingo**
+- Paper 5×5 card with Lilita numbers.
+- Called numbers are stamped with an ink-dauber blot in the caller's colour. The caller is worked out from the call order, since turns go round one by one.
+- Completed lines are struck through with a marker stroke.
+- B-I-N-G-O letters are 5 big tiles that light up gold.
+- Called-number history strip in caller colours; score cards show each player's letters.
+- Moments: LINE! and BINGO! (confetti).
+
+**Colour Clash**
+- Cards are paper with a colour field and a tilted oval (four colours on wilds).
+- Lilita numbers; Skip, Reverse and the wild star are drawn; +2 / +4 in Lilita.
+- Drawn suit marks per colour (heart, star, triangle, diamond) replace the ♥★♣♦ text.
+- Felt table: a two-card draw pile, and a ring in the current colour with direction arrows around the discard.
+- The hand is fanned with playable cards lifted, and the ONE! button pulses gold.
+- New colour picker and a pass-the-phone sheet.
+- Moments: +2!, +4! (shake), SKIP!, REVERSE!, ONE CARD!
+- No emoji left in its UI.
+
+**Raja Mantri Chor Sipahi (spec 4.13)**
+- Cards use the shared `CardBack` and paper faces with drawn emblems: crown (Raja), scroll (Mantri), shield (Sipahi), mask (Chor).
+- Seats sit on the felt table, with badge + name, a gold points line and a `+N` edge tag after the reveal.
+- The headline panel uses drawn icons, the Mantri countdown ring uses Lilita, and the result banner is a success / miss `TurnBanner`.
+- Moments: RAJA!, CAUGHT!, ESCAPED! (shake).
+- The menu is styled like the game intro: role cards, rule steps, badge + name fields, round chips, gold "Deal the cards".
+- Final results use the shared `ResultScreen` (all four role cards as the hero).
+- The online Raja Mantri screen (`games/raja_mantri`) shares these widgets. Its headline texts still contain emoji; that's left for the online-variants sweep in the final pass.
+
+**Tests**
+- analyze clean, 830 tests pass; `raja_mantri_test` was updated for the new labels.
+- Debug builds pass for both flavors.
+- Renders: `tool/screens_test.dart` (bingo, colour_clash) and the new `tool/rmcs_render_test.dart`.

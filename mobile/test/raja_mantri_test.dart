@@ -151,21 +151,21 @@ void main() {
           await tester.pump();
         }
         await tester.enterText(find.byType(TextField).first, 'Asha');
-        await tester.scrollUntilVisible(find.text('DEAL THE CARDS'), 200, scrollable: find.byType(Scrollable).first);
-        await tester.tap(find.text('DEAL THE CARDS'));
+        await tester.scrollUntilVisible(find.text('Deal the cards'), 200, scrollable: find.byType(Scrollable).first);
+        await tester.tap(find.text('Deal the cards'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
-        expect(find.text('ROUND 1 / 20'), findsOneWidget);
+        expect(find.text('Round 1 / 20'), findsOneWidget);
         expect(find.text('SHUFFLING…'), findsOneWidget);
         await tester.pump(const Duration(milliseconds: 2400));
 
         // Each player peeks in turn.
-        expect(find.text('📱 Pass the phone to Asha'), findsOneWidget);
+        expect(find.text('Pass the phone to Asha'), findsOneWidget);
         for (var i = 0; i < 4; i++) {
           await tester.tap(find.text('TAP TO REVEAL'));
           await flip(tester);
           expect(find.textContaining('Remember your card'), findsOneWidget);
-          await tester.tap(find.textContaining('HIDE CARD'));
+          await tester.tap(find.textContaining('Hide card'));
           await flip(tester);
         }
 
@@ -176,21 +176,21 @@ void main() {
         await flip(tester); // flip
         expect(find.text('MANTRI'), findsOneWidget);
         expect(find.text('CHOR'), findsNothing, reason: 'Chor still hidden');
-        await tester.tap(find.text('MANTRI: FIND THE CHOR (10s)'));
+        await tester.tap(find.text('Mantri: find the Chor (10s)'));
         await tester.pump(const Duration(milliseconds: 300));
         expect(find.textContaining('who is the CHOR?'), findsOneWidget);
         expect(find.text('TAP TO ACCUSE'), findsNWidgets(2));
 
         await tester.tap(find.text('TAP TO ACCUSE').first);
         await tester.pump(const Duration(milliseconds: 1500));
-        final caught = find.text('✓ CHOR CAUGHT!').evaluate().isNotEmpty;
-        expect(caught || find.text('✗ WRONG GUESS — CHOR ESCAPED!').evaluate().isNotEmpty, isTrue);
+        final caught = find.text('Chor caught!').evaluate().isNotEmpty;
+        expect(caught || find.text('Wrong guess: Chor escaped!').evaluate().isNotEmpty, isTrue);
         expect(find.text('CHOR'), findsOneWidget, reason: 'all cards revealed');
         expect(find.text('+1000'), findsOneWidget);
         expect(find.text('1000 pts'), findsOneWidget);
-        await tester.tap(find.text('NEXT ROUND (2/20)'));
+        await tester.tap(find.text('Next round (2/20)'));
         await tester.pump();
-        expect(find.text('ROUND 2 / 20'), findsOneWidget);
+        expect(find.text('Round 2 / 20'), findsOneWidget);
 
         await tester.pumpWidget(const SizedBox());
         await tester.pump(const Duration(seconds: 3));
@@ -207,11 +207,11 @@ void main() {
       await tester.tap(find.text('5'));
       await tester.pump();
       expect(find.text('Quick game · about 5 minutes'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('DEAL THE CARDS'), 200, scrollable: find.byType(Scrollable).first);
-      await tester.tap(find.text('DEAL THE CARDS'));
+      await tester.scrollUntilVisible(find.text('Deal the cards'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('Deal the cards'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('ROUND 1 / 5'), findsOneWidget);
+      expect(find.text('Round 1 / 5'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 3));
     });
@@ -226,14 +226,14 @@ void main() {
       expect(find.text('10'), findsOneWidget, reason: 'countdown');
       clock = 10000;
       await tester.pump(const Duration(milliseconds: 200));
-      expect(find.text('✗ WRONG GUESS — CHOR ESCAPED!'), findsOneWidget);
+      expect(find.text('Wrong guess: Chor escaped!'), findsOneWidget);
       expect(find.text("Time's up! The Mantri didn't choose."), findsOneWidget);
-      await tester.tap(find.text('SEE FINAL RESULTS'));
+      await tester.tap(find.text('See final results'));
       await tester.pump(const Duration(milliseconds: 500));
-      expect(find.textContaining('WINS!'), findsOneWidget);
-      expect(find.text('🥇'), findsOneWidget);
-      await tester.ensureVisible(find.text('PLAY AGAIN'));
-      await tester.tap(find.text('PLAY AGAIN'));
+      expect(find.textContaining(' wins!', findRichText: true).evaluate().isNotEmpty || find.text("It's a draw!").evaluate().isNotEmpty, isTrue);
+      expect(find.bySemanticsLabel(RegExp('^Place 1, ')), findsWidgets);
+      await tester.ensureVisible(find.text('Rematch'));
+      await tester.tap(find.text('Rematch'));
       await tester.pump();
       expect(g.round, 1);
       expect(find.text('SHUFFLING…'), findsOneWidget);
@@ -303,7 +303,7 @@ void main() {
       }));
       await pumpGame(tester, const RajaMantriScreen(), s);
       await tester.pump(const Duration(milliseconds: 1000));
-      expect(find.text('✓ CHOR CAUGHT!'), findsOneWidget);
+      expect(find.text('Chor caught!'), findsOneWidget);
       for (final t in ['RAJA', 'MANTRI', 'SIPAHI', 'CHOR', '🚨 CAUGHT!', '+1000', '+500', '+300', '+0']) {
         expect(find.text(t), findsOneWidget, reason: t);
       }

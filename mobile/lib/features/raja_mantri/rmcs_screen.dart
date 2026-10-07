@@ -3,13 +3,31 @@ import 'package:flutter/material.dart';
 import '../../core/audio/game_audio.dart';
 import '../../core/ui/components.dart';
 import '../guess_person/models/gp_player.dart';
-import '../guess_person/widgets/gp_theme.dart';
+import '../local_games/shell/how_to_play.dart' show RuleStep;
+import '../local_games/shell/local_game_info.dart';
+import '../local_games/shell/result_screen.dart';
 import 'rmcs_game.dart';
 import 'rmcs_role.dart';
 import 'widgets/role_card.dart';
 import 'widgets/rmcs_widgets.dart';
 
-/// Setup: four names, how many rounds, the rules at a glance, then play on one device.
+/// How this game appears on the shared result screen (not a shell game: it has its own flow).
+final _resultInfo = LocalGameInfo(
+  id: 'raja_mantri',
+  title: 'Raja Mantri',
+  emoji: '',
+  color: const Color(0xFF8A1C3A),
+  tagline: 'Can the Mantri catch the Chor?',
+  rules: const [],
+  scoreUnit: 'points',
+  splitScreen: false,
+  minPlayers: 4,
+  maxPlayers: 4,
+  play: (_, __) => const SizedBox.shrink(),
+);
+
+/// Setup (spec 4.13, styled like the game intro): the four roles, the rules as icon steps,
+/// four names, how many rounds, then Deal the cards.
 class RmcsMenuScreen extends StatefulWidget {
   const RmcsMenuScreen({super.key});
   @override
@@ -31,63 +49,59 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
 
   void _start() {
     final players = [
-      for (var i = 0; i < 4; i++)
-        GpPlayer(name: _names[i].text.trim().isEmpty ? 'Player ${i + 1}' : _names[i].text.trim(), color: gpPlayerColors[i]),
+      for (var i = 0; i < 4; i++) GpPlayer(name: _names[i].text.trim().isEmpty ? 'Player ${i + 1}' : _names[i].text.trim(), color: gpPlayerColors[i]),
     ];
     Navigator.push(context, MaterialPageRoute(builder: (_) => RmcsGameScreen(game: RmcsGame(players: players, totalRounds: _rounds))));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: RmcsBackground(
-        child: SafeArea(
-          child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 24), children: [
-            Row(children: [
-              AppIconButton(icon: Icons.arrow_back_rounded, tooltip: 'Back', onPressed: () => Navigator.maybePop(context)),
-              const Spacer(),
-              AppIconButton(icon: Icons.tune_rounded, tooltip: 'Settings', onPressed: () => showSettingsSheet(context)),
-            ]),
-            const Text('RAJA MANTRI\nCHOR SIPAHI',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: RmcsColors.gold, fontSize: 32, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: 1, shadows: [Shadow(color: Color(0xFF8A1C3A), offset: Offset(0, 4))])),
-            const SizedBox(height: 6),
-            Text('4 PLAYERS · $_rounds ROUNDS · ONE PHONE', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 150,
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                for (final r in RmcsRole.values)
-                  Flexible(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: RoleCard(role: r, faceUp: true))),
-              ]),
-            ),
-            const SizedBox(height: 16),
-            _rules(),
-            const SizedBox(height: 16),
-            for (var i = 0; i < 4; i++)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: TextField(
-                  controller: _names[i],
-                  maxLength: 12,
-                  textCapitalization: TextCapitalization.words,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
-                  decoration: InputDecoration(
-                    counterText: '',
-                    hintText: 'Player ${i + 1}',
-                    hintStyle: const TextStyle(color: Colors.white38),
-                    prefixIcon: Padding(padding: const EdgeInsets.all(8), child: PlayerAvatar(name: 'Player ${i + 1}', color: gpPlayerColors[i], seat: i, size: 28)),
-                    filled: true,
-                    fillColor: Colors.white10,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+    return TokenScope(
+      flat: false,
+      child: Scaffold(
+        body: RmcsBackground(
+          child: SafeArea(
+            child: Column(children: [
+              Expanded(
+                child: ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 16), children: [
+                  PageHeader(
+                    label: 'Raja Mantri Chor Sipahi',
+                    title: 'One phone',
+                    trailing: RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  Text('4 PLAYERS · $_rounds ROUNDS · ONE PHONE', textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.label, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.6)),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    height: 150,
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      for (final r in RmcsRole.values) Flexible(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: RoleCard(role: r, faceUp: true))),
+                    ]),
+                  ),
+                  const SizedBox(height: 14),
+                  _rules(),
+                  const SizedBox(height: 14),
+                  const Text('PLAYERS', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.82, color: Colors.white)),
+                  const SizedBox(height: 8),
+                  for (var i = 0; i < 4; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(children: [
+                        PlayerBadge(index: i, size: 30, initial: 'P'),
+                        const SizedBox(width: 10),
+                        Expanded(child: KitField(controller: _names[i], hint: 'Player ${i + 1}', capitalization: TextCapitalization.words, maxLength: 12)),
+                      ]),
+                    ),
+                  const SizedBox(height: 6),
+                  _roundPicker(),
+                ]),
               ),
-            const SizedBox(height: 8),
-            _roundPicker(),
-            const SizedBox(height: 16),
-            GpButton('DEAL THE CARDS', icon: Icons.style_rounded, onPressed: _start),
-          ]),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 22),
+                child: GoldButton('Deal the cards', height: 58, fontSize: 24, onPressed: _start),
+              ),
+            ]),
+          ),
         ),
       ),
     );
@@ -95,44 +109,38 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
 
   Widget _roundPicker() => Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: RmcsColors.panel, borderRadius: BorderRadius.circular(18), border: Border.all(color: RmcsColors.gold.withValues(alpha: 0.35))),
+        decoration: BoxDecoration(color: RmcsColors.panel, borderRadius: Radii.rButton, border: Border.all(color: Colors.white.withValues(alpha: 0.10))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('ROUNDS', style: TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-          const SizedBox(height: 10),
-          Wrap(spacing: 8, runSpacing: 8, children: [
-            for (final n in roundChoices)
-              AppChip(label: '$n', selected: n == _rounds, semanticLabel: '$n rounds', onTap: () => setState(() => _rounds = n)),
+          const Text('ROUNDS', style: TextStyle(fontFamily: Fonts.body, color: NeonPalette.label, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.6)),
+          const SizedBox(height: 6),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            for (final n in roundChoices) KitChip('$n', selected: n == _rounds, onTap: () => setState(() => _rounds = n)),
           ]),
-          const SizedBox(height: 8),
-          Text(_rounds <= 5 ? 'Quick game · about 5 minutes' : _rounds >= 30 ? 'Marathon · about 30 minutes' : 'About $_rounds minutes', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700, fontSize: 12)),
+          const SizedBox(height: 6),
+          Text(_rounds <= 5 ? 'Quick game · about 5 minutes' : _rounds >= 30 ? 'Marathon · about 30 minutes' : 'About $_rounds minutes',
+              style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.textMuted, fontWeight: FontWeight.w800, fontSize: 12)),
         ]),
       );
 
   Widget _rules() {
-    Widget line(String emoji, String text) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 3),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(emoji, style: const TextStyle(fontSize: 16)),
-            const SizedBox(width: 8),
-            Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13))),
-          ]),
-        );
+    final rules = [
+      'Each round the 4 cards are shuffled and dealt. Pass the phone so everyone secretly sees their own card.',
+      'The Raja is revealed (+1000 every round), then the Mantri steps forward.',
+      'The Mantri has 10 seconds to point at the Chor. Right: Mantri +500. Wrong or too slow: Chor +500.',
+      'The Sipahi always gets +300. Highest total after $_rounds rounds wins!',
+    ];
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: RmcsColors.panel, borderRadius: BorderRadius.circular(18), border: Border.all(color: RmcsColors.gold.withValues(alpha: 0.35))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('HOW TO PLAY', style: TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-        const SizedBox(height: 6),
-        line('🃏', 'Each round the 4 cards are shuffled and dealt. Pass the phone so everyone secretly sees their own card.'),
-        line('👑', 'The Raja is revealed (+1000 every round), then the Mantri steps forward.'),
-        line('🧠', 'The Mantri has 10 seconds to point at the Chor. Right: Mantri +500. Wrong or too slow: Chor +500.'),
-        line('👮', 'The Sipahi always gets +300. Highest total after $_rounds rounds wins!'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: RmcsColors.panel, borderRadius: Radii.rButton, border: Border.all(color: Colors.white.withValues(alpha: 0.10))),
+      child: Column(children: [
+        for (var i = 0; i < rules.length; i++) ...[if (i > 0) const SizedBox(height: 8), RuleStep(index: i, rule: rules[i])],
       ]),
     );
   }
 }
 
-/// The table: four seats, a headline for what's happening, and the action button.
+/// The table: round, a headline for what's happening, four seats on the felt and the
+/// action button. Results go to the shared result screen.
 class RmcsGameScreen extends StatefulWidget {
   final RmcsGame game;
   const RmcsGameScreen({super.key, required this.game});
@@ -146,6 +154,7 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
   Timer? _mantriTimer;
   bool _mantriShown = false;
   RmcsPhase? _lastPhase;
+  final _fx = GlobalKey<GameFeedback>();
 
   @override
   void initState() {
@@ -170,10 +179,17 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
           if (mounted) setState(() => _mantriShown = true);
         });
         haptic(HapticWeight.medium);
+        _fx.currentState?.announce('RAJA!', sub: '${_n(g.raja)} +1000');
       }
       if (g.phase == RmcsPhase.reveal) {
         haptic(HapticWeight.heavy);
         GameAudio.sfx(g.caught ? 'coin' : 'lose');
+        if (g.caught) {
+          _fx.currentState?.announce('CAUGHT!', sub: 'The Mantri found the Chor');
+        } else {
+          _fx.currentState?.announce('ESCAPED!', sub: 'The Chor gets away', color: const Color(0xFFB57BFF));
+          _fx.currentState?.shake();
+        }
       }
     }
     if (mounted) setState(() {});
@@ -188,21 +204,24 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
   }
 
   Future<void> _leave() async {
-    final ok = await confirmAction(context, title: 'Leave the game?', message: 'Scores for this game will be lost.', confirm: 'LEAVE', cancel: 'STAY', emoji: '🚪');
+    final ok = await confirmAction(context, title: 'Leave the game?', message: 'Scores for this game will be lost.', confirm: 'Leave', cancel: 'Stay', emoji: null);
     if (ok && mounted) Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: g.phase == RmcsPhase.finished,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _leave();
-      },
-      child: Scaffold(
-        body: RmcsBackground(
-          child: SafeArea(
-            child: g.phase == RmcsPhase.finished ? _finished() : _table(),
+    return TokenScope(
+      flat: false,
+      child: PopScope(
+        canPop: g.phase == RmcsPhase.finished,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _leave();
+        },
+        child: Scaffold(
+          body: RmcsBackground(
+            child: SafeArea(
+              child: g.phase == RmcsPhase.finished ? _finished() : FeedbackLayer(key: _fx, child: _table()),
+            ),
           ),
         ),
       ),
@@ -211,24 +230,28 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
 
   Widget _table() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 12),
       child: Column(children: [
         Row(children: [
-          AppIconButton(icon: Icons.close_rounded, tooltip: 'Leave game', onPressed: _leave),
+          RoundButton(icon: GameIcons.close, label: 'Leave game', onPressed: _leave),
           Expanded(
-            child: Text('ROUND ${g.round} / ${g.totalRounds}', textAlign: TextAlign.center, style: const TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 2)),
+            child: Semantics(
+              header: true,
+              child: Column(children: [
+                const Text('RAJA MANTRI', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.76, color: NeonPalette.label)),
+                Text('Round ${g.round} / ${g.totalRounds}', style: const TextStyle(fontFamily: Fonts.display, fontSize: 20, color: Colors.white)),
+              ]),
+            ),
           ),
-          AppIconButton(icon: Icons.tune_rounded, tooltip: 'Settings', onPressed: () => showSettingsSheet(context)),
+          RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
         ]),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         _headline(),
         const SizedBox(height: 8),
         Expanded(
-          child: g.phase == RmcsPhase.dealing
-              ? ShuffleDeal(key: ValueKey('deal${g.round}'), onDone: g.dealt)
-              : SeatGrid(seats: [for (var i = 0; i < 4; i++) _seat(i)]),
+          child: g.phase == RmcsPhase.dealing ? ShuffleDeal(key: ValueKey('deal${g.round}'), onDone: g.dealt) : SeatGrid(seats: [for (var i = 0; i < 4; i++) _seat(i)]),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         _actions(),
       ]),
     );
@@ -239,22 +262,25 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
   Widget _headline() {
     switch (g.phase) {
       case RmcsPhase.dealing:
-        return const RmcsHeadline(title: '🃏 Shuffling and dealing…', subtitle: 'Four cards: Raja, Mantri, Sipahi and Chor.');
+        return const RmcsHeadline(title: 'Shuffling and dealing…', subtitle: 'Four cards: Raja, Mantri, Sipahi and Chor.', icon: GameIcons.restart);
       case RmcsPhase.peek:
         final who = _n(g.peekIndex);
         return RmcsHeadline(
-          title: g.peekShown ? '🤫 Remember your card, $who!' : '📱 Pass the phone to $who',
+          title: g.peekShown ? 'Remember your card, $who!' : 'Pass the phone to $who',
           subtitle: g.peekShown ? 'Then hide it and pass the phone on.' : 'Everyone else, look away! Tap your card to see it.',
+          icon: g.peekShown ? GameIcons.eye : GameIcons.people,
         );
       case RmcsPhase.rajaReveal:
         return RmcsHeadline(
-          title: '👑 ${_n(g.raja)} is the RAJA!',
-          subtitle: _mantriShown ? '🧠 ${_n(g.mantri)} is the Mantri. Find the Chor: ${_n(g.suspects[0])} or ${_n(g.suspects[1])}?' : 'Bow to the king… +1000 points!',
+          title: '${_n(g.raja)} is the RAJA!',
+          subtitle: _mantriShown ? '${_n(g.mantri)} is the Mantri. Find the Chor: ${_n(g.suspects[0])} or ${_n(g.suspects[1])}?' : 'Bow to the king… +1000 points!',
+          icon: GameIcons.crown,
         );
       case RmcsPhase.guessing:
         return RmcsHeadline(
-          title: '🧠 ${_n(g.mantri)}, who is the CHOR?',
+          title: '${_n(g.mantri)}, who is the CHOR?',
           subtitle: 'Tap ${_n(g.suspects[0])} or ${_n(g.suspects[1])}.',
+          icon: GameIcons.scroll,
           trailing: CountdownRing(msLeft: g.guessMsLeft, totalMs: g.guessMs, size: 52),
         );
       case RmcsPhase.reveal:
@@ -295,7 +321,7 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
         if (!faceUp) {
           highlight = true;
           badge = 'TAP TO ACCUSE';
-          badgeColor = GpColors.no;
+          badgeColor = StatusColors.danger;
           onTap = () {
             haptic(HapticWeight.selection);
             g.accuse(i);
@@ -308,20 +334,24 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
         // The accused card turns first, the other suspect a beat later.
         if (role == RmcsRole.sipahi || role == RmcsRole.chor) flip = Duration(milliseconds: i == g.accused ? 600 : 1100);
         if (i == g.accused) {
-          badge = '👉 ACCUSED';
+          badge = 'ACCUSED';
           badgeColor = Colors.white;
         } else if (role == RmcsRole.chor) {
           badge = 'ESCAPED!';
-          badgeColor = GpColors.no;
+          badgeColor = StatusColors.danger;
         }
         if (role == RmcsRole.chor) highlight = true;
-        if (i == g.accused && g.caught) badge = '🚨 CAUGHT!';
+        if (i == g.accused && g.caught) {
+          badge = 'CAUGHT!';
+          badgeColor = StatusColors.success;
+        }
       case RmcsPhase.finished:
         faceUp = true;
     }
     return RmcsSeat(
       name: player.name,
       color: player.color,
+      seat: i,
       role: role,
       faceUp: faceUp,
       score: g.scores[i],
@@ -339,53 +369,38 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
     switch (g.phase) {
       case RmcsPhase.dealing:
       case RmcsPhase.guessing:
-        return const SizedBox(height: 54);
+        return const SizedBox(height: 58);
       case RmcsPhase.peek:
-        if (!g.peekShown) return const SizedBox(height: 54);
+        if (!g.peekShown) return const SizedBox(height: 58);
         final last = g.peekIndex == RmcsGame.playerCount - 1;
-        return GpButton(last ? 'HIDE CARD · REVEAL THE RAJA' : 'HIDE CARD · PASS TO ${_n(g.peekIndex + 1).toUpperCase()}', icon: Icons.visibility_off_rounded, onPressed: g.passPeek);
+        return GoldButton(last ? 'Hide card · reveal the Raja' : 'Hide card · pass to ${_n(g.peekIndex + 1)}', icon: GameIcons.eye, height: 58, fontSize: 19, onPressed: g.passPeek);
       case RmcsPhase.rajaReveal:
-        return GpButton(_mantriShown ? 'MANTRI: FIND THE CHOR (10s)' : '…', icon: Icons.timer_rounded, onPressed: _mantriShown ? g.startGuessing : null);
+        return GoldButton(_mantriShown ? 'Mantri: find the Chor (10s)' : '…', icon: GameIcons.clock, height: 58, fontSize: 19, onPressed: _mantriShown ? g.startGuessing : null);
       case RmcsPhase.reveal:
-        return GpButton(g.isLastRound ? 'SEE FINAL RESULTS' : 'NEXT ROUND (${g.round + 1}/${g.totalRounds})', icon: Icons.arrow_forward_rounded, onPressed: g.nextRound);
+        return GoldButton(g.isLastRound ? 'See final results' : 'Next round (${g.round + 1}/${g.totalRounds})', icon: GameIcons.forward, height: 58, fontSize: 19, onPressed: g.nextRound);
       case RmcsPhase.finished:
         return const SizedBox.shrink();
     }
   }
 
+  /// The shared result screen: the winner, standings with each player's total.
   Widget _finished() {
-    final order = g.standings;
-    final best = g.scores[order.first];
-    final winners = [for (final i in order) if (g.scores[i] == best) _n(i)];
-    return ListView(padding: const EdgeInsets.all(20), children: [
-      const SizedBox(height: 8),
-      const Text('🏆', textAlign: TextAlign.center, style: TextStyle(fontSize: 72)),
-      Text(winners.length == 1 ? '${winners.first.toUpperCase()} WINS!' : "IT'S A TIE!",
-          textAlign: TextAlign.center, style: const TextStyle(color: RmcsColors.gold, fontSize: 30, fontWeight: FontWeight.w900)),
-      Text('after ${g.totalRounds} rounds', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
-      const SizedBox(height: 18),
-      for (var rank = 0; rank < order.length; rank++)
-        Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: rank == 0 ? RmcsColors.gold.withValues(alpha: 0.2) : RmcsColors.panel,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: rank == 0 ? RmcsColors.gold : Colors.white12, width: 2),
-          ),
-          child: Row(children: [
-            Text(['🥇', '🥈', '🥉', '4️⃣'][rank], style: const TextStyle(fontSize: 26)),
-            const SizedBox(width: 12),
-            PlayerAvatar(name: _n(order[rank]), color: g.players[order[rank]].color, seat: order[rank], size: 34),
-            const SizedBox(width: 10),
-            Expanded(child: Text(_n(order[rank]), overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18))),
-            Text('${g.scores[order[rank]]}', style: const TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, fontSize: 20, fontFeatures: [FontFeature.tabularFigures()])),
-          ]),
-        ),
-      const SizedBox(height: 12),
-      GpButton('PLAY AGAIN', icon: Icons.replay_rounded, onPressed: g.restart),
-      const SizedBox(height: 10),
-      GpButton('EXIT', outlined: true, onPressed: () => Navigator.pop(context)),
-    ]);
+    final players = [for (var i = 0; i < 4; i++) GpPlayer(name: _n(i), color: g.players[i].color, score: g.scores[i])];
+    final extras = ResultExtras()
+      ..subtitle = 'after ${g.totalRounds} rounds'
+      ..hero = ((_) => SizedBox(
+            height: 130,
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              for (final r in RmcsRole.values) Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child: RoleCard(role: r, faceUp: true)),
+            ]),
+          ));
+    return ResultScreen(
+      game: _resultInfo,
+      players: players,
+      extras: extras,
+      onRematch: g.restart,
+      onChangePlayers: () => Navigator.pop(context),
+      onExit: () => Navigator.pop(context),
+    );
   }
 }

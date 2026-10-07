@@ -1,35 +1,36 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/ui/components.dart';
+import '../../../core/ui/materials/materials.dart';
 import '../rmcs_role.dart';
 import 'role_card.dart';
 
 class RmcsColors {
-  static const top = Color(0xFF3A0F45);
-  static const bottom = Color(0xFF12071C);
-  static const gold = Color(0xFFFFD34D);
-  static const panel = Color(0x33000000);
+  static const top = NeonPalette.bgTop;
+  static const bottom = NeonPalette.bgBottom;
+  static const gold = Brand.gold;
+  static const panel = Color(0x0FFFFFFF);
 }
 
-/// Royal night background with a soft golden glow at the top.
+/// The night background with a soft royal-gold glow at the top.
 class RmcsBackground extends StatelessWidget {
   final Widget child;
   const RmcsBackground({super.key, required this.child});
   @override
   Widget build(BuildContext context) => DecoratedBox(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [RmcsColors.top, RmcsColors.bottom]),
+          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, stops: [0, 0.45, 1], colors: [NeonPalette.bgTop, NeonPalette.bg, NeonPalette.bgBottom]),
         ),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: RadialGradient(center: const Alignment(0, -1.1), radius: 0.9, colors: [RmcsColors.gold.withValues(alpha: 0.22), Colors.transparent]),
+            gradient: RadialGradient(center: const Alignment(0, -1.1), radius: 0.9, colors: [Brand.gold.withValues(alpha: 0.14), Colors.transparent]),
           ),
           child: child,
         ),
       );
 }
 
-/// One player at the table: name, card and running score.
+/// One player at the table: badge and name, their card, and the running score.
 class RmcsSeat extends StatelessWidget {
   final String name;
   final Color color;
@@ -44,6 +45,7 @@ class RmcsSeat extends StatelessWidget {
   final bool dim;
   final Duration flipDuration;
   final VoidCallback? onTap;
+  final int seat;
   const RmcsSeat({
     super.key,
     required this.name,
@@ -59,13 +61,15 @@ class RmcsSeat extends StatelessWidget {
     this.dim = false,
     this.flipDuration = const Duration(milliseconds: 650),
     this.onTap,
+    this.seat = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: onTap != null,
-      label: '$name${faceUp && role != null ? ', ${role!.title}' : ''}',
+      label: '$name${faceUp && role != null ? ', ${role!.title}' : ''}, $score points${badge != null ? ', ${badge!.toLowerCase()}' : ''}',
+      excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
@@ -73,13 +77,13 @@ class RmcsSeat extends StatelessWidget {
           duration: const Duration(milliseconds: 300),
           opacity: dim ? 0.45 : 1,
           child: Padding(
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(6),
             child: Column(children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
-                child: Text(name.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
-              ),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                PlayerBadge(index: seat, size: 18, color: color),
+                const SizedBox(width: 6),
+                Flexible(child: Text(name.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.6))),
+              ]),
               const SizedBox(height: 4),
               Expanded(
                 child: Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
@@ -91,8 +95,8 @@ class RmcsSeat extends StatelessWidget {
                         enabled: onTap != null,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(10), boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 4)]),
-                          child: Text(badge!, style: TextStyle(color: badgeColor.computeLuminance() > 0.5 ? GpColors.ink : Colors.white, fontWeight: FontWeight.w900, fontSize: 10)),
+                          decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(9), boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 4)]),
+                          child: Text(badge!, style: TextStyle(fontFamily: Fonts.body, color: onColor(badgeColor), fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1)),
                         ),
                       ),
                     ),
@@ -105,11 +109,7 @@ class RmcsSeat extends StatelessWidget {
                         duration: const Duration(milliseconds: 600),
                         curve: Curves.elasticOut,
                         builder: (_, t, child) => Transform.scale(scale: t, child: child),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(color: delta! > 0 ? GpColors.yes : Colors.white24, borderRadius: BorderRadius.circular(10)),
-                          child: Text(delta! > 0 ? '+$delta' : '+0', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
-                        ),
+                        child: EdgeTag(delta! > 0 ? '+$delta' : '+0', color: delta! > 0 ? Brand.gold : Colors.white24, score: delta! > 0),
                       ),
                     ),
                 ]),
@@ -118,7 +118,7 @@ class RmcsSeat extends StatelessWidget {
               TweenAnimationBuilder<double>(
                 tween: Tween(end: score.toDouble()),
                 duration: const Duration(milliseconds: 900),
-                builder: (_, v, __) => Text('${v.round()} pts', style: const TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, fontSize: 13)),
+                builder: (_, v, __) => Text('${v.round()} pts', style: const TextStyle(fontFamily: Fonts.display, color: RmcsColors.gold, fontSize: 16, fontFeatures: [FontFeature.tabularFigures()])),
               ),
             ]),
           ),
@@ -167,10 +167,18 @@ class SeatGrid extends StatelessWidget {
   final List<Widget> seats;
   const SeatGrid({super.key, required this.seats});
   @override
-  Widget build(BuildContext context) => Column(children: [
-        for (var r = 0; r < 2; r++)
-          Expanded(child: Row(children: [for (var c = 0; c < 2; c++) Expanded(child: seats[r * 2 + c])])),
-      ]);
+  Widget build(BuildContext context) => DecoratedBox(
+        decoration: BoxDecoration(borderRadius: Radii.rBoard, boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 24, offset: Offset(0, 10))]),
+        child: CustomPaint(
+          painter: const FeltPainter(),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(children: [
+              for (var r = 0; r < 2; r++) Expanded(child: Row(children: [for (var c = 0; c < 2; c++) Expanded(child: seats[r * 2 + c])])),
+            ]),
+          ),
+        ),
+      );
 }
 
 /// Shuffles a small deck in the middle of the table, then deals one card to each seat.
@@ -215,7 +223,7 @@ class _ShuffleDealState extends State<ShuffleDeal> with SingleTickerProviderStat
               top: centre.dy - cardH / 2 - 34,
               child: Opacity(
                 opacity: (1 - (t - 0.5) * 4).clamp(0.0, 1.0),
-                child: const Text('SHUFFLING…', textAlign: TextAlign.center, style: TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, letterSpacing: 3, fontSize: 16)),
+                child: const Text('SHUFFLING…', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, color: RmcsColors.gold, letterSpacing: 3, fontSize: 20)),
               ),
             ),
             for (var i = 0; i < 4; i++) ...() {
@@ -253,76 +261,79 @@ class CountdownRing extends StatelessWidget {
   Widget build(BuildContext context) {
     final f = (msLeft / totalMs).clamp(0.0, 1.0);
     final urgent = msLeft <= 3000;
-    final color = urgent ? GpColors.no : RmcsColors.gold;
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(fit: StackFit.expand, children: [
-        CircularProgressIndicator(value: f, strokeWidth: 6, color: color, backgroundColor: Colors.white12),
-        Center(child: Text('${(msLeft / 1000).ceil()}', style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: size * 0.4))),
-      ]),
-    );
-  }
-}
-
-/// "✓ CHOR CAUGHT!" or "✗ WRONG GUESS — CHOR ESCAPED!" with a pop-in.
-class ResultBanner extends StatelessWidget {
-  final bool caught;
-  final bool timedOut;
-  const ResultBanner({super.key, required this.caught, required this.timedOut});
-  @override
-  Widget build(BuildContext context) {
-    final color = caught ? GpColors.yes : GpColors.no;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.6, end: 1),
-      duration: const Duration(milliseconds: 700),
-      curve: Curves.elasticOut,
-      builder: (_, s, child) => Transform.scale(scale: s, child: child),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 18), BoxShadow(color: Color.lerp(color, Colors.black, 0.5)!, offset: const Offset(0, 4))],
-        ),
-        child: Column(children: [
-          FittedBox(
-            child: Text(caught ? '✓ CHOR CAUGHT!' : '✗ WRONG GUESS — CHOR ESCAPED!', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: 0.5)),
-          ),
-          if (timedOut) const Text("Time's up! The Mantri didn't choose.", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+    final color = urgent ? StatusColors.danger : RmcsColors.gold;
+    return Semantics(
+      label: '${(msLeft / 1000).ceil()} seconds left',
+      excludeSemantics: true,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Stack(fit: StackFit.expand, children: [
+          CircularProgressIndicator(value: f, strokeWidth: 6, color: color, backgroundColor: Colors.white12),
+          Center(child: Text('${(msLeft / 1000).ceil()}', style: TextStyle(fontFamily: Fonts.display, color: color, fontSize: size * 0.42))),
         ]),
       ),
     );
   }
 }
 
-/// Phase headline with a smooth swap between messages.
+/// "Chor caught!" or "Chor escaped!" as a success or miss banner.
+class ResultBanner extends StatelessWidget {
+  final bool caught;
+  final bool timedOut;
+  const ResultBanner({super.key, required this.caught, required this.timedOut});
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: Motion.reduced(context) ? 1 : 0.7, end: 1),
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.elasticOut,
+        builder: (_, s, child) => Transform.scale(scale: s, child: child),
+        child: SizedBox(
+          width: double.infinity,
+          child: TurnBanner(
+            text: caught ? 'Chor caught!' : 'Wrong guess: Chor escaped!',
+            sub: timedOut ? "Time's up! The Mantri didn't choose." : (caught ? 'Mantri +500' : 'Chor +500'),
+            color: Brand.gold,
+            kind: caught ? TurnBannerKind.success : TurnBannerKind.miss,
+            icon: caught ? GameIcons.check : GameIcons.cross,
+          ),
+        ),
+      );
+}
+
+/// Phase headline with a smooth swap between messages, and an optional [icon] or
+/// [trailing] widget (the countdown).
 class RmcsHeadline extends StatelessWidget {
   final String title;
   final String? subtitle;
   final Widget? trailing;
-  const RmcsHeadline({super.key, required this.title, this.subtitle, this.trailing});
+  final GameIcons? icon;
+  const RmcsHeadline({super.key, required this.title, this.subtitle, this.trailing, this.icon});
   @override
   Widget build(BuildContext context) => AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         child: Container(
           key: ValueKey(title + (subtitle ?? '')),
           width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 64),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(color: RmcsColors.panel, borderRadius: BorderRadius.circular(18), border: Border.all(color: RmcsColors.gold.withValues(alpha: 0.4))),
-          child: Row(children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(subtitle!, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700, fontSize: 12.5)),
-                ],
-              ]),
-            ),
-            if (trailing != null) ...[const SizedBox(width: 10), trailing!],
-          ]),
+          decoration: BoxDecoration(color: RmcsColors.panel, borderRadius: Radii.rButton, border: Border.all(color: RmcsColors.gold.withValues(alpha: 0.45), width: 1.5)),
+          child: Semantics(
+            liveRegion: true,
+            child: Row(children: [
+              if (icon != null) ...[GameIcon(icon!, size: 30, color: RmcsColors.gold), const SizedBox(width: 10)],
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(title, style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 20, height: 1.15)),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(subtitle!, style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.textMuted, fontWeight: FontWeight.w800, fontSize: 12.5)),
+                  ],
+                ]),
+              ),
+              if (trailing != null) ...[const SizedBox(width: 10), trailing!],
+            ]),
+          ),
         ),
       );
 }

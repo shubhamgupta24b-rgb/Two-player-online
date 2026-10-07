@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../core/audio/game_audio.dart';
 import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/ui/materials/materials.dart';
+import '../shell/local_game_shell.dart' show ResultScope;
 import '../shell/local_game_info.dart';
 import '../shell/game_hud.dart';
 import '../party/party_widgets.dart' show HoldToReveal;
@@ -20,14 +21,24 @@ const clashColors = {
   ClashColor.wild: Color(0xFF1C1C24),
 };
 
-/// A suit per colour, printed on the cards, so colour is never the only way to tell them apart.
-const clashSymbols = {
-  ClashColor.red: '♥',
-  ClashColor.yellow: '★',
-  ClashColor.green: '♣',
-  ClashColor.blue: '♦',
-  ClashColor.wild: '',
-};
+/// A mark per colour, printed on the cards, so colour is never the only way to tell them
+/// apart: red heart, yellow star, green triangle, blue diamond (drawn, not text).
+void _paintSuit(Canvas canvas, ClashColor c, Rect r, Color ink) {
+  switch (c) {
+    case ClashColor.red:
+      paintIcon(canvas, GameIcons.heart, r, color: ink);
+    case ClashColor.yellow:
+      canvas.drawPath(PlayerShapePainter.pathFor(PlayerShape.star, r), Paint()..color = ink);
+    case ClashColor.green:
+      canvas.drawPath(PlayerShapePainter.pathFor(PlayerShape.triangle, r), Paint()..color = ink);
+    case ClashColor.blue:
+      canvas.drawPath(PlayerShapePainter.pathFor(PlayerShape.diamond, r), Paint()..color = ink);
+    case ClashColor.wild:
+      break;
+  }
+}
+
+String _colourName(ClashColor c) => c == ClashColor.wild ? 'wild' : c.name;
 
 final colourClashInfo = LocalGameInfo(
   id: 'colour_clash',
@@ -163,7 +174,9 @@ final colourClashInfo = LocalGameInfo(
   ),
 );
 
-/// One card, face up or face down, at any size (designed at 70x105).
+/// One card, face up or face down, at any size (designed at 70x105): a paper card with a
+/// colour field, the number or a drawn Skip / Reverse / +2 / Wild / +4 symbol, and the
+/// colour's suit mark in the corners.
 class ClashCardView extends StatelessWidget {
   final ClashCard? card; // null = face down
   final double width;
@@ -174,101 +187,138 @@ class ClashCardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = card;
-    return SizedBox(
-      width: width,
-      height: width * 1.5,
-      child: FittedBox(
-        child: Opacity(
-          opacity: dim ? 0.55 : 1,
-          child: Container(
-            width: 70,
-            height: 105,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(9),
-              boxShadow: [
-                const BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
-                if (highlight) const BoxShadow(color: Color(0xFFFFE066), blurRadius: 10, spreadRadius: 2),
-              ],
-            ),
-            padding: const EdgeInsets.all(4),
-            child: c == null ? _back() : _face(c),
+    return Semantics(
+      label: c == null ? 'Face-down card' : '${_colourName(c.color)} ${_spoken(c)}',
+      excludeSemantics: true,
+      child: Opacity(
+        opacity: dim ? 0.55 : 1,
+        child: Container(
+          width: width,
+          height: width * 1.5,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(width * 0.13),
+            boxShadow: [
+              const BoxShadow(color: Color(0x73000000), blurRadius: 6, offset: Offset(0, 3)),
+              if (highlight) BoxShadow(color: Brand.gold.withValues(alpha: 0.85), blurRadius: 12, spreadRadius: 1),
+            ],
           ),
+          child: c == null ? CardBack(radius: width * 0.13) : CustomPaint(painter: _CardPainter(c)),
         ),
       ),
     );
   }
 
-  Widget _back() => Container(
-        decoration: BoxDecoration(color: const Color(0xFF1C1C24), borderRadius: BorderRadius.circular(6)),
-        child: Center(
-          child: Transform.rotate(
-            angle: -0.35,
-            child: Container(
-              width: 52,
-              height: 32,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: const Color(0xFFE53935), borderRadius: BorderRadius.circular(20)),
-              child: const Text('CLASH', style: TextStyle(color: Color(0xFFF9C80E), fontWeight: FontWeight.w900, fontSize: 11, fontStyle: FontStyle.italic)),
-            ),
-          ),
-        ),
-      );
-
-  Widget _face(ClashCard c) {
-    final bg = clashColors[c.color]!;
-    final big = c.kind == ClashKind.number ? 30.0 : (c.label.length > 1 ? 24.0 : 28.0);
-    final corner = Column(mainAxisSize: MainAxisSize.min, children: [
-      Text(c.label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, height: 1)),
-      if (!c.isWild) Text(clashSymbols[c.color]!, style: const TextStyle(color: Colors.white, fontSize: 10, height: 1.1)),
-    ]);
-    return Container(
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Stack(children: [
-        Center(
-          child: Transform.rotate(
-            angle: -0.5,
-            child: Container(
-              width: 48,
-              height: 74,
-              decoration: BoxDecoration(color: c.isWild ? null : Colors.white, borderRadius: const BorderRadius.all(Radius.elliptical(48, 74))),
-              child: c.isWild ? const CustomPaint(painter: _WildPainter()) : null,
-            ),
-          ),
-        ),
-        Center(
-          child: Text(c.label,
-              style: TextStyle(
-                color: c.isWild ? Colors.white : bg,
-                fontWeight: FontWeight.w900,
-                fontSize: big,
-                fontStyle: FontStyle.italic,
-                shadows: const [Shadow(color: Colors.black54, offset: Offset(1.5, 1.5))],
-              )),
-        ),
-        Positioned(left: 3, top: 3, child: corner),
-        Positioned(right: 3, bottom: 3, child: RotatedBox(quarterTurns: 2, child: corner)),
-      ]),
-    );
-  }
+  static String _spoken(ClashCard c) => switch (c.kind) {
+        ClashKind.number => '${c.number}',
+        ClashKind.skip => 'skip',
+        ClashKind.reverse => 'reverse',
+        ClashKind.drawTwo => 'draw two',
+        ClashKind.wild => 'wild',
+        ClashKind.wildFour => 'wild draw four',
+      };
 }
 
-/// Four-colour oval for wild cards.
-class _WildPainter extends CustomPainter {
-  const _WildPainter();
+class _CardPainter extends CustomPainter {
+  final ClashCard c;
+  _CardPainter(this.c);
+
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    canvas.clipPath(Path()..addOval(rect));
-    final c = rect.center;
-    final colors = [ClashColor.red, ClashColor.blue, ClashColor.yellow, ClashColor.green];
-    for (var i = 0; i < 4; i++) {
-      canvas.drawArc(Rect.fromCenter(center: c, width: size.width * 2, height: size.height * 2), -pi / 2 + i * pi / 2, pi / 2, true, Paint()..color = clashColors[colors[i]]!);
+    final w = size.width, h = size.height;
+    final outer = RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(w * 0.13));
+    canvas.drawRRect(outer, Paint()..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFFFDF6), Color(0xFFF5E9D2)]).createShader(Offset.zero & size));
+    final field = RRect.fromRectAndRadius((Offset.zero & size).deflate(w * 0.07), Radius.circular(w * 0.09));
+    final bg = clashColors[c.color]!;
+    canvas.drawRRect(field, Paint()..color = bg);
+    canvas.save();
+    canvas.clipRRect(field);
+    // The tilted oval in the middle (four colours on wilds).
+    canvas.save();
+    canvas.translate(w / 2, h / 2);
+    canvas.rotate(-0.45);
+    final oval = Rect.fromCenter(center: Offset.zero, width: w * 0.68, height: h * 0.72);
+    if (c.isWild) {
+      canvas.save();
+      canvas.clipPath(Path()..addOval(oval));
+      const order = [ClashColor.red, ClashColor.blue, ClashColor.yellow, ClashColor.green];
+      for (var i = 0; i < 4; i++) {
+        canvas.drawArc(oval.inflate(w), -pi / 2 + i * pi / 2, pi / 2, true, Paint()..color = clashColors[order[i]]!);
+      }
+      canvas.restore();
+    } else {
+      canvas.drawOval(oval, Paint()..color = Colors.white);
+    }
+    canvas.restore();
+    // The big centre mark.
+    final centre = Offset(w / 2, h / 2);
+    final ink = c.isWild ? Colors.white : bg;
+    switch (c.kind) {
+      case ClashKind.number || ClashKind.drawTwo || ClashKind.wildFour:
+        _text(canvas, c.kind == ClashKind.number ? '${c.number}' : (c.kind == ClashKind.drawTwo ? '+2' : '+4'), centre, w * (c.kind == ClashKind.number ? 0.52 : 0.4), ink);
+      case ClashKind.skip:
+        _skip(canvas, centre, w * 0.2, ink);
+      case ClashKind.reverse:
+        _reverse(canvas, centre, w * 0.2, ink);
+      case ClashKind.wild:
+        canvas.drawPath(PlayerShapePainter.pathFor(PlayerShape.star, Rect.fromCircle(center: centre, radius: w * 0.2)), Paint()..color = Colors.white);
+    }
+    // Corners: small mark and suit, top-left and (turned) bottom-right.
+    for (final flip in [false, true]) {
+      canvas.save();
+      if (flip) {
+        canvas.translate(w, h);
+        canvas.rotate(pi);
+      }
+      final at = Offset(w * 0.2, h * 0.14);
+      switch (c.kind) {
+        case ClashKind.skip:
+          _skip(canvas, at, w * 0.07, Colors.white);
+        case ClashKind.reverse:
+          _reverse(canvas, at, w * 0.07, Colors.white);
+        case ClashKind.wild:
+          canvas.drawPath(PlayerShapePainter.pathFor(PlayerShape.star, Rect.fromCircle(center: at, radius: w * 0.08)), Paint()..color = Colors.white);
+        default:
+          _text(canvas, c.kind == ClashKind.number ? '${c.number}' : (c.kind == ClashKind.drawTwo ? '+2' : '+4'), at, w * 0.16, Colors.white, shadow: false);
+      }
+      if (!c.isWild) _paintSuit(canvas, c.color, Rect.fromCenter(center: at + Offset(0, h * 0.1), width: w * 0.13, height: w * 0.13), Colors.white);
+      canvas.restore();
+    }
+    canvas.restore();
+  }
+
+  void _text(Canvas canvas, String s, Offset c, double size, Color color, {bool shadow = true}) {
+    final tp = TextPainter(
+      text: TextSpan(text: s, style: TextStyle(fontFamily: Fonts.display, fontSize: size, height: 1, color: color, shadows: shadow ? const [Shadow(color: Color(0x80000000), offset: Offset(1.5, 2))] : null)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, c - Offset(tp.width / 2, tp.height / 2));
+  }
+
+  void _skip(Canvas canvas, Offset c, double r, Color color) {
+    final p = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = r * 0.32
+      ..color = color;
+    canvas.drawCircle(c, r, p);
+    canvas.drawLine(c + Offset(-r * 0.7, r * 0.7), c + Offset(r * 0.7, -r * 0.7), p..strokeCap = StrokeCap.round);
+  }
+
+  void _reverse(Canvas canvas, Offset c, double r, Color color) {
+    final p = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = r * 0.3
+      ..strokeCap = StrokeCap.round
+      ..color = color;
+    for (final s in [-1.0, 1.0]) {
+      final y = c.dy + s * r * 0.45;
+      canvas.drawLine(Offset(c.dx - r, y), Offset(c.dx + r, y), p);
+      final tip = Offset(c.dx + s * r, y);
+      canvas.drawLine(tip, tip + Offset(-s * r * 0.5, -s * r * 0.45), p);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(_CardPainter o) => o.c.id != c.id;
 }
 
 class _ClashTable extends StatelessWidget {
@@ -287,127 +337,240 @@ class _ClashTable extends StatelessWidget {
     final myTurn = holder == g.turn;
     final player = players[holder];
     final hand = g.hands[holder];
-    return Stack(children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
-        child: Column(children: [
-          GameHud(players: players, turn: g.turn, extra: (i) => '🂠 ${g.hands[i].length}${g.hands[i].length == 1 ? ' ONE!' : ''}'),
-          const SizedBox(height: 6),
-          Expanded(child: _Centre(g: g, canAct: myTurn, waitingFor: myTurn ? null : players[g.turn].name)),
-          if (botTurn)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              child: Text('🤖 ${players[g.turn].name} is playing…', style: context.tk.styles.title),
-            )
-          else if (online || g.phase != ClashPhase.handoff) ...[
-            Row(children: [
-              Expanded(
-                child: Text(online ? 'YOUR HAND · ${hand.length} cards' : '${player.whose} HAND · ${hand.length} cards',
-                    style: context.tk.styles.label.copyWith(color: Color.lerp(player.color, Colors.white, 0.4))),
-              ),
-              if (myTurn && hand.length == 2 && g.phase == ClashPhase.play)
-                _SmallButton(
-                  label: g.calledOne ? 'ONE! ✓' : 'ONE!',
-                  color: g.calledOne ? GpColors.yes : const Color(0xFFFF8A3D),
-                  onTap: g.calledOne
-                      ? null
-                      : () {
-                          haptic(HapticWeight.medium);
-                          GameAudio.sfx('coin');
-                          g.callOne();
-                        },
-                ),
-              if (myTurn && g.drewThisTurn && g.phase == ClashPhase.play) ...[
-                const SizedBox(width: 6),
-                _SmallButton(label: 'PASS', color: Colors.white24, onTap: g.pass),
-              ],
-            ]),
+    final t = context.tk;
+    ResultScope.of(context)
+      ?..subtitle = g.winner == null ? null : '${players[g.winner!].name} played their last card'
+      ..detail = ((_, i) => Text('${g.hands[i].length} ${g.hands[i].length == 1 ? 'card' : 'cards'} left', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: NeonPalette.textMuted)));
+    return MomentWatcher<int>(
+      value: g.discard.length,
+      onChange: (fx, before, now) {
+        if (now <= before) return;
+        final top = g.top;
+        switch (top.kind) {
+          case ClashKind.drawTwo:
+            keyMoment(fx, '+2!', sub: g.message.isEmpty ? 'Draw two' : stripEmoji(g.message), sound: 'hit', shake: true);
+          case ClashKind.wildFour:
+            keyMoment(fx, '+4!', sub: g.message.isEmpty ? 'Draw four' : stripEmoji(g.message), sound: 'boom', buzz: HapticWeight.heavy, shake: true);
+          case ClashKind.skip:
+            fx?.pop('SKIP!');
+          case ClashKind.reverse:
+            fx?.pop('REVERSE!');
+          default:
+            if (g.winner == null && g.hands.any((h) => h.length == 1)) fx?.pop('ONE CARD!');
+        }
+        if (top.kind == ClashKind.number) GameAudio.sfx('tap');
+      },
+      child: Stack(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.s),
+          child: Column(children: [
+            ScoreHud(
+              title: 'Colour Clash',
+              state: g.winner != null ? '${players[g.winner!].name} wins' : '${possessive(players[g.turn].name)} turn',
+              players: players,
+              turn: g.winner != null ? null : g.turn,
+              score: (i) => '${g.hands[i].length}',
+              tag: (i) => g.hands[i].length == 1 ? 'ONE!' : (i == g.turn && g.winner == null ? 'PLAYING' : null),
+            ),
             const SizedBox(height: 6),
-            _Hand(g: g, hand: hand, active: myTurn && g.phase == ClashPhase.play),
-          ],
-        ]),
-      ),
-      if (g.phase == ClashPhase.chooseColor && myTurn) _ColorPicker(g: g),
-      if (!online && g.phase == ClashPhase.handoff) _Handoff(player: player, g: g),
-    ]);
+            Expanded(child: _Centre(g: g, players: players, canAct: myTurn, waitingFor: myTurn ? null : players[g.turn].name)),
+            if (botTurn)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                child: Text('${players[g.turn].name} is playing…', style: t.styles.h3.copyWith(color: t.onBg)),
+              )
+            else if (online || g.phase != ClashPhase.handoff) ...[
+              Row(children: [
+                PlayerBadge(index: PlayerPalette.indexOf(player.color) ?? holder, size: 18, color: player.color),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(online ? 'YOUR HAND · ${hand.length} cards' : '${possessive(player.name).toUpperCase()} HAND · ${hand.length} cards',
+                      maxLines: 1, overflow: TextOverflow.ellipsis, style: t.styles.label.copyWith(color: nameColor(player.color))),
+                ),
+                if (myTurn && hand.length == 2 && g.phase == ClashPhase.play) _OneButton(called: g.calledOne, onTap: g.callOne),
+                if (myTurn && g.drewThisTurn && g.phase == ClashPhase.play) ...[
+                  const SizedBox(width: 6),
+                  KitButton('Pass', style: KitButtonStyle.soft, height: 44, onPressed: g.pass),
+                ],
+              ]),
+              const SizedBox(height: 6),
+              _Hand(g: g, hand: hand, active: myTurn && g.phase == ClashPhase.play),
+            ],
+          ]),
+        ),
+        if (g.phase == ClashPhase.chooseColor && myTurn) _ColorPicker(g: g),
+        if (!online && g.phase == ClashPhase.handoff) _Handoff(player: player, g: g),
+      ]),
+    );
   }
 }
 
-class _Centre extends StatelessWidget {
-  final ColourClashLogic g;
-  final bool canAct;
-  final String? waitingFor;
-  const _Centre({required this.g, this.canAct = true, this.waitingFor});
+/// ONE! — pulses gold when you're down to two cards and haven't called it yet.
+class _OneButton extends StatefulWidget {
+  final bool called;
+  final VoidCallback onTap;
+  const _OneButton({required this.called, required this.onTap});
+  @override
+  State<_OneButton> createState() => _OneButtonState();
+}
+
+class _OneButtonState extends State<_OneButton> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 700))..repeat(reverse: true);
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final col = clashColors[g.color]!;
+    if (widget.called) {
+      return Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: StatusColors.success.withValues(alpha: 0.2), borderRadius: Radii.rChip, border: Border.all(color: StatusColors.success)),
+        child: const Row(mainAxisSize: MainAxisSize.min, children: [
+          GameIcon(GameIcons.check, size: 14, color: Color(0xFFB5F0CD)),
+          SizedBox(width: 4),
+          Text('ONE!', style: TextStyle(fontFamily: Fonts.display, fontSize: 16, color: Color(0xFFB5F0CD))),
+        ]),
+      );
+    }
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, child) => Transform.scale(scale: Motion.reduced(context) ? 1 : 1 + _c.value * 0.08, child: child),
+      child: SizedBox(
+        width: 92,
+        child: GoldButton('ONE!', height: 44, fontSize: 18, onPressed: () {
+          haptic(HapticWeight.medium);
+          GameAudio.sfx('coin');
+          widget.onTap();
+        }),
+      ),
+    );
+  }
+}
+
+/// The felt table: draw pile, the discard with a ring in the current colour, the
+/// direction of play, and the last event.
+class _Centre extends StatelessWidget {
+  final ColourClashLogic g;
+  final List<GpPlayer> players;
+  final bool canAct;
+  final String? waitingFor;
+  const _Centre({required this.g, required this.players, this.canAct = true, this.waitingFor});
+  @override
+  Widget build(BuildContext context) {
+    final col = g.color == ClashColor.wild ? Colors.white : clashColors[g.color]!;
     final canDraw = canAct && g.phase == ClashPhase.play && !g.drewThisTurn;
     return LayoutBuilder(builder: (context, c) {
-      // Card width from the space inside the table (border, labels and message take ~90px).
       final w = min(c.maxWidth * 0.28, (c.maxHeight - 90) * 0.62 / 1.5).clamp(36.0, 130.0);
-      // A felt card table under the piles.
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
-        decoration: BoxDecoration(
-          gradient: const RadialGradient(colors: [Color(0xFF1F8A4C), Color(0xFF0F5C30)], radius: 0.9),
-          borderRadius: BorderRadius.circular(c.maxHeight * 0.3),
-          border: Border.all(color: const Color(0xFF8B5A2B), width: 5),
-          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 18, offset: Offset(0, 8))],
-        ),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        // Scales down (never overflows) with large text.
-        FittedBox(fit: BoxFit.scaleDown, child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Semantics(
-            button: true,
-            label: 'Draw a card',
-            child: GestureDetector(
-              onTap: canDraw
-                  ? () {
-                      haptic(HapticWeight.selection);
-                      g.draw();
-                    }
-                  : null,
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                ClashCardView(card: null, width: w * 0.85, highlight: canDraw && g.playable.isEmpty),
-                const SizedBox(height: 4),
-                Text('DRAW · ${g.drawPile.length}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800, fontSize: 11)),
+        decoration: BoxDecoration(borderRadius: Radii.rBoard, boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 24, offset: Offset(0, 10))]),
+        child: CustomPaint(
+          painter: const FeltPainter(),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Semantics(
+                  button: canDraw,
+                  label: 'Draw a card, ${g.drawPile.length} left',
+                  excludeSemantics: true,
+                  child: GestureDetector(
+                    onTap: canDraw
+                        ? () {
+                            haptic(HapticWeight.selection);
+                            GameAudio.sfx('throw');
+                            g.draw();
+                          }
+                        : null,
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Stack(children: [
+                        Transform.translate(offset: const Offset(4, 4), child: ClashCardView(card: null, width: w * 0.85)),
+                        ClashCardView(card: null, width: w * 0.85, highlight: canDraw && g.playable.isEmpty),
+                      ]),
+                      const SizedBox(height: 6),
+                      Text('DRAW · ${g.drawPile.length}', style: const TextStyle(fontFamily: Fonts.body, color: Color(0xFFE9C46A), fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.2)),
+                    ]),
+                  ),
+                ),
+                SizedBox(width: w * 0.35),
+                Column(mainAxisSize: MainAxisSize.min, children: [
+                  Stack(alignment: Alignment.center, children: [
+                    // The direction of play, around the pile.
+                    SizedBox(
+                      width: w * 1.75,
+                      height: w * 1.75,
+                      child: CustomPaint(painter: _DirectionRing(g.direction, col)),
+                    ),
+                    TweenAnimationBuilder<double>(
+                      key: ValueKey(g.top.id),
+                      tween: Tween(begin: Motion.reduced(context) ? 1 : 0.6, end: 1),
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeOutBack,
+                      builder: (_, s, child) => Transform.scale(scale: s, child: child),
+                      child: ClashCardView(card: g.top, width: w),
+                    ),
+                  ]),
+                  Text('COLOUR: ${_colourName(g.color).toUpperCase()}',
+                      style: TextStyle(fontFamily: Fonts.body, color: g.color == ClashColor.wild ? Colors.white : Color.lerp(col, Colors.white, 0.3), fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.2)),
+                ]),
               ]),
             ),
-          ),
-          SizedBox(width: w * 0.35),
-          Column(mainAxisSize: MainAxisSize.min, children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), color: col.withValues(alpha: 0.35), boxShadow: [BoxShadow(color: col.withValues(alpha: 0.6), blurRadius: 18)]),
-              child: TweenAnimationBuilder<double>(
-                key: ValueKey(g.top.id),
-                tween: Tween(begin: 0.6, end: 1),
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeOutBack,
-                builder: (_, s, child) => Transform.scale(scale: s, child: child),
-                child: ClashCardView(card: g.top, width: w),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                [if (waitingFor != null) '${possessive(waitingFor!)} turn', g.message.isEmpty && waitingFor == null ? 'Match the colour, number or symbol' : stripEmoji(g.message)].where((t) => t.isNotEmpty).join(' · '),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12.5),
               ),
             ),
-            const SizedBox(height: 4),
-            Text('COLOUR: ${g.color.name.toUpperCase()}', style: TextStyle(color: col == clashColors[ClashColor.wild] ? Colors.white : col, fontWeight: FontWeight.w900, fontSize: 11)),
           ]),
-        ])),
-        const SizedBox(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(g.direction == 1 ? Icons.rotate_right_rounded : Icons.rotate_left_rounded, color: Colors.white54, size: 18),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text([if (waitingFor != null) "$waitingFor's turn", g.message.isEmpty && waitingFor == null ? 'Match the colour, number or symbol' : g.message].where((t) => t.isNotEmpty).join(' · '),
-                textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
-          ),
-        ]),
-      ]),
+        ),
       );
     });
   }
 }
 
+/// A ring in the current colour with arrows showing which way play goes.
+class _DirectionRing extends CustomPainter {
+  final int direction;
+  final Color color;
+  _DirectionRing(this.direction, this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.width / 2 - 4;
+    canvas.drawCircle(c, r, Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5
+      ..color = color.withValues(alpha: 0.75));
+    final p = Paint()..color = color;
+    for (var k = 0; k < 3; k++) {
+      final a = -pi / 2 + k * 2 * pi / 3;
+      final at = c + Offset(cos(a), sin(a)) * r;
+      final tangent = Offset(-sin(a), cos(a)) * direction.toDouble();
+      final normal = Offset(cos(a), sin(a));
+      canvas.drawPath(
+          Path()
+            ..moveTo((at + tangent * 9).dx, (at + tangent * 9).dy)
+            ..lineTo((at - tangent * 3 + normal * 7).dx, (at - tangent * 3 + normal * 7).dy)
+            ..lineTo((at - tangent * 3 - normal * 7).dx, (at - tangent * 3 - normal * 7).dy)
+            ..close(),
+          p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DirectionRing o) => o.direction != direction || o.color != color;
+}
+
+/// Your hand, fanned along the bottom: playable cards lift and glow.
 class _Hand extends StatelessWidget {
   final ColourClashLogic g;
   final List<ClashCard> hand;
@@ -417,46 +580,49 @@ class _Hand extends StatelessWidget {
   Widget build(BuildContext context) {
     final playable = active ? g.playable.map((c) => c.id).toSet() : const <int>{};
     return SizedBox(
-      height: 112,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(top: 12),
-        itemCount: hand.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
-        itemBuilder: (context, i) {
-          final card = hand[i];
-          final ok = active && playable.contains(card.id);
-          return Semantics(
-            button: ok,
-            label: '${card.color.name} ${card.label}',
-            child: GestureDetector(
-              onTap: ok
-                  ? () {
-                      haptic(HapticWeight.light);
-                      GameAudio.sfx('tap');
-                      g.play(card.id);
-                    }
-                  : null,
-              child: AnimatedSlide(
-                duration: const Duration(milliseconds: 200),
-                offset: Offset(0, ok ? -0.1 : 0),
-                child: ClashCardView(card: card, width: 62, highlight: ok, dim: active && !ok),
-              ),
-            ),
-          );
-        },
-      ),
+      height: 118,
+      child: LayoutBuilder(builder: (context, c) {
+        const cw = 62.0;
+        final n = hand.length;
+        // Overlap so the whole hand fits; never more spread than a small gap.
+        final step = n <= 1 ? 0.0 : min(cw + 6, (c.maxWidth - cw) / (n - 1));
+        final total = cw + step * (n - 1);
+        final left0 = (c.maxWidth - total) / 2;
+        return Stack(clipBehavior: Clip.none, children: [
+          for (var i = 0; i < n; i++)
+            Builder(builder: (context) {
+              final card = hand[i];
+              final ok = active && playable.contains(card.id);
+              final mid = (n - 1) / 2;
+              final angle = n <= 1 ? 0.0 : (i - mid) / max(mid, 1) * 0.12;
+              return Positioned(
+                left: left0 + i * step,
+                top: 14 + ((i - mid).abs() / max(mid, 1)) * 6,
+                child: Semantics(
+                  button: ok,
+                  label: '${_colourName(card.color)} ${ClashCardView._spoken(card)}${ok ? ', playable' : ''}',
+                  excludeSemantics: true,
+                  child: GestureDetector(
+                    onTap: ok
+                        ? () {
+                            haptic(HapticWeight.light);
+                            GameAudio.sfx('tap');
+                            g.play(card.id);
+                          }
+                        : null,
+                    child: AnimatedSlide(
+                      duration: Motion.of(context, Motion.normal),
+                      offset: Offset(0, ok ? -0.12 : 0),
+                      child: Transform.rotate(angle: angle, child: ClashCardView(card: card, width: cw, highlight: ok, dim: active && !ok)),
+                    ),
+                  ),
+                ),
+              );
+            }),
+        ]);
+      }),
     );
   }
-}
-
-class _SmallButton extends StatelessWidget {
-  final String label;
-  final Color color;
-  final VoidCallback? onTap;
-  const _SmallButton({required this.label, required this.color, this.onTap});
-  @override
-  Widget build(BuildContext context) => AppButton(label, compact: true, color: color == Colors.white24 ? null : color, variant: color == Colors.white24 ? ButtonVariant.secondary : ButtonVariant.primary, onPressed: onTap);
 }
 
 class _ColorPicker extends StatelessWidget {
@@ -465,20 +631,21 @@ class _ColorPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Positioned.fill(
         child: ColoredBox(
-          color: Colors.black54,
+          color: const Color(0x9E060820),
           child: Center(
             child: Container(
               margin: const EdgeInsets.all(24),
               padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(color: context.tk.card, borderRadius: Radii.rXl, boxShadow: context.tk.shadowLg),
+              decoration: BoxDecoration(color: NeonPalette.sheet, borderRadius: BorderRadius.circular(28), border: Border.all(color: Colors.white.withValues(alpha: 0.14)), boxShadow: Shadows.large),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Text('PICK A COLOUR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1.5)),
+                const Text('Pick a colour', style: TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 26)),
                 const SizedBox(height: 14),
-                Wrap(spacing: 12, runSpacing: 12, children: [
+                Wrap(spacing: 14, runSpacing: 14, children: [
                   for (final c in [ClashColor.red, ClashColor.yellow, ClashColor.green, ClashColor.blue])
                     Semantics(
                       button: true,
                       label: c.name,
+                      excludeSemantics: true,
                       child: GestureDetector(
                         onTap: () {
                           haptic(HapticWeight.selection);
@@ -488,12 +655,11 @@ class _ColorPicker extends StatelessWidget {
                           Container(
                             width: 64,
                             height: 64,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(color: clashColors[c], shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3)),
-                            child: Text(clashSymbols[c]!, style: const TextStyle(color: Colors.white, fontSize: 28)),
+                            decoration: BoxDecoration(color: clashColors[c], shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3), boxShadow: Shadows.edge(Color.lerp(clashColors[c]!, Colors.black, 0.4)!, depth: 4)),
+                            child: CustomPaint(painter: _SuitPainter(c)),
                           ),
                           const SizedBox(height: 4),
-                          Text(c.name.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                          Text(c.name.toUpperCase(), style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
                         ]),
                       ),
                     ),
@@ -503,6 +669,15 @@ class _ColorPicker extends StatelessWidget {
           ),
         ),
       );
+}
+
+class _SuitPainter extends CustomPainter {
+  final ClashColor c;
+  _SuitPainter(this.c);
+  @override
+  void paint(Canvas canvas, Size size) => _paintSuit(canvas, c, Rect.fromCenter(center: size.center(Offset.zero), width: size.width * 0.45, height: size.height * 0.45), Colors.white);
+  @override
+  bool shouldRepaint(_SuitPainter o) => o.c != c;
 }
 
 /// Hides the hands while the phone changes hands (the table stays visible above it).
@@ -518,23 +693,28 @@ class _Handoff extends StatelessWidget {
       right: 0,
       bottom: 0,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(Space.xl, Space.l, Space.xl, Space.xl),
+        padding: const EdgeInsets.fromLTRB(Space.l, Space.l, Space.l, Space.xl),
         decoration: BoxDecoration(
-          color: t.bgBottom,
+          color: NeonPalette.sheet,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border(top: BorderSide(color: player.color, width: 4)),
+          border: Border(top: BorderSide(color: player.color, width: 3)),
           boxShadow: t.shadowLg,
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            PlayerAvatar(name: player.name, color: player.color, size: 44),
+            PlayerBadge(index: PlayerPalette.indexOf(player.color) ?? 0, size: 40, color: player.color, initial: player.name),
             const SizedBox(width: Space.m),
-            Flexible(child: Text('📱 Pass to ${player.name}', style: t.styles.title.copyWith(fontSize: 20))),
+            Flexible(
+              child: Text.rich(
+                TextSpan(children: [const TextSpan(text: 'Pass to '), TextSpan(text: player.name, style: TextStyle(color: nameColor(player.color)))]),
+                style: const TextStyle(fontFamily: Fonts.display, fontSize: 24, color: Colors.white),
+              ),
+            ),
           ]),
           const SizedBox(height: Space.xs),
-          Text('Everyone else, no peeking at the cards!', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
+          Text('Everyone else, no peeking at the cards!', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: NeonPalette.textMuted)),
           const SizedBox(height: Space.m),
-          HoldToReveal(label: 'HOLD TO SEE MY CARDS', color: player.color, onRevealed: g.reveal),
+          HoldToReveal(label: 'Hold to see my cards', color: player.color, onRevealed: g.reveal),
         ]),
       ),
     );

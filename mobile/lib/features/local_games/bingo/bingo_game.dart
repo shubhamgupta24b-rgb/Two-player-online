@@ -7,6 +7,7 @@ import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/game_hud.dart';
 import '../party/party_widgets.dart' show PassCover;
+import '../shell/local_game_shell.dart' show ResultScope;
 import '../shell/ticking_play.dart';
 
 /// Bingo: everyone has a 5x5 card with 1-25 in a different order. Players take turns
@@ -139,9 +140,11 @@ final bingoInfo = LocalGameInfo(
   ),
 );
 
-// Board palette: a paper bingo ticket and a dabber.
-const _ticket = Color(0xFFFFF8EC);
+// Board palette: a paper bingo ticket and ink dabbers.
 const _ticketInk = Color(0xFF1E1B3A);
+
+/// Who called each number: turns go round one by one, so call k was made by seat k % players.
+int _callerOf(BingoLogic g, int number) => g.called.indexOf(number) % g.players;
 
 class _BingoTable extends StatelessWidget {
   final BingoLogic g;
@@ -149,6 +152,8 @@ class _BingoTable extends StatelessWidget {
   final int? me; // whose card this phone shows (online, or one person vs bots)
   final Set<int> bots;
   const _BingoTable({required this.g, required this.players, this.me, this.bots = const {}});
+
+  String _letters(int i) => g.lineCount(i) == 0 ? '–' : BingoLogic.word.substring(0, min(g.lineCount(i), 5));
 
   @override
   Widget build(BuildContext context) {
@@ -159,49 +164,75 @@ class _BingoTable extends StatelessWidget {
     final covered = passing && !bots.contains(g.turn) && g.revealedFor != g.turn && !g.finished;
     final myTurn = holder == g.turn && !bots.contains(g.turn);
     final current = players[g.turn];
-    return Stack(children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
-        child: Column(children: [
-          GameHud(
-            players: players,
-            turn: g.finished ? null : g.turn,
-            extra: (i) => g.lineCount(i) == 0 ? '—' : BingoLogic.word.substring(0, min(g.lineCount(i), 5)),
-          ),
-          const SizedBox(height: Space.m),
-          _Letters(lines: g.lineCount(holder), color: players[holder].color),
-          GameStatus(
-            player: current,
-            height: 46,
-            turnText: myTurn ? (passing ? '${current.whose} TURN: CALL A NUMBER' : 'YOUR TURN: CALL A NUMBER') : '${current.name} is calling…',
-            message: g.finished ? '🎉 BINGO!' : null,
-          ),
-          Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Card(g: g, player: holder, color: players[holder].color, canCall: myTurn && !covered)))),
-          const SizedBox(height: Space.s),
-          if (g.called.isNotEmpty)
+    ResultScope.of(context)
+      ?..subtitle = g.finished ? '${g.called.length} numbers called' : null
+      ..detail = ((_, i) => Text(_letters(i), style: TextStyle(fontFamily: Fonts.display, fontSize: 18, letterSpacing: 2, color: nameColor(players[i].color))));
+    final banner = g.finished
+        ? TurnBanner(text: 'BINGO!', sub: '${g.winners.map((w) => players[w].name).join(' & ')} ${g.winners.length > 1 ? 'win' : 'wins'}', color: current.color, kind: TurnBannerKind.success, icon: GameIcons.star, compact: true)
+        : TurnBanner(
+            text: myTurn ? (passing ? '${possessive(current.name)} turn' : 'Your turn') : '${current.name} is calling…',
+            sub: myTurn ? 'Tap a number on your card to call it' : 'Watch your card',
+            color: current.color,
+            compact: true,
+          );
+    return MomentWatcher<(int, int)>(
+      value: (g.called.length, g.lineCount(holder)),
+      onChange: (fx, before, now) {
+        if (g.finished) {
+          keyMoment(fx, 'BINGO!', sub: g.winners.map((w) => players[w].name).join(' & '), sound: 'win', confetti: true);
+        } else if (now.$2 > before.$2) {
+          keyMoment(fx, 'LINE!', sub: BingoLogic.word.substring(0, min(now.$2, 5)), sound: 'coin');
+        }
+      },
+      child: Stack(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
+          child: Column(children: [
+            ScoreHud(
+              title: 'Bingo',
+              state: g.finished ? 'Bingo!' : '${g.called.length} of 25 called',
+              players: players,
+              turn: g.finished ? null : g.turn,
+              score: _letters,
+              tag: (i) => !g.finished && i == g.turn ? 'CALLING' : (g.winners.contains(i) ? 'BINGO' : null),
+            ),
+            const SizedBox(height: Space.s),
+            _Letters(lines: g.lineCount(holder)),
+            const SizedBox(height: 4),
+            SizedBox(height: 54, child: Center(child: banner)),
+            Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Card(g: g, player: holder, players: players, canCall: myTurn && !covered)))),
+            const SizedBox(height: Space.s),
             SizedBox(
               height: 40,
-              child: Row(children: [
-                Text('CALLED', style: t.styles.label),
-                const SizedBox(width: Space.s),
-                Expanded(
-                  child: ListView(scrollDirection: Axis.horizontal, children: [
-                    for (final n in g.called.reversed.take(12))
-                      Container(
-                        margin: const EdgeInsets.only(right: 6),
-                        width: 36,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: n == g.called.last ? Brand.gold : t.glassStrong),
-                        child: Text('$n', style: TextStyle(color: n == g.called.last ? Brand.ink : t.onBg, fontWeight: FontWeight.w900, fontFeatures: const [FontFeature.tabularFigures()])),
+              child: g.called.isEmpty
+                  ? const SizedBox.shrink()
+                  : Row(children: [
+                      Text('CALLED', style: t.styles.label),
+                      const SizedBox(width: Space.s),
+                      Expanded(
+                        child: ListView(scrollDirection: Axis.horizontal, children: [
+                          for (final n in g.called.reversed.take(12))
+                            Container(
+                              margin: const EdgeInsets.only(right: 6),
+                              width: 36,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: n == g.called.last ? Brand.gold : players[_callerOf(g, n)].color.withValues(alpha: 0.25),
+                                border: Border.all(color: n == g.called.last ? Brand.gold : players[_callerOf(g, n)].color, width: 1.5),
+                              ),
+                              child: Text('$n',
+                                  style: TextStyle(fontFamily: Fonts.display, fontSize: 16, color: n == g.called.last ? Brand.onGold : t.onBg, fontFeatures: const [FontFeature.tabularFigures()])),
+                            ),
+                        ]),
                       ),
-                  ]),
-                ),
-              ]),
+                    ]),
             ),
-        ]),
-      ),
-      if (covered) PassCover(player: current, holdLabel: 'HOLD TO SEE YOUR CARD', onReveal: () => g.reveal(g.turn)),
-    ]);
+          ]),
+        ),
+        if (covered) PassCover(player: current, holdLabel: 'Hold to see your card', onReveal: () => g.reveal(g.turn)),
+      ]),
+    );
   }
 
   int _lastPerson() {
@@ -213,10 +244,10 @@ class _BingoTable extends StatelessWidget {
   }
 }
 
+/// B-I-N-G-O as five big tiles that light up gold, one per completed line.
 class _Letters extends StatelessWidget {
   final int lines;
-  final Color color;
-  const _Letters({required this.lines, required this.color});
+  const _Letters({required this.lines});
   @override
   Widget build(BuildContext context) => Semantics(
         label: lines == 0 ? 'No lines yet' : '${BingoLogic.word.substring(0, min(lines, 5))}: $lines lines',
@@ -227,97 +258,147 @@ class _Letters extends StatelessWidget {
               duration: Motion.of(context, Motion.slow),
               curve: Motion.emphasized,
               margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: 48,
-              height: 48,
+              width: 46,
+              height: 46,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: i < lines ? fillFor(color) : context.tk.glass,
-                borderRadius: Radii.rMd,
-                border: Border.all(color: i < lines ? Colors.white : context.tk.stroke, width: 2),
-                boxShadow: [if (i < lines) BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 12)],
+                color: i < lines ? Brand.gold : context.tk.surface,
+                borderRadius: Radii.rCard,
+                border: Border.all(color: i < lines ? Brand.gold : context.tk.stroke, width: 2),
+                boxShadow: i < lines ? [...Shadows.edge(Brand.goldDeep, depth: 3), BoxShadow(color: Brand.gold.withValues(alpha: 0.5), blurRadius: 12)] : null,
               ),
-              child: Text(BingoLogic.word[i], style: TextStyle(color: i < lines ? Colors.white : context.tk.onBgMuted, fontWeight: FontWeight.w900, fontSize: 24)),
+              child: Text(BingoLogic.word[i], style: TextStyle(fontFamily: Fonts.display, color: i < lines ? Brand.onGold : context.tk.onBgMuted, fontSize: 26, height: 1)),
             ),
         ]),
       );
 }
 
+/// A paper 5×5 card: Lilita numbers, called numbers stamped with an ink dauber in the
+/// caller's colour, completed lines struck through with a marker in the holder's colour.
 class _Card extends StatelessWidget {
   final BingoLogic g;
   final int player;
-  final Color color;
+  final List<GpPlayer> players;
   final bool canCall;
-  const _Card({required this.g, required this.player, required this.color, required this.canCall});
+  const _Card({required this.g, required this.player, required this.players, required this.canCall});
+
+  static const _gap = 6.0, _pad = 10.0;
 
   @override
   Widget build(BuildContext context) {
-    final done = {for (final l in g.doneLines(player)) ...l};
+    final color = players[player].color;
     final last = g.called.isEmpty ? null : g.called.last;
-    final dab = fillFor(color);
     return Container(
-      padding: const EdgeInsets.all(Space.s),
       decoration: BoxDecoration(
-        color: _ticket,
-        borderRadius: Radii.rXl,
-        border: Border.all(color: dab, width: 3),
-        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 18), const BoxShadow(color: Colors.black45, offset: Offset(0, 6))],
+        gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFFFDF6), Color(0xFFF5E9D2)]),
+        borderRadius: Radii.rBoard,
+        border: Border.all(color: fillFor(color), width: 3),
+        boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 20, offset: Offset(0, 10))],
       ),
-      child: GridView.count(
-        crossAxisCount: BingoLogic.size,
-        mainAxisSpacing: 6,
-        crossAxisSpacing: 6,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          for (var cell = 0; cell < 25; cell++)
-            Builder(builder: (context) {
-              final n = g.cards[player][cell];
-              final isMarked = g.isCalled(n);
-              final inLine = done.contains(cell);
-              return Semantics(
-                button: canCall && !isMarked,
-                label: isMarked ? '$n, crossed off' : '$n',
-                child: GestureDetector(
-                  onTap: canCall && !isMarked
-                      ? () {
-                          haptic(HapticWeight.selection);
-                          GameAudio.sfx('pop');
-                          g.call(n);
-                        }
-                      : null,
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: inLine ? dab : Colors.white,
-                      borderRadius: Radii.rSm,
-                      border: Border.all(color: n == last ? Brand.ink : dab.withValues(alpha: 0.35), width: n == last ? 3 : 1.5),
-                    ),
-                    child: Stack(alignment: Alignment.center, children: [
-                      // The dabber's ink blot over a called number.
-                      if (isMarked && !inLine)
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(begin: Motion.reduced(context) ? 1 : 0.4, end: 1),
-                          duration: Motion.of(context, Motion.normal),
-                          curve: Curves.easeOutBack,
-                          builder: (_, s, child) => Transform.scale(scale: s, child: child),
-                          child: FractionallySizedBox(
-                            widthFactor: 0.82,
-                            heightFactor: 0.82,
-                            child: DecoratedBox(decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.45))),
+      padding: const EdgeInsets.all(_pad),
+      child: Stack(children: [
+        GridView.count(
+          crossAxisCount: BingoLogic.size,
+          mainAxisSpacing: _gap,
+          crossAxisSpacing: _gap,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            for (var cell = 0; cell < 25; cell++)
+              Builder(builder: (context) {
+                final n = g.cards[player][cell];
+                final isMarked = g.isCalled(n);
+                final ink = isMarked ? players[_callerOf(g, n)].color : null;
+                return Semantics(
+                  button: canCall && !isMarked,
+                  label: isMarked ? '$n, crossed off' : '$n',
+                  excludeSemantics: true,
+                  child: GestureDetector(
+                    onTap: canCall && !isMarked
+                        ? () {
+                            haptic(HapticWeight.selection);
+                            GameAudio.sfx('pop');
+                            g.call(n);
+                          }
+                        : null,
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        borderRadius: Radii.rTile,
+                        border: Border.all(color: n == last ? _ticketInk : const Color(0x22704A20), width: n == last ? 2.5 : 1),
+                      ),
+                      child: Stack(alignment: Alignment.center, children: [
+                        if (ink != null)
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: Motion.reduced(context) ? 1 : 0.4, end: 1),
+                            duration: Motion.of(context, Motion.normal),
+                            curve: Curves.easeOutBack,
+                            builder: (_, s, child) => Transform.scale(scale: s, child: child),
+                            child: FractionallySizedBox(widthFactor: 0.86, heightFactor: 0.86, child: CustomPaint(painter: _DabPainter(ink, n))),
+                          ),
+                        FittedBox(
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Text('$n', style: TextStyle(fontFamily: Fonts.display, color: _ticketInk.withValues(alpha: isMarked ? 0.85 : 1), fontSize: 28, fontFeatures: const [FontFeature.tabularFigures()])),
                           ),
                         ),
-                      FittedBox(
-                        child: Padding(
-                          padding: const EdgeInsets.all(6),
-                          child: Text('$n', style: TextStyle(color: inLine ? Colors.white : _ticketInk, fontWeight: FontWeight.w900, fontSize: 26, fontFeatures: const [FontFeature.tabularFigures()])),
-                        ),
-                      ),
-                    ]),
+                      ]),
+                    ),
                   ),
-                ),
-              );
-            }),
-        ],
-      ),
+                );
+              }),
+          ],
+        ),
+        Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _LinesPainter(g.doneLines(player), fillFor(color))))),
+      ]),
     );
   }
+}
+
+/// An ink dauber blot: a soft, slightly uneven circle.
+class _DabPainter extends CustomPainter {
+  final Color color;
+  final int seed;
+  _DabPainter(this.color, this.seed);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.shortestSide / 2;
+    final rng = Random(seed);
+    final p = Path();
+    for (var i = 0; i <= 16; i++) {
+      final a = i / 16 * 2 * pi;
+      final k = r * (0.92 + rng.nextDouble() * 0.08);
+      final pt = c + Offset(cos(a) * k, sin(a) * k);
+      i == 0 ? p.moveTo(pt.dx, pt.dy) : p.lineTo(pt.dx, pt.dy);
+    }
+    canvas.drawPath(p..close(), Paint()..color = color.withValues(alpha: 0.5));
+    canvas.drawCircle(c, r * 0.55, Paint()..color = color.withValues(alpha: 0.2));
+  }
+
+  @override
+  bool shouldRepaint(_DabPainter o) => o.color != color || o.seed != seed;
+}
+
+/// Marker strokes through completed lines.
+class _LinesPainter extends CustomPainter {
+  final List<List<int>> lines;
+  final Color color;
+  _LinesPainter(this.lines, this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    const n = BingoLogic.size, gap = _Card._gap;
+    final cell = (size.width - gap * (n - 1)) / n;
+    Offset at(int i) => Offset((i % n) * (cell + gap) + cell / 2, (i ~/ n) * (cell + gap) + cell / 2);
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.55)
+      ..strokeWidth = cell * 0.22
+      ..strokeCap = StrokeCap.round;
+    for (final l in lines) {
+      canvas.drawLine(at(l.first), at(l.last), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LinesPainter o) => o.lines.length != lines.length || o.color != color;
 }
