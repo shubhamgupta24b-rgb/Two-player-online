@@ -1,6 +1,6 @@
 # Handoff: finish the Party Games UI redesign
 
-You are continuing a UI redesign of the Flutter app in `mobile/` (repo `Two-player-online`, branch `feature/ui-redesign`). About 28% of the work is left: B5 is done; 29 games still need their own redesign (B6-B8), plus the final pass. Everything listed under "Already done" is committed and pushed. Work only on this branch and push after every batch.
+You are continuing a UI redesign of the Flutter app in `mobile/` (repo `Two-player-online`, branch `feature/ui-redesign`). About 20% of the work is left: B5 and B6 are done; the solo games (B7-B8) still need their own redesign, plus the final pass. Everything listed under "Already done" is committed and pushed. Work only on this branch and push after every batch.
 
 ## Read first
 1. `docs/ui-redesign/UI_SPEC.md`: the spec. Section 0 is strict, section 5 describes every game, and sections 8 and 9 are the quality bar and the done checklist.
@@ -18,7 +18,7 @@ You are continuing a UI redesign of the Flutter app in `mobile/` (repo `Two-play
 
 ## Remaining work, in order
 - **B5 — Action 1 (DONE):** Crush It, Basketball Hoops, Fruit Duel, Paint Fight, Air Hockey, Ping Pong, Snake Duel, Reaction Tap, Penalty Shootout.
-- **B6 — Action 2:** Math Duel, Smash Karts (mockups/smash_karts), Mini Golf, Slingshot, Archery (mockups/archery), Shooting Gallery, Bottle Smash, Fruit Merge Battle.
+- **B6 — Action 2 (DONE; Smash Karts park not redrawn):** Math Duel, Smash Karts (mockups/smash_karts), Mini Golf, Slingshot, Archery (mockups/archery), Shooting Gallery, Bottle Smash, Fruit Merge Battle.
 - **B7 — Solo 1:** Fruit Merge, 2048, Classic Snake, Flappy Jump, Minesweeper, Brick Breaker, Whack-a-Mole, Piano Tiles, Word Scramble, Stack Tower.
 - **B8 — Solo 2:** Simon Says, Ball Sort, Sliding Puzzle, Sudoku, Hangman, Dino Run, Block Drop, Bubble Shooter, Sky Jumper, Space Shooter, Color Switch.
 - **Prompt 13 — final pass:**

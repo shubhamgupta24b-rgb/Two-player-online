@@ -395,3 +395,50 @@ Checked with render PNGs (`tool/screens_test.dart`); the emulator can't run on t
 - KICKER / KEEPER chip with an icon; Lilita titles (GOAL! / GREAT SAVE! in gold); zone semantics.
 
 **Tests:** analyze clean, 830 tests pass (two tests now expect the "Swipe up to shoot" copy); debug builds pass for both flavors.
+
+## B6 — Action 2 (Math Duel, Smash Karts, Mini Golf, Slingshot, Archery, Shooting Gallery, Bottle Smash, Fruit Merge Battle)
+
+Checked with render PNGs; the emulator can't run on this machine.
+
+**Math Duel**
+- A chalkboard card shows the sum; each zone has chunky answer buttons with an edge.
+- A wrong answer puts a lock over that zone; first-to-7 pips.
+- A correct answer flashes green with a "+1 Name" pop.
+- Zone tints; small zones scale down from a 250 px design height.
+
+**Smash Karts**
+- Every emoji is now a drawn icon: weapons (rocket, triple rocket, mine, gun, bolt, shield) on the karts, in the kill feed, on the FIRE button and on the controls strip; hearts and the mystery box are icons too.
+- Rank medals (1/2/3 circles) with player badges.
+- Lilita clock and announcements; kit overlay chips.
+- Not done: redrawing the park itself (sunset palette, rear-view karts). The existing drawn arena is kept.
+
+**Archery**
+- Golden-hour sky and warm hills; mowed-grass stripes.
+- A striped windsock that stretches with the wind, and a "WIND n" chip with a drawn arrow.
+- A straw target boss; a drawn archer in the shooter's colour (replaces 🧍).
+- The range sits in a SceneFrame; the HUD shows "n left" (replaces the bow emoji).
+
+**Shooting Gallery**
+- Striped awning with a scalloped edge and chasing bulbs.
+- Tin-plate targets with drawn duck / rabbit / star / bomb (replace the emoji); Lilita +/- points.
+- Start overlay with badge, "Name's turn" and a gold Start button.
+- SceneFrame.
+
+**Bottle Smash**
+- Shaded glass bottles with an outline, cork, paper label and highlights.
+- SceneFrame; the turn text shows "n balls left" (replaces the emoji).
+
+**Slingshot**
+- Birds in the shooter's colour; SceneFrame; "n birds left / n pigs left" text.
+
+**Mini Golf**
+- The flag is in the current player's colour; walls get a bevel highlight; SceneFrame.
+
+**Fruit Merge (solo + battle)**
+- Drawn fruit icons for the whole chain, cherry to watermelon (the logic keeps its emoji list).
+- Glass-jar reflections; badge header; "Box full!" in Lilita.
+- Timer label without the emoji.
+
+**Note:** messages that live in logic state and are relayed online (mini golf / slingshot / bottle smash `message`) are unchanged; `GameStatus` strips emoji when it displays them.
+
+**Tests:** analyze clean, 830 tests pass; debug builds pass for both flavors.

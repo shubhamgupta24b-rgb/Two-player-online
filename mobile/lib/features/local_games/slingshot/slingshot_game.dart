@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
@@ -269,7 +270,7 @@ final slingInfo = LocalGameInfo(
   tagline: 'Fling birds, flatten the pigs\' fort!',
   rules: const [
     'Pull back anywhere and let go to fling a bird. The dots show where it\'s heading.',
-    'Wood breaks, stone takes two hits, and falling blocks squash pigs. 🐷 100, block 10.',
+    'Wood breaks, stone takes two hits, and falling blocks squash pigs. Pig 100, block 10.',
     '3 birds a fort; a bird left over is a 50 bonus. 3 forts, taking turns. 1 to 4 players.',
   ],
   scoreUnit: 'points',
@@ -387,7 +388,7 @@ class _SlingViewState extends State<_SlingView> {
                           if (a != null && a.$2 > 0.1) g.fling(g.turn, a.$1, a.$2);
                         }
                       : null,
-                  child: ClipRRect(borderRadius: BorderRadius.circular(18), child: CustomPaint(painter: _SlingPainter(g, w, aim))),
+                  child: SceneFrame(child: CustomPaint(painter: _SlingPainter(g, w, aim, current.color))),
                 ),
               ),
             );
@@ -396,7 +397,7 @@ class _SlingViewState extends State<_SlingView> {
         const SizedBox(height: 8),
         GameStatus(
           player: current,
-          turnText: g.finished ? 'All forts done!' : (_mine ? '${current.whose} TURN · ${'🐦' * g.birds}' : '${current.name} is aiming… · 🐷 ${g.pigsLeft} left'),
+          turnText: g.finished ? 'All forts done!' : (_mine ? '${current.whose} TURN · ${g.birds} ${g.birds == 1 ? 'bird' : 'birds'} left' : '${current.name} is aiming... · ${g.pigsLeft} pigs left'),
           message: showMsg ? g.message : null,
         ),
       ]),
@@ -408,7 +409,8 @@ class _SlingPainter extends CustomPainter {
   final SlingLogic g;
   final double s;
   final (double, double)? aim;
-  _SlingPainter(this.g, this.s, this.aim);
+  final Color birdColor; // the shooter's colour
+  _SlingPainter(this.g, this.s, this.aim, this.birdColor);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -529,7 +531,11 @@ class _SlingPainter extends CustomPainter {
   }
 
   void _bird(Canvas canvas, Offset c, double r) {
-    canvas.drawCircle(c, r, Paint()..color = const Color(0xFFE53935));
+    canvas.drawCircle(c, r, Paint()..shader = RadialGradient(center: const Alignment(-0.35, -0.4), colors: [Color.lerp(birdColor, Colors.white, 0.35)!, birdColor, Color.lerp(birdColor, Colors.black, 0.3)!]).createShader(Rect.fromCircle(center: c, radius: r)));
+    canvas.drawCircle(c, r, Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = max(1.0, r * 0.08)
+      ..color = Color.lerp(birdColor, Colors.black, 0.5)!);
     canvas.drawOval(Rect.fromCenter(center: c + Offset(0, r * 0.45), width: r * 1.2, height: r * 0.8), Paint()..color = const Color(0xFFFFE0B2));
     for (final dx in [-0.3, 0.3]) {
       canvas.drawCircle(c + Offset(r * dx, -r * 0.2), r * 0.26, Paint()..color = Colors.white);

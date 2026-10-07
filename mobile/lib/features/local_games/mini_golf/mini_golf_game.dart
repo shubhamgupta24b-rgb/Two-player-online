@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
@@ -344,7 +345,7 @@ class _GolfViewState extends State<_GolfView> {
                           if (a != null && a.$2 > 0.04) g.putt(g.turn, a.$1, a.$2);
                         }
                       : null,
-                  child: ClipRRect(borderRadius: BorderRadius.circular(18), child: CustomPaint(painter: _CoursePainter(g, w, aim, current.color))),
+                  child: SceneFrame(child: CustomPaint(painter: _CoursePainter(g, w, aim, current.color))),
                 ),
               ),
             );
@@ -392,6 +393,10 @@ class _CoursePainter extends CustomPainter {
       final rect = Rect.fromLTRB(r.left * s, r.top * s, r.right * s, r.bottom * s);
       canvas.drawRRect(RRect.fromRectAndRadius(rect.shift(const Offset(2, 3)), const Radius.circular(4)), Paint()..color = Colors.black26);
       canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(4)), Paint()..shader = const LinearGradient(colors: [Color(0xFFA1887F), Color(0xFF6D4C41)], begin: Alignment.topLeft, end: Alignment.bottomRight).createShader(rect));
+      canvas.drawRRect(RRect.fromRectAndRadius(rect.deflate(1.5), const Radius.circular(3)), Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = const Color(0x55FFE0B2));
     }
     // Tee box, cup and flag.
     canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: o(h.tee), width: s * 0.12, height: s * 0.07), const Radius.circular(6)), Paint()..color = Colors.white12);
@@ -411,7 +416,7 @@ class _CoursePainter extends CustomPainter {
           ..lineTo(cup.dx + s * 0.07 + wave, cup.dy - s * 0.11)
           ..lineTo(cup.dx, cup.dy - s * 0.09)
           ..close(),
-        Paint()..color = const Color(0xFFE53935));
+        Paint()..color = colour);
     // Aim: dotted line ahead of the ball, longer and redder with power.
     final ball = o(g.ball);
     if (aim != null) {
