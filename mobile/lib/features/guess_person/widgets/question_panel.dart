@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../logic/gp_rules.dart';
 import '../models/gp_question.dart';
+import '../../../core/ui/app_flavor.dart';
 import 'gp_theme.dart';
+import 'person_portrait.dart' show traitColor;
 
 /// Category tiles (GENDER, EYE COLOR, HAIR, ...). Tapping one shows its questions;
 /// asking returns to the tiles. Asked questions show their YES/NO and can't be re-asked.
@@ -41,10 +43,68 @@ class _CategoryPanelState extends State<CategoryPanel> {
               emoji: cat.emoji,
               label: cat.label,
               asked: widget.questions.where((q) => q.category == cat.id && widget.answerFor(q) != null).length,
-              onTap: () => setState(() => open = cat.id),
+              onTap: () => flatStyle ? _popup(cat) : setState(() => open = cat.id),
             ),
         ]);
       },
+    );
+  }
+
+  /// Flat app: the category's questions in a white pop-up card, like the board game app.
+  void _popup(GpCategory cat) {
+    final qs = widget.questions.where((q) => q.category == cat.id).toList();
+    showDialog<void>(
+      context: context,
+      barrierColor: const Color(0x8C1B2A38),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 22),
+        child: Stack(clipBehavior: Clip.none, children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 22),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              FittedBox(child: Text(cat.label, style: const TextStyle(color: FlatColors.ink, fontSize: 40, fontWeight: FontWeight.w900, letterSpacing: 1))),
+              const SizedBox(height: 16),
+              LayoutBuilder(builder: (context, c) {
+                const gap = 14.0;
+                final w = (c.maxWidth - gap) / 2;
+                return Wrap(alignment: WrapAlignment.center, spacing: gap, runSpacing: gap, children: [
+                  for (final q in qs)
+                    _FlatOption(
+                      width: w,
+                      question: q,
+                      answer: widget.answerFor(q),
+                      onTap: widget.answerFor(q) != null || widget.onAsk == null
+                          ? null
+                          : () {
+                              Navigator.pop(ctx);
+                              widget.onAsk!(q);
+                            },
+                    ),
+                ]);
+              }),
+            ]),
+          ),
+          Positioned(
+            top: -14,
+            right: -6,
+            child: Semantics(
+              button: true,
+              label: 'Close',
+              child: GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(color: FlatColors.close, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3)),
+                  child: const Icon(Icons.close_rounded, color: Colors.white, size: 32),
+                ),
+              ),
+            ),
+          ),
+        ]),
+      ),
     );
   }
 
@@ -100,6 +160,65 @@ class _CategoryPanelState extends State<CategoryPanel> {
               style: TextStyle(color: asked ? Color.lerp(color, Colors.black, 0.35) : Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One answer in the flat pop-up: an icon (emoji or colour swatch) over a bold label.
+class _FlatOption extends StatelessWidget {
+  final double width;
+  final GpQuestion question;
+  final bool? answer;
+  final VoidCallback? onTap;
+  const _FlatOption({required this.width, required this.question, required this.answer, required this.onTap});
+
+  static const _emoji = {
+    'male': '👨', 'female': '👩', //
+    'long_hair': '💇‍♀️', 'short_hair': '💇‍♂️', 'curly': '👩‍🦱', 'bun': '🎀', 'spiky': '⚡', 'bald': '👨‍🦲',
+    'glasses': '👓', 'hat': '🎩', 'acc_earrings': '💎', 'acc_necklace': '📿', 'acc_bowtie': '🎀',
+    'beard': '🧔', 'mustache': '🥸',
+  };
+
+  Widget _icon() {
+    final id = question.id;
+    final cut = id.indexOf('_');
+    final kind = cut < 0 ? id : id.substring(0, cut);
+    final swatch = cut < 0 ? null : traitColor(kind, id.substring(cut + 1));
+    if (swatch != null) {
+      return Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(color: kind == 'eyes' ? Colors.white : swatch, shape: BoxShape.circle, border: Border.all(color: const Color(0x33000000), width: 2)),
+        alignment: Alignment.center,
+        child: kind == 'eyes' ? Container(width: 20, height: 20, decoration: BoxDecoration(color: swatch, shape: BoxShape.circle, border: Border.all(color: FlatColors.ink, width: 5))) : null,
+      );
+    }
+    return Text(_emoji[id] ?? '❓', style: const TextStyle(fontSize: 32));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final a = answer;
+    final color = a == null ? FlatColors.option : (a ? const Color(0xFFCFF3DD) : const Color(0xFFFAD4D3));
+    return Semantics(
+      button: a == null,
+      label: a == null ? question.prompt : '${question.prompt} ${a ? 'Yes' : 'No'}',
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: width,
+          padding: const EdgeInsets.fromLTRB(6, 12, 6, 10),
+          decoration: flatTile(radius: 14, color: color),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            _icon(),
+            const SizedBox(height: 6),
+            FittedBox(
+              child: Text(a == null ? question.label : '${question.label} · ${a ? 'YES' : 'NO'}',
+                  style: TextStyle(color: a == null ? FlatColors.ink : (a ? const Color(0xFF15803D) : const Color(0xFFB91C1C)), fontWeight: FontWeight.w900, fontSize: 17)),
+            ),
+          ]),
         ),
       ),
     );

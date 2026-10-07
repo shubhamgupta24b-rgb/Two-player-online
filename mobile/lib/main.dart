@@ -1,15 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config.dart';
+import 'core/audio/game_audio.dart';
+import 'core/settings/app_settings.dart';
 import 'core/auth/authentication_manager.dart';
+import 'core/lan/lan_host.dart';
 import 'core/network/socket_manager.dart';
 import 'core/room/room_manager.dart';
 import 'core/session/game_session_manager.dart';
+import 'core/ui/app_flavor.dart';
+import 'core/ui/app_ui.dart';
 import 'features/splash/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
+  await GameAudio.init();
+  await AppSettings.init();
+  // This phone was hosting games for the others (hotspot, no internet): start its server again.
+  if (AppConfig.hosting) {
+    try {
+      await LanHost.start();
+    } catch (_) {
+      await AppConfig.useOnline(); // the port is busy or the network is gone: fall back to online
+    }
+  }
   runApp(const App());
 }
 
@@ -35,9 +50,9 @@ class _AppState extends State<App> {
         ChangeNotifierProvider.value(value: session),
       ],
       child: MaterialApp(
-        title: 'Party Games',
+        title: appName,
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorSchemeSeed: const Color(0xFF6C5CE7), brightness: Brightness.dark, useMaterial3: true),
+        theme: buildAppTheme(),
         home: const SplashScreen(),
       ),
     );

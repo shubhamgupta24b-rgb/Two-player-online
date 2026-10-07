@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import '../air_hockey/air_hockey_game.dart' show V;
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
@@ -36,7 +36,10 @@ class PingPongLogic extends LocalGameLogic {
   bool get finished => points.any((p) => p >= target);
   bool get waitingToServe => _serveAt != null;
 
-  void movePaddle(int p, double x) => paddleX[p] = x.clamp(paddleHalf, 1 - paddleHalf);
+  void movePaddle(int p, double x) {
+    paddleX[p] = x.clamp(paddleHalf, 1 - paddleHalf); // online: shown straight away, host has the final say
+    if (forward('paddle', [p, x])) changed();
+  }
 
   /// Y of each player's paddle face: bottom for player 1, top for player 2.
   static double paddleLine(int p) => p == 0 ? length - paddleY : paddleY;
@@ -107,6 +110,51 @@ final pingPongInfo = LocalGameInfo(
   ],
   scoreUnit: 'points',
   splitScreen: true,
+  bot: botFor<PingPongLogic>((g, b, now) {
+    final last = (b.memory['t'] as int?) ?? now;
+    b.memory['t'] = now;
+    final dt = ((now - last) / 1000).clamp(0.0, 0.05);
+    // Follow the ball when it's coming, aiming a little off-centre (for angle) and a little late.
+    final coming = b.seat == 1 ? g.vel.y < 0 : g.vel.y > 0;
+    final aimOff = (b.memory['off'] as double?) ?? 0.0;
+    if (!coming) b.memory['off'] = (b.rng.nextDouble() - 0.5) * 0.16;
+    final target = coming ? g.ball.x + aimOff : 0.5;
+    final x = g.paddleX[b.seat];
+    final step = 0.95 * dt;
+    g.movePaddle(b.seat, x + (target - x).clamp(-step, step));
+  }),
+  online: RelaySpec<PingPongLogic>(
+    create: (n) => PingPongLogic(),
+    save: (g) => {
+      'points': g.points,
+      'paddles': g.paddleX,
+      'ball': [g.ball.x, g.ball.y],
+      'last': g.lastPointTo,
+      'serving': g.waitingToServe,
+    },
+    load: (g, s, me) {
+      g.points.setAll(0, ints(s['points']));
+      final pads = doubles(s['paddles']);
+      for (var i = 0; i < 2; i++) {
+        if (i != me) g.paddleX[i] = pads[i];
+      }
+      final b = doubles(s['ball']);
+      g.ball = V(b[0], b[1]);
+      g.lastPointTo = nInt(s['last']);
+      g._serveAt = s['serving'] == true ? 1 << 40 : null;
+    },
+    apply: (g, from, name, a) {
+      if (name == 'paddle' && asInt(a[0]) == from) g.movePaddle(from, asDouble(a[1]));
+    },
+    continuous: const {'paddle'},
+    view: (context, g, players, me) => RotatedBox(
+      quarterTurns: me == 1 ? 2 : 0,
+      child: Column(children: [
+        Expanded(child: Padding(padding: const EdgeInsets.all(8), child: _PongTable(players: players, g: g))),
+        ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ]),
+    ),
+  ),
   play: (players, onFinished) => TickingPlay<PingPongLogic>(
     create: () => PingPongLogic(),
     onFinished: onFinished,
@@ -165,36 +213,63 @@ class _PongPainter extends CustomPainter {
       : ball = g.ball,
         paddles = List.of(g.paddleX);
 
+  // Table palette: tournament blue with white lines.
+  static const _top = [Color(0xFF2361B8), Color(0xFF184A92)];
+  static const _edge = Color(0xFF0E2A55);
+
   @override
   void paint(Canvas canvas, Size size) {
     final s = table.width;
     Offset at(double x, double y) => Offset(table.left + x * s, table.top + y * s);
-    canvas.drawRRect(RRect.fromRectAndRadius(table, Radius.circular(s * 0.05)), Paint()..color = const Color(0xFF1F6F5C));
+    final top = RRect.fromRectAndRadius(table, Radius.circular(s * 0.03));
+    // Table edge and shadow give it thickness.
+    canvas.drawRRect(top.shift(Offset(0, s * 0.025)), Paint()..color = _edge);
+    canvas.drawRRect(top.shift(Offset(0, s * 0.05)), Paint()..color = Colors.black38);
+    canvas.drawRRect(top, Paint()..shader = const LinearGradient(colors: _top, begin: Alignment.topCenter, end: Alignment.bottomCenter).createShader(table));
     final white = Paint()
-      ..color = Colors.white70
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
-    canvas.drawLine(at(0, PingPongLogic.length / 2), at(1, PingPongLogic.length / 2), white);
+    canvas.drawRRect(top.deflate(4), white);
     canvas.drawLine(at(0.5, 0), at(0.5, PingPongLogic.length), Paint()
-      ..color = Colors.white24
+      ..color = Colors.white60
       ..strokeWidth = 2);
+    // The net across the middle, with its posts.
+    final ny = PingPongLogic.length / 2;
+    canvas.drawLine(at(0, ny) + const Offset(0, 5), at(1, ny) + const Offset(0, 5), Paint()
+      ..color = Colors.black26
+      ..strokeWidth = 6);
+    canvas.drawLine(at(-0.02, ny), at(1.02, ny), Paint()
+      ..color = const Color(0xFFF2F2F2)
+      ..strokeWidth = 5);
+    for (final x in [-0.03, 1.03]) {
+      canvas.drawCircle(at(x, ny), 6, Paint()..color = const Color(0xFF222630));
+    }
+    // Bats: a rubber face in the player's colour with a wooden handle behind it.
     for (var p = 0; p < 2; p++) {
       final y = PingPongLogic.paddleLine(p);
-      final r = Rect.fromCenter(center: at(paddles[p], y + (p == 0 ? 0.0125 : -0.0125)), width: PingPongLogic.paddleHalf * 2 * s, height: 0.025 * s);
-      canvas.drawRRect(RRect.fromRectAndRadius(r, Radius.circular(0.0125 * s)), Paint()..color = colors[p]);
+      final c = at(paddles[p], y + (p == 0 ? 0.0125 : -0.0125));
+      final w = PingPongLogic.paddleHalf * 2 * s, h = 0.03 * s;
+      final handle = Rect.fromCenter(center: c + Offset(0, (p == 0 ? 1 : -1) * h * 1.3), width: w * 0.22, height: h * 1.6);
+      canvas.drawRRect(RRect.fromRectAndRadius(handle, Radius.circular(h * 0.3)), Paint()..color = const Color(0xFFB07A45));
+      final face = RRect.fromRectAndRadius(Rect.fromCenter(center: c, width: w, height: h), Radius.circular(h / 2));
+      canvas.drawRRect(face.shift(const Offset(0, 3)), Paint()..color = Colors.black38);
+      canvas.drawRRect(face, Paint()..shader = LinearGradient(colors: [Color.lerp(colors[p], Colors.white, 0.3)!, colors[p]], begin: Alignment.topCenter, end: Alignment.bottomCenter).createShader(face.outerRect));
     }
     if (!g.waitingToServe || g.lastPointTo == null) {
-      canvas.drawCircle(at(ball.x, ball.y), PingPongLogic.ballR * s, Paint()..color = Colors.white);
+      final b = at(ball.x, ball.y), br = PingPongLogic.ballR * s;
+      canvas.drawCircle(b + const Offset(3, 5), br, Paint()..color = Colors.black38);
+      canvas.drawCircle(b, br, Paint()..shader = RadialGradient(center: const Alignment(-0.35, -0.4), colors: const [Colors.white, Color(0xFFFFE0B2)]).createShader(Rect.fromCircle(center: b, radius: br)));
     }
     if (g.waitingToServe) {
       final text = g.lastPointTo == null ? 'GET READY' : 'POINT!';
       final tp = TextPainter(
-        text: TextSpan(text: text, style: const TextStyle(color: GpColors.accent, fontSize: 40, fontWeight: FontWeight.w900)),
+        text: TextSpan(text: text, style: const TextStyle(color: Brand.gold, fontSize: 40, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 3))])),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, table.center - Offset(tp.width / 2, tp.height / 2));
     }
   }
-
   @override
   bool shouldRepaint(_PongPainter old) => true;
 }

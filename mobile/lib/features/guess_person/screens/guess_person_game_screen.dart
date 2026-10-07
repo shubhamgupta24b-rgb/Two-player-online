@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:provider/provider.dart';
 import '../logic/gp_settings.dart';
 import '../logic/guess_person_controller.dart';
@@ -33,19 +34,8 @@ class _GameView extends StatelessWidget {
   const _GameView();
 
   Future<void> _confirmLeave(BuildContext context) async {
-    final leave = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: GpCoral.panel,
-        title: const Text('Leave game?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-        content: const Text('Scores for this match will be lost.', style: TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('STAY')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('LEAVE', style: TextStyle(color: GpColors.no))),
-        ],
-      ),
-    );
-    if (leave == true && context.mounted) Navigator.pop(context);
+    final leave = await confirmAction(context, title: 'Leave game?', message: 'Scores for this match will be lost.', confirm: 'LEAVE', cancel: 'STAY', emoji: '🚪');
+    if (leave && context.mounted) Navigator.pop(context);
   }
 
   @override
@@ -163,6 +153,13 @@ class _SelectView extends StatelessWidget {
         const Text('Choose your\ncharacter!',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white, fontSize: 30, height: 1.05, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0x55000000), offset: Offset(0, 2), blurRadius: 3)])),
+        // The picked card may be scrolled out of view (e.g. after RANDOM): name it here too.
+        if (c.selectedPerson != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text('🎲 Selected: ${c.selectedPerson!.name}',
+                textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+          ),
         const SizedBox(height: 12),
         Row(children: [
           Expanded(child: GpButton('RANDOM', icon: Icons.casino_rounded, color: Colors.white, onPressed: c.selectRandomPerson)),

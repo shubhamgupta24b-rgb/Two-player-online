@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Smash Karts — Two players, one phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Nunito:wght@600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFC93C}a:hover{color:#FFE08A}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; background: #060820; font-family: 'Nunito', system-ui, sans-serif; color: #FFFFFF">
+
+  <div style="height: 120px; transform: rotate(180deg); box-sizing: border-box; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(180deg, rgba(255,138,31,0.10), rgba(255,138,31,0.24)); border-top: 2px solid #FF8A1F">
+    <div style="position: relative; width: 96px; height: 96px; border-radius: 48px; background: rgba(8,10,30,0.55); border: 2px solid rgba(255,255,255,0.22); box-sizing: border-box">
+      <div style="position: absolute; left: 38px; top: 14px; width: 40px; height: 40px; border-radius: 20px; background: radial-gradient(circle at 35% 30%, #FFC48A, #FF8A1F 55%, #C25A00); border: 3px solid #FFFFFF; box-sizing: border-box"></div>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <div style="display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 14px"><span style="width: 9px; height: 9px; background: #FF8A1F; transform: rotate(45deg); display: inline-block"></span>Meera</div>
+      <div style="font-family: 'Lilita One', sans-serif; font-size: 22px; line-height: 1; font-variant-numeric: tabular-nums">2 <span style="font-size: 13px; color: #FFD2A8">WRECKS</span></div>
+      <div style="font-size: 11px; font-weight: 800; color: #E3E6FA">Find a <span style="display: inline-block; width: 13px; height: 13px; line-height: 13px; text-align: center; border-radius: 3px; background: #FFC93C; color: #3A2A00; font-weight: 900">?</span> box</div>
+      <div style="display: flex; gap: 3px"><span style="width: 18px; height: 7px; border-radius: 3px; background: #FF3B5C; display: inline-block"></span><span style="width: 18px; height: 7px; border-radius: 3px; background: rgba(255,255,255,0.22); display: inline-block"></span><span style="width: 18px; height: 7px; border-radius: 3px; background: rgba(255,255,255,0.22); display: inline-block"></span></div>
+    </div>
+    <button aria-label="Fire (no power-up yet)" style="width: 84px; height: 84px; border-radius: 42px; border: 3px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.6); font-family: 'Lilita One', sans-serif; font-size: 18px; letter-spacing: 0.06em; padding: 0">FIRE</button>
+  </div>
+
+  <div style="position: relative; flex: 1; overflow: hidden; background: linear-gradient(180deg, #5E2C6E, #E0556A 40%, #FFB45E 60%, #3B7D2F 61%)">
+    <div style="position: absolute; left: 0; top: 0; width: 390px; height: 604px; transform: perspective(900px) rotateX(24deg); transform-origin: 50% 50%">
+      <svg width="390" height="604" viewBox="0 0 390 604" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The whole of Sunset Park seen from above at an angle: Aarav's shielded blue kart, Meera's orange kart firing a rocket, crates, walls, trees, boost pads and mystery boxes">
+        <defs>
+          <linearGradient id="asph" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4C505B"></stop><stop offset="1" stop-color="#33363E"></stop></linearGradient>
+          <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFE27A" stop-opacity="0.65"></stop><stop offset="1" stop-color="#FFC93C" stop-opacity="0"></stop></radialGradient>
+          <linearGradient id="tr" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0"></stop><stop offset="1" stop-color="#FFA726"></stop></linearGradient>
+          <g id="kt">
+            <ellipse cx="2" cy="3" rx="16" ry="10" fill="#000000" opacity="0.3"></ellipse>
+            <rect x="-11" y="-11" width="7" height="5" rx="1.5" fill="#16171B"></rect><rect x="5" y="-11" width="7" height="5" rx="1.5" fill="#16171B"></rect>
+            <rect x="-11" y="6" width="7" height="5" rx="1.5" fill="#16171B"></rect><rect x="5" y="6" width="7" height="5" rx="1.5" fill="#16171B"></rect>
+            <rect x="-13" y="-8" width="26" height="16" rx="5" fill="currentColor"></rect>
+            <rect x="-13" y="-8" width="26" height="6" rx="3" fill="#FFFFFF" opacity="0.18"></rect>
+            <rect x="9" y="-7" width="4" height="14" rx="2" fill="#263238"></rect>
+            <rect x="-14" y="-9" width="3" height="18" rx="1" fill="#1C2033"></rect>
+            <circle cx="-2" cy="0" r="4.5" fill="#F5F6FA"></circle>
+            <rect x="-2.5" y="-4.5" width="2" height="9" fill="currentColor"></rect>
+          </g>
+        </defs>
+        <rect x="0" y="0" width="390" height="604" fill="#4F9A3A"></rect>
+        <g fill="#5AA645"><rect x="0" y="0" width="390" height="24"></rect><rect x="0" y="48" width="390" height="24"></rect><rect x="0" y="96" width="390" height="24"></rect><rect x="0" y="144" width="390" height="24"></rect><rect x="0" y="192" width="390" height="24"></rect><rect x="0" y="240" width="390" height="24"></rect><rect x="0" y="288" width="390" height="24"></rect><rect x="0" y="336" width="390" height="24"></rect><rect x="0" y="384" width="390" height="24"></rect><rect x="0" y="432" width="390" height="24"></rect><rect x="0" y="480" width="390" height="24"></rect><rect x="0" y="528" width="390" height="24"></rect><rect x="0" y="576" width="390" height="24"></rect></g>
+        <g><rect x="30" y="126" width="56" height="10" fill="#2E8BFF"></rect><rect x="86" y="126" width="56" height="10" fill="#F2F2F2"></rect><rect x="142" y="126" width="56" height="10" fill="#FF8A1F"></rect><rect x="198" y="126" width="56" height="10" fill="#1C2033"></rect><rect x="254" y="126" width="56" height="10" fill="#2E8BFF"></rect><rect x="310" y="126" width="50" height="10" fill="#F2F2F2"></rect></g>
+        <rect x="45" y="152" width="300" height="300" rx="26" fill="url(#asph)"></rect>
+        <rect x="45" y="152" width="300" height="300" rx="26" fill="none" stroke="#F2F2F2" stroke-width="8"></rect>
+        <rect x="45" y="152" width="300" height="300" rx="26" fill="none" stroke="#E5383B" stroke-width="8" stroke-dasharray="14 14"></rect>
+        <circle cx="195" cy="302" r="56" fill="none" stroke="#FFC107" stroke-width="3" opacity="0.32"></circle>
+        <g fill="none" stroke="#1A1B20" stroke-width="3" opacity="0.35" stroke-linecap="round"><path d="M90 420 Q70 380 110 360"></path><path d="M300 200 Q330 240 300 270"></path><path d="M180 430 Q230 420 260 380"></path></g>
+
+        <g transform="translate(195 242)"><rect x="-10" y="-10" width="20" height="20" rx="3" fill="#FFC93C"></rect><g fill="none" stroke="#8D6E00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="-6,-5 -1,0 -6,5"></polyline><polyline points="1,-5 6,0 1,5"></polyline></g></g>
+        <g transform="translate(195 362) rotate(180)"><rect x="-10" y="-10" width="20" height="20" rx="3" fill="#FFC93C"></rect><g fill="none" stroke="#8D6E00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="-6,-5 -1,0 -6,5"></polyline><polyline points="1,-5 6,0 1,5"></polyline></g></g>
+        <g transform="translate(135 302) rotate(-90)"><rect x="-10" y="-10" width="20" height="20" rx="3" fill="#FFC93C"></rect><g fill="none" stroke="#8D6E00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="-6,-5 -1,0 -6,5"></polyline><polyline points="1,-5 6,0 1,5"></polyline></g></g>
+        <g transform="translate(255 302) rotate(90)"><rect x="-10" y="-10" width="20" height="20" rx="3" fill="#FFC93C"></rect><g fill="none" stroke="#8D6E00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="-6,-5 -1,0 -6,5"></polyline><polyline points="1,-5 6,0 1,5"></polyline></g></g>
+
+        <rect x="179" y="287" width="37.5" height="37.5" fill="#000000" opacity="0.25"></rect>
+        <rect x="176.25" y="290.75" width="37.5" height="37.5" fill="#7A4F25"></rect>
+        <rect x="176.25" y="283.25" width="37.5" height="37.5" fill="#C48A4C" stroke="#5E3A18" stroke-width="1.5"></rect>
+        <g stroke="#5E3A18" stroke-width="1.2"><line x1="176.25" y1="283.25" x2="213.75" y2="320.75"></line><line x1="213.75" y1="283.25" x2="176.25" y2="320.75"></line></g>
+
+        <g>
+          <rect x="101.25" y="210.5" width="37.5" height="10" fill="#5E6E76"></rect><rect x="101.25" y="204.5" width="37.5" height="12.5" fill="#A6B6BE"></rect>
+          <g fill="#FFC107"><rect x="104" y="217" width="4" height="3.5"></rect><rect x="113" y="217" width="4" height="3.5"></rect><rect x="122" y="217" width="4" height="3.5"></rect><rect x="131" y="217" width="4" height="3.5"></rect></g>
+          <rect x="251.25" y="210.5" width="37.5" height="10" fill="#5E6E76"></rect><rect x="251.25" y="204.5" width="37.5" height="12.5" fill="#A6B6BE"></rect>
+          <g fill="#FFC107"><rect x="254" y="217" width="4" height="3.5"></rect><rect x="263" y="217" width="4" height="3.5"></rect><rect x="272" y="217" width="4" height="3.5"></rect><rect x="281" y="217" width="4" height="3.5"></rect></g>
+          <rect x="101.25" y="393" width="37.5" height="10" fill="#5E6E76"></rect><rect x="101.25" y="387" width="37.5" height="12.5" fill="#A6B6BE"></rect>
+          <g fill="#FFC107"><rect x="104" y="399.5" width="4" height="3.5"></rect><rect x="113" y="399.5" width="4" height="3.5"></rect><rect x="122" y="399.5" width="4" height="3.5"></rect><rect x="131" y="399.5" width="4" height="3.5"></rect></g>
+          <rect x="251.25" y="393" width="37.5" height="10" fill="#5E6E76"></rect><rect x="251.25" y="387" width="37.5" height="12.5" fill="#A6B6BE"></rect>
+          <g fill="#FFC107"><rect x="254" y="399.5" width="4" height="3.5"></rect><rect x="263" y="399.5" width="4" height="3.5"></rect><rect x="272" y="399.5" width="4" height="3.5"></rect><rect x="281" y="399.5" width="4" height="3.5"></rect></g>
+        </g>
+        <g>
+          <rect x="72.5" y="263.5" width="12.5" height="15" fill="#7A4F25"></rect><rect x="72.5" y="259.5" width="12.5" height="15" fill="#C48A4C" stroke="#5E3A18" stroke-width="1"></rect>
+          <rect x="305" y="333.5" width="12.5" height="15" fill="#7A4F25"></rect><rect x="305" y="329.5" width="12.5" height="15" fill="#C48A4C" stroke="#5E3A18" stroke-width="1"></rect>
+          <rect x="220" y="183.5" width="15" height="12.5" fill="#7A4F25"></rect><rect x="220" y="179.5" width="15" height="12.5" fill="#C48A4C" stroke="#5E3A18" stroke-width="1"></rect>
+          <rect x="155" y="416" width="15" height="12.5" fill="#7A4F25"></rect><rect x="155" y="412" width="15" height="12.5" fill="#C48A4C" stroke="#5E3A18" stroke-width="1"></rect>
+        </g>
+        <g>
+          <ellipse cx="133" cy="278" rx="13" ry="8" fill="#000000" opacity="0.3"></ellipse><circle cx="130" cy="272" r="12" fill="#2E7D32"></circle><circle cx="126" cy="268" r="7" fill="#43A047"></circle><circle cx="124" cy="265" r="3" fill="#66BB6A"></circle>
+          <ellipse cx="263" cy="278" rx="13" ry="8" fill="#000000" opacity="0.3"></ellipse><circle cx="260" cy="272" r="12" fill="#2E7D32"></circle><circle cx="256" cy="268" r="7" fill="#43A047"></circle><circle cx="254" cy="265" r="3" fill="#66BB6A"></circle>
+          <ellipse cx="133" cy="333" rx="13" ry="8" fill="#000000" opacity="0.3"></ellipse><circle cx="130" cy="327" r="12" fill="#2E7D32"></circle><circle cx="126" cy="323" r="7" fill="#43A047"></circle><circle cx="124" cy="320" r="3" fill="#66BB6A"></circle>
+          <ellipse cx="263" cy="333" rx="13" ry="8" fill="#000000" opacity="0.3"></ellipse><circle cx="260" cy="327" r="12" fill="#2E7D32"></circle><circle cx="256" cy="323" r="7" fill="#43A047"></circle><circle cx="254" cy="320" r="3" fill="#66BB6A"></circle>
+        </g>
+        <g>
+          <circle cx="82.5" cy="189.5" r="14" fill="url(#glow)"></circle><rect x="75" y="185" width="15" height="9" fill="#E6A100"></rect><rect x="75" y="181" width="15" height="9" fill="#FFD54F"></rect><text x="82.5" y="189" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="8" fill="#7A5200">?</text>
+          <circle cx="307.5" cy="189.5" r="14" fill="url(#glow)"></circle><rect x="300" y="185" width="15" height="9" fill="#E6A100"></rect><rect x="300" y="181" width="15" height="9" fill="#FFD54F"></rect><text x="307.5" y="189" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="8" fill="#7A5200">?</text>
+          <circle cx="82.5" cy="414.5" r="14" fill="url(#glow)"></circle><rect x="75" y="410" width="15" height="9" fill="#E6A100"></rect><rect x="75" y="406" width="15" height="9" fill="#FFD54F"></rect><text x="82.5" y="414" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="8" fill="#7A5200">?</text>
+          <circle cx="307.5" cy="414.5" r="14" fill="url(#glow)"></circle><rect x="300" y="410" width="15" height="9" fill="#E6A100"></rect><rect x="300" y="406" width="15" height="9" fill="#FFD54F"></rect><text x="307.5" y="414" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="8" fill="#7A5200">?</text>
+          <circle cx="195" cy="214.5" r="14" fill="url(#glow)"></circle><rect x="187.5" y="210" width="15" height="9" fill="#E6A100"></rect><rect x="187.5" y="206" width="15" height="9" fill="#FFD54F"></rect><text x="195" y="214" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="8" fill="#7A5200">?</text>
+          <circle cx="282.5" cy="302" r="14" fill="url(#glow)"></circle><rect x="275" y="297.5" width="15" height="9" fill="#E6A100"></rect><rect x="275" y="293.5" width="15" height="9" fill="#FFD54F"></rect><text x="282.5" y="301.5" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="8" fill="#7A5200">?</text>
+          <g opacity="0.3"><rect x="187.5" y="385" width="15" height="9" fill="none" stroke="#FFD54F" stroke-width="1.5" stroke-dasharray="2 2"></rect><rect x="100" y="297.5" width="15" height="9" fill="none" stroke="#FFD54F" stroke-width="1.5" stroke-dasharray="2 2"></rect></g>
+        </g>
+
+        <circle cx="232" cy="230" r="6" fill="#263238" stroke="#9AA0AC" stroke-width="1.5"></circle><circle cx="232" cy="230" r="2.2" fill="#FF1744"></circle>
+
+        <path d="M296 352 L238 360" stroke="url(#tr)" stroke-width="4" stroke-linecap="round"></path>
+        <g transform="translate(232 361) rotate(172)"><rect x="-7" y="-2.5" width="14" height="5" rx="2.5" fill="#ECEFF1"></rect><circle cx="7" cy="0" r="2.5" fill="#E53935"></circle></g>
+
+        <use href="#kt" transform="translate(306 350) rotate(172)" color="#FF8A1F"></use>
+        <circle cx="152" cy="380" r="20" fill="#4FC3F7" fill-opacity="0.2" stroke="#81D4FA" stroke-width="2"></circle>
+        <use href="#kt" transform="translate(152 380) rotate(-35)" color="#2E8BFF"></use>
+      </svg>
+    </div>
+
+    <div style="position: absolute; left: 268px; top: 296px; transform: rotate(180deg); padding: 2px 7px; border-radius: 8px; background: rgba(8,10,30,0.72); border: 1.5px solid #FF8A1F; font-size: 10px; font-weight: 900">Meera</div>
+    <div style="position: absolute; left: 118px; top: 404px; padding: 2px 7px; border-radius: 8px; background: rgba(8,10,30,0.72); border: 1.5px solid #2E8BFF; font-size: 10px; font-weight: 900">Aarav · SHIELD</div>
+
+    <div style="position: absolute; left: 14px; top: 276px; transform: rotate(-90deg); transform-origin: 0 0; display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 14px; background: rgba(8,10,30,0.7); border: 1px solid rgba(255,255,255,0.2)">
+      <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="#FFC93C" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="10" r="6.5"></circle><path d="M9 10V6.5M7 1.5h4"></path></svg>
+      <span style="font-family: 'Lilita One', sans-serif; font-size: 18px; line-height: 1; font-variant-numeric: tabular-nums">0:52</span>
+    </div>
+    <button aria-label="Pause" style="position: absolute; right: 12px; top: 280px; width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.22); background: rgba(8,10,30,0.6); display: flex; align-items: center; justify-content: center; padding: 0">
+      <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true"><rect x="3" y="2" width="4" height="14" rx="1.5" fill="#FFFFFF"></rect><rect x="11" y="2" width="4" height="14" rx="1.5" fill="#FFFFFF"></rect></svg>
+    </button>
+  </div>
+
+  <div style="height: 120px; box-sizing: border-box; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(180deg, rgba(46,139,255,0.10), rgba(46,139,255,0.24)); border-top: 2px solid #2E8BFF">
+    <div style="position: relative; width: 96px; height: 96px; border-radius: 48px; background: rgba(8,10,30,0.55); border: 2px solid rgba(255,255,255,0.22); box-sizing: border-box">
+      <svg width="92" height="92" viewBox="0 0 92 92" style="position: absolute; left: 0; top: 0" aria-hidden="true"><path d="M40 6 A40 40 0 0 1 76 26" fill="none" stroke="#2E8BFF" stroke-width="4" stroke-linecap="round"></path></svg>
+      <div style="position: absolute; left: 36px; top: 10px; width: 40px; height: 40px; border-radius: 20px; background: radial-gradient(circle at 35% 30%, #8CC2FF, #2E8BFF 55%, #1B5FB8); border: 3px solid #FFFFFF; box-sizing: border-box"></div>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <div style="display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 14px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #2E8BFF; display: inline-block"></span>Aarav</div>
+      <div style="font-family: 'Lilita One', sans-serif; font-size: 22px; line-height: 1; font-variant-numeric: tabular-nums">3 <span style="font-size: 13px; color: #A9CFFF">WRECKS</span></div>
+      <div style="font-size: 11px; font-weight: 900; letter-spacing: 0.12em">SHIELD UP</div>
+      <div style="display: flex; gap: 3px"><span style="width: 18px; height: 7px; border-radius: 3px; background: #2ECC71; display: inline-block"></span><span style="width: 18px; height: 7px; border-radius: 3px; background: #2ECC71; display: inline-block"></span><span style="width: 18px; height: 7px; border-radius: 3px; background: #2ECC71; display: inline-block"></span></div>
+    </div>
+    <button aria-label="Shield is active" style="width: 84px; height: 84px; border-radius: 42px; border: 3px solid #FFFFFF; background: radial-gradient(circle at 35% 30%, #8CC2FF, #2E8BFF 55%, #1B5FB8); box-shadow: 0 0 20px rgba(46,139,255,0.7), 0 5px 0 #123E7A; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="rgba(255,255,255,0.25)" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"></path></svg>
+      <span style="font-family: 'Lilita One', sans-serif; font-size: 12px; letter-spacing: 0.06em">ACTIVE</span>
+    </button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

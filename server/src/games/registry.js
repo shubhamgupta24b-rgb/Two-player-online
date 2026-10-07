@@ -8,12 +8,14 @@ function register(mod) {
   if (mod.implemented) for (const f of REQUIRED) if (typeof mod[f] !== 'function') throw new Error(`game ${mod.id} missing ${f}`);
   games.set(mod.id, mod);
 }
-const get=id=>games.get(id), has=id=>games.has(id);
+const get=id=>games.get(id), has=id=>games.has(id), list=()=>[...games.values()];
 register(require('./guess_person').game);
 register(require('./memory').game);
 register(require('./crush_it').game);
-register(require('./basketball_hoops').game);
+// basketball_hoops is played through the relay now (the swipe-to-shoot version).
 register(require('./fruit_duel').game);
 register(require('./paint_fight').game);
 register(require('./guess_who').game);
-module.exports={register,get,has};
+register(require('./raja_mantri').game);
+for (const g of require('./relay').games) register(g);
+module.exports={register,get,has,list};

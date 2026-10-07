@@ -34,6 +34,11 @@ final crushItInfo = LocalGameInfo(
   scoreUnit: 'taps',
   splitScreen: true,
   maxPlayers: 6,
+  bot: botFor<CrushItLogic>((g, b, now) {
+    if (g.finished || !b.due(now)) return;
+    g.tap(b.seat);
+    b.wait(now, 130, 230); // about 5-7 taps a second
+  }),
   play: (players, onFinished) => TickingPlay<CrushItLogic>(
     create: () => CrushItLogic(players: players.length),
     onFinished: onFinished,

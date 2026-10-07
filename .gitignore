@@ -3,3 +3,8 @@ node_modules/
 mobile/android/
 mobile/build/
 .dart_tool/
+
+# Android release signing: never commit
+*.jks
+*.keystore
+key.properties

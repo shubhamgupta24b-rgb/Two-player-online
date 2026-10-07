@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Archery — Bullseye</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Nunito:wght@600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFC93C}a:hover{color:#FFE08A}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 14px 16px 22px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(180deg, #151A4A 0%, #0B0E2E 45%, #060820 100%); font-family: 'Nunito', system-ui, sans-serif; color: #FFFFFF; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <button aria-label="Pause" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.10); display: flex; align-items: center; justify-content: center; padding: 0">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="3" y="2" width="4" height="14" rx="1.5" fill="#FFFFFF"></rect><rect x="11" y="2" width="4" height="14" rx="1.5" fill="#FFFFFF"></rect></svg>
+      </button>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.16em; color: #AAB2E8">ARCHERY</div>
+        <div style="font-family: 'Lilita One', sans-serif; font-size: 20px; letter-spacing: 0.02em">Arrow 3 of 5</div>
+      </div>
+      <button aria-label="How to play" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.10); display: flex; align-items: center; justify-content: center; padding: 0">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="8"></circle><path d="M7.6 7.6a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4"></path><circle cx="10" cy="14.6" r="0.6" fill="#FFFFFF"></circle></svg>
+      </button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <div style="position: relative; border-radius: 18px; padding: 10px 12px; background: rgba(255,201,60,0.14); border: 2px solid #FFC93C; box-shadow: 0 0 0 4px rgba(255,201,60,0.18), 0 8px 20px rgba(0,0,0,0.35); display: flex; flex-direction: column; gap: 8px">
+        <div style="position: absolute; top: -10px; right: 10px; background: #FFC93C; color: #2A1A00; font-family: 'Lilita One', sans-serif; font-size: 14px; padding: 1px 9px; border-radius: 9px; box-shadow: 0 3px 8px rgba(0,0,0,0.3)">+10</div>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <div style="width: 30px; height: 30px; border-radius: 15px; background: #2E8BFF; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 16px; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.25)">A</div>
+          <div style="flex: 1; min-width: 0; font-weight: 900; font-size: 15px">Aarav</div>
+          <div style="font-family: 'Lilita One', sans-serif; font-size: 28px; font-variant-numeric: tabular-nums; line-height: 1; color: #FFE08A">26</div>
+        </div>
+        <div style="display: flex; gap: 4px">
+          <div style="flex: 1; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.14); font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center">9</div>
+          <div style="flex: 1; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.14); font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center">7</div>
+          <div style="flex: 1; height: 22px; border-radius: 6px; background: #FFC93C; color: #2A1A00; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center">10</div>
+          <div style="flex: 1; height: 22px; border-radius: 6px; border: 1.5px dashed rgba(255,255,255,0.25); box-sizing: border-box"></div>
+          <div style="flex: 1; height: 22px; border-radius: 6px; border: 1.5px dashed rgba(255,255,255,0.25); box-sizing: border-box"></div>
+        </div>
+      </div>
+      <div style="position: relative; border-radius: 18px; padding: 10px 12px; background: rgba(255,255,255,0.06); border: 2px solid rgba(255,138,31,0.55); display: flex; flex-direction: column; gap: 8px">
+        <div style="position: absolute; top: -9px; left: 12px; background: #FF8A1F; color: #2A1300; font-size: 10px; font-weight: 900; letter-spacing: 0.12em; padding: 2px 8px; border-radius: 8px">UP NEXT</div>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <div style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center">
+            <div style="width: 22px; height: 22px; background: #FF8A1F; border-radius: 5px; transform: rotate(45deg); display: flex; align-items: center; justify-content: center"><span style="transform: rotate(-45deg); font-family: 'Lilita One', sans-serif; font-size: 14px; color: #3A1A00">M</span></div>
+          </div>
+          <div style="flex: 1; min-width: 0; font-weight: 900; font-size: 15px; color: #E6E9FF">Meera</div>
+          <div style="font-family: 'Lilita One', sans-serif; font-size: 28px; font-variant-numeric: tabular-nums; line-height: 1; color: #E6E9FF">17</div>
+        </div>
+        <div style="display: flex; gap: 4px">
+          <div style="flex: 1; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.14); font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center">9</div>
+          <div style="flex: 1; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.14); font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center">8</div>
+          <div style="flex: 1; height: 22px; border-radius: 6px; border: 1.5px dashed rgba(255,255,255,0.25); box-sizing: border-box"></div>
+          <div style="flex: 1; height: 22px; border-radius: 6px; border: 1.5px dashed rgba(255,255,255,0.25); box-sizing: border-box"></div>
+          <div style="flex: 1; height: 22px; border-radius: 6px; border: 1.5px dashed rgba(255,255,255,0.25); box-sizing: border-box"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: relative; width: 358px; height: 520px; border-radius: 24px; overflow: hidden; box-shadow: 0 14px 34px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.10)">
+    <svg width="358" height="520" viewBox="0 -50 358 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Arrow stuck in the gold centre of the target, with a faint trail showing its flight">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#21458A"></stop><stop offset="0.45" stop-color="#5B94D4"></stop><stop offset="0.68" stop-color="#BFD7EC"></stop><stop offset="0.75" stop-color="#F2D49B"></stop><stop offset="1" stop-color="#F2D49B"></stop></linearGradient>
+        <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFF6CC" stop-opacity="0.95"></stop><stop offset="0.3" stop-color="#FFE08A" stop-opacity="0.55"></stop><stop offset="1" stop-color="#FFD27A" stop-opacity="0"></stop></radialGradient>
+        <radialGradient id="hit" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFE27A" stop-opacity="0.9"></stop><stop offset="1" stop-color="#FFC93C" stop-opacity="0"></stop></radialGradient>
+        <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FBD50"></stop><stop offset="1" stop-color="#4A8A30"></stop></linearGradient>
+        <linearGradient id="straw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E2BE76"></stop><stop offset="1" stop-color="#B98E47"></stop></linearGradient>
+      </defs>
+      <rect x="0" y="-50" width="358" height="520" fill="url(#sky)"></rect>
+      <circle cx="262" cy="292" r="74" fill="url(#sun)"></circle>
+      <circle cx="262" cy="292" r="13" fill="#FFF3C4"></circle>
+      <g fill="#FFFFFF" opacity="0.85"><ellipse cx="72" cy="40" rx="34" ry="10"></ellipse><ellipse cx="90" cy="32" rx="20" ry="11"></ellipse><ellipse cx="56" cy="34" rx="14" ry="8"></ellipse></g>
+      <g fill="#FFFFFF" opacity="0.5"><ellipse cx="190" cy="150" rx="26" ry="6"></ellipse><ellipse cx="202" cy="145" rx="13" ry="6"></ellipse></g>
+      <path d="M0 318 C40 300 80 304 120 312 C170 322 210 296 260 302 C300 306 330 312 358 304 L358 350 L0 350 Z" fill="#8FA6B9" opacity="0.75"></path>
+      <path d="M0 336 Q8 322 16 333 Q24 318 33 331 Q42 320 50 332 Q60 316 70 330 Q80 321 88 333 Q98 318 108 331 Q118 323 126 334 Q136 317 146 330 Q156 322 164 333 Q174 319 184 331 Q194 324 202 334 Q212 318 222 330 Q232 322 240 333 Q250 317 260 330 Q270 323 278 334 Q288 319 298 331 Q308 322 316 333 Q326 318 336 330 Q346 323 358 332 L358 352 L0 352 Z" fill="#2E5634"></path>
+      <rect x="0" y="348" width="358" height="122" fill="url(#grass)"></rect>
+      <g fill="#FFFFFF" opacity="0.06"><rect x="0" y="356" width="358" height="14"></rect><rect x="0" y="384" width="358" height="14"></rect><rect x="0" y="412" width="358" height="14"></rect><rect x="0" y="440" width="358" height="14"></rect></g>
+      <rect x="0" y="347" width="358" height="3" fill="#24432A" opacity="0.5"></rect>
+      <rect x="175" y="420" width="3" height="24" fill="#ECECEC"></rect>
+      <rect x="178" y="420" width="15" height="10" fill="#FFC93C"></rect>
+
+      <line x1="238" y1="312" x2="238" y2="446" stroke="#D8D8D8" stroke-width="2.5"></line>
+      <polygon points="237,314 228,315.4 228,328.6 237,330" fill="#FF3B5C"></polygon>
+      <polygon points="228,315.4 219,316.8 219,327.2 228,328.6" fill="#FFFFFF"></polygon>
+      <polygon points="219,316.8 210,318 210,326 219,327.2" fill="#FF3B5C"></polygon>
+
+      <path d="M62 356 Q190 236 318 364" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 6" stroke-linecap="round" opacity="0.45"></path>
+
+      <ellipse cx="322" cy="452" rx="30" ry="4" fill="#000000" opacity="0.22"></ellipse>
+      <line x1="322" y1="370" x2="322" y2="452" stroke="#4A2F1A" stroke-width="5" stroke-linecap="round"></line>
+      <line x1="316" y1="372" x2="300" y2="450" stroke="#7A5230" stroke-width="5" stroke-linecap="round"></line>
+      <line x1="328" y1="372" x2="344" y2="450" stroke="#7A5230" stroke-width="5" stroke-linecap="round"></line>
+      <line x1="305" y1="425" x2="339" y2="425" stroke="#6A4528" stroke-width="3" stroke-linecap="round"></line>
+      <ellipse cx="325" cy="366" rx="18" ry="38" fill="url(#straw)" stroke="#9C7536" stroke-width="1.5"></ellipse>
+      <g stroke="rgba(0,0,0,0.22)" stroke-width="0.5">
+        <ellipse cx="320" cy="366" rx="14.85" ry="27" fill="#F4F2EC"></ellipse>
+        <ellipse cx="320" cy="366" rx="13.37" ry="24.3" fill="#F4F2EC"></ellipse>
+        <ellipse cx="320" cy="366" rx="11.88" ry="21.6" fill="#222222" stroke="#555555"></ellipse>
+        <ellipse cx="320" cy="366" rx="10.4" ry="18.9" fill="#222222" stroke="#555555"></ellipse>
+        <ellipse cx="320" cy="366" rx="8.91" ry="16.2" fill="#1F7BD0"></ellipse>
+        <ellipse cx="320" cy="366" rx="7.43" ry="13.5" fill="#1F7BD0"></ellipse>
+        <ellipse cx="320" cy="366" rx="5.94" ry="10.8" fill="#E12A2F"></ellipse>
+        <ellipse cx="320" cy="366" rx="4.46" ry="8.1" fill="#E12A2F"></ellipse>
+        <ellipse cx="320" cy="366" rx="2.97" ry="5.4" fill="#F7C51E"></ellipse>
+        <ellipse cx="320" cy="366" rx="1.49" ry="2.7" fill="#F7C51E"></ellipse>
+      </g>
+      <circle cx="320" cy="365" r="16" fill="url(#hit)"></circle>
+      <g stroke="#FFE27A" stroke-width="2" stroke-linecap="round" opacity="0.9">
+        <line x1="320" y1="338" x2="320" y2="330"></line><line x1="338" y1="350" x2="345" y2="344"></line><line x1="340" y1="372" x2="348" y2="374"></line><line x1="302" y1="344" x2="296" y2="338"></line>
+      </g>
+      <g stroke-linecap="round">
+        <line x1="320" y1="362" x2="290" y2="359" stroke="#1E1E1E" stroke-width="2.2"></line><line x1="290" y1="359" x2="298" y2="359.8" stroke="#FF8A1F" stroke-width="4.5"></line>
+        <line x1="320" y1="373" x2="290" y2="370" stroke="#1E1E1E" stroke-width="2.2"></line><line x1="290" y1="370" x2="298" y2="370.8" stroke="#FF8A1F" stroke-width="4.5"></line>
+        <line x1="320" y1="370.5" x2="290" y2="367.5" stroke="#1E1E1E" stroke-width="2.2"></line><line x1="290" y1="367.5" x2="298" y2="368.3" stroke="#2E8BFF" stroke-width="4.5"></line>
+        <line x1="320" y1="356" x2="290" y2="353" stroke="#1E1E1E" stroke-width="2.2"></line><line x1="290" y1="353" x2="298" y2="353.8" stroke="#2E8BFF" stroke-width="4.5"></line>
+        <line x1="320" y1="365" x2="288" y2="361" stroke="#1E1E1E" stroke-width="2.6"></line><line x1="288" y1="361" x2="297" y2="362.1" stroke="#2E8BFF" stroke-width="5"></line>
+      </g>
+
+      <ellipse cx="26" cy="442" rx="18" ry="3" fill="#000000" opacity="0.25"></ellipse>
+      <rect x="9" y="372" width="7" height="26" rx="2.5" fill="#6B4423" transform="rotate(-18 13 385)"></rect>
+      <path d="M24 402 L16 441 M28 402 L37 441" stroke="#273047" stroke-width="5.5" stroke-linecap="round" fill="none"></path>
+      <path d="M19 376 Q17 390 20 404 L32 404 Q34 390 31 376 Q25 372 19 376 Z" fill="#2E8BFF"></path>
+      <rect x="19.5" y="399" width="13" height="3" rx="1" fill="#1A2140"></rect>
+      <circle cx="26" cy="362" r="7.5" fill="#C68A5E"></circle>
+      <path d="M18.5 361 Q19 352 26 352 Q33 352 33.5 359 Q29 356 24 357 Q20 358 18.5 361 Z" fill="#2B1D14"></path>
+      <line x1="30" y1="377" x2="56.3" y2="351.9" stroke="#C68A5E" stroke-width="4.5" stroke-linecap="round"></line>
+      <polyline points="22,377 14,386 18,394" fill="none" stroke="#C68A5E" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+      <line x1="31.7" y1="333.6" x2="71.9" y2="378.2" stroke="#F4F1E8" stroke-width="1.2"></line>
+      <path d="M31.7 333.6 Q52.2 335.4 56.3 351.9 Q72.2 357.6 71.9 378.2 M31.7 333.6 L32.7 328.7 M71.9 378.2 L76.9 377.7" fill="none" stroke="#5B3A1E" stroke-width="3.6" stroke-linecap="round"></path>
+      <circle cx="56.3" cy="351.9" r="3.5" fill="#C68A5E"></circle>
+    </svg>
+
+    <div style="position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 10px; border-radius: 14px; background: rgba(10,14,40,0.66); border: 1px solid rgba(255,255,255,0.14)">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#CFE3FF" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 7h10a2.5 2.5 0 1 0-2.5-2.5"></path><path d="M2 11h13a2.5 2.5 0 1 1-2.5 2.5"></path><path d="M2 15h6"></path></svg>
+      <div style="display: flex; flex-direction: column; line-height: 1">
+        <span style="font-size: 9px; font-weight: 900; letter-spacing: 0.14em; color: #CFD6FF">NEW WIND</span>
+        <span style="font-family: 'Lilita One', sans-serif; font-size: 18px; font-variant-numeric: tabular-nums">1.8</span>
+      </div>
+      <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true"><path d="M21 7H4M9 2L4 7l5 5" fill="none" stroke="#FFC93C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </div>
+
+    <div style="position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border-radius: 16px; background: rgba(10,14,40,0.66); border: 1px solid rgba(255,255,255,0.14)">
+      <svg width="96" height="96" viewBox="0 0 100 100" role="img" aria-label="Target seen face on: Aarav's three arrows as circles, Meera's two as diamonds; the newest arrow is in the gold">
+        <g stroke="rgba(0,0,0,0.25)" stroke-width="0.5">
+          <circle cx="50" cy="50" r="49" fill="#F4F2EC"></circle>
+          <circle cx="50" cy="50" r="44.1" fill="#F4F2EC"></circle>
+          <circle cx="50" cy="50" r="39.2" fill="#222222" stroke="#555555"></circle>
+          <circle cx="50" cy="50" r="34.3" fill="#222222" stroke="#555555"></circle>
+          <circle cx="50" cy="50" r="29.4" fill="#1F7BD0"></circle>
+          <circle cx="50" cy="50" r="24.5" fill="#1F7BD0"></circle>
+          <circle cx="50" cy="50" r="19.6" fill="#E12A2F"></circle>
+          <circle cx="50" cy="50" r="14.7" fill="#E12A2F"></circle>
+          <circle cx="50" cy="50" r="9.8" fill="#F7C51E"></circle>
+          <circle cx="50" cy="50" r="4.9" fill="#F7C51E"></circle>
+        </g>
+        <circle cx="47" cy="31.5" r="3.4" fill="#2E8BFF" stroke="#FFFFFF" stroke-width="1.2"></circle>
+        <circle cx="55" cy="58.3" r="3.4" fill="#2E8BFF" stroke="#FFFFFF" stroke-width="1.2"></circle>
+        <rect x="41" y="39.6" width="6" height="6" fill="#FF8A1F" stroke="#FFFFFF" stroke-width="1.2" transform="rotate(45 44 42.6)"></rect>
+        <rect x="54" y="60" width="6" height="6" fill="#FF8A1F" stroke="#FFFFFF" stroke-width="1.2" transform="rotate(45 57 63)"></rect>
+        <circle cx="51" cy="48.2" r="7" fill="none" stroke="#FFFFFF" stroke-width="1.5"></circle>
+        <circle cx="51" cy="48.2" r="3.8" fill="#2E8BFF" stroke="#FFFFFF" stroke-width="1.4"></circle>
+      </svg>
+      <span style="font-size: 9px; font-weight: 900; letter-spacing: 0.14em; color: #CFD6FF">SCORING</span>
+    </div>
+
+    <div style="position: absolute; left: 0; right: 0; top: 140px; display: flex; flex-direction: column; align-items: center; gap: 2px">
+      <div style="font-family: 'Lilita One', sans-serif; font-size: 50px; line-height: 1; color: #FFC93C; letter-spacing: 0.02em; text-shadow: 0 4px 0 #7A4B00, 0 0 28px rgba(255,201,60,0.55)">BULLSEYE!</div>
+      <div style="font-family: 'Lilita One', sans-serif; font-size: 26px; color: #FFFFFF; text-shadow: 0 2px 0 rgba(0,0,0,0.35)">+10 for Aarav</div>
+    </div>
+    <div style="position: absolute; left: 70px; top: 118px; width: 8px; height: 14px; background: #FFC93C; border-radius: 2px; transform: rotate(-24deg)"></div>
+    <div style="position: absolute; left: 112px; top: 96px; width: 7px; height: 12px; background: #2E8BFF; border-radius: 2px; transform: rotate(32deg)"></div>
+    <div style="position: absolute; left: 248px; top: 112px; width: 8px; height: 14px; background: #FFFFFF; border-radius: 2px; transform: rotate(18deg)"></div>
+    <div style="position: absolute; left: 284px; top: 214px; width: 7px; height: 12px; background: #FFC93C; border-radius: 2px; transform: rotate(-40deg)"></div>
+    <div style="position: absolute; left: 52px; top: 220px; width: 7px; height: 12px; background: #FF8A1F; border-radius: 2px; transform: rotate(50deg)"></div>
+    <div style="position: absolute; left: 196px; top: 92px; width: 6px; height: 10px; background: #FF3B5C; border-radius: 2px; transform: rotate(-12deg)"></div>
+  </div>
+
+  <div style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px 14px; border-radius: 18px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10)">
+    <div style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center">
+      <div style="width: 24px; height: 24px; background: #FF8A1F; border-radius: 5px; transform: rotate(45deg); display: flex; align-items: center; justify-content: center"><span style="transform: rotate(-45deg); font-family: 'Lilita One', sans-serif; font-size: 15px; color: #3A1A00">M</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div style="font-family: 'Lilita One', sans-serif; font-size: 20px; color: #FFA552">Meera, you're up</div>
+      <div style="font-size: 13px; font-weight: 700; color: #C3C9EE">Wind changed — the target moved too</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

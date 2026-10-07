@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
@@ -49,6 +50,7 @@ class SnakeDuelLogic extends LocalGameLogic {
 
   /// Turn left (-1) or right (+1) relative to the current heading; applied on the next step.
   void turn(int player, int side) {
+    if (forward('turn', [player, side])) return;
     if (betweenRounds || finished) return;
     _queued[player] = (dir[player] + side + 4) % 4;
   }
@@ -122,6 +124,68 @@ final snakeDuelInfo = LocalGameInfo(
   ],
   scoreUnit: 'rounds',
   splitScreen: true,
+  bot: botFor<SnakeDuelLogic>((g, b, now) {
+    if (g.finished || g.betweenRounds || !b.due(now)) return;
+    b.wait(now, 60, 110);
+    const dx = [0, 1, 0, -1], dy = [-1, 0, 1, 0];
+    final h = g.head[b.seat];
+    bool free(int x, int y) => x >= 0 && x < g.cols && y >= 0 && y < g.rows && g.owner[y * g.cols + x] < 0;
+    // How much room is in a direction (a few steps of look-ahead).
+    int room(int dir) {
+      var x = h % g.cols, y = h ~/ g.cols, n = 0;
+      for (var i = 0; i < 6; i++) {
+        x += dx[dir];
+        y += dy[dir];
+        if (!free(x, y)) break;
+        n++;
+      }
+      return n;
+    }
+
+    final d = g.dir[b.seat];
+    final ahead = room(d), left = room((d + 3) % 4), right = room((d + 1) % 4);
+    if (ahead <= 1 || (b.chance(0.04) && max(left, right) > ahead)) {
+      if (left == 0 && right == 0) return;
+      g.turn(b.seat, left > right || (left == right && b.chance(0.5)) ? -1 : 1);
+    }
+  }),
+  online: RelaySpec<SnakeDuelLogic>(
+    create: (n) => SnakeDuelLogic(),
+    save: (g) => {
+      'score': g.score,
+      // Trails as one short string: '.' empty, '0'/'1' owner.
+      'owner': String.fromCharCodes(g.owner.map((o) => o < 0 ? 46 : 48 + o)),
+      'head': g.head,
+      'dir': g.dir,
+      'round': g.round,
+      'roundWinner': g.roundWinner,
+      'between': g._nextRoundAt != null,
+    },
+    load: (g, s, me) {
+      g.score.setAll(0, ints(s['score']));
+      final o = (s['owner'] as String).codeUnits;
+      g.owner = [for (final c in o) c == 46 ? -1 : c - 48];
+      g.head.setAll(0, ints(s['head']));
+      g.dir.setAll(0, ints(s['dir']));
+      g.round = asInt(s['round']);
+      g.roundWinner = nInt(s['roundWinner']);
+      g._nextRoundAt = s['between'] == true ? 1 << 40 : null;
+    },
+    apply: (g, from, name, a) {
+      final side = asInt(a[1]);
+      if (name == 'turn' && asInt(a[0]) == from && (side == 1 || side == -1)) g.turn(from, side);
+    },
+    view: (context, g, players, me) => Column(children: [
+      Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: RotatedBox(quarterTurns: me == 1 ? 2 : 0, child: _Arena(players: players, g: g)),
+        ),
+      ),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      _Controls(player: players[me], index: me, g: g),
+    ]),
+  ),
   play: (players, onFinished) => TickingPlay<SnakeDuelLogic>(
     create: () => SnakeDuelLogic(),
     onFinished: onFinished,
@@ -192,19 +256,38 @@ class _ArenaPainter extends CustomPainter {
   final List<int> heads;
   _ArenaPainter(this.g, this.colors, this.owners, this.heads);
 
+  // Arena palette: a dark checkered floor.
+  static const _floorA = Color(0xFF1A2440);
+  static const _floorB = Color(0xFF1F2B4C);
+
   @override
   void paint(Canvas canvas, Size size) {
     final cw = size.width / g.cols, ch = size.height / g.rows;
+    final floor = Paint();
+    for (var r = 0; r < g.rows; r++) {
+      for (var c = 0; c < g.cols; c++) {
+        floor.color = (r + c).isEven ? _floorA : _floorB;
+        canvas.drawRect(Rect.fromLTWH(c * cw, r * ch, cw + 0.5, ch + 0.5), floor);
+      }
+    }
     for (var i = 0; i < owners.length; i++) {
       final o = owners[i];
       if (o < 0) continue;
       final rect = Rect.fromLTWH((i % g.cols) * cw + 1, (i ~/ g.cols) * ch + 1, cw - 2, ch - 2);
       final isHead = heads[o] == i;
-      canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(cw * 0.3)), Paint()..color = isHead ? Colors.white : colors[o].withValues(alpha: 0.85));
-      if (isHead) canvas.drawRRect(RRect.fromRectAndRadius(rect.deflate(cw * 0.18), Radius.circular(cw * 0.2)), Paint()..color = colors[o]);
+      final body = RRect.fromRectAndRadius(rect, Radius.circular(cw * (isHead ? 0.45 : 0.3)));
+      canvas.drawRRect(body.shift(const Offset(0, 1.5)), Paint()..color = Colors.black38);
+      canvas.drawRRect(body, Paint()..shader = LinearGradient(colors: [Color.lerp(colors[o], Colors.white, isHead ? 0.25 : 0.12)!, colors[o]], begin: Alignment.topLeft, end: Alignment.bottomRight).createShader(rect));
+      if (isHead) {
+        // Two eyes, so the head reads at a glance.
+        for (final dx in [-0.2, 0.2]) {
+          final e = rect.center + Offset(rect.width * dx, -rect.height * 0.08);
+          canvas.drawCircle(e, cw * 0.14, Paint()..color = Colors.white);
+          canvas.drawCircle(e, cw * 0.07, Paint()..color = Colors.black);
+        }
+      }
     }
   }
-
   @override
   bool shouldRepaint(_ArenaPainter old) => true;
 }

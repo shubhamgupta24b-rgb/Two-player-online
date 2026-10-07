@@ -65,7 +65,8 @@ test('room capacity (2/3/4) enforced by server', async t => {
 test('payload validation', async t => {
   const { mk } = await setup(t);
   const a = await mk('a');
-  assert.strictEqual((await emit(a, 'create_room', { gameType: 'memory', maxPlayers: 5 })).error, 'INVALID_PAYLOAD');
+  assert.strictEqual((await emit(a, 'create_room', { gameType: 'memory', maxPlayers: 7 })).error, 'INVALID_PAYLOAD');
+  assert.strictEqual((await emit(a, 'create_room', { gameType: 'memory', maxPlayers: 1 })).error, 'INVALID_PAYLOAD');
   assert.strictEqual((await emit(a, 'create_room', { gameType: 'nope', maxPlayers: 2 })).error, 'INVALID_PAYLOAD');
   assert.strictEqual((await emit(a, 'join_room', { code: 'zz' })).error, 'INVALID_PAYLOAD');
   assert.strictEqual((await emit(a, 'join_room', { code: 'ABCDEF' })).error, 'ROOM_NOT_FOUND');

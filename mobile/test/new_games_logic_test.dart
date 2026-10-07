@@ -18,11 +18,13 @@ import 'package:multiplayer_game/features/local_games/shell/split_screen.dart';
 import 'package:multiplayer_game/features/local_games/snake_duel/snake_duel_game.dart';
 
 void main() {
-  test('13 one-device games in the hub (+ Guess the Person + Guess Who online = 15), unique ids, 2-6 players', () {
-    expect(localGames, hasLength(13));
-    expect(localGames.map((g) => g.id).toSet(), hasLength(13));
+  test('55 shell games in the hub (+ Guess the Person + Raja Mantri = 57), unique ids, 1-6 players', () {
+    expect(localGames, hasLength(60));
+    expect(localGames.map((g) => g.id).toSet(), hasLength(60));
+    expect(localGames.where((g) => g.solo), hasLength(21));
+    expect(totalGameCount, 62);
     for (final g in localGames) {
-      expect(g.maxPlayers, inInclusiveRange(2, 6), reason: g.id);
+      expect(g.maxPlayers, inInclusiveRange(1, 6), reason: g.id);
     }
     expect({for (final g in localGames) g.id: g.maxPlayers}, containsPair('crush_it', 6));
     expect(defaultPlayers(6).map((p) => p.color).toSet(), hasLength(6), reason: 'six distinct colours');
@@ -373,16 +375,13 @@ void main() {
       }
     });
 
-    test('Basketball with 4: every meter stays in range', () {
+    test('Basketball with 4: everyone shoots at the same hoop', () {
       final g = BasketballLogic(players: 4);
-      for (var t = 0; t < 3000; t += 37) {
-        g.update(t);
-        for (var p = 0; p < 4; p++) {
-          expect(g.meter(p), inInclusiveRange(0, 100));
-        }
-      }
-      expect(g.shoot(3), isNotNull);
-      expect(g.shots, [0, 0, 0, 1]);
+      g.update(2000);
+      expect(g.shoot(3, 0), 3);
+      expect(g.shoot(1, 1), 0);
+      expect(g.shots, [0, 1, 0, 1]);
+      expect(g.scores, [0, 0, 0, 3]);
     });
 
     test('Guess the Person with 3 players rotates chooser and guesser', () {

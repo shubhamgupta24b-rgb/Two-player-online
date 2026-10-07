@@ -117,11 +117,16 @@ test('Guess Who: finishes after the last round and ranks players; rejects outsid
   assert.deepStrictEqual(g.getResult(s).winners, ['a']);
 });
 
-test('Guess Who: only 2 players per room', () => {
+test('Guess Who: only starts with exactly 2 players', () => {
   const srv = createServer();
   const rm = srv.rooms;
-  assert.throws(() => rm.createRoom({ userId: 'h', username: 'H' }, { gameType: 'guess_who', maxPlayers: 3 }), e => e.code === 'INVALID_PAYLOAD');
-  assert.ok(rm.createRoom({ userId: 'h', username: 'H' }, { gameType: 'guess_who', maxPlayers: 2 }));
+  rm.createRoom({ userId: 'h', username: 'H' }, { gameType: 'guess_who', maxPlayers: 3 });
+  rm.joinRoom({ userId: 'p', username: 'P' }, rm.roomOf('h').code);
+  rm.joinRoom({ userId: 'q', username: 'Q' }, rm.roomOf('h').code);
+  rm.setReady('p', true); rm.setReady('q', true);
+  assert.throws(() => rm.startGame('h'), e => e.code === 'TOO_MANY_PLAYERS');
+  rm.leave('q');
+  assert.strictEqual(rm.startGame('h').status, 'playing');
   srv.io.close(); srv.httpServer.close();
 });
 

@@ -1,35 +1,62 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/records/records.dart';
+import '../../../core/settings/app_settings.dart';
+import '../../../core/ui/app_flavor.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
-import '../../guess_person/widgets/result_view.dart' show Confetti;
-import '../../guess_person/widgets/score_board.dart';
+import 'game_intro.dart';
+import 'game_pause.dart';
+import 'game_style.dart';
+import 'how_to_play.dart';
 import 'local_game_info.dart';
+import 'pause_sheet.dart';
+import 'result_screen.dart';
+import 'turns_play.dart';
+
+export 'game_pause.dart';
+export 'game_style.dart';
+export 'result_screen.dart' show ResultExtras, ResultScope;
 
 enum _ShellPhase { intro, countdown, playing, result }
 
-/// Lets a game place its own pause/leave button wherever it fits its layout.
+/// Lets a game place its own pause (and help) button wherever it fits its layout.
+/// [onLeave] opens the pause sheet, [onHelp] How to play; [state] is the game's current
+/// state line ("Arrow 3 of 5"), shown on the pause sheet.
 class LeaveGameScope extends InheritedWidget {
   final VoidCallback onLeave;
-  const LeaveGameScope({super.key, required this.onLeave, required super.child});
+  final VoidCallback? onHelp;
+  final ValueNotifier<String?>? state;
+  const LeaveGameScope({super.key, required this.onLeave, this.onHelp, this.state, required super.child});
   static VoidCallback? of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<LeaveGameScope>()?.onLeave;
+  static VoidCallback? helpOf(BuildContext context) => context.dependOnInheritedWidgetOfExactType<LeaveGameScope>()?.onHelp;
+  static ValueNotifier<String?>? stateOf(BuildContext context) => context.getInheritedWidgetOfExactType<LeaveGameScope>()?.state;
   @override
   bool updateShouldNotify(LeaveGameScope old) => false;
 }
 
+/// The pause button every game shows: 44 px round glass. Opens the shell's pause sheet.
 class PauseButton extends StatelessWidget {
-  const PauseButton({super.key});
+  final bool dark; // on a picture (driving scenes)
+  const PauseButton({super.key, this.dark = false});
   @override
   Widget build(BuildContext context) {
-    final leave = LeaveGameScope.of(context);
-    if (leave == null) return const SizedBox.shrink();
-    return IconButton(
-      tooltip: 'Leave game',
-      onPressed: leave,
-      padding: EdgeInsets.zero,
-      icon: const Icon(Icons.pause_circle_filled_rounded, color: Colors.white70, size: 30),
-      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-    );
+    final open = LeaveGameScope.of(context);
+    if (open == null) return const SizedBox.shrink();
+    return RoundButton(icon: GameIcons.pause, label: 'Pause', onPressed: open, dark: dark);
+  }
+}
+
+/// The help button of the game top bar: opens How to play (the game keeps running).
+class HelpButton extends StatelessWidget {
+  final bool dark;
+  const HelpButton({super.key, this.dark = false});
+  @override
+  Widget build(BuildContext context) {
+    final open = LeaveGameScope.helpOf(context);
+    if (open == null) return const SizedBox.shrink();
+    return RoundButton(icon: GameIcons.help, label: 'How to play', onPressed: open, dark: dark);
   }
 }
 
@@ -43,280 +70,282 @@ class LocalGameShell extends StatefulWidget {
 }
 
 class _LocalGameShellState extends State<LocalGameShell> {
-  var players = defaultPlayers();
-  var wins = [0, 0];
+  final _names = <int, String>{}; // names typed on the intro, by seat
+  late var players = _makePlayers(widget.game.minPlayers);
+  int? best; // solo games: best score on this phone
+  bool newBest = false;
+  late var wins = List.filled(players.length, 0);
   var phase = _ShellPhase.intro;
   var matchNo = 0;
+  int botCount = 0; // computer players (the last seats); 0 = everyone is a person
+  bool get vsComputer => botCount > 0;
+  List<BotSeat> _bots = const [];
+  final _paused = ValueNotifier(false);
+  final _stateLine = ValueNotifier<String?>(null);
+  var _extras = ResultExtras();
+  bool _menuOpen = false;
 
-  /// Changing the player count starts a fresh tally.
+  /// People take the first seats, computer players the rest. A lone person is "You"
+  /// (or the name set in Settings); the colour picked in Settings goes to seat 1.
+  /// Names typed on the intro win over the defaults.
+  List<GpPlayer> _makePlayers(int n) {
+    final myName = AppSettings.playerName.value;
+    final colours = [for (var i = 0; i < math.max(n, 1); i++) gpPlayerColors[i % gpPlayerColors.length]];
+    final mine = PlayerPalette.color(AppSettings.playerColor.value);
+    final swap = colours.indexOf(mine);
+    if (swap > 0) colours[swap] = colours[0];
+    colours[0] = mine;
+    if (widget.game.solo) return [GpPlayer(name: _names[0] ?? (myName.isEmpty ? 'You' : myName), color: colours[0])];
+    final people = n - botCount;
+    return [
+      for (var i = 0; i < n; i++)
+        GpPlayer(
+          name: i < people && (_names[i]?.isNotEmpty ?? false)
+              ? _names[i]!
+              : i == 0 && myName.isNotEmpty
+                  ? myName
+                  : (i < people ? (people == 1 ? 'You' : 'Player ${i + 1}') : 'CPU ${i - people + 1}'),
+          color: colours[i],
+        ),
+    ];
+  }
+
+  /// Changing the player count (or who's playing) starts a fresh tally.
   void _setPlayerCount(int n) => setState(() {
-        players = defaultPlayers(n);
+        botCount = botCount.clamp(0, n - 1);
+        players = _makePlayers(n);
         wins = List.filled(n, 0);
       });
 
-  void _start() => setState(() => phase = _ShellPhase.countdown);
+  void _setBotCount(int n) {
+    botCount = n.clamp(0, players.length - 1);
+    _setPlayerCount(players.length);
+  }
+
+  void _setName(int seat, String name) => setState(() {
+        if (name.isEmpty) {
+          _names.remove(seat);
+        } else {
+          _names[seat] = name;
+        }
+        players = _makePlayers(players.length);
+      });
+
+  bool teams = false; // 2 vs 2, for games that have a team version and 4 players
+
+  /// The game being played: its team version when TEAMS is on.
+  LocalGameInfo get _game => teams && players.length == 4 && widget.game.teamVariant != null ? widget.game.teamVariant! : widget.game;
+  bool get _teamsOn => !identical(_game, widget.game);
+
+  bool takeTurns = true; // full screen, one player at a time (games that offer it)
+  int turnMinutes = 1;
+  bool get _turnsOn => takeTurns && _game.turns != null && players.length > 1;
+
+  // No 3-2-1 for solo games (you start when you're ready) or take turns (each turn has its START).
+  void _start() => _turnsOn || widget.game.solo ? _go() : setState(() => phase = _ShellPhase.countdown);
 
   void _go() => setState(() {
         matchNo++;
+        _paused.value = false;
+        _stateLine.value = null;
+        _extras = ResultExtras();
+        // Fresh computer players every match (their memory and timing start over).
+        _bots = vsComputer && _game.bot != null ? [for (var i = players.length - botCount; i < players.length; i++) BotSeat(i, null, players.length - botCount == 1)] : const [];
         phase = _ShellPhase.playing;
+        GameAudio.music(GameAudio.musicFor(widget.game.id));
       });
+
+  @override
+  void dispose() {
+    GameAudio.stopMusic();
+    _paused.dispose();
+    _stateLine.dispose();
+    super.dispose();
+  }
+
+  Widget _play(LocalGameInfo g) {
+    if (_turnsOn) {
+      return TurnsPlay(
+        spec: g.turns!,
+        players: players,
+        botSeats: vsComputer ? {for (var i = players.length - botCount; i < players.length; i++) i} : const {},
+        durationMs: turnMinutes * 60000,
+        onFinished: _finished,
+      );
+    }
+    final game = g.play(players, _finished);
+    if (_bots.isEmpty) return game;
+    return BotScope(seats: _bots, turn: g.bot!, people: players.length - botCount, child: game);
+  }
 
   void _finished(List<int> scores) {
     if (!mounted) return;
-    HapticFeedback.mediumImpact().ignore();
+    haptic(HapticWeight.medium);
+    GameAudio.stopMusic();
+    GameAudio.sfx('win');
+    if (_menuOpen) Navigator.of(context).popUntil((r) => r is! PopupRoute);
     setState(() {
       for (var i = 0; i < players.length; i++) {
         players[i].score = scores[i];
       }
       final top = scores.reduce((a, b) => a > b ? a : b);
       final leaders = [for (var i = 0; i < scores.length; i++) if (scores[i] == top) i];
-      if (leaders.length == 1) wins[leaders.single]++;
+      // One winner, or a whole team (2 vs 2) winning together.
+      if (leaders.length == 1 || _teamsOn && leaders.length == 2) {
+        for (final i in leaders) {
+          wins[i]++;
+        }
+      }
       phase = _ShellPhase.result;
+      best = null;
+      newBest = false;
     });
+    _record(scores);
   }
 
-  Future<void> _confirmLeave() async {
-    final leave = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: GpColors.bgTop,
-        title: const Text('Leave game?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-        content: const Text('This match will be lost.', style: TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('STAY')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('LEAVE', style: TextStyle(color: GpColors.no))),
-        ],
-      ),
-    );
-    if (leave == true && mounted) Navigator.pop(context);
+  /// My Records on this phone: solo and "you vs the computer" count as yours (with wins);
+  /// a game shared by several people records the best score made on this phone.
+  /// Solo games show the best score so far and a NEW BEST badge.
+  Future<void> _record(List<int> scores) async {
+    final top = scores.reduce((a, b) => a > b ? a : b);
+    final people = players.length - botCount;
+    if (widget.game.solo) {
+      final score = scores.single;
+      var prev = 0;
+      try {
+        prev = (await Records.all())[widget.game.id]?.best ?? 0;
+      } catch (_) {}
+      await Records.add(widget.game.id, score: score);
+      if (!mounted) return;
+      setState(() {
+        newBest = score > prev;
+        best = math.max(score, prev);
+      });
+    } else if (vsComputer && people == 1) {
+      final leaders = [for (var i = 0; i < scores.length; i++) if (scores[i] == top) i];
+      final won = scores[0] == top && (leaders.length == 1 || _teamsOn && leaders.length == 2);
+      Records.add(_game.id, score: scores[0], won: won).ignore();
+    } else {
+      Records.add(_game.id, score: top).ignore();
+    }
+  }
+
+  /// The pause sheet: the game clock stops while it's open.
+  Future<void> _openMenu() async {
+    if (_menuOpen) return;
+    if (phase != _ShellPhase.playing && phase != _ShellPhase.countdown) {
+      Navigator.maybePop(context);
+      return;
+    }
+    _menuOpen = true;
+    _paused.value = true;
+    haptic(HapticWeight.selection);
+    final action = await showPauseSheet(context, game: _game, state: _stateLine.value);
+    _menuOpen = false;
+    if (!mounted) return;
+    switch (action) {
+      case PauseAction.restart:
+        if (await confirmAction(context, title: 'Restart?', message: 'This match starts again from the beginning.', confirm: 'Restart', emoji: null)) {
+          _start();
+        }
+      case PauseAction.quit:
+        if (await confirmAction(context, title: 'Leave game?', message: 'This match will be lost.', confirm: 'Leave', cancel: 'Stay', emoji: null)) {
+          if (mounted) Navigator.pop(context);
+          return;
+        }
+      case PauseAction.resume || null:
+        break;
+    }
+    if (mounted && phase == _ShellPhase.playing) _paused.value = false;
+  }
+
+  /// How to play from the game's help button. Pauses the game while it's open.
+  Future<void> _openHelp() async {
+    if (_menuOpen) return;
+    final wasPaused = _paused.value;
+    _paused.value = true;
+    await showHowToPlay(context, _game);
+    if (mounted && phase == _ShellPhase.playing && !wasPaused) _paused.value = false;
   }
 
   @override
   Widget build(BuildContext context) {
     final g = widget.game;
+    final flat = isFlatGame(g.id) && phase == _ShellPhase.playing; // intro and results keep the night look
     final Widget body = switch (phase) {
-      _ShellPhase.intro => _Intro(game: g, onPlay: _start, playerCount: players.length, onPlayerCount: _setPlayerCount),
-      _ShellPhase.countdown => _Countdown(onDone: _go, color: g.color),
+      _ShellPhase.intro => GameIntro(
+          game: g,
+          players: players,
+          botCount: botCount,
+          onStart: _start,
+          onPlayerCount: _setPlayerCount,
+          onName: _setName,
+          onBotCount: g.bot == null ? null : _setBotCount,
+          teams: g.teamVariant != null && players.length == 4 ? teams : null,
+          onTeams: (on) => setState(() {
+            teams = on;
+            wins = List.filled(players.length, 0); // a new kind of match: fresh tally
+          }),
+          turns: g.turns != null && players.length > 1 ? (takeTurns, turnMinutes) : null,
+          onTurns: (on, minutes) => setState(() {
+            takeTurns = on;
+            turnMinutes = minutes;
+          }),
+        ),
+      _ShellPhase.countdown => CountdownOverlay(onDone: _go, color: g.color, mirrored: g.splitScreen && players.length - botCount > 1),
       // A new key per match guarantees fresh game state on Play Again.
-      _ShellPhase.playing => KeyedSubtree(key: ValueKey('match$matchNo'), child: g.play(players, _finished)),
-      _ShellPhase.result => _Result(game: g, players: players, wins: wins, onAgain: _start, onExit: () => Navigator.pop(context)),
+      _ShellPhase.playing => KeyedSubtree(
+          key: ValueKey('match$matchNo'),
+          child: ResultScope(extras: _extras, child: FeedbackLayer(child: GamePause(paused: _paused, child: _play(_game)))),
+        ),
+      _ShellPhase.result => ResultScreen(
+          game: _game,
+          teams: _teamsOn,
+          players: players,
+          wins: wins,
+          extras: _extras,
+          best: best,
+          newBest: newBest,
+          onRematch: _start,
+          onChangePlayers: g.solo ? null : () => setState(() => phase = _ShellPhase.intro),
+          onExit: () => Navigator.pop(context),
+        ),
     };
     return PopScope(
       canPop: phase != _ShellPhase.playing && phase != _ShellPhase.countdown,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _confirmLeave();
+        if (!didPop) _openMenu();
       },
       child: Scaffold(
-        body: GpBackground(
-          child: SafeArea(
-            child: LeaveGameScope(
-              onLeave: _confirmLeave,
-              child: AnimatedSwitcher(duration: const Duration(milliseconds: 250), child: KeyedSubtree(key: ValueKey('$phase$matchNo'), child: body)),
+        // Each game glows in its own colour (the flat app draws word games on a sky-blue board).
+        body: TokenScope(
+          flat: flat,
+          child: GameTheme(
+            color: g.color,
+            emoji: g.emoji,
+            flat: flat,
+            id: g.id,
+            child: GameBackground(
+              color: g.color,
+              flat: flat,
+              // The intro's art runs up under the status bar; everything else stays inside it.
+              child: SafeArea(
+                top: phase != _ShellPhase.intro,
+                child: LeaveGameScope(
+                  onLeave: _openMenu,
+                  onHelp: _openHelp,
+                  state: _stateLine,
+                  child: AnimatedSwitcher(
+                    duration: Motion.of(context, Motion.normal),
+                    switchInCurve: Motion.standard,
+                    child: KeyedSubtree(key: ValueKey('$phase$matchNo'), child: body),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
       ),
     );
-  }
-}
-
-class _Intro extends StatelessWidget {
-  final LocalGameInfo game;
-  final VoidCallback onPlay;
-  final int playerCount;
-  final ValueChanged<int> onPlayerCount;
-  const _Intro({required this.game, required this.onPlay, required this.playerCount, required this.onPlayerCount});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(children: [
-      Positioned(
-        top: 4,
-        left: 4,
-        child: IconButton(
-          tooltip: 'Back',
-          onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
-          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-        ),
-      ),
-      Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Center(
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(color: game.color, shape: BoxShape.circle, boxShadow: [BoxShadow(color: game.color.withValues(alpha: 0.5), blurRadius: 24)]),
-                  child: Text(game.emoji, style: const TextStyle(fontSize: 60)),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(game.title.toUpperCase(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0xFF6C5CE7), offset: Offset(0, 3))])),
-              const SizedBox(height: 6),
-              Text(game.tagline, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontSize: 15, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 22),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: GpColors.panel, borderRadius: BorderRadius.circular(18)),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('HOW TO PLAY', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2, fontSize: 12)),
-                  const SizedBox(height: 8),
-                  for (final r in game.rules)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const Text('•  ', style: TextStyle(color: GpColors.accent, fontWeight: FontWeight.w900, fontSize: 16)),
-                        Expanded(child: Text(r, style: const TextStyle(color: Colors.white, fontSize: 15))),
-                      ]),
-                    ),
-                ]),
-              ),
-              if (game.maxPlayers > 2) ...[
-                const SizedBox(height: 16),
-                const Text('PLAYERS', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-                const SizedBox(height: 8),
-                Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6, children: [
-                  for (var n = 2; n <= game.maxPlayers; n++)
-                    Padding(
-                      padding: EdgeInsets.zero,
-                      child: Semantics(
-                        button: true,
-                        selected: n == playerCount,
-                        label: '$n players',
-                        child: Material(
-                          color: n == playerCount ? GpColors.accent : GpColors.panel,
-                          shape: const CircleBorder(),
-                          child: InkWell(
-                            customBorder: const CircleBorder(),
-                            onTap: () => onPlayerCount(n),
-                            child: SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: Center(
-                                child: Text('$n', style: TextStyle(color: n == playerCount ? GpColors.ink : Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ]),
-              ],
-              if (game.splitScreen) ...[
-                const SizedBox(height: 12),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Icon(Icons.screen_rotation_alt_rounded, color: Colors.white60, size: 18),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                        playerCount == 2
-                            ? 'Lay the phone flat · Player 1 bottom, Player 2 top'
-                            : 'Lay the phone flat · players sit along both long sides, each at their own zone',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white60, fontSize: 13)),
-                  ),
-                ]),
-              ],
-              const SizedBox(height: 24),
-              GpButton('PLAY', icon: Icons.play_arrow_rounded, onPressed: onPlay),
-            ]),
-          ),
-        ),
-      ),
-    ]);
-  }
-}
-
-class _Countdown extends StatefulWidget {
-  final VoidCallback onDone;
-  final Color color;
-  const _Countdown({required this.onDone, required this.color});
-  @override
-  State<_Countdown> createState() => _CountdownState();
-}
-
-class _CountdownState extends State<_Countdown> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))
-    ..addStatusListener((s) {
-      if (s == AnimationStatus.completed) widget.onDone();
-    })
-    ..forward();
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (_, __) {
-        final step = (_c.value * 3).floor().clamp(0, 2);
-        final t = (_c.value * 3) - step; // 0..1 within this number
-        final label = ['3', '2', '1'][step];
-        final text = Text(label, style: TextStyle(color: Colors.white, fontSize: 120, fontWeight: FontWeight.w900, shadows: [Shadow(color: widget.color, offset: const Offset(0, 6))]));
-        // Shown to both ends of the table.
-        return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-          RotatedBox(quarterTurns: 2, child: Opacity(opacity: (1 - t).clamp(0.3, 1), child: Transform.scale(scale: 1.4 - t * 0.4, child: text))),
-          const Text('GET READY!', style: TextStyle(color: GpColors.accent, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 2)),
-          Opacity(opacity: (1 - t).clamp(0.3, 1), child: Transform.scale(scale: 1.4 - t * 0.4, child: text)),
-        ]);
-      },
-    );
-  }
-}
-
-class _Result extends StatelessWidget {
-  final LocalGameInfo game;
-  final List<GpPlayer> players;
-  final List<int> wins;
-  final VoidCallback onAgain;
-  final VoidCallback onExit;
-  const _Result({required this.game, required this.players, required this.wins, required this.onAgain, required this.onExit});
-
-  @override
-  Widget build(BuildContext context) {
-    final top = players.map((p) => p.score).reduce((a, b) => a > b ? a : b);
-    final leaders = players.where((p) => p.score == top).toList();
-    final draw = leaders.length > 1;
-    return Stack(children: [
-      Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text(draw ? '🤝' : '🏆', textAlign: TextAlign.center, style: const TextStyle(fontSize: 72)),
-              Text(draw ? 'DRAW!' : '${leaders.single.name.toUpperCase()} WINS!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: draw ? Colors.white : leaders.single.color, fontSize: 34, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 4),
-              Text('${game.emoji} ${game.title}', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontSize: 15, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 20),
-              Text(game.scoreUnit.toUpperCase(), textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
-              const SizedBox(height: 8),
-              ScoreBoard(players: players, large: true, highlight: draw ? const {} : leaders.toSet()),
-              const SizedBox(height: 14),
-              Text('MATCHES WON  ·  ${[for (var i = 0; i < players.length; i++) '${players[i].name} ${wins[i]}'].join('  ·  ')}',
-                  textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 28),
-              GpButton('PLAY AGAIN', icon: Icons.replay_rounded, onPressed: onAgain),
-              const SizedBox(height: 12),
-              GpButton('ALL GAMES', icon: Icons.grid_view_rounded, outlined: true, onPressed: onExit),
-            ]),
-          ),
-        ),
-      ),
-      if (!draw) const Positioned.fill(child: IgnorePointer(child: Confetti())),
-    ]);
   }
 }

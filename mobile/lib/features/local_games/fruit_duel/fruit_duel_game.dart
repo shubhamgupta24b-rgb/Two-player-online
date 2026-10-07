@@ -7,6 +7,7 @@ import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
 import '../shell/ticking_play.dart';
+import '../shell/turns_play.dart';
 
 class Slash {
   final int fruit;
@@ -86,7 +87,7 @@ class FruitDuelLogic extends TimedDuel {
   }
 }
 
-final fruitDuelInfo = LocalGameInfo(
+final LocalGameInfo fruitDuelInfo = LocalGameInfo(
   id: 'fruit_duel',
   title: 'Fruit Duel',
   emoji: '🍉',
@@ -95,11 +96,29 @@ final fruitDuelInfo = LocalGameInfo(
   rules: const [
     'A fruit pops up in one of three lanes on both sides.',
     'Tap the lane with the fruit to slice it. One try per fruit!',
-    'First to slice gets +2, everyone else who gets it +1. Fruits get faster. 20 seconds. 2 to 4 players.',
+    'First to slice gets +2, everyone else who gets it +1. Fruits get faster. Take turns (1-5 minutes each) or split the screen (20 seconds). 2 to 4 players.',
   ],
   scoreUnit: 'points',
   splitScreen: true,
   maxPlayers: 4,
+  bot: botFor<FruitDuelLogic>((g, b, now) {
+    if (g.finished || g.slashedCurrent(b.seat)) return;
+    if (!b.thinkFirst(g.current, now, 380, 900)) return;
+    final lane = b.chance(0.85) ? g.fruitLane : (g.fruitLane + 1 + b.rng.nextInt(FruitDuelLogic.lanes - 1)) % FruitDuelLogic.lanes;
+    g.slash(b.seat, lane);
+  }),
+  // One phone: each player gets the whole screen for the chosen time.
+  turns: TurnsSpec(
+    play: (player, ms, onDone) => TickingPlay<FruitDuelLogic>(
+      create: () => FruitDuelLogic(players: 1, durationMs: ms),
+      onFinished: (s) => onDone(s.first),
+      builder: (context, g) => Column(children: [
+        TurnBar(player: player, score: g.scores.first, secondsLeft: g.secondsLeft),
+        Expanded(child: _FruitHalf(player: player, index: 0, g: g)),
+      ]),
+    ),
+    simulate: (ms, rng) => simulateTurn(FruitDuelLogic(players: 1, durationMs: ms, random: rng), fruitDuelInfo.bot!, ms, rng),
+  ),
   play: (players, onFinished) => TickingPlay<FruitDuelLogic>(
     create: () => FruitDuelLogic(players: players.length),
     onFinished: onFinished,
@@ -171,13 +190,23 @@ class _Lane extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = slashHere;
     return Container(
+      // Fill the whole column, fruit or not (otherwise the fruit's lane shrinks to fit it).
+      width: double.infinity,
+      height: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withValues(alpha: fruit != null ? 0.38 : 0.24), color.withValues(alpha: 0.08)],
+        ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.5), width: 2),
+        border: Border.all(color: color.withValues(alpha: fruit != null ? 0.95 : 0.6), width: fruit != null ? 3 : 2),
+        boxShadow: [if (fruit != null) BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 16)],
       ),
       child: Stack(alignment: Alignment.center, children: [
+        // A faint knife at the bottom of every lane: tap here to slice.
+        Positioned(bottom: 14, child: Opacity(opacity: 0.25, child: Text('🔪', style: TextStyle(fontSize: 22, color: color)))),
         if (fruit != null)
           TweenAnimationBuilder<double>(
             key: ValueKey(fruitId),

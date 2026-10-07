@@ -29,6 +29,7 @@ class SocketManager {
       io.OptionBuilder()
           .setTransports(['websocket'])
           .setAuth({'token': token})
+          .enableForceNew() // a fresh connection each time, never a cached one for the same address
           .enableReconnection()
           .setReconnectionDelay(500)
           .setReconnectionDelayMax(5000)
@@ -48,10 +49,9 @@ class SocketManager {
       s.on(name, (d) => _events.add(SocketEvent(name, d)));
     }
     s.connect();
-    await done.future.timeout(const Duration(seconds: 10), onTimeout: () {
-      s.dispose();
-      throw Exception('Connection timed out');
-    });
+    // A free cloud server can take up to a minute to wake up. Report the slow start, but keep
+    // the socket: it goes on retrying and flips [connected] as soon as the server answers.
+    await done.future.timeout(const Duration(seconds: 10), onTimeout: () => throw Exception('Connection timed out'));
   }
 
   /// Sends an event and waits for the server ack: {ok: true, ...} or {ok: false, error: CODE}.

@@ -63,6 +63,7 @@ class PenaltyLogic extends LocalGameLogic {
 
   /// [zone] is absolute (0 left, 1 centre, 2 right from player 1's side). Returns true if accepted.
   bool pick(int player, int zone) {
+    if (forward('pick', [player, zone])) return false;
     if (finished || showingResult || zone < 0 || zone > 2 || picks[player] != null) return false;
     picks[player] = zone;
     if (picks[0] != null && picks[1] != null) {
@@ -90,6 +91,38 @@ final penaltyInfo = LocalGameInfo(
   ],
   scoreUnit: 'goals',
   splitScreen: true,
+  bot: botFor<PenaltyLogic>((g, b, now) {
+    if (g.finished || g.showingResult || g.picks[b.seat] != null) return;
+    if (b.thinkFirst(g.kickNo, now, 700, 1600)) g.pick(b.seat, b.rng.nextInt(3));
+  }),
+  online: RelaySpec<PenaltyLogic>(
+    create: (n) => PenaltyLogic(),
+    save: (g) => {
+      'goals': g.goals,
+      'kicks': [for (final k in g.kicks) [k.kicker, k.shot, k.dive]],
+      // Only whether each player has picked: the side stays secret until both have.
+      'locked': [for (final p in g.picks) p != null],
+      'showing': g.showingResult,
+    },
+    load: (g, s, me) {
+      g.goals.setAll(0, ints(s['goals']));
+      g.kicks
+        ..clear()
+        ..addAll([for (final k in s['kicks'] as List) Kick(asInt((k as List)[0]), asInt(k[1]), asInt(k[2]))]);
+      final locked = (s['locked'] as List).cast<bool>();
+      for (var i = 0; i < 2; i++) {
+        g.picks[i] = locked[i] ? (g.picks[i] ?? 1) : null;
+      }
+      g._nextAt = s['showing'] == true ? 1 << 40 : null;
+    },
+    apply: (g, from, name, a) {
+      if (name == 'pick' && asInt(a[0]) == from) g.pick(from, asInt(a[1]));
+    },
+    view: (context, g, players, me) => Column(children: [
+      ScoreMiddleBar(players: players, scores: g.scores, label: g.kickNo < 2 * g.kicksEach ? 'KICK ${g.kickNo ~/ 2 + 1} OF ${g.kicksEach}' : 'SUDDEN DEATH'),
+      Expanded(child: _PenaltyHalf(player: players[me], index: me, g: g)),
+    ]),
+  ),
   play: (players, onFinished) => TickingPlay<PenaltyLogic>(
     create: () => PenaltyLogic(),
     onFinished: onFinished,
@@ -128,70 +161,150 @@ class _PenaltyHalf extends StatelessWidget {
     }
     const labels = ['LEFT', 'MIDDLE', 'RIGHT'];
     final canPick = !g.showingResult && g.picks[index] == null && !g.finished;
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(children: [
-        Row(children: [
-          PlayerTagSmall(player: player),
-          const Spacer(),
-          Text(kicking ? 'KICKER' : 'KEEPER', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-        ]),
-        Expanded(
-          child: Center(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Column(children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900)),
-                Text(sub, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+    // A little pitch: striped grass, the goal with a net, three target zones inside it.
+    return Container(
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF2E9E4F), Color(0xFF1F7A3B)]),
+        border: Border.all(color: player.color.withValues(alpha: 0.7), width: 2),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: CustomPaint(
+          painter: const _GrassStripes(),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(children: [
+              Row(children: [
+                Flexible(child: PlayerTagSmall(player: player)),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(10)),
+                  child: Text(kicking ? '⚽ KICKER' : '🧤 KEEPER', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                ),
               ]),
-            ),
-          ),
-        ),
-        // The goal mouth with three zones.
-        Container(
-          padding: const EdgeInsets.fromLTRB(6, 6, 6, 0),
-          decoration: const BoxDecoration(
-            border: Border(top: BorderSide(color: Colors.white, width: 6), left: BorderSide(color: Colors.white, width: 6), right: BorderSide(color: Colors.white, width: 6)),
-          ),
-          child: Row(children: [
-            for (var shown = 0; shown < 3; shown++)
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(3),
-                  child: Material(
-                    color: _zoneColor(toAbsolute(shown), kick),
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: canPick
-                          ? () {
-                              if (g.pick(index, toAbsolute(shown))) HapticFeedback.selectionClick().ignore();
-                            }
-                          : null,
-                      child: SizedBox(
-                        height: 70,
-                        child: Center(child: Text(labels[shown], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
-                      ),
-                    ),
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(children: [
+                      Text(title, style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 3)])),
+                      Text(sub, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                    ]),
                   ),
                 ),
               ),
-          ]),
+              // The goal: posts and crossbar, a net behind three tappable zones.
+              Container(
+                padding: const EdgeInsets.fromLTRB(5, 5, 5, 0),
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: Colors.white, width: 7), left: BorderSide(color: Colors.white, width: 7), right: BorderSide(color: Colors.white, width: 7)),
+                  boxShadow: [BoxShadow(color: Colors.black26, offset: Offset(0, 3), blurRadius: 4)],
+                ),
+                child: CustomPaint(
+                  painter: const _Net(),
+                  child: Row(children: [
+                    for (var shown = 0; shown < 3; shown++)
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Material(
+                            color: _zoneColor(toAbsolute(shown), kick),
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: canPick
+                                  ? () {
+                                      if (g.pick(index, toAbsolute(shown))) HapticFeedback.selectionClick().ignore();
+                                    }
+                                  : null,
+                              child: SizedBox(
+                                height: 78,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                                    Text(_zoneIcon(toAbsolute(shown), kick, kicking), style: const TextStyle(fontSize: 24)),
+                                    Text(labels[shown], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, shadows: [Shadow(color: Colors.black45, blurRadius: 2)])),
+                                  ]),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ]),
+                ),
+              ),
+            ]),
+          ),
         ),
-      ]),
+      ),
     );
+  }
+
+  /// What a zone shows: after the kick, where the ball went (⚽) and where the keeper dove (🧤);
+  /// before it, a target (kicker) or a glove (keeper).
+  String _zoneIcon(int zone, Kick? kick, bool kicking) {
+    if (g.showingResult && kick != null) {
+      if (zone == kick.shot && zone == kick.dive) return '🧤⚽';
+      if (zone == kick.shot) return '⚽';
+      if (zone == kick.dive) return '🧤';
+      return '';
+    }
+    if (g.picks[index] == zone) return '✓';
+    return kicking ? '🎯' : '🧤';
   }
 
   Color _zoneColor(int zone, Kick? kick) {
     if (g.showingResult && kick != null) {
-      if (zone == kick.shot && zone == kick.dive) return GpColors.no;
-      if (zone == kick.shot) return GpColors.yes;
-      if (zone == kick.dive) return const Color(0xFF7A7A90);
-      return Colors.white12;
+      if (zone == kick.shot && zone == kick.dive) return GpColors.no.withValues(alpha: 0.85);
+      if (zone == kick.shot) return GpColors.yes.withValues(alpha: 0.85);
+      if (zone == kick.dive) return const Color(0xCC7A7A90);
+      return Colors.transparent;
     }
-    return g.picks[index] == zone ? player.color : player.color.withValues(alpha: 0.35);
+    return g.picks[index] == zone ? player.color : player.color.withValues(alpha: 0.3);
   }
 
   // Describe the zone from this player's point of view.
   String _side(int absolute) => const ['left', 'middle', 'right'][index == 0 ? absolute : 2 - absolute];
+}
+
+/// Mowed-grass stripes across the pitch.
+class _GrassStripes extends CustomPainter {
+  const _GrassStripes();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..color = Colors.white.withValues(alpha: 0.05);
+    const band = 34.0;
+    for (var y = 0.0; y < size.height; y += band * 2) {
+      canvas.drawRect(Rect.fromLTWH(0, y, size.width, band), p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// The goal net: a fine white mesh.
+class _Net extends CustomPainter {
+  const _Net();
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = Colors.black.withValues(alpha: 0.18));
+    final p = Paint()
+      ..color = Colors.white.withValues(alpha: 0.35)
+      ..strokeWidth = 1;
+    const step = 12.0;
+    for (var x = 0.0; x <= size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), p);
+    }
+    for (var y = 0.0; y <= size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
