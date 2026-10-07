@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart' show GpColors;
+import '../../../core/ui/components.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -126,20 +126,16 @@ final LocalGameInfo basketballInfo = LocalGameInfo(
     // Online: your own court fills the screen, everyone's score along the top.
     view: (context, g, players, me) => Column(children: [
       Container(
-        color: GpColors.bgBottom,
+        color: NeonPalette.overlay,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Row(children: [
           Expanded(
             child: Wrap(spacing: 6, runSpacing: 4, children: [
               for (var i = 0; i < players.length; i++)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: players[i].color, borderRadius: BorderRadius.circular(10)),
-                  child: Text('${players[i].name} ${g.score[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
-                ),
+                EdgeTag('${players[i].name} ${g.score[i]}', color: players[i].color),
             ]),
           ),
-          Text('${g.secondsLeft}s', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+          Text('${g.secondsLeft}s', style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 22, fontFeatures: [FontFeature.tabularFigures()])),
         ]),
       ),
       Expanded(child: _HoopZone(player: players[me], index: me, g: g)),
@@ -162,6 +158,7 @@ final LocalGameInfo basketballInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => PlayerZones(
       count: players.length,
+      colors: [for (final p in players) p.color],
       middle: DuelMiddleBar(players: players, scores: g.scores, secondsLeft: g.secondsLeft, progress: g.progress),
       center: ZoneCenterChip('${g.secondsLeft}s'),
       zone: (i) => _HoopZone(player: players[i], index: i, g: g),
@@ -233,7 +230,15 @@ class _HoopZoneState extends State<_HoopZone> {
                 painter: _CourtPainter(geo: geo, hoopX: g.hoopX, score: g.score[i], shot: shot, since: since, ready: g.canShoot(i)),
               ),
             ),
-            if (widget.chrome) Positioned(left: 8, top: 6, child: PlayerTagSmall(player: widget.player)),
+            if (widget.chrome) Positioned(
+                left: 8,
+                top: 6,
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  PlayerBadge(index: PlayerPalette.indexOf(widget.player.color) ?? i, size: 22, color: widget.player.color, initial: widget.player.name),
+                  const SizedBox(width: 6),
+                  Text(widget.player.name, style: TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14, shadows: const [Shadow(color: Color(0x99000000), blurRadius: 3)])),
+                ]),
+              ),
             if (widget.chrome)
               Positioned(
                 right: 0,
@@ -245,7 +250,7 @@ class _HoopZoneState extends State<_HoopZone> {
                     borderRadius: const BorderRadius.horizontal(left: Radius.circular(40)),
                     border: Border.all(color: Colors.black, width: 3),
                   ),
-                  child: Text('${g.secondsLeft}', style: TextStyle(color: const Color(0xFFFF5B57), fontWeight: FontWeight.w900, fontSize: max(16.0, geo.h * 0.06))),
+                  child: Text('${g.secondsLeft}', style: TextStyle(fontFamily: Fonts.display, color: const Color(0xFFFF5B57), fontSize: max(16.0, geo.h * 0.06), fontFeatures: const [FontFeature.tabularFigures()])),
                 ),
               ),
             if (showText)
@@ -261,9 +266,9 @@ class _HoopZoneState extends State<_HoopZone> {
                           : 'MISS',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: shot.points == 0 ? Colors.white : (shot.points == 3 ? const Color(0xFFFFD43B) : Colors.white),
-                    fontSize: max(16.0, geo.h * 0.07),
-                    fontWeight: FontWeight.w900,
+                    fontFamily: Fonts.display,
+                    color: shot.points == 0 ? const Color(0xFFFF8E8B) : (shot.points == 3 ? Brand.gold : Colors.white),
+                    fontSize: max(18.0, geo.h * 0.08),
                     shadows: const [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2))],
                   ),
                 ),
@@ -273,8 +278,8 @@ class _HoopZoneState extends State<_HoopZone> {
                 left: 0,
                 right: 0,
                 top: geo.courtTop + (geo.h - geo.courtTop) * 0.06,
-                child: Text('SWIPE UP TO SHOOT',
-                    textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: max(11.0, geo.h * 0.032))),
+                child: Text('Swipe up to shoot',
+                    textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, color: Colors.white.withValues(alpha: 0.8), fontSize: max(13.0, geo.h * 0.04))),
               ),
           ]),
         ),
@@ -424,7 +429,7 @@ class _CourtPainter extends CustomPainter {
     canvas.drawRRect(sb, Paint()..color = const Color(0xFF2A2A2E));
     canvas.drawRRect(sb, black);
     final tp = TextPainter(
-      text: TextSpan(text: '$score', style: TextStyle(color: const Color(0xFFFF5B57), fontWeight: FontWeight.w900, fontSize: geo.bbH * 0.17)),
+      text: TextSpan(text: '$score', style: TextStyle(fontFamily: Fonts.display, color: const Color(0xFFFF5B57), fontSize: geo.bbH * 0.17)),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, sb.center - Offset(tp.width / 2, tp.height / 2));

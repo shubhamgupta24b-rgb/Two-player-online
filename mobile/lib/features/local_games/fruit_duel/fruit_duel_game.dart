@@ -2,7 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/ui/components.dart';
+import '../../../core/ui/materials/materials.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -124,6 +125,7 @@ final LocalGameInfo fruitDuelInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => PlayerZones(
       count: players.length,
+      colors: [for (final p in players) p.color],
       middle: DuelMiddleBar(players: players, scores: g.scores, secondsLeft: g.secondsLeft, progress: g.progress),
       center: ZoneCenterChip('${g.secondsLeft}s'),
       zone: (i) => _FruitHalf(player: players[i], index: i, g: g),
@@ -145,9 +147,10 @@ class _FruitHalf extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       child: Column(children: [
         Row(children: [
-          PlayerTagSmall(player: player),
-          const Spacer(),
-          Text('${g.score[index]} pts', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+          PlayerBadge(index: PlayerPalette.indexOf(player.color) ?? index, size: 22, color: player.color, initial: player.name),
+          const SizedBox(width: 6),
+          Expanded(child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, color: nameColor(player.color), fontWeight: FontWeight.w900, fontSize: 15))),
+          Text('${g.score[index]}', style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 24, fontFeatures: [FontFeature.tabularFigures()])),
         ]),
         const SizedBox(height: 8),
         Expanded(
@@ -177,6 +180,20 @@ class _FruitHalf extends StatelessWidget {
   }
 }
 
+/// The drawn fruit and its juice colour for each fruit key (the logic keeps emoji keys).
+const _fruitArt = <String, (GameIcons, Color)>{
+  '🍉': (GameIcons.watermelon, Color(0xFFEF5350)),
+  '🍎': (GameIcons.apple, Color(0xFFE53935)),
+  '🍊': (GameIcons.orange, Color(0xFFFF9800)),
+  '🍍': (GameIcons.pineapple, Color(0xFFFFC107)),
+  '🍇': (GameIcons.grapes, Color(0xFF7E57C2)),
+  '🍌': (GameIcons.banana, Color(0xFFFFD54F)),
+  '🍓': (GameIcons.strawberry, Color(0xFFE53935)),
+  '🥝': (GameIcons.kiwi, Color(0xFF8BC34A)),
+};
+
+/// A wooden lane (spec 5.3 #27). The fruit pops up; a slice draws a blade arc with a juice
+/// splash in the fruit's colour and the two halves fall apart.
 class _Lane extends StatelessWidget {
   final Color color;
   final String? fruit;
@@ -189,52 +206,97 @@ class _Lane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = slashHere;
+    final art = fruit == null ? null : _fruitArt[fruit!];
+    final sliced = s != null && s.points > 0;
     return Container(
       // Fill the whole column, fruit or not (otherwise the fruit's lane shrinks to fit it).
       width: double.infinity,
       height: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [color.withValues(alpha: fruit != null ? 0.38 : 0.24), color.withValues(alpha: 0.08)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: fruit != null ? 0.95 : 0.6), width: fruit != null ? 3 : 2),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: fruit != null ? color : Colors.black.withValues(alpha: 0.4), width: fruit != null ? 3 : 1.5),
         boxShadow: [if (fruit != null) BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 16)],
       ),
-      child: Stack(alignment: Alignment.center, children: [
-        // A faint knife at the bottom of every lane: tap here to slice.
-        Positioned(bottom: 14, child: Opacity(opacity: 0.25, child: Text('🔪', style: TextStyle(fontSize: 22, color: color)))),
-        if (fruit != null)
-          TweenAnimationBuilder<double>(
-            key: ValueKey(fruitId),
-            tween: Tween(begin: 0.2, end: 1),
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutBack,
-            builder: (_, v, child) => Transform.scale(scale: v, child: child),
-            child: Opacity(
-              opacity: dim && (s == null || s.points == 0) ? 0.35 : 1,
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                FittedBox(child: Text(s != null && s.points > 0 ? '💥' : fruit!, style: const TextStyle(fontSize: 54))),
-                const SizedBox(height: 6),
-                SizedBox(
-                  width: 50,
-                  child: LinearProgressIndicator(value: timeLeft, minHeight: 4, color: Colors.white, backgroundColor: Colors.white12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: CustomPaint(
+          painter: const WoodPainter(radius: 0),
+          child: Stack(alignment: Alignment.center, children: [
+            // A faint blade at the bottom of every lane: tap here to slice.
+            Positioned(bottom: 12, child: Opacity(opacity: 0.35, child: GameIcon(GameIcons.arrowUp, size: 20, color: Colors.white.withValues(alpha: 0.9)))),
+            if (art != null)
+              TweenAnimationBuilder<double>(
+                key: ValueKey('$fruitId${sliced ? 's' : ''}'),
+                tween: Tween(begin: sliced ? 0 : 0.2, end: 1),
+                duration: Duration(milliseconds: sliced ? 420 : 180),
+                curve: sliced ? Curves.easeIn : Curves.easeOutBack,
+                builder: (_, v, __) => sliced
+                    ? SizedBox(width: 90, height: 120, child: CustomPaint(painter: _SlicePainter(art.$1, art.$2, v)))
+                    : Transform.scale(
+                        scale: v,
+                        child: Opacity(
+                          opacity: dim && (s == null || s.points == 0) ? 0.35 : 1,
+                          child: Column(mainAxisSize: MainAxisSize.min, children: [
+                            GameIcon(art.$1, size: 56, semanticLabel: 'fruit'),
+                            const SizedBox(height: 6),
+                            SizedBox(width: 50, child: MeterBar(value: timeLeft, height: 5)),
+                          ]),
+                        ),
+                      ),
+              ),
+            if (s != null)
+              Positioned(
+                bottom: 30,
+                child: Text(
+                  s.points == 0 ? 'MISS' : (s.points > 1 ? '+${s.points} FIRST!' : '+${s.points}'),
+                  style: TextStyle(fontFamily: Fonts.display, color: s.points == 0 ? const Color(0xFFFF8E8B) : Brand.gold, fontSize: 20, shadows: const [Shadow(color: Color(0x99000000), offset: Offset(0, 2))]),
                 ),
-              ]),
-            ),
-          ),
-        if (s != null)
-          Positioned(
-            bottom: 12,
-            child: Text(
-              s.points == 0 ? '✗ MISS' : '+${s.points}',
-              style: TextStyle(color: s.points == 0 ? GpColors.no : GpColors.yes, fontSize: 20, fontWeight: FontWeight.w900),
-            ),
-          ),
-      ]),
+              ),
+          ]),
+        ),
+      ),
     );
   }
+}
+
+/// The slice: a white blade arc, a juice splash, and the fruit's two halves falling apart.
+class _SlicePainter extends CustomPainter {
+  final GameIcons icon;
+  final Color juice;
+  final double t; // 0 -> 1
+  _SlicePainter(this.icon, this.juice, this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = Offset(size.width / 2, size.height * 0.4);
+    const s = 56.0;
+    // Juice splash.
+    final splash = Paint()..color = juice.withValues(alpha: (1 - t) * 0.8);
+    for (var k = 0; k < 7; k++) {
+      final a = k * 0.9 + 0.3;
+      canvas.drawCircle(c + Offset(cos(a), sin(a)) * (10 + t * 30), 5 * (1 - t) + 2, splash);
+    }
+    // Two halves sliding apart and falling.
+    for (final side in [-1.0, 1.0]) {
+      canvas.save();
+      canvas.translate(c.dx + side * t * 18, c.dy + t * t * 40);
+      canvas.rotate(side * t * 0.6);
+      canvas.clipRect(side < 0 ? const Rect.fromLTWH(-s / 2, -s / 2, s / 2, s) : const Rect.fromLTWH(0, -s / 2, s / 2, s));
+      paintIcon(canvas, icon, const Rect.fromLTWH(-s / 2, -s / 2, s, s));
+      canvas.restore();
+    }
+    // The blade arc.
+    if (t < 0.6) {
+      final arc = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4
+        ..strokeCap = StrokeCap.round
+        ..color = Colors.white.withValues(alpha: 1 - t / 0.6);
+      canvas.drawArc(Rect.fromCircle(center: c + const Offset(0, 6), radius: 34), -2.4, 1.9, false, arc);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SlicePainter o) => o.t != t;
 }

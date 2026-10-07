@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/ui/components.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -119,7 +119,7 @@ final snakeDuelInfo = LocalGameInfo(
   tagline: "Trap your rival, don't crash!",
   rules: const [
     'Your snake moves on its own and leaves a trail that never goes away.',
-    'Tap ◀ or ▶ at your end to turn left or right.',
+    'Tap the left or right arrow at your end to turn.',
     'Hit a wall or any trail and you lose the round. First to 3 rounds wins.',
   ],
   scoreUnit: 'rounds',
@@ -182,7 +182,7 @@ final snakeDuelInfo = LocalGameInfo(
           child: RotatedBox(quarterTurns: me == 1 ? 2 : 0, child: _Arena(players: players, g: g)),
         ),
       ),
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
       _Controls(player: players[me], index: me, g: g),
     ]),
   ),
@@ -192,7 +192,7 @@ final snakeDuelInfo = LocalGameInfo(
     builder: (context, g) => Column(children: [
       RotatedBox(quarterTurns: 2, child: _Controls(player: players[1], index: 1, g: g)),
       Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: _Arena(players: players, g: g))),
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
       _Controls(player: players[0], index: 0, g: g),
     ]),
   ),
@@ -206,29 +206,38 @@ class _Controls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget btn(String label, int side) => Expanded(
-          child: Listener(
-            onPointerDown: (_) {
-              g.turn(index, side);
-              HapticFeedback.selectionClick().ignore();
-            },
-            child: Container(
-              height: 76,
-              margin: const EdgeInsets.all(6),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: player.color, borderRadius: BorderRadius.circular(20)),
-              child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900)),
+    Widget btn(GameIcons icon, String label, int side) => Expanded(
+          child: Semantics(
+            button: true,
+            label: '${player.name}: $label',
+            excludeSemantics: true,
+            child: Listener(
+              onPointerDown: (_) {
+                g.turn(index, side);
+                HapticFeedback.selectionClick().ignore();
+              },
+              child: Container(
+                height: 72,
+                margin: const EdgeInsets.fromLTRB(6, 4, 6, 10),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color.lerp(player.color, Colors.white, 0.18)!, player.color]),
+                  borderRadius: Radii.rButton,
+                  boxShadow: Shadows.edge(Color.lerp(player.color, Colors.black, 0.45)!, depth: 5),
+                ),
+                child: GameIcon(icon, size: 36, color: Colors.white),
+              ),
             ),
           ),
         );
     final status = g.roundWinner == null
-        ? player.name.toUpperCase()
+        ? player.name
         : g.roundWinner == -1
-            ? 'TIE!'
-            : (g.roundWinner == index ? 'YOU WIN THE ROUND!' : 'CRASH!');
+            ? 'Tie!'
+            : (g.roundWinner == index ? 'You win the round!' : 'Crash!');
     return Column(children: [
-      Text(status, style: TextStyle(color: player.color, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-      Row(children: [btn('◀', -1), btn('▶', 1)]),
+      Text(status, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, color: g.roundWinner == index ? Brand.gold : nameColor(player.color), fontSize: 18)),
+      Row(children: [btn(GameIcons.arrowLeft, 'turn left', -1), btn(GameIcons.arrowRight, 'turn right', 1)]),
     ]);
   }
 }
@@ -242,7 +251,7 @@ class _Arena extends StatelessWidget {
         child: AspectRatio(
           aspectRatio: g.cols / g.rows,
           child: Container(
-            decoration: BoxDecoration(color: GpColors.bgBottom, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white24, width: 2)),
+            decoration: BoxDecoration(color: const Color(0xFF141B30), borderRadius: Radii.rBoard, border: Border.all(color: Colors.white24, width: 2), boxShadow: Shadows.large),
             child: CustomPaint(painter: _ArenaPainter(g, players.map((p) => p.color).toList(), List.of(g.owner), List.of(g.head))),
           ),
         ),

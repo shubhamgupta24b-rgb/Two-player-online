@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../guess_person/models/gp_player.dart';
+import '../../../core/ui/components.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -66,7 +67,8 @@ final paintFightInfo = LocalGameInfo(
     create: () => PaintFightLogic(),
     onFinished: onFinished,
     builder: (context, g) => Column(children: [
-      RotatedBox(quarterTurns: 2, child: _Hud(player: players[1], cells: g.cells[1], total: g.owner.length)),
+      RotatedBox(quarterTurns: 2, child: _Hud(player: players[1], seat: 1, cells: g.cells[1], total: g.owner.length)),
+      _Coverage(cells: g.cells, total: g.owner.length, colors: [for (final p in players) p.color]),
       Expanded(child: _PaintBoard(players: players, g: g)),
       DuelMiddleBar(players: players, scores: g.scores, secondsLeft: g.secondsLeft, progress: g.progress),
     ]),
@@ -75,24 +77,47 @@ final paintFightInfo = LocalGameInfo(
 
 class _Hud extends StatelessWidget {
   final GpPlayer player;
+  final int seat;
   final int cells;
   final int total;
-  const _Hud({required this.player, required this.cells, required this.total});
+  const _Hud({required this.player, required this.seat, required this.cells, required this.total});
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.fromLTRB(14, 8, 14, 6),
         child: Row(children: [
-          PlayerTagSmall(player: player),
+          PlayerBadge(index: PlayerPalette.indexOf(player.color) ?? seat, size: 24, color: player.color, initial: player.name),
           const SizedBox(width: 8),
-          Expanded(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerRight,
-              child: Text('$cells cells · ${(cells * 100 / total).round()}%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-            ),
-          ),
+          Expanded(child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, color: nameColor(player.color), fontWeight: FontWeight.w900, fontSize: 15))),
+          Text('${(cells * 100 / total).round()}%', style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 26, height: 1, fontFeatures: [FontFeature.tabularFigures()])),
         ]),
       );
+}
+
+/// How much of the board each colour covers, as one split bar (empty cells in the middle).
+class _Coverage extends StatelessWidget {
+  final List<int> cells;
+  final int total;
+  final List<Color> colors;
+  const _Coverage({required this.cells, required this.total, required this.colors});
+  @override
+  Widget build(BuildContext context) {
+    final int empty = max(0, total - cells.fold<int>(0, (a, b) => a + b));
+    return Semantics(
+      label: 'Board covered: ${[for (var i = 0; i < cells.length; i++) '${(cells[i] * 100 / total).round()}%'].join(' vs ')}',
+      excludeSemantics: true,
+      child: Container(
+        height: 10,
+        margin: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+        decoration: BoxDecoration(borderRadius: Radii.rChip, border: Border.all(color: Colors.white.withValues(alpha: 0.25))),
+        clipBehavior: Clip.antiAlias,
+        child: Row(children: [
+          // Player 2 (top of the screen) on the left so it reads like the board.
+          for (final (flex, color) in [if (cells.length > 1) (cells[1], colors[1]), (empty, const Color(0xFFE6DDCC)), (cells[0], colors[0])])
+            if (flex > 0) Expanded(flex: flex, child: AnimatedContainer(duration: const Duration(milliseconds: 200), color: color)),
+        ]),
+      ),
+    );
+  }
 }
 
 /// Shared board. Each finger belongs to whoever's half it first touched.
@@ -182,22 +207,38 @@ class _BoardPainter extends CustomPainter {
       canvas.drawRect(Rect.fromLTWH(0, 0, w, h / 2), Paint()..color = colors[1].withValues(alpha: 0.07));
       canvas.drawRect(Rect.fromLTWH(0, h / 2, w, h / 2), Paint()..color = colors[0].withValues(alpha: 0.07));
     }
-    final empty = Paint()..color = const Color(0xFFE6DDCC);
-    final gloss = Paint()..color = Colors.white.withValues(alpha: 0.28);
+    // Paper texture: faint grid dots where nobody has painted yet.
+    final dot = Paint()..color = const Color(0xFFE2D8C4);
     for (var r = 0; r < g.rows; r++) {
       for (var c = 0; c < g.cols; c++) {
-        final o = _owners[r * g.cols + c];
-        final rect = Rect.fromLTWH(c * cell + 2, r * cell + 2, cell - 4, cell - 4);
-        final rr = RRect.fromRectAndRadius(rect, Radius.circular(cell * 0.22));
-        if (o < 0) {
-          canvas.drawRRect(rr, empty);
-          continue;
-        }
-        canvas.drawRRect(rr, Paint()..color = colors[o]);
-        // A paint-blob shine on the top-left.
-        canvas.drawOval(Rect.fromLTWH(rect.left + rect.width * 0.14, rect.top + rect.height * 0.12, rect.width * 0.38, rect.height * 0.24), gloss);
+        if (_owners[r * g.cols + c] < 0) canvas.drawCircle(Offset((c + 0.5) * cell, (r + 0.5) * cell), cell * 0.08, dot);
       }
     }
+    // Painted cells are overlapping blobs with a few drips, so the board looks splattered.
+    canvas.save();
+    canvas.clipRRect(RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, w, h), Radius.circular(cell * 0.3)));
+    final gloss = Paint()..color = Colors.white.withValues(alpha: 0.22);
+    for (var r = 0; r < g.rows; r++) {
+      for (var c = 0; c < g.cols; c++) {
+        final i = r * g.cols + c;
+        final o = _owners[i];
+        if (o < 0) continue;
+        final ctr = Offset((c + 0.5) * cell, (r + 0.5) * cell);
+        final paint = Paint()..color = colors[o];
+        canvas.drawCircle(ctr, cell * 0.64, paint);
+        // Two small drops per cell, placed by its index so they never jump around.
+        final a1 = (i * 2.399) % (2 * pi), a2 = a1 + 2.2;
+        canvas.drawCircle(ctr + Offset(cos(a1), sin(a1)) * cell * 0.62, cell * 0.14, paint);
+        canvas.drawCircle(ctr + Offset(cos(a2), sin(a2)) * cell * 0.58, cell * 0.1, paint);
+      }
+    }
+    for (var r = 0; r < g.rows; r++) {
+      for (var c = 0; c < g.cols; c++) {
+        if (_owners[r * g.cols + c] < 0) continue;
+        canvas.drawOval(Rect.fromLTWH((c + 0.18) * cell, (r + 0.14) * cell, cell * 0.34, cell * 0.2), gloss);
+      }
+    }
+    canvas.restore();
     // Halfway line: where each player's strokes must start.
     final y = g.rows * cell / 2;
     final line = Paint()

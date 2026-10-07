@@ -351,3 +351,47 @@
 - Not done: brush colours / sizes / eraser. They would need colour in the stroke data, which changes the logic and the relay JSON, so the pencil stays one colour.
 
 **Tests:** analyze clean, 830 tests pass; debug builds pass for both flavors.
+
+## B5 — Action 1 (Crush It, Basketball Hoops, Fruit Duel, Paint Fight, Air Hockey, Ping Pong, Snake Duel, Reaction Tap, Penalty Shootout)
+
+Checked with render PNGs (`tool/screens_test.dart`); the emulator can't run on this machine. **All B5 games:** zone tints via `PlayerZones(colors:)`, badge headers, Lilita text, no emoji in the UI, gp_theme removed.
+
+**Crush It**
+- A squash pad with a hammer icon that springs back on every tap.
+- Burst rays and a floating +1 on each tap; the leader's pad glows gold.
+- The result subtitle shows the winning tap count.
+
+**Fruit Duel**
+- Wooden lanes; drawn fruit replaces the emoji (the logic keeps its emoji keys and maps them to icons).
+- A slice shows a blade arc and a juice splash, and the fruit splits into two falling halves.
+- "+N" / "MISS" in Lilita.
+
+**Basketball Hoops**
+- The existing drawn court is kept. Name badge; Lilita for the clock, SWISH / MISS text and the "Swipe up to shoot" hint.
+- The online top bar uses EdgeTags.
+
+**Paint Fight**
+- Badge HUD with a big percentage, plus a coverage split bar.
+- Painted cells are drawn as overlapping blobs with drops; the empty paper has dot texture.
+
+**Air Hockey**
+- The table now leaves room for its rail, so it no longer pokes past the screen edge.
+- "GOAL!" in Lilita, in the scorer's colour.
+
+**Ping Pong**
+- Lilita point text.
+
+**Snake Duel**
+- Chunky player-colour buttons with drawn left/right arrows (they replace ◀ ▶) and semantic labels.
+- The arena gets the board radius and a shadow.
+- The rule text no longer uses arrow glyphs.
+
+**Reaction Tap**
+- A signal lamp with an icon for each state: red with a lock, green with a bolt, gold with a star for the winner.
+- Name and score badge; sentence-case calls.
+
+**Penalty Shootout**
+- Football, glove, target and check icons replace the emoji.
+- KICKER / KEEPER chip with an icon; Lilita titles (GOAL! / GREAT SAVE! in gold); zone semantics.
+
+**Tests:** analyze clean, 830 tests pass (two tests now expect the "Swipe up to shoot" copy); debug builds pass for both flavors.

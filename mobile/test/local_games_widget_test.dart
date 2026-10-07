@@ -107,7 +107,7 @@ void main() {
       await tapStart(tester);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 2800));
-      expect(find.text('SWIPE UP TO SHOOT'), findsNWidgets(players));
+      expect(find.text('Swipe up to shoot'), findsNWidgets(players));
 
       // Player 1's zone: bottom half (2 players) or top-left, sideways (4 players).
       final ball = players == 2 ? const Offset(205, 840) : const Offset(35, 228);
@@ -116,7 +116,7 @@ void main() {
       await tester.dragFrom(ball, up);
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.text('+3 SWISH!'), findsOneWidget);
-      expect(find.text('SWIPE UP TO SHOOT'), findsNWidgets(players - 1));
+      expect(find.text('Swipe up to shoot'), findsNWidgets(players - 1));
 
       // Swiping the wrong way does nothing.
       await tester.pump(const Duration(seconds: 1));
