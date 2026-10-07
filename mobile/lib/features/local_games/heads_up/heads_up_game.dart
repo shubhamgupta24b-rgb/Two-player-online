@@ -46,7 +46,7 @@ Widget _view(BuildContext context, WordTurnsLogic g, List players, int? me) => W
       players: players.cast(),
       g: g,
       me: me,
-      title: '🙆 HEADS UP',
+      title: 'Heads Up',
       readyText: "You're guessing! Hold the phone on your forehead, screen facing out.",
       watchText: 'Give clues, but never say the word!',
       performerSeesWord: false,

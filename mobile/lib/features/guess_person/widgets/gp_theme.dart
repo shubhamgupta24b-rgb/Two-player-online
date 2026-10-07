@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/app_flavor.dart';
 import '../../../core/ui/components.dart';
+import '../../../core/ui/materials/materials.dart';
 
 /// Guess the Person's colours, now aliases to the design tokens.
 class GpColors {
@@ -19,27 +20,32 @@ class GpColors {
   ];
 }
 
-/// Guess the Person's board look: warm coral, or sky blue in the flat app.
+/// Guess the Person's board look (spec 4.12): the night table with a felt board, or sky
+/// blue with the dark-blue board in the flat app.
 class GpCoral {
-  static const bg = flatStyle ? FlatColors.sky : Color(0xFFF2A283);
-  static const mark = Color(0x22FFFFFF); // faint "?" shapes
-  static const board = flatStyle ? FlatColors.board : Color(0xFFA9634E);
+  static const bg = flatStyle ? FlatColors.sky : NeonPalette.bg;
+  static const mark = Color(0x22FFFFFF); // faint "?" shapes (flat app)
+  static const board = flatStyle ? FlatColors.board : FeltPainter.mid;
   static const nameStrip = Color(0xFF3A3846);
   static const tile = Colors.white;
   static const tileInk = Color(0xFF2B2A35);
-  static const panel = Color(0xEB2F2C40); // dark cards for text-heavy content
+  static const panel = Color(0xF2121640); // the sheet colour, for text-heavy panels
   static const closeBlue = Color(0xFF7FA8E8);
 }
 
-/// Coral background scattered with big faint question marks.
+/// The background of every Guess the Person screen: night (or sky with "?" marks when flat).
 class CoralBackground extends StatelessWidget {
   final Widget child;
   const CoralBackground({super.key, required this.child});
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-        decoration: const BoxDecoration(color: GpCoral.bg),
-        child: CustomPaint(painter: const _QuestionMarks(), child: child),
-      );
+  Widget build(BuildContext context) => flatStyle
+      ? DecoratedBox(decoration: const BoxDecoration(color: GpCoral.bg), child: CustomPaint(painter: const _QuestionMarks(), child: child))
+      : DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, stops: [0, 0.45, 1], colors: [NeonPalette.bgTop, NeonPalette.bg, NeonPalette.bgBottom]),
+          ),
+          child: child,
+        );
 }
 
 class _QuestionMarks extends CustomPainter {
@@ -72,28 +78,15 @@ class _QuestionMarks extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Round white close button with a soft blue ✕.
+/// The 44 px round close button of the game top bar.
 class CircleCloseButton extends StatelessWidget {
   final VoidCallback onPressed;
   const CircleCloseButton({super.key, required this.onPressed});
   @override
-  Widget build(BuildContext context) => Semantics(
-        button: true,
-        label: 'Leave game',
-        child: Material(
-          color: Colors.white,
-          shape: const CircleBorder(),
-          elevation: 2,
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onPressed,
-            child: const SizedBox(width: 52, height: 52, child: Icon(Icons.close_rounded, color: GpCoral.closeBlue, size: 34, weight: 900)),
-          ),
-        ),
-      );
+  Widget build(BuildContext context) => RoundButton(icon: GameIcons.close, label: 'Leave game', onPressed: onPressed);
 }
 
-/// Dark rounded card that keeps text readable on the coral background.
+/// A sheet-coloured rounded panel that keeps text readable over the table.
 class DarkPanel extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -101,7 +94,12 @@ class DarkPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: padding,
-        decoration: BoxDecoration(color: GpCoral.panel, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: GpCoral.panel,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          boxShadow: Shadows.large,
+        ),
         child: child,
       );
 }
@@ -121,9 +119,10 @@ class GpBackground extends StatelessWidget {
         );
 }
 
-/// Chunky rounded party-game button with a pressed-down shadow. Kept for its many callers;
-/// it is the shared [AppButton] underneath (outlined = the ghost variant).
-class GpButton extends StatelessWidget {
+/// Chunky party-game button (Lilita, a deeper bottom edge that sinks when pressed). Kept
+/// for its many callers: gold by default, any [color] fill, or a light outline. Icons are
+/// left out: the shared buttons use drawn icons only.
+class GpButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
   final Color color;
@@ -134,17 +133,59 @@ class GpButton extends StatelessWidget {
       {super.key, this.onPressed, this.color = GpColors.accent, this.textColor = GpColors.ink, this.icon, this.outlined = false});
 
   @override
-  Widget build(BuildContext context) => AppButton(
-        label,
-        icon: icon,
-        onPressed: onPressed,
-        variant: outlined ? ButtonVariant.ghost : ButtonVariant.primary,
-        color: color == GpColors.accent ? null : color,
-        textColor: color == GpColors.accent && textColor == GpColors.ink ? null : textColor,
-      );
+  State<GpButton> createState() => _GpButtonState();
 }
 
-/// Coloured pill showing a player and what they are doing (not colour-only: the name is always shown).
+class _GpButtonState extends State<GpButton> {
+  bool _down = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final w = widget;
+    if (w.outlined) return KitButton(w.label, style: KitButtonStyle.outline, height: 54, onPressed: w.onPressed);
+    if (w.color == Colors.white || w.color == Colors.white24) return KitButton(w.label, style: KitButtonStyle.soft, height: 54, onPressed: w.onPressed);
+    final gold = w.color == GpColors.accent;
+    final fill = gold ? Brand.gold : fillFor(w.color);
+    final ink = gold ? Brand.onGold : (w.textColor == GpColors.ink ? onColor(fill) : w.textColor);
+    final enabled = w.onPressed != null;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: w.label,
+      excludeSemantics: true,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.5,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: enabled ? (_) => setState(() => _down = true) : null,
+          onTapUp: enabled ? (_) => setState(() => _down = false) : null,
+          onTapCancel: () => setState(() => _down = false),
+          onTap: enabled
+              ? () {
+                  haptic(HapticWeight.selection);
+                  w.onPressed!();
+                }
+              : null,
+          child: AnimatedContainer(
+            duration: Motion.of(context, Motion.fast),
+            constraints: const BoxConstraints(minHeight: 54),
+            transform: Matrix4.translationValues(0, _down ? 4 : 0, 0),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: Radii.rButton,
+              boxShadow: _down || !enabled ? Shadows.edge(gold ? Brand.goldDeep : Color.lerp(fill, Colors.black, 0.4)!, depth: 1) : Shadows.edge(gold ? Brand.goldDeep : Color.lerp(fill, Colors.black, 0.4)!),
+            ),
+            child: Text(w.label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 20, height: 1.1, color: ink)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A player and what they are doing: their badge, name and an optional role.
 class PlayerTag extends StatelessWidget {
   final String name;
   final Color color;
@@ -152,21 +193,18 @@ class PlayerTag extends StatelessWidget {
   const PlayerTag({super.key, required this.name, required this.color, this.role});
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.fromLTRB(6, 5, 12, 5),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.2), borderRadius: Radii.rChip, border: Border.all(color: color, width: 1.5)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.person, size: 18, color: Colors.white),
-          const SizedBox(width: 4),
+          PlayerBadge(index: PlayerPalette.indexOf(color) ?? 0, size: 20, color: color, initial: name),
+          const SizedBox(width: 6),
           Flexible(
             child: Text(name.toUpperCase(),
-                maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
           ),
           if (role != null) ...[
             const SizedBox(width: 6),
-            Flexible(
-              child: Text('· $role',
-                  maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
-            ),
+            Flexible(child: Text('· $role', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
           ],
         ]),
       );

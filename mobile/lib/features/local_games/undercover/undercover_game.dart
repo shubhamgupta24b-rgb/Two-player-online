@@ -1,7 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/ui/components.dart';
+import '../shell/game_hud.dart' show MomentWatcher, keyMoment;
+import '../shell/local_game_shell.dart' show ResultScope;
 import '../party/party_widgets.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
@@ -194,26 +196,46 @@ class _UcViewState extends State<_UcView> {
 
   @override
   Widget build(BuildContext context) {
+    final g = widget.g, players = widget.players;
+    ResultScope.of(context)?.subtitle = g.phase.index >= UcPhase.result.index ? (g.undercoverWins ? 'The undercover wins' : 'The town wins') : null;
+    return MomentWatcher<UcPhase>(
+      value: g.phase,
+      onChange: (fx, _, now) {
+        if (now == UcPhase.out && g.lastOut >= 0) keyMoment(fx, 'VOTED OUT', sub: '${players[g.lastOut].name} was not undercover', sound: 'lose', color: Colors.white);
+        if (now == UcPhase.result) {
+          if (g.undercoverWins) {
+            keyMoment(fx, 'UNDERCOVER WINS!', sub: '${players[g.undercover].name} survived', sound: 'lose', color: const Color(0xFFFF8E8B));
+          } else {
+            keyMoment(fx, 'CAUGHT!', sub: '${players[g.undercover].name} was undercover', sound: 'win', confetti: true);
+          }
+        }
+      },
+      child: _phase(context),
+    );
+  }
+
+  Widget _phase(BuildContext context) {
     final g = widget.g, players = widget.players, me = widget.me;
+    final t = context.tk;
     final out = {for (var i = 0; i < players.length; i++) if (!g.alive.contains(i)) i};
-    Widget secret(int p) => PromptCard(header: 'YOUR SECRET WORD', text: g.wordFor(p), emoji: '🤫', footer: 'Someone has a slightly different word. It might be you!');
+    Widget secret(int p) => PromptCard(header: 'Your secret word', text: g.wordFor(p), icon: GameIcons.lock, footer: 'Someone has a slightly different word. It might be you!');
 
     switch (g.phase) {
       case UcPhase.reveal:
         if (me != null) {
           final ready = g.seen.contains(me);
           return PartyFrame(
-            title: 'YOUR WORD',
-            subtitle: ready ? 'Waiting for the others (${g.seen.length}/${players.length})' : 'Remember it, then tap READY',
+            title: 'Undercover',
+            subtitle: ready ? 'Waiting for the others (${g.seen.length}/${players.length})' : 'Remember it, then tap Ready',
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Expanded(child: Center(child: SingleChildScrollView(child: secret(me)))),
-              GpButton(ready ? 'READY ✓' : "I'M READY", onPressed: ready ? null : () => g.seenCard(me)),
+              GoldButton(ready ? 'Ready' : "I'm ready", icon: ready ? GameIcons.check : null, height: 58, onPressed: ready ? null : () => g.seenCard(me)),
             ]),
           );
         }
         final p = g.revealTurn;
         return PartyFrame(
-          title: 'SECRET WORDS',
+          title: 'Undercover',
           subtitle: '${g.seen.length} of ${players.length} have looked',
           child: PassAndReveal(
             player: players[p],
@@ -227,27 +249,34 @@ class _UcViewState extends State<_UcView> {
           ),
         );
       case UcPhase.describe:
+        final order = [for (var i = 0; i < players.length; i++) if (g.alive.contains(i)) i];
         return PartyFrame(
-          title: 'ROUND ${g.round}: GIVE A CLUE',
-          subtitle: 'In order, each player says ONE word about their secret word.',
+          title: 'Undercover',
+          subtitle: 'Round ${g.round}: give a clue',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            TurnBanner(text: 'One word each', sub: 'In order, say one word about your secret word', color: Brand.gold, kind: TurnBannerKind.info, icon: GameIcons.speech, compact: true),
+            const SizedBox(height: 12),
             Expanded(
-              child: Center(
-                child: SingleChildScrollView(
-                  child: PlayerPicker(players: players, disabled: out, notes: {for (final i in out) i: 'OUT'}),
-                ),
-              ),
+              child: ListView(children: [
+                for (var k = 0; k < order.length; k++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _ClueRow(order: k + 1, player: players[order[k]], seat: PlayerPalette.indexOf(players[order[k]].color) ?? order[k]),
+                  ),
+                for (final i in out)
+                  Padding(padding: const EdgeInsets.only(bottom: 8), child: Opacity(opacity: 0.45, child: _ClueRow(order: 0, player: players[i], seat: PlayerPalette.indexOf(players[i].color) ?? i))),
+              ]),
             ),
-            if (me != null) Text('Your word: ${g.wordFor(me)}', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800)),
+            if (me != null) Text('Your word: ${g.wordFor(me)}', textAlign: TextAlign.center, style: t.styles.bodyStrong.copyWith(color: t.onBgMuted)),
             const SizedBox(height: 8),
-            GpButton('EVERYONE GAVE A CLUE · VOTE', icon: Icons.how_to_vote_rounded, onPressed: g.startVote),
+            GoldButton('Everyone gave a clue: vote', icon: GameIcons.people, height: 58, fontSize: 19, onPressed: g.startVote),
           ]),
         );
       case UcPhase.vote:
         if (me != null) {
           final canVote = g.alive.contains(me);
           return PartyFrame(
-            title: 'WHO IS UNDERCOVER?',
+            title: 'Who is undercover?',
             subtitle: canVote ? 'Your vote · ${g.votesIn}/${g.alive.length} voted' : "You're out: watch the others vote",
             child: Center(
               child: SingleChildScrollView(
@@ -257,47 +286,117 @@ class _UcViewState extends State<_UcView> {
           );
         }
         return PartyFrame(
-          title: 'WHO IS UNDERCOVER?',
-          subtitle: 'Agree together, then tap the player to vote out.',
-          child: Center(child: SingleChildScrollView(child: PlayerPicker(players: players, disabled: out, onPick: g.accuse))),
+          title: 'Who is undercover?',
+          subtitle: 'Agree, then tap who to vote out',
+          child: Center(child: SingleChildScrollView(child: PlayerPicker(players: players, disabled: out, onPick: g.accuse, notes: {for (final i in out) i: 'OUT'}))),
         );
       case UcPhase.out:
         return PartyFrame(
-          title: 'VOTED OUT',
+          title: 'Voted out',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
                   child: g.lastOut < 0
-                      ? const PromptCard(header: 'TIE VOTE', text: 'Nobody is out', emoji: '🤝', footer: 'Give another clue and vote again.')
-                      : PromptCard(header: '${players[g.lastOut].name.toUpperCase()} IS OUT', text: 'Not undercover!', emoji: '😇', footer: 'The undercover is still among you…', color: players[g.lastOut].color),
+                      ? const PromptCard(header: 'Tie vote', text: 'Nobody is out', icon: GameIcons.people, footer: 'Give another clue and vote again.')
+                      : _FlipReveal(
+                          front: PromptCard(header: '${players[g.lastOut].name} is out', text: '…', icon: GameIcons.mask, color: players[g.lastOut].color),
+                          back: PromptCard(header: '${players[g.lastOut].name} is out', text: g.wordFor(g.lastOut), icon: GameIcons.check, footer: 'Not undercover! The undercover is still among you…', color: players[g.lastOut].color),
+                        ),
                 ),
               ),
             ),
-            GpButton('NEXT ROUND', icon: Icons.arrow_forward_rounded, onPressed: g.nextRound),
+            GoldButton('Next round', icon: GameIcons.forward, height: 58, onPressed: g.nextRound),
           ]),
         );
       case UcPhase.result:
       case UcPhase.done:
         final uc = players[g.undercover];
         return PartyFrame(
-          title: g.undercoverWins ? 'UNDERCOVER WINS' : 'TOWN WINS',
+          title: g.undercoverWins ? 'Undercover wins' : 'Town wins',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
                   child: Column(children: [
-                    Text(g.undercoverWins ? '😈 ${uc.name} survived to the end!' : '✅ ${uc.name} was caught!',
-                        textAlign: TextAlign.center, style: TextStyle(color: g.undercoverWins ? GpColors.no : GpColors.yes, fontWeight: FontWeight.w900, fontSize: 22)),
+                    TurnBanner(
+                      text: g.undercoverWins ? '${uc.name} survived!' : '${uc.name} was caught!',
+                      sub: g.undercoverWins ? 'The undercover made it to the end' : 'The town found the undercover',
+                      color: uc.color,
+                      kind: g.undercoverWins ? TurnBannerKind.miss : TurnBannerKind.success,
+                      icon: GameIcons.mask,
+                    ),
                     const SizedBox(height: 14),
-                    PromptCard(header: 'UNDERCOVER: ${uc.name.toUpperCase()}', text: '${g.undercoverWord} vs ${g.townWord}', emoji: '🎭', footer: 'Undercover word vs everyone else', color: uc.color),
+                    // The two words side by side.
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Expanded(child: PromptCard(header: 'Undercover', text: g.undercoverWord, icon: GameIcons.mask, color: uc.color, dark: true)),
+                      const SizedBox(width: 10),
+                      Expanded(child: PromptCard(header: 'Everyone else', text: g.townWord, icon: GameIcons.people)),
+                    ]),
                   ]),
                 ),
               ),
             ),
-            GpButton('SEE SCORES', icon: Icons.emoji_events_rounded, onPressed: g.finish),
+            GoldButton('See scores', icon: GameIcons.trophy, height: 58, onPressed: g.finish),
           ]),
         );
     }
   }
+}
+
+/// A player's turn to give a clue: order number, badge, name and a speech bubble.
+class _ClueRow extends StatelessWidget {
+  final int order; // 0: out
+  final GpPlayer player;
+  final int seat;
+  const _ClueRow({required this.order, required this.player, required this.seat});
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    return Container(
+      height: 54,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(color: t.flat ? Colors.white : t.surface, borderRadius: Radii.rLg, border: Border.all(color: t.flat ? FlatPalette.stroke : t.stroke)),
+      child: Row(children: [
+        SizedBox(width: 22, child: Text(order == 0 ? '' : '$order', style: TextStyle(fontFamily: Fonts.display, fontSize: 18, color: t.flat ? FlatPalette.ink : Brand.gold))),
+        PlayerBadge(index: seat, size: 24, color: player.color, initial: player.name),
+        const SizedBox(width: 10),
+        Expanded(child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: t.flat ? FlatPalette.ink : Colors.white))),
+        if (order == 0)
+          Text('OUT', style: t.styles.label)
+        else
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(color: player.color.withValues(alpha: 0.2), borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12), bottomLeft: Radius.circular(12), bottomRight: Radius.circular(3))),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              GameIcon(GameIcons.speech, size: 14, color: t.flat ? fillFor(player.color) : nameColor(player.color)),
+              const SizedBox(width: 4),
+              Text('one word', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: t.flat ? FlatPalette.ink : kIdleInk)),
+            ]),
+          ),
+      ]),
+    );
+  }
+}
+
+/// A card that flips once from [front] to [back] when it appears.
+class _FlipReveal extends StatelessWidget {
+  final Widget front, back;
+  const _FlipReveal({required this.front, required this.back});
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: Motion.reduced(context) ? 1 : 0, end: 1),
+        duration: const Duration(milliseconds: 900),
+        curve: const Interval(0.35, 1, curve: Curves.easeInOutCubic),
+        builder: (_, v, __) {
+          final showBack = v >= 0.5;
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.0015)
+              ..rotateY((showBack ? v - 1 : v) * pi),
+            child: showBack ? back : front,
+          );
+        },
+      );
 }

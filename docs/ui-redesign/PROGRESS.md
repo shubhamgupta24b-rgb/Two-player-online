@@ -264,3 +264,49 @@
 - analyze clean, 830 tests pass; `raja_mantri_test` was updated for the new labels.
 - Debug builds pass for both flavors.
 - Renders: `tool/screens_test.dart` (bingo, colour_clash) and the new `tool/rmcs_render_test.dart`.
+
+## B3 — Party 1 (done)
+
+**Dumb Charades / Heads Up** (`party/word_turns.dart`)
+- Ready screen with the player's big badge and "Name's turn".
+- Charades: the movie is on a clapperboard card that the actor holds to read.
+- Heads Up: the word is huge on a paper card, with full-height Skip (left) and Got it (right) side zones.
+- Everyone else sees a big ring timer with the count.
+- Got it flashes green with a +1 pop; Skip flashes orange.
+- Turn summary uses player score cards.
+
+**Find the Spy**
+- Each of the 30 locations has a drawn icon (the logic keeps its emoji keys).
+- The location is a paper card; the spy gets a dark "You are the SPY" card with a magnifier.
+- Possible locations show as paper chips; the spy's guess is a grid of location cards.
+- Result banner; moments: SPY CAUGHT!, SPY WINS!, TOWN WINS! (confetti).
+
+**Undercover**
+- Clue rounds show each player in speaking order with a speech-bubble tag.
+- The voted-out card flips to show their word.
+- The final reveal shows both words side by side.
+- Moments: VOTED OUT, CAUGHT! (confetti), UNDERCOVER WINS!
+
+**Mafia**
+- Role cards use drawn emblems: mafia mask, doctor cross, detective magnifier, villager house. The mafia card is dark.
+- Night happens under a starry sky with a moon; morning under a day sky, cross-fading between them.
+- The detective's check is a success / miss banner.
+- The final reveal lists every role.
+- Moments: NIGHT N, MORNING, MAFIA WINS!, TOWN WINS!
+
+**Guess the Person (spec 4.12)**
+- `gp_theme.dart` now uses the tokens:
+  - night background (sky with "?" marks in the flat app);
+  - felt board under the grid; cream paper person cards (portraits kept);
+  - round close button, sheet-coloured panels, badge + name chips.
+- `GpButton` is now a chunky Lilita button with a sinking edge. It is shared by the not-yet-redesigned games too, which therefore already get the new button look.
+- Hand-off screen with badge and name; how-to-play with drawn step icons.
+- Game over uses the shared `ResultScreen`; the final guess is a gold `TurnBanner`.
+- Emoji removed from its texts.
+
+**Also:** `PromptCard` gained `icon:` and `dark:`.
+
+**Tests**
+- analyze clean, 830 tests pass; the GP widget test was updated (two labels lost their emoji).
+- Debug builds pass for both flavors.
+- New render tools: `tool/gp_render_test.dart`; word games rendered with `tool/screens_test.dart`.

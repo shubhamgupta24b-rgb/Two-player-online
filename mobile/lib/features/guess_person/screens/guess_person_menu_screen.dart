@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../data/person_data.dart';
 import '../logic/gp_settings.dart';
+import '../../../core/ui/components.dart';
 import '../widgets/gp_theme.dart';
 import '../widgets/person_portrait.dart';
 import 'gp_settings_screen.dart';
@@ -36,16 +37,7 @@ class _GuessPersonMenuScreenState extends State<GuessPersonMenuScreen> with Sing
       body: CoralBackground(
         child: SafeArea(
           child: Stack(children: [
-            Positioned(
-              top: 4,
-              left: 4,
-              child: IconButton(
-                tooltip: 'Back',
-                onPressed: () => Navigator.maybePop(context),
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
-                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-              ),
-            ),
+            Positioned(top: 14, left: 16, child: RoundButton(icon: GameIcons.back, label: 'Back', onPressed: () => Navigator.maybePop(context))),
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -80,19 +72,10 @@ class _GuessPersonMenuScreenState extends State<GuessPersonMenuScreen> with Sing
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text('GUESS\nTHE PERSON',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 44,
-                          height: 1.0,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                          shadows: [Shadow(color: GpCoral.board, offset: Offset(0, 4), blurRadius: 0)],
-                        )),
+                    const Text('Guess the\nPerson', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 48, height: 1.0)),
                     const SizedBox(height: 10),
                     Text('${settings.playerCount} players · one device · pass & play',
-                        textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                        textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.textMuted, fontSize: 15, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 36),
                     GpButton('PLAY', icon: Icons.play_arrow_rounded, onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => GuessPersonGameScreen(settings: settings)));
@@ -107,7 +90,7 @@ class _GuessPersonMenuScreenState extends State<GuessPersonMenuScreen> with Sing
                     Text(
                       '${settings.peopleCount} people · ${settings.rounds} rounds ·${settings.hasTimer ? '${settings.timerSeconds}s timer' : 'no timer'} ·${settings.autoEliminate ? 'auto' : 'manual'} elimination · sound ${settings.sound ? 'on' : 'off'}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.label, fontSize: 12, fontWeight: FontWeight.w700),
                     ),
                   ]),
                 ),

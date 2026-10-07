@@ -2,7 +2,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/ui/materials/materials.dart';
+import '../shell/game_hud.dart' show MomentWatcher, keyMoment;
+import '../shell/local_game_shell.dart' show ResultScope;
 import '../party/party_widgets.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
@@ -248,6 +250,34 @@ class _MafiaView extends StatefulWidget {
   State<_MafiaView> createState() => _MafiaViewState();
 }
 
+/// Drawn role emblems (no emoji): mask, medical cross, magnifier, house.
+GameIcons _roleIcon(MafiaRole r) => switch (r) {
+      MafiaRole.mafia => GameIcons.mask,
+      MafiaRole.doctor => GameIcons.medical,
+      MafiaRole.detective => GameIcons.magnifier,
+      MafiaRole.villager => GameIcons.home,
+    };
+
+/// The sky behind the night and day phases: dark navy with a moon, or a warm day.
+class _Sky extends StatelessWidget {
+  final bool night;
+  final Widget child;
+  const _Sky({required this.night, required this.child});
+  @override
+  Widget build(BuildContext context) => AnimatedSwitcher(
+        duration: Motion.of(context, const Duration(milliseconds: 700)),
+        child: ClipRRect(
+          key: ValueKey(night),
+          borderRadius: Radii.rBoard,
+          child: Stack(children: [
+            Positioned.fill(child: CustomPaint(painter: SkyPainter(time: night ? SkyTime.night : SkyTime.day, hills: true, horizon: 0.86, clouds: !night))),
+            Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(color: (night ? NeonPalette.bgBottom : Colors.black).withValues(alpha: night ? 0.35 : 0.12)))),
+            Padding(padding: const EdgeInsets.all(12), child: child),
+          ]),
+        ),
+      );
+}
+
 class _MafiaViewState extends State<_MafiaView> {
   bool _shown = false;
   int? _pick; // night choice before confirming
@@ -261,9 +291,10 @@ class _MafiaViewState extends State<_MafiaView> {
     final role = g.roles[p];
     final partners = [for (var i = 0; i < players.length; i++) if (i != p && g.isMafia(i)) players[i].name];
     return PromptCard(
-      header: 'YOU ARE',
+      header: 'You are',
       text: role.title,
-      emoji: role.emoji,
+      icon: _roleIcon(role),
+      dark: role == MafiaRole.mafia,
       footer: role.about + (role == MafiaRole.mafia && partners.isNotEmpty ? '\nYour partner: ${partners.join(', ')}' : ''),
       color: role.color,
     );
@@ -280,7 +311,7 @@ class _MafiaViewState extends State<_MafiaView> {
       MafiaRole.mafia => 'Who do you eliminate tonight?',
       MafiaRole.doctor => 'Who do you save tonight?',
       MafiaRole.detective => 'Who do you investigate?',
-      MafiaRole.villager => "You're a villager. Nothing to do tonight: just sleep 😴",
+      MafiaRole.villager => "You're a villager. Nothing to do tonight: just sleep.",
     };
     final disabled = {
       ...dead,
@@ -288,16 +319,25 @@ class _MafiaViewState extends State<_MafiaView> {
       if (role == MafiaRole.detective) p,
     };
     return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text('${role.emoji} ${role.title}', style: TextStyle(color: role.color, fontWeight: FontWeight.w900, fontSize: 22)),
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        GameIcon(_roleIcon(role), size: 28, color: nameColor(role.color)),
+        const SizedBox(width: 8),
+        Text(role.title, style: TextStyle(fontFamily: Fonts.display, color: nameColor(role.color), fontSize: 26)),
+      ]),
       const SizedBox(height: 6),
-      Text(prompt, textAlign: TextAlign.center, style: context.tk.styles.bodyStrong.copyWith(fontSize: 16)),
+      Text(prompt, textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
       const SizedBox(height: 14),
-      if (role != MafiaRole.villager)
-        PlayerPicker(players: players, disabled: disabled, highlight: _pick, onPick: (i) => setState(() => _pick = i)),
+      if (role == MafiaRole.villager) const GameIcon(GameIcons.moon, size: 64, color: Color(0xFFFFF3C4)),
+      if (role != MafiaRole.villager) PlayerPicker(players: players, disabled: disabled, highlight: _pick, onPick: (i) => setState(() => _pick = i)),
       if (role == MafiaRole.detective && _pick != null) ...[
         const SizedBox(height: 14),
-        Text(g.isMafia(_pick!) ? '🔴 ${players[_pick!].name} IS MAFIA!' : '🟢 ${players[_pick!].name} is not mafia',
-            textAlign: TextAlign.center, style: TextStyle(color: g.isMafia(_pick!) ? GpColors.no : GpColors.yes, fontWeight: FontWeight.w900, fontSize: 18)),
+        TurnBanner(
+          text: g.isMafia(_pick!) ? '${players[_pick!].name} IS MAFIA!' : '${players[_pick!].name} is not mafia',
+          color: role.color,
+          kind: g.isMafia(_pick!) ? TurnBannerKind.miss : TurnBannerKind.success,
+          icon: GameIcons.magnifier,
+          compact: true,
+        ),
       ],
     ]);
   }
@@ -317,24 +357,49 @@ class _MafiaViewState extends State<_MafiaView> {
 
   @override
   Widget build(BuildContext context) {
+    ResultScope.of(context)?.subtitle = g.phase.index >= MafiaPhase.result.index ? (g.mafiaWins ? 'The mafia took over' : 'The town is safe') : null;
+    return MomentWatcher<MafiaPhase>(
+      value: g.phase,
+      onChange: (fx, _, now) {
+        if (now == MafiaPhase.night) fx?.announce('NIGHT ${g.day}', sub: 'The town sleeps…', color: const Color(0xFFCFD6FF));
+        if (now == MafiaPhase.morning) {
+          if (g.killed >= 0) {
+            keyMoment(fx, 'MORNING', sub: '${players[g.killed].name} was taken', sound: 'lose', color: Brand.gold);
+          } else {
+            keyMoment(fx, 'MORNING', sub: 'Nobody died', sound: 'coin');
+          }
+        }
+        if (now == MafiaPhase.result) {
+          if (g.mafiaWins) {
+            keyMoment(fx, 'MAFIA WINS!', sound: 'lose', color: const Color(0xFFFF8E8B), shake: true);
+          } else {
+            keyMoment(fx, 'TOWN WINS!', sound: 'win', confetti: true);
+          }
+        }
+      },
+      child: _phase(context),
+    );
+  }
+
+  Widget _phase(BuildContext context) {
     final me = widget.me;
     switch (g.phase) {
       case MafiaPhase.reveal:
         if (me != null) {
           final ready = g.seen.contains(me);
           return PartyFrame(
-            title: 'YOUR ROLE',
-            subtitle: ready ? 'Waiting for the others (${g.seen.length}/${players.length})' : 'Keep it secret!',
+            title: 'Mafia',
+            subtitle: ready ? 'Waiting for the others (${g.seen.length}/${players.length})' : 'Your role · keep it secret!',
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Expanded(child: Center(child: SingleChildScrollView(child: _roleCard(me)))),
-              GpButton(ready ? 'READY ✓' : "I'M READY", onPressed: ready ? null : () => g.seenCard(me)),
+              GoldButton(ready ? 'Ready' : "I'm ready", icon: ready ? GameIcons.check : null, height: 58, onPressed: ready ? null : () => g.seenCard(me)),
             ]),
           );
         }
         final p = g.revealTurn;
         return PartyFrame(
-          title: 'SECRET ROLES',
-          subtitle: '${g.seen.length} of ${players.length} have looked',
+          title: 'Mafia',
+          subtitle: '${g.seen.length} of ${players.length} have seen their role',
           child: PassAndReveal(
             player: players[p],
             revealed: _shown,
@@ -348,28 +413,34 @@ class _MafiaViewState extends State<_MafiaView> {
         );
       case MafiaPhase.night:
         if (me != null) {
-          if (!g.alive.contains(me)) return PartyFrame(title: '🌙 NIGHT ${g.day}', child: const WaitingNote("You're out. The town sleeps…"));
-          if (g.acted.contains(me)) return PartyFrame(title: '🌙 NIGHT ${g.day}', child: WaitingNote('Waiting for the night to end (${g.acted.length}/${g.alive.length})'));
+          if (!g.alive.contains(me)) return PartyFrame(title: 'Mafia', subtitle: 'Night ${g.day}', child: const _Sky(night: true, child: WaitingNote("You're out. The town sleeps…")));
+          if (g.acted.contains(me)) return PartyFrame(title: 'Mafia', subtitle: 'Night ${g.day}', child: _Sky(night: true, child: WaitingNote('Waiting for the night to end (${g.acted.length}/${g.alive.length})')));
           return PartyFrame(
-            title: '🌙 NIGHT ${g.day}',
-            subtitle: 'Make sure nobody sees your screen',
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Expanded(child: Center(child: SingleChildScrollView(child: _nightPanel(me)))),
-              GpButton(g.roles[me] == MafiaRole.villager ? 'SLEEP' : 'CONFIRM', onPressed: _confirm(me)),
-            ]),
+            title: 'Mafia',
+            subtitle: 'Night ${g.day} · keep your screen hidden',
+            child: _Sky(
+              night: true,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Expanded(child: Center(child: SingleChildScrollView(child: _nightPanel(me)))),
+                GoldButton(g.roles[me] == MafiaRole.villager ? 'Sleep' : 'Confirm', icon: g.roles[me] == MafiaRole.villager ? GameIcons.moon : GameIcons.check, height: 56, onPressed: _confirm(me)),
+              ]),
+            ),
           );
         }
         final p = g.nightTurn;
         return PartyFrame(
-          title: '🌙 NIGHT ${g.day}',
-          subtitle: 'Everyone takes a turn, so nobody can tell who did what.',
-          child: PassAndReveal(
-            player: players[p],
-            revealed: _shown,
-            onReveal: () => setState(() => _shown = true),
-            onDone: _confirm(p),
-            doneLabel: g.roles[p] == MafiaRole.villager ? 'SLEEP · HIDE & PASS' : 'CONFIRM · HIDE & PASS',
-            secret: _nightPanel(p),
+          title: 'Mafia',
+          subtitle: 'Night ${g.day} · everyone takes a turn',
+          child: _Sky(
+            night: true,
+            child: PassAndReveal(
+              player: players[p],
+              revealed: _shown,
+              onReveal: () => setState(() => _shown = true),
+              onDone: _confirm(p),
+              doneLabel: g.roles[p] == MafiaRole.villager ? 'Sleep · hide & pass' : 'Confirm · hide & pass',
+              secret: _nightPanel(p),
+            ),
           ),
         );
       case MafiaPhase.morning:
@@ -378,25 +449,30 @@ class _MafiaViewState extends State<_MafiaView> {
             ? '\n\n(Only you see this: ${players[g.detectiveCheck!].name} ${g.isMafia(g.detectiveCheck!) ? 'IS mafia' : 'is not mafia'})'
             : '';
         return PartyFrame(
-          title: '☀️ DAY ${g.day}',
+          title: 'Mafia',
+          subtitle: 'Day ${g.day}',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
-              child: Center(
-                child: SingleChildScrollView(
-                  child: victim != null
-                      ? PromptCard(header: 'LAST NIGHT', text: '${victim.name} was eliminated', emoji: '💀', footer: 'They were a ${g.roles[g.killed].title}.$check', color: GpColors.no)
-                      : PromptCard(header: 'LAST NIGHT', text: g.saved ? 'The doctor saved a life!' : 'A peaceful night', emoji: g.saved ? '💉' : '😴', footer: 'Nobody died.$check', color: GpColors.yes),
+              child: _Sky(
+                night: false,
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: victim != null
+                        ? PromptCard(header: 'Last night', text: '${victim.name} was taken in the night', icon: GameIcons.mask, dark: true, footer: 'They were a ${g.roles[g.killed].title}.$check', color: StatusColors.danger)
+                        : PromptCard(header: 'Last night', text: g.saved ? 'The doctor saved a life!' : 'Nobody died', icon: g.saved ? GameIcons.medical : GameIcons.sun, footer: 'A peaceful night.$check', color: StatusColors.success),
+                  ),
                 ),
               ),
             ),
-            GpButton('DISCUSS, THEN VOTE', icon: Icons.how_to_vote_rounded, onPressed: g.startVote),
+            const SizedBox(height: 10),
+            GoldButton('Discuss, then vote', icon: GameIcons.speech, height: 58, onPressed: g.startVote),
           ]),
         );
       case MafiaPhase.vote:
         if (me != null) {
           final canVote = g.alive.contains(me);
           return PartyFrame(
-            title: 'WHO IS MAFIA?',
+            title: 'Who is mafia?',
             subtitle: canVote ? 'Your vote · ${g.votesIn}/${g.alive.length} voted' : "You're out: watch the vote",
             child: Center(
               child: SingleChildScrollView(
@@ -406,48 +482,73 @@ class _MafiaViewState extends State<_MafiaView> {
           );
         }
         return PartyFrame(
-          title: 'WHO IS MAFIA?',
-          subtitle: 'Agree together, then tap the player to vote out.',
+          title: 'Who is mafia?',
+          subtitle: 'Agree, then tap who to vote out',
           child: Center(child: SingleChildScrollView(child: PlayerPicker(players: players, disabled: dead, onPick: g.accuse, notes: {for (final i in dead) i: 'OUT'}))),
         );
       case MafiaPhase.out:
         return PartyFrame(
-          title: 'THE TOWN HAS SPOKEN',
+          title: 'Mafia',
+          subtitle: 'The town has spoken',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
                   child: g.lastOut < 0
-                      ? const PromptCard(header: 'TIE VOTE', text: 'Nobody is out', emoji: '🤝')
-                      : PromptCard(header: '${players[g.lastOut].name.toUpperCase()} IS OUT', text: 'They were ${g.roles[g.lastOut].title}', emoji: g.roles[g.lastOut].emoji, color: g.roles[g.lastOut].color),
+                      ? const PromptCard(header: 'Tie vote', text: 'Nobody is out', icon: GameIcons.people)
+                      : PromptCard(header: '${players[g.lastOut].name} is out', text: 'They were ${g.roles[g.lastOut].title}', icon: _roleIcon(g.roles[g.lastOut]), dark: g.roles[g.lastOut] == MafiaRole.mafia, color: g.roles[g.lastOut].color),
                 ),
               ),
             ),
-            GpButton('NIGHT FALLS…', icon: Icons.nightlight_round, onPressed: g.nextNight),
+            GoldButton('Night falls…', icon: GameIcons.moon, height: 58, onPressed: g.nextNight),
           ]),
         );
       case MafiaPhase.result:
       case MafiaPhase.done:
         final mafia = [for (var i = 0; i < players.length; i++) if (g.isMafia(i)) players[i].name];
         return PartyFrame(
-          title: g.mafiaWins ? 'MAFIA WINS' : 'TOWN WINS',
+          title: g.mafiaWins ? 'Mafia wins' : 'Town wins',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
                   child: Column(children: [
-                    PromptCard(
-                      header: g.mafiaWins ? '😈 THE MAFIA TOOK OVER' : '🎉 THE TOWN IS SAFE',
-                      text: 'Mafia: ${mafia.join(' & ')}',
-                      emoji: '🔪',
-                      footer: [for (var i = 0; i < players.length; i++) '${players[i].name}: ${g.roles[i].title}'].join('\n'),
-                      color: g.mafiaWins ? GpColors.no : GpColors.yes,
+                    TurnBanner(
+                      text: g.mafiaWins ? 'The mafia took over' : 'The town is safe',
+                      sub: 'Mafia: ${mafia.join(' & ')}',
+                      color: Brand.gold,
+                      kind: g.mafiaWins ? TurnBannerKind.miss : TurnBannerKind.success,
+                      icon: g.mafiaWins ? GameIcons.mask : GameIcons.home,
                     ),
+                    const SizedBox(height: 12),
+                    // Every role, revealed.
+                    Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 8, children: [
+                      for (var i = 0; i < players.length; i++)
+                        Container(
+                          width: 150,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: g.roles[i] == MafiaRole.mafia ? const Color(0xFF241B48) : Colors.white.withValues(alpha: 0.06),
+                            borderRadius: Radii.rLg,
+                            border: Border.all(color: g.roles[i].color.withValues(alpha: 0.7), width: 1.5),
+                          ),
+                          child: Row(children: [
+                            GameIcon(_roleIcon(g.roles[i]), size: 26, color: nameColor(g.roles[i].color)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text(players[i].name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w900, fontSize: 13, color: Colors.white)),
+                                Text(g.roles[i].title, style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1, color: nameColor(g.roles[i].color))),
+                              ]),
+                            ),
+                          ]),
+                        ),
+                    ]),
                   ]),
                 ),
               ),
             ),
-            GpButton('SEE SCORES', icon: Icons.emoji_events_rounded, onPressed: g.finish),
+            GoldButton('See scores', icon: GameIcons.trophy, height: 58, onPressed: g.finish),
           ]),
         );
     }

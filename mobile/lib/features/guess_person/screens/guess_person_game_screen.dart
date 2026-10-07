@@ -12,8 +12,9 @@ import '../widgets/pass_device_view.dart';
 import '../widgets/person_card.dart';
 import '../widgets/person_grid.dart';
 import '../widgets/question_panel.dart';
-import '../widgets/result_view.dart';
-import '../widgets/score_board.dart';
+import '../widgets/result_view.dart' show ResultView;
+import '../../local_games/shell/local_game_info.dart';
+import '../../local_games/shell/result_screen.dart';
 
 /// Hosts one match. The controller is created here and disposed with the screen,
 /// which also cancels its timer.
@@ -34,7 +35,7 @@ class _GameView extends StatelessWidget {
   const _GameView();
 
   Future<void> _confirmLeave(BuildContext context) async {
-    final leave = await confirmAction(context, title: 'Leave game?', message: 'Scores for this match will be lost.', confirm: 'LEAVE', cancel: 'STAY', emoji: '🚪');
+    final leave = await confirmAction(context, title: 'Leave game?', message: 'Scores for this match will be lost.', confirm: 'Leave', cancel: 'Stay', emoji: null);
     if (leave && context.mounted) Navigator.pop(context);
   }
 
@@ -60,7 +61,7 @@ class _GameView extends StatelessWidget {
           ),
         GpPhase.selectingPerson => _SelectView(c: c, onClose: leave),
         GpPhase.confirmSelection => _ConfirmView(c: c),
-        GpPhase.passDevice => PassDeviceView(title: '🔒 PERSON SELECTED', to: c.guesser, onReady: c.switchToGuessing),
+        GpPhase.passDevice => PassDeviceView(title: 'PERSON SELECTED', to: c.guesser, onReady: c.switchToGuessing),
         GpPhase.guessing || GpPhase.finalGuess => _GuessView(c: c, onClose: leave),
         GpPhase.result => ResultView(result: c.result!, players: c.players, lastRound: c.isLastRound, onNext: c.nextRound),
         GpPhase.gameOver => _GameOverView(c: c),
@@ -124,8 +125,8 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(color: GpCoral.panel, borderRadius: BorderRadius.circular(16)),
-        child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+        decoration: BoxDecoration(color: NeonPalette.overlay, borderRadius: Radii.rChip, border: Border.all(color: Colors.white.withValues(alpha: 0.14))),
+        child: Text(text, style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 15)),
       );
 }
 
@@ -150,15 +151,13 @@ class _SelectView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        const Text('Choose your\ncharacter!',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 30, height: 1.05, fontWeight: FontWeight.w900, shadows: [Shadow(color: Color(0x55000000), offset: Offset(0, 2), blurRadius: 3)])),
+        const Text('Choose your\ncharacter!', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 30, height: 1.05)),
         // The picked card may be scrolled out of view (e.g. after RANDOM): name it here too.
         if (c.selectedPerson != null)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text('🎲 Selected: ${c.selectedPerson!.name}',
-                textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+            child: Text('Selected: ${c.selectedPerson!.name}',
+                textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.body, color: Brand.gold, fontWeight: FontWeight.w900, fontSize: 15)),
           ),
         const SizedBox(height: 12),
         Row(children: [
@@ -189,7 +188,7 @@ class _ConfirmView extends StatelessWidget {
             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Center(child: SizedBox(width: 160, height: 200, child: PersonCard(person: p, mark: CardMark.selected))),
               const SizedBox(height: 22),
-              const Text('Are you sure?', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+              const Text('Are you sure?', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 30)),
               const SizedBox(height: 6),
               Text('${c.guesser.name} will try to find ${p.name}.', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
               const SizedBox(height: 24),
@@ -280,12 +279,9 @@ class _GuessView extends StatelessWidget {
         _TopBar(c: c, onClose: onClose, guessing: true),
         const SizedBox(height: 8),
         if (finalMode)
-          Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(color: GpColors.accent, borderRadius: BorderRadius.circular(14)),
-            child: const Text('WHO IS THE PERSON? Tap your final guess',
-                textAlign: TextAlign.center, style: TextStyle(color: GpColors.ink, fontWeight: FontWeight.w900, fontSize: 15)),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: TurnBanner(text: 'Who is the person?', sub: 'Tap your final guess', color: Brand.gold, kind: TurnBannerKind.success, icon: GameIcons.target, compact: true),
           ),
         Expanded(
           child: PersonGrid(
@@ -306,42 +302,35 @@ class _GuessView extends StatelessWidget {
   }
 }
 
+/// The shared result screen (spec 2.10) with Guess the Person's final scores.
 class _GameOverView extends StatelessWidget {
   final GuessPersonController c;
   const _GameOverView({required this.c});
 
+  static final _info = LocalGameInfo(
+    id: 'guess_person',
+    title: 'Guess the Person',
+    emoji: '',
+    color: const Color(0xFFFFC93C),
+    tagline: '',
+    rules: const [],
+    scoreUnit: 'points',
+    splitScreen: false,
+    maxPlayers: 6,
+    play: (_, __) => const SizedBox.shrink(),
+  );
+
   @override
   Widget build(BuildContext context) {
-    final leaders = c.leaders;
-    final headline = c.isDraw ? '🤝 DRAW!' : '${leaders.first.name.toUpperCase()} WINS!';
-    return Stack(children: [
-      Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: DarkPanel(
-              padding: const EdgeInsets.all(22),
-              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                const Text('🏆', textAlign: TextAlign.center, style: TextStyle(fontSize: 72)),
-                const Text('GAME OVER', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 6),
-                Text(headline, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.accent, fontSize: 26, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 24),
-                const Text('FINAL SCORE', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
-                const SizedBox(height: 10),
-                ScoreBoard(players: c.players, large: true, highlight: c.isDraw ? const {} : leaders.toSet()),
-                const SizedBox(height: 28),
-                GpButton('PLAY AGAIN', icon: Icons.replay_rounded, onPressed: c.resetGame),
-                const SizedBox(height: 12),
-                GpButton('MAIN MENU', icon: Icons.home_rounded, outlined: true, onPressed: () => Navigator.pop(context)),
-              ]),
-            ),
-          ),
-        ),
-      ),
-      if (!c.isDraw) const Positioned.fill(child: IgnorePointer(child: Confetti())),
-    ]);
+    final players = [for (final p in c.players) GpPlayer(name: p.name, color: p.color, score: p.score)];
+    return ResultScreen(
+      game: _info,
+      players: players,
+      extras: ResultExtras()..subtitle = '${c.totalRounds} rounds · ${c.players.length} players',
+      onRematch: c.resetGame,
+      onChangePlayers: () => Navigator.pop(context),
+      onExit: () => Navigator.pop(context),
+    );
   }
 }
 
