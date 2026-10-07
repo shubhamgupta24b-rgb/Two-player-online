@@ -7,6 +7,8 @@ import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/game_hud.dart';
 import '../party/party_widgets.dart' show PassCover;
+import '../shell/local_game_shell.dart' show ResultScope;
+import '../../../core/ui/materials/materials.dart';
 import '../shell/ticking_play.dart';
 
 /// Battleship for 2 on an 8x8 sea. Fleets are placed at random. Take turns firing at the
@@ -192,10 +194,6 @@ final battleshipInfo = LocalGameInfo(
 );
 
 // Board palette: open sea, grey hulls.
-const _sea = [Color(0xFF0B3C7A), Color(0xFF125AA8)];
-const _hull = Color(0xFF8C9BA5);
-const _wreck = Color(0xFF4E3B31);
-
 class _BattleTable extends StatelessWidget {
   final BattleshipLogic g;
   final List<GpPlayer> players;
@@ -205,7 +203,6 @@ class _BattleTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tk;
     final passing = me == null;
     // Whose seas are shown: this phone's player, or (passing the phone) the player whose turn it is.
     final viewer = me ?? (bots.contains(g.turn) ? g.other(g.turn) : g.turn);
@@ -213,51 +210,84 @@ class _BattleTable extends StatelessWidget {
     final myTurn = viewer == g.turn && !bots.contains(g.turn) && !g.finished;
     final enemy = g.other(viewer);
     final current = players[g.turn];
-    return Stack(children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.s),
-        child: Column(children: [
-          GameHud(players: players, turn: g.finished ? null : g.turn, extra: (i) => '🚢${g.shipsLeft(i)}'),
-          GameStatus(
-            player: current,
-            height: 44,
-            turnText: myTurn ? (passing ? '${current.whose} TURN: FIRE!' : 'YOUR TURN: FIRE!') : '${current.name} is aiming…',
-            message: g.finished ? '🏆 ${players[g.scores[0] == 1 ? 0 : 1].name.toUpperCase()} WINS!' : null,
-          ),
-          if (g.message.isNotEmpty) Semantics(liveRegion: true, child: Text(g.message, textAlign: TextAlign.center, style: t.styles.bodyStrong)),
-          const SizedBox(height: Space.xs),
-          _SeaLabel('🎯 ENEMY SEA · ${g.shipsLeft(enemy)} ships left', players[enemy].color),
-          Expanded(
-            flex: 3,
-            child: Center(
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: _Sea(g: g, owner: enemy, showShips: g.finished, onFire: myTurn && !covered ? g.fire : null),
+    final winner = g.finished ? (g.scores[0] == 1 ? 0 : 1) : null;
+    ResultScope.of(context)?.subtitle = winner == null ? null : '${g.shipsLeft(winner)} of ${BattleshipLogic.fleet.length} ships still afloat';
+    final m = stripEmoji(g.message);
+    final Widget banner = g.finished
+        ? TurnBanner(text: '${players[winner!].name} wins!', sub: 'Whole fleet sunk', color: players[winner].color, kind: TurnBannerKind.success, icon: GameIcons.trophy, compact: true)
+        : g.message.contains('Miss')
+            ? TurnBanner(text: 'Miss', sub: myTurn ? 'Pass the phone' : '${current.name} is aiming…', color: current.color, kind: TurnBannerKind.miss, compact: true)
+            : (g.message.contains('Hit') || g.message.contains('Sunk'))
+                ? TurnBanner(text: m.split('!').first, sub: 'Fire again', color: current.color, kind: TurnBannerKind.success, icon: GameIcons.target, compact: true)
+                : TurnBanner(text: myTurn ? (passing ? '${possessive(current.name)} turn: fire!' : 'Your turn: fire!') : '${current.name} is aiming…', sub: 'Tap a square on the enemy sea', color: current.color, compact: true);
+    return MomentWatcher<int>(
+      value: g.shots[0].length + g.shots[1].length,
+      onChange: (fx, before, now) {
+        if (now <= before) return;
+        if (g.message.contains('Sunk') || g.message.contains('Whole fleet')) {
+          keyMoment(fx, 'SUNK!', sub: g.message.contains('Whole') ? 'The whole fleet' : 'A ship goes down', sound: 'boom', buzz: HapticWeight.heavy, shake: true);
+        } else if (g.message.contains('Hit')) {
+          keyMoment(fx, 'HIT!', sub: 'Fire again', sound: 'hit', buzz: HapticWeight.heavy, shake: true);
+        } else {
+          fx?.pop('MISS', color: Colors.white);
+        }
+      },
+      child: Stack(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.s),
+          child: Column(children: [
+            ScoreHud(
+              title: 'Battleship',
+              state: g.finished ? 'Game over' : '${possessive(current.name)} shot',
+              players: players,
+              turn: g.finished ? null : g.turn,
+              score: (i) => '${g.shipsLeft(i)}',
+              tag: (i) => !g.finished && i == g.turn ? 'FIRING' : null,
+              detail: (i, compact) => Pips(filled: g.shipsLeft(i), total: BattleshipLogic.fleet.length, color: players[i].color, size: 10),
+            ),
+            const SizedBox(height: 6),
+            SizedBox(height: 54, child: Center(child: banner)),
+            const SizedBox(height: 4),
+            _SeaLabel(GameIcons.target, 'Enemy sea · ${g.shipsLeft(enemy)} ships left', players[enemy].color),
+            Expanded(
+              flex: 3,
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: _Sea(g: g, owner: enemy, showShips: g.finished, onFire: myTurn && !covered ? g.fire : null),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: Space.s),
-          _SeaLabel('🛡 YOUR FLEET · ${g.shipsLeft(viewer)} ships left', players[viewer].color),
-          Expanded(flex: 2, child: Center(child: AspectRatio(aspectRatio: 1, child: _Sea(g: g, owner: viewer, showShips: true)))),
-        ]),
-      ),
-      if (covered) PassCover(player: current, holdLabel: 'HOLD TO SEE YOUR SEA', note: 'No peeking at the other fleet! 🙈', onReveal: () => g.reveal(g.turn)),
-    ]);
+            const SizedBox(height: Space.s),
+            _SeaLabel(GameIcons.shield, 'Your fleet · ${g.shipsLeft(viewer)} ships left', players[viewer].color),
+            Expanded(flex: 2, child: Center(child: AspectRatio(aspectRatio: 1, child: _Sea(g: g, owner: viewer, showShips: true)))),
+          ]),
+        ),
+        if (covered) PassCover(player: current, holdLabel: 'Hold to see your sea', note: 'No peeking at the other fleet!', onReveal: () => g.reveal(g.turn)),
+      ]),
+    );
   }
 }
 
 class _SeaLabel extends StatelessWidget {
+  final GameIcons icon;
   final String text;
   final Color color;
-  const _SeaLabel(this.text, this.color);
+  const _SeaLabel(this.icon, this.text, this.color);
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: Space.xs),
-        child: Text(text, style: context.tk.styles.label.copyWith(color: Color.lerp(color, Colors.white, 0.45))),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          GameIcon(icon, size: 14, color: nameColor(color)),
+          const SizedBox(width: 6),
+          Flexible(child: Text(text.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: context.tk.styles.label.copyWith(color: nameColor(color)))),
+        ]),
       );
 }
 
-/// One player's sea. [onFire] makes its squares tappable.
+/// One player's sea (spec 5.1 #7): water, grey ships seen from above, hits burning with
+/// smoke, misses as white splash rings, the last shot ringed gold. [onFire] makes the
+/// squares tappable.
 class _Sea extends StatelessWidget {
   final BattleshipLogic g;
   final int owner;
@@ -269,86 +299,141 @@ class _Sea extends StatelessWidget {
   Widget build(BuildContext context) {
     final shotsHere = g.shots[g.other(owner)];
     return Container(
-      padding: const EdgeInsets.all(Space.xs),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: _sea, begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: Radii.rMd,
+        borderRadius: Radii.rChip,
         border: Border.all(color: onFire != null ? Brand.gold : Colors.white24, width: onFire != null ? 3 : 1.5),
-        boxShadow: onFire != null ? [BoxShadow(color: Brand.gold.withValues(alpha: 0.35), blurRadius: 14)] : null,
+        boxShadow: [if (onFire != null) BoxShadow(color: Brand.gold.withValues(alpha: 0.35), blurRadius: 14), const BoxShadow(color: Color(0x66000000), blurRadius: 12, offset: Offset(0, 6))],
       ),
-      child: CustomPaint(
-        painter: const _Waves(),
-        child: GridView.count(
-          crossAxisCount: BattleshipLogic.size,
-          mainAxisSpacing: 2,
-          crossAxisSpacing: 2,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            for (var cell = 0; cell < 64; cell++)
-              Builder(builder: (context) {
-                final shot = shotsHere.contains(cell);
-                final ship = g.isShip(owner, cell);
-                final sunkShip = ship && g.sunk(owner, g.ships[owner].firstWhere((s) => s.contains(cell)));
-                final visible = ship && (showShips || shot);
-                return Semantics(
-                  button: onFire != null && !shot,
-                  label: '${String.fromCharCode(65 + cell ~/ 8)}${cell % 8 + 1}: ${shot ? (ship ? (sunkShip ? 'sunk' : 'hit') : 'miss') : (visible ? 'ship' : 'water')}',
-                  excludeSemantics: true,
-                  child: GestureDetector(
-                    onTap: onFire == null || shot
-                        ? null
-                        : () {
-                            haptic(HapticWeight.medium);
-                            final hit = g.isShip(owner, cell);
-                            onFire!(cell);
-                            GameAudio.sfx(hit ? 'boom' : 'pop');
-                          },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: sunkShip ? _wreck : (visible ? _hull : Colors.white.withValues(alpha: 0.06)),
-                        gradient: visible && !sunkShip ? const LinearGradient(colors: [Color(0xFFB0BEC5), _hull], begin: Alignment.topCenter, end: Alignment.bottomCenter) : null,
-                        borderRadius: BorderRadius.circular(visible ? 6 : 3),
-                        border: cell == g.lastShot && shot ? Border.all(color: Brand.gold, width: 2) : null,
-                      ),
-                      alignment: Alignment.center,
-                      child: shot
-                          ? (ship
-                              ? FittedBox(child: Text(sunkShip ? '💥' : '🔥', style: const TextStyle(fontSize: 18)))
-                              : FractionallySizedBox(
-                                  widthFactor: 0.5,
-                                  heightFactor: 0.5,
-                                  child: DecoratedBox(decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.75), width: 2))),
-                                ))
-                          : null,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(children: [
+          Positioned.fill(child: RepaintBoundary(child: CustomPaint(painter: _SeaPainter(g, owner, showShips, shotsHere.length, g.lastShot)))),
+          GridView.count(
+            crossAxisCount: BattleshipLogic.size,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              for (var cell = 0; cell < 64; cell++)
+                Builder(builder: (context) {
+                  final shot = shotsHere.contains(cell);
+                  final ship = g.isShip(owner, cell);
+                  final sunkShip = ship && g.sunk(owner, g.ships[owner].firstWhere((s) => s.contains(cell)));
+                  final visible = ship && (showShips || shot);
+                  return Semantics(
+                    button: onFire != null && !shot,
+                    label: '${String.fromCharCode(65 + cell ~/ 8)}${cell % 8 + 1}: ${shot ? (ship ? (sunkShip ? 'sunk' : 'hit') : 'miss') : (visible ? 'ship' : 'water')}',
+                    excludeSemantics: true,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: onFire == null || shot
+                          ? null
+                          : () {
+                              haptic(HapticWeight.medium);
+                              final hit = g.isShip(owner, cell);
+                              onFire!(cell);
+                              GameAudio.sfx(hit ? 'boom' : 'pop');
+                            },
                     ),
-                  ),
-                );
-              }),
-          ],
-        ),
+                  );
+                }),
+            ],
+          ),
+        ]),
       ),
     );
   }
 }
 
-/// Faint wave lines behind the sea grid.
-class _Waves extends CustomPainter {
-  const _Waves();
+class _SeaPainter extends CustomPainter {
+  final BattleshipLogic g;
+  final int owner;
+  final bool showShips;
+  final int shotCount; // repaint when a shot lands
+  final int? lastShot;
+  _SeaPainter(this.g, this.owner, this.showShips, this.shotCount, this.lastShot);
+
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = Colors.white.withValues(alpha: 0.08)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    for (var y = size.height / 10; y < size.height; y += size.height / 7) {
-      final path = Path()..moveTo(0, y);
-      for (var x = 0.0; x <= size.width; x += size.width / 12) {
-        path.quadraticBezierTo(x + size.width / 24, y - 4, x + size.width / 12, y);
+    const n = BattleshipLogic.size;
+    final s = size.width / n;
+    const WaterPainter(radius: 0).paint(canvas, size);
+    final grid = Paint()
+      ..color = Colors.white.withValues(alpha: 0.12)
+      ..strokeWidth = 1;
+    for (var i = 1; i < n; i++) {
+      canvas.drawLine(Offset(i * s, 0), Offset(i * s, size.height), grid);
+      canvas.drawLine(Offset(0, i * s), Offset(size.width, i * s), grid);
+    }
+    final shots = g.shots[g.other(owner)];
+    Rect cellRect(int c) => Rect.fromLTWH((c % n) * s, (c ~/ n) * s, s, s);
+    // Ships: shown when it's your fleet, at the end, or once sunk.
+    for (final ship in g.ships[owner]) {
+      final sunk = g.sunk(owner, ship);
+      if (!showShips && !sunk) continue;
+      var r = cellRect(ship.first);
+      for (final c in ship) {
+        r = r.expandToInclude(cellRect(c));
       }
-      canvas.drawPath(path, p);
+      final across = r.width > r.height;
+      final hull = r.deflate(s * 0.12);
+      final rr = RRect.fromRectAndRadius(hull, Radius.circular(s * 0.38));
+      canvas.drawRRect(rr.shift(Offset(s * 0.05, s * 0.08)), Paint()..color = const Color(0x55000000));
+      canvas.drawRRect(
+          rr,
+          Paint()
+            ..shader = LinearGradient(
+              begin: across ? Alignment.topCenter : Alignment.centerLeft,
+              end: across ? Alignment.bottomCenter : Alignment.centerRight,
+              colors: sunk ? const [Color(0xFF5A4A40), Color(0xFF3A2E28)] : const [Color(0xFFC9D3DA), Color(0xFF7D8E99)],
+            ).createShader(hull));
+      // Deck: a centre line and small turrets.
+      final deck = Paint()
+        ..color = sunk ? const Color(0x55000000) : const Color(0xFF5E6E79)
+        ..strokeWidth = s * 0.06
+        ..strokeCap = StrokeCap.round;
+      final a = across ? Offset(hull.left + s * 0.3, hull.center.dy) : Offset(hull.center.dx, hull.top + s * 0.3);
+      final b = across ? Offset(hull.right - s * 0.3, hull.center.dy) : Offset(hull.center.dx, hull.bottom - s * 0.3);
+      canvas.drawLine(a, b, deck);
+      for (var i = 0; i < ship.length; i++) {
+        final c = cellRect(ship[i]).center;
+        canvas.drawCircle(c, s * 0.13, Paint()..color = sunk ? const Color(0xFF2E2420) : const Color(0xFF9AA8B2));
+        canvas.drawCircle(c, s * 0.13, deck..style = PaintingStyle.stroke);
+        deck.style = PaintingStyle.fill;
+      }
+    }
+    // Shots: burning hits with smoke, splash rings for misses.
+    for (final c in shots) {
+      final r = cellRect(c);
+      final ctr = r.center;
+      if (g.isShip(owner, c)) {
+        for (final (dx, dy, k) in const [(-0.12, -0.3, 0.2), (0.1, -0.42, 0.16), (-0.02, -0.52, 0.12)]) {
+          canvas.drawCircle(ctr + Offset(dx * s, dy * s), k * s, Paint()..color = const Color(0x8C3A3A40));
+        }
+        Path flame(Offset c, double k) => Path()
+          ..moveTo(c.dx, c.dy - s * 0.32 * k)
+          ..quadraticBezierTo(c.dx + s * 0.3 * k, c.dy, c.dx, c.dy + s * 0.28 * k)
+          ..quadraticBezierTo(c.dx - s * 0.3 * k, c.dy, c.dx, c.dy - s * 0.32 * k)
+          ..close();
+        canvas.drawPath(flame(ctr, 1), Paint()..color = const Color(0xFFFF6B1A));
+        canvas.drawPath(flame(ctr + Offset(0, s * 0.08), 0.55), Paint()..color = const Color(0xFFFFD54F));
+      } else {
+        final ring = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = s * 0.06
+          ..color = Colors.white.withValues(alpha: 0.85);
+        canvas.drawCircle(ctr, s * 0.22, ring);
+        canvas.drawCircle(ctr, s * 0.08, Paint()..color = Colors.white.withValues(alpha: 0.85));
+      }
+      if (c == lastShot) {
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(r.deflate(1.5), Radius.circular(s * 0.15)),
+            Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2.5
+              ..color = Brand.gold);
+      }
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(_SeaPainter o) => o.shotCount != shotCount || o.showShips != showShips || o.lastShot != lastShot || o.owner != owner;
 }

@@ -733,7 +733,7 @@ class TurnBanner extends StatelessWidget {
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: lead == null ? CrossAxisAlignment.center : CrossAxisAlignment.start, children: [
                   Text(stripEmoji(text), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: compact ? 16 : 20, height: 1.0, color: line)),
                   if (sub != null)
-                    Text(stripEmoji(sub!), maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: compact ? 12 : 13, fontWeight: FontWeight.w700, color: t.flat ? t.textMuted : NeonPalette.textMuted)),
+                    Text(stripEmoji(sub!), maxLines: compact ? 1 : 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: compact ? 12 : 13, fontWeight: FontWeight.w700, color: t.flat ? t.textMuted : NeonPalette.textMuted)),
                 ]),
               ),
             ]),

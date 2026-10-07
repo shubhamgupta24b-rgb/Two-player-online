@@ -210,3 +210,23 @@
 **Could not test**
 - Emulator (not enough RAM).
 - Online view of these games and two people on one real phone.
+
+## B2 — part 1: Memory, Battleship (done; Bingo, Colour Clash, Raja Mantri still to do)
+
+**Memory** (mockups memory/*)
+- Felt card table, `CardBack` backs, paper faces with drawn fruit (the logic keeps its emoji keys; the view maps each to a fruit icon).
+- Matched cards are tinted with the owner's colour and badge. The pair just matched glows gold; a wrong pair gets a red outline and a tilt.
+- The banner shows "MATCH! +1 pair · X goes again" or "No match" with a draining bar for the reveal time.
+- Score cards show the collected fruit, with GO AGAIN / MISSED / NEXT tags.
+- Results: "Board clear" label, "N of 12 pairs · P players", a fan of 3 cards as the hero, and a fruit row per player.
+- The flat app keeps its cartoon faces.
+
+**Battleship**
+- Seas use `WaterPainter`; grey top-down ships with deck and turrets (sunk ones dark).
+- Hits are flames with smoke, misses white splash rings, and the last shot is ringed in gold.
+- Score cards show ships left (pips), and the turn banner shows Hit / Miss / Sunk.
+- Moments: HIT! and SUNK! with shake, MISS pop.
+
+**Also:** compact `TurnBanner` sub-lines are now one line.
+
+**Tests:** analyze clean, 830 tests pass.
