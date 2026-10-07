@@ -39,4 +39,4 @@ final mostLikelyInfo = LocalGameInfo(
 
 PromptVoteLogic _create(int n) => PromptVoteLogic(mode: VoteMode.mostLikely, players: n, prompts: mostLikelyPrompts);
 Widget _view(BuildContext context, PromptVoteLogic g, List<GpPlayer> players, int? me) =>
-    PromptVoteView(players: players, g: g, me: me, title: '👉 MOST LIKELY TO', color: const Color(0xFFFF9F43));
+    PromptVoteView(players: players, g: g, me: me, title: 'Most Likely To', color: const Color(0xFFFF9F43));

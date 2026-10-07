@@ -310,3 +310,44 @@
 - analyze clean, 830 tests pass; the GP widget test was updated (two labels lost their emoji).
 - Debug builds pass for both flavors.
 - New render tools: `tool/gp_render_test.dart`; word games rendered with `tool/screens_test.dart`.
+
+## B4 — Party 2 (done)
+
+**Most Likely To / Would You Rather** (`party/prompt_vote.dart`)
+- The question is a paper card with a drawn icon.
+- Would You Rather: two big A (blue) / B (red) choice cards. The reveal is a split bar with the counts, each side's voters as badges, and the majority side glowing gold.
+- Most Likely To: the reveal is player rows with the voters' badges stacking in, and a crown for the winners.
+- Moments: winner name + confetti, or "A perfect split!".
+
+**Truth or Dare**
+- Round table: wood rim around felt.
+- A see-through glass bottle with highlights, a paper label and a cork.
+- Seat chips with badge + name; the picked player is ringed gold.
+- Big TRUTH (blue) / DARE (orange) cards; the prompt is a paper card.
+- Skip / "Did it +1" (gold), with a +1 pop.
+
+**Rock Paper Scissors**
+- Drawn rock, paper and scissors hands on round buttons in the player's colour, with zone tints.
+- The reveal shows a big hand, gold when it wins, plus the other players' hands with their badges.
+- SHOOT! moment.
+
+**Hand Cricket**
+- Stadium scoreboard with LED-style digits (both scores, innings / target, ball) and pause.
+- The number pad is drawn hands showing 1–5 fingers, with a thumbs-up for 6.
+- The reveal shows both hands, and an OUT! red stamp.
+- Moments: OUT!, SIX!, FOUR!, INNINGS 2.
+- Halves scale down on short screens.
+
+**Quiz Battle**
+- Category chips: each emoji key is shown as a drawn icon + word (Bollywood, Cricket, India, …).
+- Question in Lilita; player-colour answer buttons; a lock over a player's buttons after a wrong answer; first-to-N pips.
+- A correct answer flashes green with a "+1 Name" pop.
+- Small sideways zones lay out at 270 px tall and scale down.
+
+**Draw & Guess**
+- Hold the eye button to peek at the word; a round clear button; a paper sheet with a soft shadow.
+- Guesser chips with badges; a typed-guess field for online.
+- End banner "The word was…"; moments GOT IT! (confetti) or NOBODY GOT IT.
+- Not done: brush colours / sizes / eraser. They would need colour in the stroke data, which changes the logic and the relay JSON, so the pencil stays one colour.
+
+**Tests:** analyze clean, 830 tests pass; debug builds pass for both flavors.

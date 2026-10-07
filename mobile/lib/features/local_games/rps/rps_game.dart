@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../shell/game_hud.dart' show MomentWatcher, keyMoment;
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -119,14 +119,31 @@ final rpsInfo = LocalGameInfo(
   play: (players, onFinished) => TickingPlay<RpsLogic>(
     create: () => RpsLogic(players: players.length),
     onFinished: onFinished,
-    builder: (context, g) => PlayerZones(
-      count: players.length,
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'ROUND ${g.round} · FIRST TO ${g.target}'),
-      center: ZoneCenterChip('ROUND ${g.round}'),
-      zone: (i) => _RpsZone(player: players[i], index: i, g: g, players: players),
+    builder: (context, g) => MomentWatcher<RpsPhase>(
+      value: g.phase,
+      onChange: (fx, _, now) {
+        if (now == RpsPhase.reveal) {
+          final winners = [for (var i = 0; i < players.length; i++) if (g.lastPoints[i] > 0) players[i].name];
+          if (winners.isEmpty) {
+            fx?.pop('DRAW!', color: Colors.white);
+          } else {
+            keyMoment(fx, 'SHOOT!', sub: '${winners.join(' & ')} ${winners.length == 1 ? 'scores' : 'score'}', sound: 'pop');
+          }
+        }
+      },
+      child: PlayerZones(
+        count: players.length,
+        colors: [for (final p in players) p.color],
+        middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'Round ${g.round} · first to ${g.target}'),
+        center: ZoneCenterChip('Round ${g.round}'),
+        zone: (i) => _RpsZone(player: players[i], index: i, g: g, players: players),
+      ),
     ),
   ),
 );
+
+/// The drawn hands (no emoji): rock, paper, scissors.
+const _hands = [GameIcons.rock, GameIcons.paper, GameIcons.scissors];
 
 class _RpsZone extends StatelessWidget {
   final GpPlayer player;
@@ -139,65 +156,101 @@ class _RpsZone extends StatelessWidget {
   Widget build(BuildContext context) {
     final reveal = g.phase != RpsPhase.pick;
     final picked = g.picks[index] != null;
-    return Container(
-      color: player.color.withValues(alpha: 0.1),
+    final seat = PlayerPalette.indexOf(player.color) ?? index;
+    final won = reveal && g.lastPoints[index] > 0;
+    return Padding(
       padding: const EdgeInsets.all(10),
       // Small zones (6 players on a small phone): shrink to fit rather than overflow.
-      child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('${player.name.toUpperCase()} · ${g.score[index]}', style: TextStyle(color: player.color, fontWeight: FontWeight.w900, letterSpacing: 1)),
-        const SizedBox(height: 6),
-        if (reveal) ...[
-          TweenAnimationBuilder<double>(
-            key: ValueKey('r${g.round}'),
-            tween: Tween(begin: 0.3, end: 1),
-            duration: const Duration(milliseconds: 450),
-            curve: Curves.elasticOut,
-            builder: (_, s, child) => Transform.scale(scale: s, child: child),
-            child: Text(RpsLogic.emoji[g.lastPicks[index]], style: const TextStyle(fontSize: 64)),
-          ),
-          Text(g.lastPoints[index] > 0 ? '+${g.lastPoints[index]} 🎉' : 'no points', style: TextStyle(color: g.lastPoints[index] > 0 ? GpColors.yes : GpColors.muted, fontWeight: FontWeight.w900, fontSize: 18)),
-          if (players.length > 2)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text([for (var j = 0; j < players.length; j++) if (j != index) '${players[j].name} ${RpsLogic.emoji[g.lastPicks[j]]}'].join('  '),
-                  textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 12)),
-            ),
-        ] else ...[
-          Text(picked ? '🔒 LOCKED IN' : 'PICK ONE!', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
-          const SizedBox(height: 10),
-          FittedBox(
-            child: Row(children: [
-              for (var c = 0; c < 3; c++)
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              PlayerBadge(index: seat, size: 22, color: player.color, initial: player.name),
+              const SizedBox(width: 6),
+              Text(player.name, style: TextStyle(fontFamily: Fonts.body, color: nameColor(player.color), fontWeight: FontWeight.w900, fontSize: 15)),
+              const SizedBox(width: 8),
+              Text('${g.score[index]}', style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 22)),
+            ]),
+            const SizedBox(height: 8),
+            if (reveal) ...[
+              TweenAnimationBuilder<double>(
+                key: ValueKey('r${g.round}'),
+                tween: Tween(begin: Motion.reduced(context) ? 1 : 0.3, end: 1),
+                duration: const Duration(milliseconds: 450),
+                curve: Curves.elasticOut,
+                builder: (_, s, child) => Transform.scale(scale: s, child: child),
+                child: Container(
+                  width: 112,
+                  height: 112,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: won ? Brand.gold.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.06),
+                    border: Border.all(color: won ? Brand.gold : Colors.white.withValues(alpha: 0.18), width: won ? 3 : 1.5),
+                  ),
+                  child: Semantics(label: RpsLogic.names[g.lastPicks[index]], child: GameIcon(_hands[g.lastPicks[index]], size: 72, color: nameColor(player.color))),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(won ? '+${g.lastPoints[index]}' : 'no points', style: TextStyle(fontFamily: Fonts.display, color: won ? Brand.gold : NeonPalette.textMuted, fontSize: 22)),
+              if (players.length > 2)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: Semantics(
-                    button: true,
-                    label: RpsLogic.names[c],
-                    child: Material(
-                      color: picked ? Colors.white10 : fillFor(player.color),
-                      elevation: picked ? 0 : 3,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Wrap(spacing: 8, children: [
+                    for (var j = 0; j < players.length; j++)
+                      if (j != index)
+                        Row(mainAxisSize: MainAxisSize.min, children: [
+                          PlayerBadge(index: PlayerPalette.indexOf(players[j].color) ?? j, size: 14, color: players[j].color),
+                          const SizedBox(width: 3),
+                          GameIcon(_hands[g.lastPicks[j]], size: 22, color: nameColor(players[j].color)),
+                        ]),
+                  ]),
+                ),
+            ] else ...[
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                if (picked) ...[const GameIcon(GameIcons.lock, size: 18), const SizedBox(width: 6)],
+                Text(picked ? 'Locked in' : 'Pick one!', style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 22)),
+              ]),
+              const SizedBox(height: 10),
+              Row(children: [
+                for (var c = 0; c < 3; c++)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: Semantics(
+                      button: true,
+                      label: RpsLogic.names[c],
+                      excludeSemantics: true,
+                      child: GestureDetector(
                         onTap: picked
                             ? null
                             : () {
                                 haptic(HapticWeight.selection);
                                 g.pick(index, c);
                               },
-                        child: SizedBox(
-                          width: 84,
-                          height: 84,
-                          child: Center(child: Opacity(opacity: picked ? 0.35 : 1, child: Text(RpsLogic.emoji[c], style: const TextStyle(fontSize: 44)))),
+                        child: Opacity(
+                          opacity: picked ? 0.35 : 1,
+                          child: Container(
+                            width: 88,
+                            height: 88,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(center: const Alignment(-0.3, -0.35), colors: [Color.lerp(player.color, Colors.white, 0.25)!, fillFor(player.color)]),
+                              border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: picked ? null : Shadows.edge(Color.lerp(player.color, Colors.black, 0.5)!, depth: 4),
+                            ),
+                            child: GameIcon(_hands[c], size: 52),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-            ]),
-          ),
-        ],
-      ]))),
+              ]),
+            ],
+          ]),
+        ),
+      ),
     );
   }
 }

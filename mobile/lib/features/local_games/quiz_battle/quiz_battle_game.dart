@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/audio/game_audio.dart';
 import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../shell/game_hud.dart' show MomentWatcher;
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -191,14 +191,43 @@ final quizBattleInfo = LocalGameInfo(
   play: (players, onFinished) => TickingPlay<QuizBattleLogic>(
     create: () => QuizBattleLogic(players: players.length),
     onFinished: onFinished,
-    builder: (context, g) => PlayerZones(
-      count: players.length,
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
-      center: ZoneCenterChip('FIRST TO ${g.target}'),
-      zone: (i) => _QuizHalf(player: players[i], index: i, g: g),
+    builder: (context, g) => MomentWatcher<int?>(
+      value: g.solvedBy,
+      onChange: (fx, _, who) {
+        if (who == null) return;
+        fx?.flash(StatusColors.success);
+        fx?.pop('+1 ${players[who].name}');
+      },
+      child: PlayerZones(
+        count: players.length,
+        colors: [for (final p in players) p.color],
+        middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
+        center: ZoneCenterChip('First to ${g.target}'),
+        zone: (i) => _QuizHalf(player: players[i], index: i, g: g),
+      ),
     ),
   ),
 );
+
+/// The category chips: the logic keys categories by emoji; the UI shows a drawn icon and a word.
+(GameIcons, String) _category(String key) {
+  final k = key.replaceAll('\u{FE0F}', '');
+  return switch (k) {
+    '🎬' => (GameIcons.clapper, 'Bollywood'),
+    '🏏' => (GameIcons.bat, 'Cricket'),
+    '🇮🇳' => (GameIcons.flag, 'India'),
+    '🌍' => (GameIcons.globe, 'World'),
+    '🔬' => (GameIcons.magnifier, 'Science'),
+    '💻' => (GameIcons.lightbulb, 'Tech'),
+    '😋' => (GameIcons.cherry, 'Food'),
+    '⚽' => (GameIcons.football, 'Football'),
+    '♟' => (GameIcons.crownKing, 'Games'),
+    '🎵' => (GameIcons.sound, 'Music'),
+    '🏅' => (GameIcons.trophy, 'Sports'),
+    '🏸' => (GameIcons.ball, 'Sports'),
+    _ => (GameIcons.lightbulb, 'Quiz'),
+  };
+}
 
 class _QuizHalf extends StatelessWidget {
   final GpPlayer player;
@@ -212,59 +241,112 @@ class _QuizHalf extends StatelessWidget {
     final status = g.solvedBy == null
         ? (locked ? (g.betweenQuestions ? 'Nobody got it!' : 'Wrong! Wait for the next one') : '')
         : (g.solvedBy == index ? 'Correct! +1' : 'Too slow!');
+    final (icon, label) = _category(g.question.category);
+    final seat = PlayerPalette.indexOf(player.color) ?? index;
+    // Small zones (3-4 players sit sideways): lay out at 270 px tall and scale down to fit.
+    return LayoutBuilder(builder: (context, c) {
+      const design = 270.0;
+      final k = c.maxHeight < design ? design / c.maxHeight : 1.0;
+      final half = _half(locked, status, icon, label, seat);
+      return k == 1.0 ? half : FittedBox(child: SizedBox(width: c.maxWidth * k, height: design, child: half));
+    });
+  }
+
+  Widget _half(bool locked, String status, GameIcons icon, String label, int seat) {
     return Padding(
       padding: const EdgeInsets.all(10),
       child: Column(children: [
         Row(children: [
-          PlayerTagSmall(player: player),
-          Text('  ${g.score[index]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+          PlayerBadge(index: seat, size: 22, color: player.color, initial: player.name),
+          const SizedBox(width: 6),
+          Flexible(child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, color: nameColor(player.color), fontWeight: FontWeight.w900, fontSize: 14))),
+          const SizedBox(width: 6),
+          Text('${g.score[index]}', style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 22)),
           const SizedBox(width: 8),
-          Expanded(child: Text(status, textAlign: TextAlign.right, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
+          Expanded(
+            child: Text(status,
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w900, color: g.solvedBy == index ? StatusColors.success : (status.isEmpty ? Colors.white : const Color(0xFFFF8E8B)))),
+          ),
         ]),
+        const SizedBox(height: 4),
+        // First to N: a pip per point.
+        Align(alignment: Alignment.centerLeft, child: Pips(filled: g.score[index], total: g.target, color: player.color, size: 9)),
         Expanded(
           child: Center(
-            child: Text('${g.question.category} ${g.question.text}',
-                textAlign: TextAlign.center, maxLines: 4, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, height: 1.2)),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(8, 3, 10, 3),
+                decoration: BoxDecoration(color: NeonPalette.overlay, borderRadius: Radii.rChip, border: Border.all(color: Colors.white.withValues(alpha: 0.14))),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  GameIcon(icon, size: 14, color: Brand.gold),
+                  const SizedBox(width: 5),
+                  Text(label.toUpperCase(), style: const TextStyle(fontFamily: Fonts.body, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: Colors.white)),
+                ]),
+              ),
+              const SizedBox(height: 6),
+              Flexible(
+                child: Text(g.question.text,
+                    textAlign: TextAlign.center, maxLines: 4, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 20, height: 1.15)),
+              ),
+            ]),
           ),
         ),
-        for (var row = 0; row < 2; row++)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Row(children: [
-              for (final v in g.question.options.skip(row * 2).take(2))
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 3),
-                    child: Opacity(
-                      opacity: locked && !g.betweenQuestions ? 0.4 : 1,
-                      child: Material(
-                        color: g.solvedBy != null && v == g.question.answer ? GpColors.yes : player.color,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () {
-                            final r = g.answer(index, v);
-                            if (r != null) {
-                        haptic(r ? HapticWeight.light : HapticWeight.heavy);
-                        GameAudio.sfx(r ? 'coin' : 'lose');
-                      }
-                          },
-                          child: SizedBox(
-                            height: 46,
-                            child: Center(
-                              child: Padding(
+        Stack(alignment: Alignment.center, children: [
+          Column(children: [
+            for (var row = 0; row < 2; row++)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Row(children: [
+                  for (final v in g.question.options.skip(row * 2).take(2))
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: Opacity(
+                          opacity: locked && !g.betweenQuestions ? 0.35 : 1,
+                          child: Semantics(
+                            button: true,
+                            label: v,
+                            excludeSemantics: true,
+                            child: GestureDetector(
+                              onTap: () {
+                                final r = g.answer(index, v);
+                                if (r != null) {
+                                  haptic(r ? HapticWeight.light : HapticWeight.heavy);
+                                  GameAudio.sfx(r ? 'coin' : 'lose');
+                                }
+                              },
+                              child: Container(
+                                height: 48,
+                                alignment: Alignment.center,
                                 padding: const EdgeInsets.symmetric(horizontal: 6),
-                                child: FittedBox(child: Text(v, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
+                                decoration: BoxDecoration(
+                                  color: g.solvedBy != null && v == g.question.answer ? StatusColors.success : fillFor(player.color),
+                                  borderRadius: Radii.rChip,
+                                  boxShadow: Shadows.edge(Color.lerp(g.solvedBy != null && v == g.question.answer ? StatusColors.success : player.color, Colors.black, 0.45)!, depth: 3),
+                                ),
+                                child: FittedBox(fit: BoxFit.scaleDown, child: Text(v, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-            ]),
-          ),
+                ]),
+              ),
+          ]),
+          // Locked out after a wrong answer: a lock over this player's buttons.
+          if (locked && !g.betweenQuestions)
+            IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: NeonPalette.overlay, shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFF8E8B), width: 2)),
+                child: const GameIcon(GameIcons.lock, size: 26, color: Color(0xFFFF8E8B)),
+              ),
+            ),
+        ]),
       ]),
     );
   }
