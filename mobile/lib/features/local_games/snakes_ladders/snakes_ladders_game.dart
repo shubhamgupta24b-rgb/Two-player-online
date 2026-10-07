@@ -92,7 +92,7 @@ final snakesLaddersInfo = LocalGameInfo(
   tagline: 'Climb up, slide down, race to 100!',
   rules: const [
     'Take turns tapping the dice. Your token moves that many squares.',
-    'Land at the foot of a ladder 🪜 to climb up; land on a snake 🐍 head and slide down.',
+    'Land at the foot of a ladder to climb up; land on a snake head and slide down.',
     'Rolling a 6 gives you another roll. You need the exact number to land on 100.',
   ],
   scoreUnit: 'wins',

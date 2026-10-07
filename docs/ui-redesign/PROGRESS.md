@@ -479,3 +479,25 @@ Checked with render PNGs (a contact sheet of every solo game); the emulator can'
 **Note:** Hangman's category keys still contain emoji because they are game data; they are stripped when displayed.
 
 **Tests:** analyze clean, 830 tests pass.
+
+## Prompt 13 — Final pass
+
+**Emoji in the UI removed from:**
+- the online Raja Mantri screen (headlines, CAUGHT / ACCUSED badge);
+- the party results (rank medals are now gold / silver / bronze circles);
+- the online Guess Who round result and the online Fruit Duel lane (drawn apple);
+- the turns overlay badge (star / arrow icons);
+- the Guess the Person result (check / cross / lock icons) and timer label;
+- the settings sheet title;
+- inline rule texts (Snakes & Ladders, RPS, Most Likely, Draw & Guess);
+- dialogs and empty states (they draw the matching icon, or none).
+
+**Still emoji on screen:** the Guess the Person attribute question chips (noted in CHECKLIST.md).
+
+**Docs:** `CHECKLIST.md` has one row per game (62) with its status and notes, plus what could not be tested.
+
+**Tests and builds:**
+- Analyze clean; 830 tests pass (online test strings updated to match the new headlines).
+- Debug builds pass for both flavors; the release APK builds and was copied to `PartyGames.apk`.
+
+**Not tested:** online play and Wi-Fi hosting on real phones, touch / haptics / sound on a device, tablets.

@@ -284,7 +284,11 @@ class _AppDialog extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(Space.xl, Space.xl, Space.xl, Space.l),
                 child: SingleChildScrollView(
                   child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                    if (emoji != null) Text(emoji!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 44)),
+                    // Callers still pass an emoji; it is drawn as the matching icon (or left out).
+                    if (emoji != null && leadingRuleIcon(emoji!) != null) ...[
+                      Center(child: GameIcon(leadingRuleIcon(emoji!)!, size: 44, color: Brand.gold)),
+                      const SizedBox(height: Space.s),
+                    ],
                     Semantics(header: true, child: Text(title, textAlign: TextAlign.center, style: t.cardStyles.headline)),
                     if (message != null) ...[const SizedBox(height: Space.s), Text(message!, textAlign: TextAlign.center, style: t.cardStyles.body.copyWith(color: t.textMuted))],
                     if (body != null) ...[const SizedBox(height: Space.l), body!],
@@ -429,7 +433,7 @@ class EmptyState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(Space.xl),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(emoji, style: const TextStyle(fontSize: 52)),
+          GameIcon(leadingRuleIcon(emoji) ?? GameIcons.magnifier, size: 52, color: t.flat ? t.textMuted : t.onBgMuted),
           const SizedBox(height: Space.m),
           Text(title, textAlign: TextAlign.center, style: t.styles.title),
           if (message != null) ...[const SizedBox(height: Space.xs), Text(message!, textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted))],

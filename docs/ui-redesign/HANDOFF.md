@@ -1,6 +1,6 @@
 # Handoff: finish the Party Games UI redesign
 
-You are continuing a UI redesign of the Flutter app in `mobile/` (repo `Two-player-online`, branch `feature/ui-redesign`). About 20% of the work is left: B5 and B6 are done; the solo games (B7-B8) still need their own redesign, plus the final pass. Everything listed under "Already done" is committed and pushed. Work only on this branch and push after every batch.
+All phases (Prompts 0-4, B1-B8 and the final pass) are done, committed and pushed on `feature/ui-redesign`. Remaining known gaps are listed in CHECKLIST.md (Smash Karts park art, Draw & Guess brushes, Guess the Person attribute chips). What is left is testing on real phones.
 
 ## Read first
 1. `docs/ui-redesign/UI_SPEC.md`: the spec. Section 0 is strict, section 5 describes every game, and sections 8 and 9 are the quality bar and the done checklist.

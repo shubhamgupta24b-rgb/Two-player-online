@@ -23,7 +23,7 @@ final mostLikelyInfo = LocalGameInfo(
   rules: const [
     'A question appears: "Who is most likely to…?"',
     'Everyone secretly votes for a player (yes, you can vote for yourself).',
-    'The most-voted player gets a 👑 point. 8 questions. 3 to 6 players.',
+    'The most-voted player gets a crown point. 8 questions. 3 to 6 players.',
   ],
   scoreUnit: 'crowns',
   splitScreen: false,

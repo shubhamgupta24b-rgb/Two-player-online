@@ -70,7 +70,7 @@ class TimerBadge extends StatelessWidget {
             border: Border.all(color: color, width: 2),
           ),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('⏱ TIME', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800)),
+            Text('TIME', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800)),
             Text('$seconds', style: TextStyle(color: color, fontSize: 26, fontWeight: FontWeight.w900, height: 1.1)),
           ]),
         ),

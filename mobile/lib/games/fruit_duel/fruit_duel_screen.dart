@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/ui/components.dart';
 import 'package:provider/provider.dart';
 import '../../core/session/game_session_manager.dart';
 
@@ -29,7 +30,7 @@ class _FruitDuelScreenState extends State<FruitDuelScreen>{
         for(int i=0;i<3;i++) Expanded(child:Padding(padding:const EdgeInsets.all(6),child:FilledButton(
           onPressed:phase=='playing'?()=>session.action('fruit_duel:slash',{'fruitId':id,'lane':i}):null,
           child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-            Text(i==lane?'🍎':'•',style:TextStyle(fontSize:i==lane?58:30)),
+            i==lane?const GameIcon(GameIcons.apple,size:58):const Text('•',style:TextStyle(fontSize:30)),
             Text('LANE '+(i+1).toString())
           ]),
         )))

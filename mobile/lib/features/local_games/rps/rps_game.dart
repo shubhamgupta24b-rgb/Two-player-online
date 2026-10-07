@@ -77,7 +77,7 @@ final rpsInfo = LocalGameInfo(
   color: const Color(0xFFFD7E14),
   tagline: 'Stone, paper, scissors… SHOOT!',
   rules: const [
-    'Everyone secretly picks ✊ Rock, ✋ Paper or ✌️ Scissors on their own side.',
+    'Everyone secretly picks Rock, Paper or Scissors on their own side.',
     'Rock beats scissors, scissors beats paper, paper beats rock.',
     'You score a point for every player you beat. First to 5 (or 7 with more players) wins!',
   ],

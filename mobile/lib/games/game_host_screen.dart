@@ -79,7 +79,7 @@ class _RoomBar extends StatelessWidget implements PreferredSizeWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(20)),
-            child: Text('🎉 GAME ${party.index + 1}/${party.games.length}', style: const TextStyle(color: AppColors.night, fontWeight: FontWeight.w900, fontSize: 12)),
+            child: Text('GAME ${party.index + 1}/${party.games.length}', style: const TextStyle(color: AppColors.night, fontWeight: FontWeight.w900, fontSize: 12)),
           ),
       ]),
       bottom: PreferredSize(preferredSize: const Size.fromHeight(3), child: Container(height: 3, color: game.color)),
@@ -164,10 +164,10 @@ class _Results extends StatelessWidget {
       child: ListView(padding: const EdgeInsets.all(16), children: [
         Text(
             party?.done == true
-                ? '🏆 ${name(partyOrder.first).toUpperCase()} WINS THE PARTY!'
+                ? '${name(partyOrder.first).toUpperCase()} WINS THE PARTY!'
                 : winners.length > 1 && winners.length == ranking.length
-                    ? "🤝 IT'S A DRAW!"
-                    : (winners.contains(myId) ? '🎉 YOU WIN!' : 'RESULTS'),
+                    ? "IT'S A DRAW!"
+                    : (winners.contains(myId) ? 'YOU WIN!' : 'RESULTS'),
             textAlign: TextAlign.center, style: const TextStyle(color: AppColors.gold, fontSize: 28, fontWeight: FontWeight.w900)),
         const SizedBox(height: 12),
         for (final r in ranking)
@@ -180,7 +180,14 @@ class _Results extends StatelessWidget {
               border: Border.all(color: r['rank'] == 1 ? AppColors.gold : AppColors.stroke),
             ),
             child: Row(children: [
-              Text(switch (r['rank']) { 1 => '🥇', 2 => '🥈', 3 => '🥉', _ => '#${r['rank']}' }, style: const TextStyle(fontSize: 22, color: Colors.white)),
+              // Rank medal: gold, silver, bronze, then plain numbers.
+              Container(
+                width: 30,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: switch (r['rank']) { 1 => Brand.gold, 2 => const Color(0xFFC7CEDB), 3 => const Color(0xFFD08A4E), _ => Colors.white24 }),
+                child: Text('${r['rank']}', style: const TextStyle(fontFamily: Fonts.display, fontSize: 16, color: Color(0xFF2A1E05))),
+              ),
               const SizedBox(width: 12),
               Expanded(child: Text('${r['username']}${r['userId'] == myId ? ' (you)' : ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16))),
               Text('${r['score']}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),

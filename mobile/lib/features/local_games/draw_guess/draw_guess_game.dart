@@ -168,7 +168,7 @@ final drawGuessInfo = LocalGameInfo(
   color: const Color(0xFFE84393),
   tagline: 'Draw it. Guess it. No words!',
   rules: const [
-    'On your turn, peek at the secret word (hold the 👁 button) and draw it. No letters or numbers!',
+    'On your turn, peek at the secret word (hold the eye button) and draw it. No letters or numbers!',
     'Everyone else guesses out loud. Tap who got it: you both score a point.',
     'Online, guessers type their answers and the app checks them. 75 seconds per drawing. 2 to 6 players.',
   ],

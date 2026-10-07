@@ -267,7 +267,7 @@ void main() {
       await tester.tap(find.text('TAP TO SEE YOUR CARD'));
       await flip(tester);
       expect(find.text('SIPAHI'), findsOneWidget);
-      expect(find.text('You are the SIPAHI 👮'), findsOneWidget);
+      expect(find.text('You are the SIPAHI'), findsOneWidget);
       expect(find.text('1500 pts'), findsOneWidget);
       await disposeGame(tester);
     });
@@ -276,7 +276,7 @@ void main() {
       final s = FakeSession(state('guessing', roles: {'me': 'mantri', 'c': 'raja'}));
       await pumpGame(tester, const RajaMantriScreen(), s);
       await flip(tester);
-      expect(find.text('🧠 Who is the CHOR?'), findsOneWidget);
+      expect(find.text('Who is the CHOR?'), findsOneWidget);
       expect(find.text('Tap Bina or Dev.'), findsOneWidget);
       expect(find.text('TAP TO ACCUSE'), findsNWidgets(2));
       await tester.tap(find.text('DEV'));
@@ -289,8 +289,8 @@ void main() {
       final s = FakeSession(state('guessing', yourRole: 'chor', roles: {'me': 'chor', 'b': 'mantri', 'c': 'raja'}));
       await pumpGame(tester, const RajaMantriScreen(), s);
       await flip(tester);
-      expect(find.text('🧠 Bina is choosing…'), findsOneWidget);
-      expect(find.text('Act natural… 😇'), findsOneWidget);
+      expect(find.text('Bina is choosing…'), findsOneWidget);
+      expect(find.text('Act natural…'), findsOneWidget);
       expect(find.text('TAP TO ACCUSE'), findsNothing);
       await disposeGame(tester);
     });
@@ -304,7 +304,7 @@ void main() {
       await pumpGame(tester, const RajaMantriScreen(), s);
       await tester.pump(const Duration(milliseconds: 1000));
       expect(find.text('Chor caught!'), findsOneWidget);
-      for (final t in ['RAJA', 'MANTRI', 'SIPAHI', 'CHOR', '🚨 CAUGHT!', '+1000', '+500', '+300', '+0']) {
+      for (final t in ['RAJA', 'MANTRI', 'SIPAHI', 'CHOR', 'CAUGHT!', '+1000', '+500', '+300', '+0']) {
         expect(find.text(t), findsOneWidget, reason: t);
       }
       expect(find.textContaining('Next round in'), findsOneWidget);
