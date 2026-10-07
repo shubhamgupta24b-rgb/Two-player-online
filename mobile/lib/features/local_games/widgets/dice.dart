@@ -52,24 +52,49 @@ class DiceFace extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => SizedBox(
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Colors.white, Color(0xFFE2E4F0)]),
-          borderRadius: BorderRadius.circular(size * 0.2),
-          boxShadow: [
-            const BoxShadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 3)),
-            if (glow != null) BoxShadow(color: glow!.withValues(alpha: 0.8), blurRadius: 14, spreadRadius: 1),
-          ],
-        ),
-        child: Stack(children: [
-          for (final (x, y) in _pips[value.clamp(1, 6)]!)
-            Positioned(
-              left: size * x - size * 0.09,
-              top: size * y - size * 0.09,
-              child: Container(width: size * 0.18, height: size * 0.18, decoration: BoxDecoration(shape: BoxShape.circle, color: value == 1 ? const Color(0xFFE53935) : const Color(0xFF1E1B3A))),
-            ),
-        ]),
+        child: CustomPaint(painter: _DiePainter(value.clamp(1, 6), glow)),
       );
+}
+
+/// A die with depth: a rounded white cube with a shaded lower edge, a soft top light and
+/// sunken pips (red single pip, as on real dice).
+class _DiePainter extends CustomPainter {
+  final int value;
+  final Color? glow;
+  _DiePainter(this.value, this.glow);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = Offset.zero & size;
+    final rad = Radius.circular(size.width * 0.22);
+    final body = RRect.fromRectAndRadius(r.deflate(size.width * 0.02), rad);
+    if (glow != null) {
+      canvas.drawRRect(body.inflate(2), Paint()
+        ..color = glow!.withValues(alpha: 0.75)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, size.width * 0.14));
+    }
+    canvas.drawRRect(body.shift(Offset(0, size.width * 0.06)), Paint()..color = const Color(0x66000000));
+    canvas.drawRRect(body, Paint()..color = const Color(0xFFB9BCD0)); // lower edge
+    final top = RRect.fromRectAndCorners(Rect.fromLTRB(body.left, body.top, body.right, body.bottom - size.width * 0.07), topLeft: rad, topRight: rad, bottomLeft: rad, bottomRight: rad);
+    canvas.drawRRect(top, Paint()..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Colors.white, Color(0xFFE6E8F2)]).createShader(r));
+    canvas.drawRRect(top.deflate(size.width * 0.03), Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.02
+      ..color = Colors.white.withValues(alpha: 0.8));
+    for (final (x, y) in DiceFace._pips[value]!) {
+      final c = Offset(size.width * x, (size.height - size.width * 0.07) * y);
+      final pr = size.width * 0.085;
+      canvas.drawCircle(c, pr, Paint()..shader = RadialGradient(center: const Alignment(-0.3, -0.3), colors: value == 1 ? const [Color(0xFFFF6B6B), Color(0xFFC62828)] : const [Color(0xFF3A3560), Color(0xFF14102E)]).createShader(Rect.fromCircle(center: c, radius: pr)));
+      canvas.drawCircle(c + Offset(0, pr * 0.25), pr, Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = pr * 0.25
+        ..color = Colors.white.withValues(alpha: 0.35));
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DiePainter old) => old.value != value || old.glow != glow;
 }

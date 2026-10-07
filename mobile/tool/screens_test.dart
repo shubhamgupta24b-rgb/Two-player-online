@@ -78,7 +78,7 @@ void main() {
       ));
       await tester.pump(const Duration(milliseconds: 300));
       await snap(tester, key, '${game.id}_intro');
-      final play = find.text('PLAY');
+      final play = find.text('Start');
       await tester.ensureVisible(play);
       await tester.pump();
       await tester.tap(play);
@@ -91,6 +91,13 @@ void main() {
       }
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 120));
+      }
+      // A few taps (dice tray, board) to get into the game.
+      for (final f in const [Offset(0.85, 0.9), Offset(0.5, 0.5), Offset(0.85, 0.9), Offset(0.3, 0.6)]) {
+        await tester.tapAt(Offset(411 * f.dx, 914 * f.dy));
+        for (var i = 0; i < 12; i++) {
+          await tester.pump(const Duration(milliseconds: 120));
+        }
       }
       await snap(tester, key, '${game.id}_play');
       await tester.pumpWidget(const SizedBox());

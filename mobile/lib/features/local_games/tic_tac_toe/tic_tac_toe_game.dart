@@ -5,6 +5,7 @@ import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/game_hud.dart';
+import '../shell/local_game_shell.dart' show ResultScope;
 import '../shell/ticking_play.dart';
 
 /// Classic noughts and crosses. Player 1 is X, player 2 is O; whoever starts
@@ -81,9 +82,7 @@ final ticTacToeInfo = LocalGameInfo(
     }
 
     // Win, else block, else centre, else a corner, else anything. Sometimes it slips up.
-    final int move = b.chance(0.12)
-        ? b.pick(empty)
-        : finishing(b.seat) ?? finishing(1 - b.seat) ?? (g.cells[4] < 0 ? 4 : null) ?? [0, 2, 6, 8].where(empty.contains).firstOrNull ?? b.pick<int>(empty);
+    final int move = b.chance(0.12) ? b.pick(empty) : finishing(b.seat) ?? finishing(1 - b.seat) ?? (g.cells[4] < 0 ? 4 : null) ?? [0, 2, 6, 8].where(empty.contains).firstOrNull ?? b.pick<int>(empty);
     g.play(move);
   }),
   online: RelaySpec<TicTacToeLogic>(
@@ -144,59 +143,73 @@ class _BoardState extends State<_Board> {
   Widget build(BuildContext context) {
     final g = widget.g, players = widget.players;
     final current = players[g.turn];
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.l),
-      child: Column(children: [
-        GameHud(players: players, turn: g.finished ? null : g.turn, extra: (i) => _Board.mark(i)),
-        const Spacer(),
-        GameStatus(
-          player: g.winner != null ? players[g.winner!] : current,
-          turnText: g.isDraw ? null : '${current.whose} TURN (${_Board.mark(g.turn)})',
-          message: g.winner != null ? '🏆 ${players[g.winner!].name.toUpperCase()} WINS!' : (g.isDraw ? "🤝 IT'S A DRAW!" : null),
-        ),
-        const SizedBox(height: Space.m),
-        LayoutBuilder(builder: (context, c) {
-          final side = c.maxWidth.clamp(0.0, 460.0);
-          return Shake(
-            trigger: _bumps == 0 ? null : _bumps,
-            child: SizedBox(
-              width: side,
-              height: side,
-              child: RepaintBoundary(
-                child: CustomPaint(
-                  painter: const _SlatePainter(),
-                  child: Padding(
-                    padding: EdgeInsets.all(side * 0.07),
-                    child: Stack(children: [
-                      GridView.count(
-                        crossAxisCount: 3,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          for (var i = 0; i < 9; i++)
-                            Semantics(
-                              button: g.cells[i] < 0 && !g.finished,
-                              label: 'Row ${i ~/ 3 + 1}, column ${i % 3 + 1}: ${g.cells[i] < 0 ? 'empty' : _Board.mark(g.cells[i])}',
-                              excludeSemantics: true,
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () => _tap(i),
-                                child: g.cells[i] < 0
-                                    ? const SizedBox.expand()
-                                    : _Mark(key: ValueKey('m$i${g.cells[i]}'), x: g.cells[i] == 0, color: Color.lerp(players[g.cells[i]].color, _chalk, 0.25)!, glow: g.winLine?.contains(i) ?? false),
+    ResultScope.of(context)?.subtitle = g.winner != null ? 'Three in a row' : (g.isDraw ? 'Every square taken' : null);
+    return MomentWatcher<bool>(
+      value: g.finished,
+      onChange: (fx, _, done) {
+        if (!done) return;
+        if (g.winner != null) {
+          keyMoment(fx, 'THREE IN A ROW!', sub: '${players[g.winner!].name} wins', sound: 'win', confetti: true);
+        } else {
+          keyMoment(fx, 'DRAW!', sub: 'Every square taken', color: Colors.white);
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.l),
+        child: Column(children: [
+          ScoreHud(
+            title: 'Tic-Tac-Toe',
+            state: g.winner != null ? '${players[g.winner!].name} wins' : (g.isDraw ? 'Draw' : '${possessive(current.name)} turn (${_Board.mark(g.turn)})'),
+            players: players,
+            turn: g.finished ? null : g.turn,
+            score: (i) => _Board.mark(i),
+            tag: (i) => !g.finished && i == g.turn ? 'YOUR TURN' : (g.winner == i ? 'WINNER' : null),
+          ),
+          const Spacer(),
+          LayoutBuilder(builder: (context, c) {
+            final side = c.maxWidth.clamp(0.0, 460.0);
+            return Shake(
+              trigger: _bumps == 0 ? null : _bumps,
+              child: SizedBox(
+                width: side,
+                height: side,
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: const _SlatePainter(),
+                    child: Padding(
+                      padding: EdgeInsets.all(side * 0.07),
+                      child: Stack(children: [
+                        GridView.count(
+                          crossAxisCount: 3,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            for (var i = 0; i < 9; i++)
+                              Semantics(
+                                button: g.cells[i] < 0 && !g.finished,
+                                label: 'Row ${i ~/ 3 + 1}, column ${i % 3 + 1}: ${g.cells[i] < 0 ? 'empty' : _Board.mark(g.cells[i])}',
+                                excludeSemantics: true,
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => _tap(i),
+                                  child: g.cells[i] < 0
+                                      ? const SizedBox.expand()
+                                      : _Mark(
+                                          key: ValueKey('m$i${g.cells[i]}'), x: g.cells[i] == 0, color: Color.lerp(players[g.cells[i]].color, _chalk, 0.25)!, glow: g.winLine?.contains(i) ?? false),
+                                ),
                               ),
-                            ),
-                        ],
-                      ),
-                      if (g.winLine != null) Positioned.fill(child: IgnorePointer(child: _WinLine(line: g.winLine!))),
-                    ]),
+                          ],
+                        ),
+                        if (g.winLine != null) Positioned.fill(child: IgnorePointer(child: _WinLine(line: g.winLine!))),
+                      ]),
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        }),
-        const Spacer(flex: 2),
-      ]),
+            );
+          }),
+          const Spacer(flex: 2),
+        ]),
+      ),
     );
   }
 }
@@ -217,7 +230,11 @@ class _SlatePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     for (var k = 0; k < 14; k++) {
       final y = size.height * (k + 0.5) / 14;
-      canvas.drawPath(Path()..moveTo(0, y)..quadraticBezierTo(size.width / 2, y + (k.isEven ? 6 : -6), size.width, y), grain);
+      canvas.drawPath(
+          Path()
+            ..moveTo(0, y)
+            ..quadraticBezierTo(size.width / 2, y + (k.isEven ? 6 : -6), size.width, y),
+          grain);
     }
     final inner = r.deflate(size.width * 0.045);
     final slate = RRect.fromRectAndRadius(inner, Radius.circular(size.width * 0.03));
@@ -225,7 +242,8 @@ class _SlatePainter extends CustomPainter {
     // Chalk dust smudges.
     for (final (x, y, rad) in const [(0.3, 0.25, 0.18), (0.72, 0.6, 0.22), (0.4, 0.8, 0.15)]) {
       final c = Offset(inner.left + inner.width * x, inner.top + inner.height * y);
-      canvas.drawCircle(c, inner.width * rad, Paint()..shader = RadialGradient(colors: [Colors.white.withValues(alpha: 0.05), Colors.white.withValues(alpha: 0)]).createShader(Rect.fromCircle(center: c, radius: inner.width * rad)));
+      canvas.drawCircle(c, inner.width * rad,
+          Paint()..shader = RadialGradient(colors: [Colors.white.withValues(alpha: 0.05), Colors.white.withValues(alpha: 0)]).createShader(Rect.fromCircle(center: c, radius: inner.width * rad)));
     }
     // Grid: two slightly wobbly chalk lines each way.
     final play = r.deflate(size.width * 0.07);
@@ -235,8 +253,16 @@ class _SlatePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     for (var k = 1; k <= 2; k++) {
       final x = play.left + play.width * k / 3, y = play.top + play.height * k / 3;
-      canvas.drawPath(Path()..moveTo(x - 2, play.top + 6)..quadraticBezierTo(x + 3, play.center.dy, x - 1, play.bottom - 6), chalk..style = PaintingStyle.stroke);
-      canvas.drawPath(Path()..moveTo(play.left + 6, y + 2)..quadraticBezierTo(play.center.dx, y - 3, play.right - 6, y + 1), chalk);
+      canvas.drawPath(
+          Path()
+            ..moveTo(x - 2, play.top + 6)
+            ..quadraticBezierTo(x + 3, play.center.dy, x - 1, play.bottom - 6),
+          chalk..style = PaintingStyle.stroke);
+      canvas.drawPath(
+          Path()
+            ..moveTo(play.left + 6, y + 2)
+            ..quadraticBezierTo(play.center.dx, y - 3, play.right - 6, y + 1),
+          chalk);
     }
   }
 
@@ -312,10 +338,13 @@ class _WinLinePainter extends CustomPainter {
     final a = centre(line.first), b = centre(line.last);
     final dir = (b - a) / (b - a).distance;
     final start = a - dir * size.width * 0.12, end = b + dir * size.width * 0.12;
-    canvas.drawLine(start, Offset.lerp(start, end, p)!, Paint()
-      ..color = Brand.gold
-      ..strokeWidth = size.width * 0.04
-      ..strokeCap = StrokeCap.round);
+    canvas.drawLine(
+        start,
+        Offset.lerp(start, end, p)!,
+        Paint()
+          ..color = Brand.gold
+          ..strokeWidth = size.width * 0.04
+          ..strokeCap = StrokeCap.round);
   }
 
   @override

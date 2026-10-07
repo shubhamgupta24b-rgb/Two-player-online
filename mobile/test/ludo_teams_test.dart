@@ -102,8 +102,8 @@ void main() {
     expect(find.text('Player 1 + Player 3 vs Player 2 + Player 4'), findsOneWidget);
     await tapStart(tester);
     await tester.pump(const Duration(milliseconds: 2800));
-    expect(find.textContaining('🅰 Player 1'), findsOneWidget, reason: 'team badges on the board');
-    expect(find.textContaining('🅱 Player 2'), findsOneWidget);
+    expect(find.text('TEAM A'), findsNWidgets(2), reason: 'team tags on the score cards');
+    expect(find.text('TEAM B'), findsNWidgets(2));
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));
   });

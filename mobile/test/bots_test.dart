@@ -119,7 +119,7 @@ void main() {
     expect(find.text('You'), findsOneWidget, reason: 'the one person is "You"');
     await tapStart(tester);
     await tester.pump(const Duration(milliseconds: 2800));
-    expect(find.text('YOUR ROLL'), findsOneWidget, reason: 'seat 0 is "You"');
+    expect(find.text('Your roll'), findsOneWidget, reason: 'seat 0 is "You"');
     await tester.tap(find.byType(RollingDice));
     await tester.pump();
     // The computer takes its own turn a moment later.
@@ -156,7 +156,7 @@ void main() {
     expect(find.text('CPU 2'), findsNothing);
     await tapStart(tester);
     await tester.pump(const Duration(milliseconds: 2800));
-    expect(find.text("PLAYER 1'S ROLL"), findsOneWidget, reason: 'people are named Player 1-3, not "You"');
+    expect(find.text("Player 1's roll"), findsOneWidget, reason: 'people are named Player 1-3, not "You"');
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));
   });

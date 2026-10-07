@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/components.dart';
+import '../../../core/ui/materials/materials.dart';
 import '../../guess_person/models/gp_player.dart';
+import '../../../core/audio/game_audio.dart';
+import '../party/party_widgets.dart' show GameTopBar;
 import 'local_game_shell.dart' show PauseButton;
 
 /// The shared in-game header for turn-based and score games: pause, one chip per player
@@ -96,7 +99,8 @@ class GameStatus extends StatelessWidget {
   }
 }
 
-/// The bottom tray of the dice games: the last event, whose roll it is, and the dice.
+/// The bottom tray of the dice games (spec 5.1): whose roll it is in their colour, the last
+/// event under it, and the dice on the right.
 class DiceTray extends StatelessWidget {
   final String message;
   final GpPlayer player;
@@ -107,43 +111,145 @@ class DiceTray extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tk;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(Space.m, Space.s, Space.s, Space.s),
-      decoration: BoxDecoration(color: t.glass, borderRadius: Radii.rXl, border: Border.all(color: player.color.withValues(alpha: 0.6), width: 2)),
-      child: Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-            if (message.isNotEmpty)
-              Semantics(
-                liveRegion: true,
-                child: Text(message, maxLines: 2, overflow: TextOverflow.ellipsis, style: t.styles.caption.copyWith(color: t.onBgMuted)),
-              ),
-            const SizedBox(height: Space.xs),
-            Align(alignment: Alignment.centerLeft, child: TurnBanner(text: turnText, color: player.color, compact: true)),
-          ]),
+    final seat = PlayerPalette.indexOf(player.color) ?? 0;
+    return Semantics(
+      liveRegion: true,
+      label: '${stripEmoji(turnText)}. ${stripEmoji(message)}',
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+        decoration: BoxDecoration(
+          color: t.flat ? Colors.white : player.color.withValues(alpha: 0.10),
+          borderRadius: Radii.rButton,
+          border: Border.all(color: player.color.withValues(alpha: 0.6), width: 1.5),
         ),
-        const SizedBox(width: Space.s),
-        dice,
-      ]),
+        child: Row(children: [
+          PlayerBadge(index: seat, size: 26, color: player.color, initial: player.name),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ExcludeSemantics(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                Text(sentence(stripEmoji(turnText)), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 19, height: 1.1, color: t.flat ? fillFor(player.color) : nameColor(player.color))),
+                if (message.isNotEmpty)
+                  Text(stripEmoji(message), maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w700, color: t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted)),
+              ]),
+            ),
+          ),
+          const SizedBox(width: 8),
+          dice,
+        ]),
+      ),
     );
   }
 }
-/// A raised rim around a game board (wood by default) so it sits on the table, not the screen.
-class BoardFrame extends StatelessWidget {
-  final Widget child;
-  final List<Color> colors;
-  final double rim;
-  const BoardFrame({super.key, required this.child, this.colors = const [Color(0xFF7A4A28), Color(0xFF452814)], this.rim = 7});
+
+/// "PLAYER 1'S ROLL" -> "Player 1's roll": banners read in sentence case, names kept.
+String sentence(String s) => s == s.toUpperCase() && s.length > 1 ? s[0] + s.substring(1).toLowerCase() : s;
+
+/// The board-game header (spec 2.3, 2.5): the game top bar, then one [PlayerScoreCard] per
+/// player (two columns for 2 players, a compact row for 3-4, a grid for 5-6).
+class ScoreHud extends StatelessWidget {
+  final String title;
+  final String? state;
+  final List<GpPlayer> players;
+  final int? turn; // lit up; null: nobody's turn
+  final String? Function(int i)? score;
+  final String? Function(int i)? tag;
+  final Widget? Function(int i, bool compact)? detail;
+  final Set<int> out;
+  final Widget? trailing;
+  final String Function(int i)? nameOf;
+  const ScoreHud(
+      {super.key, required this.title, this.state, required this.players, this.turn, this.score, this.tag, this.detail, this.out = const {}, this.trailing, this.nameOf});
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.all(rim),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: colors, begin: Alignment.topLeft, end: Alignment.bottomRight),
-          borderRadius: Radii.rLg,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-          boxShadow: const [BoxShadow(color: Colors.black54, offset: Offset(0, 8), blurRadius: 8)],
+  Widget build(BuildContext context) {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      GameTopBar(title: title, subtitle: state, trailing: trailing),
+      const SizedBox(height: 6),
+      PlayerScoreRow(
+        count: players.length,
+        card: (i, compact) => PlayerScoreCard(
+          seat: PlayerPalette.indexOf(players[i].color) ?? i,
+          color: players[i].color,
+          name: nameOf?.call(i) ?? players[i].name,
+          score: score?.call(i),
+          active: turn == i,
+          out: out.contains(i),
+          tag: tag?.call(i),
+          compact: compact,
+          detail: detail?.call(i, compact),
         ),
-        child: ClipRRect(borderRadius: Radii.rSm, child: child),
+      ),
+    ]);
+  }
+}
+
+/// Calls [onChange] (after the frame) whenever [value] changes: how a game view turns a
+/// change in its state (a message, a score) into a key-moment announcement, sound and buzz.
+class MomentWatcher<T> extends StatefulWidget {
+  final T value;
+  final void Function(GameFeedback? fx, T before, T now) onChange;
+  final Widget child;
+  const MomentWatcher({super.key, required this.value, required this.onChange, required this.child});
+  @override
+  State<MomentWatcher<T>> createState() => _MomentWatcherState<T>();
+}
+
+class _MomentWatcherState<T> extends State<MomentWatcher<T>> {
+  @override
+  void didUpdateWidget(MomentWatcher<T> old) {
+    super.didUpdateWidget(old);
+    if (old.value != widget.value) {
+      final before = old.value, now = widget.value;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onChange(GameFeedback.of(context), before, now);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// A key moment (spec 3.4): a big announcement, a sound and a buzz in one call.
+void keyMoment(GameFeedback? fx, String text, {String sub = '', String sound = 'pop', HapticWeight buzz = HapticWeight.medium, Color color = Brand.gold, bool confetti = false, bool shake = false}) {
+  fx?.announce(text, sub: sub, color: color);
+  if (confetti) fx?.confetti();
+  if (shake) fx?.shake();
+  GameAudio.sfx(sound);
+  haptic(buzz);
+}
+
+/// A raised wooden rim around a game board so it sits on the table, not the screen.
+/// [colors] tints the rim (default: the shared wood material).
+class BoardFrame extends StatelessWidget {
+  final Widget child;
+  final List<Color>? colors;
+  final double rim;
+  const BoardFrame({super.key, required this.child, this.colors, this.rim = 8});
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+        decoration: BoxDecoration(borderRadius: Radii.rLg, boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 20, offset: Offset(0, 10))]),
+        child: ClipRRect(
+          borderRadius: Radii.rLg,
+          child: CustomPaint(
+            painter: colors == null ? const WoodPainter(radius: Radii.lg) : null,
+            child: Container(
+              padding: EdgeInsets.all(rim),
+              decoration: colors == null
+                  ? BoxDecoration(borderRadius: Radii.rLg, border: Border.all(color: Colors.white.withValues(alpha: 0.18)))
+                  : BoxDecoration(gradient: LinearGradient(colors: colors!, begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: Radii.rLg),
+              child: DecoratedBox(
+                position: DecorationPosition.foreground,
+                decoration: BoxDecoration(borderRadius: Radii.rSm, border: Border.all(color: const Color(0x66000000), width: 1.5)),
+                child: ClipRRect(borderRadius: Radii.rSm, child: child),
+              ),
+            ),
+          ),
+        ),
       );
 }
+
+/// "Your" for the lone person (named You), otherwise "Name's".
+String possessive(String name) => name == 'You' ? 'Your' : "$name's";

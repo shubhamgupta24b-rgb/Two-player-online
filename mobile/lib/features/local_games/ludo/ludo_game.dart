@@ -2,9 +2,14 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/ui/components.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/services.dart';
+import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/materials/materials.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
+import '../shell/local_game_shell.dart' show ResultScope;
+import '../widgets/pawn.dart';
 import '../shell/game_hud.dart';
 import '../shell/ticking_play.dart';
 import '../widgets/dice.dart';
@@ -111,44 +116,81 @@ class _LudoTable extends StatelessWidget {
   final LudoLogic g;
   const _LudoTable({required this.players, required this.g});
 
+  int _home(int i) => g.tokens[i].where((t) => t == LudoLogic.home).length;
+
   @override
   Widget build(BuildContext context) {
     final current = players[g.turn];
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
-      child: Column(children: [
-        GameHud(
-          players: players,
-          turn: g.finished ? null : g.turn,
-          nameOf: (i) => '${g.teams ? (i.isEven ? '🅰 ' : '🅱 ') : ''}${players[i].name}',
-          extra: (i) => '🏠${g.tokens[i].where((t) => t == LudoLogic.home).length}',
-        ),
-        const SizedBox(height: Space.s),
-        Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: BoardFrame(child: RepaintBoundary(child: _Board(players: players, g: g)))))),
-        const SizedBox(height: Space.s),
-        DiceTray(
-          message: g.message,
-          player: current,
-          turnText: g.phase == LudoPhase.move
-              ? '${current.name.toUpperCase()}: MOVE ${g.lastRoll}${g.mover != g.turn ? ' (FOR ${players[g.mover].name.toUpperCase()})' : ''}'
-              : '${current.whose} ROLL',
-          dice: RollingDice(
-            value: g.lastRoll ?? 6,
-            rollId: g.rolls,
-            color: current.color,
-            size: 64,
-            onTap: g.phase == LudoPhase.roll
-                ? () {
-                    haptic(HapticWeight.medium);
-                    g.roll();
-                  }
-                : null,
+    final mover = players[g.mover];
+    // Results: each player's tokens home.
+    ResultScope.of(context)
+      ?..subtitle = g.winner == null ? null : (g.teams ? 'Both partners home' : 'All four tokens home')
+      ..detail = (context, i) => Pips(filled: _home(i), total: LudoLogic.tokensEach, color: players[i].color, size: 11);
+    return MomentWatcher<String>(
+      value: '${g.rolls}|${g.message}',
+      onChange: (fx, _, now) {
+        final m = g.message;
+        if (m.contains('Captured')) {
+          keyMoment(fx, 'CAPTURED!', sub: 'Roll again', sound: 'hit', buzz: HapticWeight.heavy, shake: true);
+        } else if (m.contains('All home')) {
+          keyMoment(fx, 'ALL HOME!', sub: 'Now move your partner\'s tokens', sound: 'coin');
+        } else if (m.contains('Token home')) {
+          keyMoment(fx, 'HOME!', sub: 'Roll again', sound: 'coin', confetti: true);
+        } else if (m.contains('Three 6s')) {
+          keyMoment(fx, 'TURN LOST', sub: 'Three 6s in a row', sound: 'lose', color: StatusColors.danger);
+        } else if (m.startsWith('Rolled a 6') || m.startsWith('No moves. Roll again')) {
+          fx?.pop('ROLL AGAIN');
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
+        child: Column(children: [
+          ScoreHud(
+            title: g.teams ? 'Ludo 2 vs 2' : 'Ludo',
+            state: g.finished ? 'Game over' : (g.phase == LudoPhase.move ? 'Move ${g.lastRoll}' : '${current.name}: roll'),
+            players: players,
+            turn: g.finished ? null : g.turn,
+            score: (i) => '${_home(i)}',
+            tag: (i) => g.teams ? (i.isEven ? 'TEAM A' : 'TEAM B') : (i == g.turn && !g.finished ? (g.phase == LudoPhase.move ? 'MOVE' : 'ROLL') : null),
+            detail: (i, compact) => Pips(filled: _home(i), total: LudoLogic.tokensEach, color: players[i].color, size: compact ? 7 : 10),
           ),
-        ),
-      ]),
+          const SizedBox(height: Space.s),
+          Expanded(
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: Semantics(
+                  label: 'Ludo board. ${current.name} to ${g.phase == LudoPhase.move ? 'move ${g.lastRoll}' : 'roll'}',
+                  child: BoardFrame(child: RepaintBoundary(child: _Board(players: players, g: g))),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: Space.s),
+          DiceTray(
+            message: g.message,
+            player: current,
+            turnText: g.phase == LudoPhase.move ? '${current.name}: move ${g.lastRoll}${g.mover != g.turn ? ' for ${mover.name}' : ''}' : '${possessive(current.name)} roll',
+            dice: RollingDice(
+              value: g.lastRoll ?? 6,
+              rollId: g.rolls,
+              color: current.color,
+              size: 60,
+              onTap: g.phase == LudoPhase.roll
+                  ? () {
+                      haptic(HapticWeight.medium);
+                      GameAudio.sfx('throw');
+                      g.roll();
+                    }
+                  : null,
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }
+
 class _Board extends StatefulWidget {
   final List<GpPlayer> players;
   final LudoLogic g;
@@ -282,15 +324,15 @@ class _BoardState extends State<_Board> {
                       g.move(t);
                     }
                   : null,
-              child: _Pawn(color: players[p].color, glow: movable),
+              child: _Pawn(color: players[p].color, seat: PlayerPalette.indexOf(players[p].color) ?? p, glow: movable),
             ),
           ),
         ));
       }
       return ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(6),
         child: Stack(children: [
-          Positioned.fill(child: CustomPaint(painter: _LudoPainter(seatColors))),
+          Positioned.fill(child: RepaintBoundary(child: CustomPaint(painter: _LudoPainter(seatColors)))),
           ...widgets,
           ...onTop, // movable tokens above the rest so they're easy to tap
         ]),
@@ -299,90 +341,91 @@ class _BoardState extends State<_Board> {
   }
 }
 
+/// A glossy dome token: the seat colour with a rim, a shadow, and the player's shape on top
+/// so tokens never differ by colour alone. Movable tokens get a gold ring.
 class _Pawn extends StatelessWidget {
   final Color color;
+  final int seat;
   final bool glow;
-  const _Pawn({required this.color, required this.glow});
+  const _Pawn({required this.color, required this.seat, required this.glow});
   @override
-  Widget build(BuildContext context) => AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(center: const Alignment(-0.3, -0.4), colors: [Color.lerp(color, Colors.white, 0.5)!, color, Color.lerp(color, Colors.black, 0.3)!]),
-          border: Border.all(color: glow ? Colors.white : Colors.black87, width: glow ? 3 : 1.5),
-          boxShadow: [
-            const BoxShadow(color: Colors.black54, blurRadius: 3, offset: Offset(0, 2)),
-            if (glow) const BoxShadow(color: Color(0xFFFFE066), blurRadius: 10, spreadRadius: 2),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) => CustomPaint(painter: PawnPainter(color, seat, glow: glow));
 }
 
+/// The board: a wood table with cream inlaid squares, seat-coloured bases and home paths,
+/// drawn star safe squares and a trophy at the centre.
 class _LudoPainter extends CustomPainter {
   final List<Color?> seatColors;
   _LudoPainter(this.seatColors);
+
+  static const _cream = Color(0xFFF6EBD2), _creamLine = Color(0x33704A20);
 
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.width / 15;
     Color seat(int i) => seatColors[i] ?? const Color(0xFF9A9AB0);
-    Rect cell(int c, int r) => Rect.fromLTWH(c * s, r * s, s, s);
-    final line = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = Colors.black26;
-
-    canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white);
-    // Bases.
+    Rect cell(int c, int r) => Rect.fromLTWH(c * s, r * s, s, s).deflate(s * 0.04);
+    RRect tile(int c, int r) => RRect.fromRectAndRadius(cell(c, r), Radius.circular(s * 0.14));
+    const WoodPainter(radius: 0).paint(canvas, size);
+    // Bases: seat colour with a cream yard and four token spots.
     const origins = [(0, 0), (9, 0), (9, 9), (0, 9)];
     for (var i = 0; i < 4; i++) {
       final (bx, by) = origins[i];
-      final base = Rect.fromLTWH(bx * s, by * s, 6 * s, 6 * s);
-      canvas.drawRect(base, Paint()..color = seat(i));
-      final inner = RRect.fromRectAndRadius(base.deflate(s * 0.8), Radius.circular(s * 0.5));
-      canvas.drawRRect(inner, Paint()..color = Colors.white);
+      final base = RRect.fromRectAndRadius(Rect.fromLTWH(bx * s, by * s, 6 * s, 6 * s).deflate(s * 0.12), Radius.circular(s * 0.5));
+      canvas.drawRRect(
+          base,
+          Paint()
+            ..shader = LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color.lerp(seat(i), Colors.white, 0.12)!, Color.lerp(seat(i), Colors.black, 0.18)!])
+                .createShader(base.outerRect));
+      final yard = RRect.fromRectAndRadius(base.outerRect.deflate(s * 0.75), Radius.circular(s * 0.45));
+      canvas.drawRRect(yard, Paint()..color = _cream);
       for (var t = 0; t < 4; t++) {
         final c = Offset((bx + 2.0 + (t % 2) * 2) * s, (by + 2.0 + (t ~/ 2) * 2) * s);
-        canvas.drawCircle(c, s * 0.62, Paint()..color = seat(i).withValues(alpha: 0.35));
-        canvas.drawCircle(c, s * 0.62, line);
+        canvas.drawCircle(c, s * 0.6, Paint()..color = seat(i).withValues(alpha: 0.3));
+        canvas.drawCircle(
+            c,
+            s * 0.6,
+            Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = s * 0.06
+              ..color = seat(i).withValues(alpha: 0.7));
       }
     }
-    // Track.
+    final edge = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = _creamLine;
+    // Track squares, inlaid.
     for (var i = 0; i < 52; i++) {
       final (c, r) = LudoLogic.track[i];
-      final rect = cell(c, r);
       final startSeat = i % 13 == 0 ? i ~/ 13 : null;
-      canvas.drawRect(rect, Paint()..color = startSeat != null ? seat(startSeat) : Colors.white);
-      canvas.drawRect(rect, line);
-      if (LudoLogic.safeCells.contains(i)) _star(canvas, rect.center, s * 0.3, startSeat != null ? Colors.white : const Color(0xFFB0B0C8));
+      canvas.drawRRect(tile(c, r), Paint()..color = startSeat != null ? seat(startSeat) : _cream);
+      canvas.drawRRect(tile(c, r), edge);
+      if (LudoLogic.safeCells.contains(i)) _star(canvas, cell(c, r).center, s * 0.32, startSeat != null ? Colors.white : const Color(0xFFD9A441));
     }
-    // Home columns.
+    // Home paths.
     for (var i = 0; i < 4; i++) {
       for (final (c, r) in LudoLogic.homeColumns[i]) {
-        canvas.drawRect(cell(c, r), Paint()..color = seat(i));
-        canvas.drawRect(cell(c, r), line);
+        canvas.drawRRect(tile(c, r), Paint()..color = seat(i));
       }
     }
-    // Centre: four triangles pointing in.
+    // Centre: four triangles pointing in, a cream disc and a drawn trophy.
     final centre = Offset(7.5 * s, 7.5 * s);
     final corners = [Offset(6 * s, 6 * s), Offset(9 * s, 6 * s), Offset(9 * s, 9 * s), Offset(6 * s, 9 * s)];
     // Triangle i sits on the side facing seat i's home column: left, top, right, bottom.
     final sides = [(corners[3], corners[0]), (corners[0], corners[1]), (corners[1], corners[2]), (corners[2], corners[3])];
     for (var i = 0; i < 4; i++) {
       final (a, b) = sides[i];
-      canvas.drawPath(Path()
-        ..moveTo(a.dx, a.dy)
-        ..lineTo(b.dx, b.dy)
-        ..lineTo(centre.dx, centre.dy)
-        ..close(), Paint()..color = seat(i));
+      canvas.drawPath(
+          Path()
+            ..moveTo(a.dx, a.dy)
+            ..lineTo(b.dx, b.dy)
+            ..lineTo(centre.dx, centre.dy)
+            ..close(),
+          Paint()..color = seat(i));
     }
-    canvas.drawCircle(centre, s * 0.45, Paint()..color = Colors.white);
-    final tp = TextPainter(text: TextSpan(text: '🏆', style: TextStyle(fontSize: s * 0.55)), textDirection: TextDirection.ltr)..layout();
-    tp.paint(canvas, centre - Offset(tp.width / 2, tp.height / 2));
-    canvas.drawRect(Offset.zero & size, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = Colors.black45);
+    canvas.drawCircle(centre, s * 0.55, Paint()..color = _cream);
+    paintIcon(canvas, GameIcons.trophy, Rect.fromCircle(center: centre, radius: s * 0.4), color: Brand.gold);
   }
 
   void _star(Canvas canvas, Offset c, double r, Color color) {
@@ -394,8 +437,14 @@ class _LudoPainter extends CustomPainter {
       i == 0 ? p.moveTo(pt.dx, pt.dy) : p.lineTo(pt.dx, pt.dy);
     }
     canvas.drawPath(p..close(), Paint()..color = color);
+    canvas.drawPath(
+        p,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = r * 0.12
+          ..color = const Color(0x55000000));
   }
 
   @override
-  bool shouldRepaint(_LudoPainter old) => true;
+  bool shouldRepaint(_LudoPainter old) => !listEquals(old.seatColors, seatColors);
 }

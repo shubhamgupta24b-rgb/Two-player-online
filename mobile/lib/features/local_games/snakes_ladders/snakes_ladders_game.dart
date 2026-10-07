@@ -1,12 +1,15 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/audio/game_audio.dart';
 import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/game_hud.dart';
+import '../shell/local_game_shell.dart' show ResultScope;
 import '../shell/ticking_play.dart';
 import '../widgets/dice.dart';
+import '../widgets/pawn.dart';
 
 /// Classic Snakes & Ladders, 2-6 players. Roll, move, climb ladders, slide down snakes.
 /// A 6 rolls again. You need the exact number to land on 100 (otherwise you stay put).
@@ -130,34 +133,67 @@ class _SnlTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final current = players[g.turn];
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
-      child: Column(children: [
-        GameHud(players: players, turn: g.finished ? null : g.turn, extra: (i) => '📍${g.pos[i]}'),
-        const SizedBox(height: Space.s),
-        Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: BoardFrame(child: RepaintBoundary(child: _Board(players: players, g: g)))))),
-        const SizedBox(height: Space.s),
-        DiceTray(
-          message: g.message,
-          player: current,
-          turnText: '${current.whose} ROLL',
-          dice: RollingDice(
-            value: g.lastRoll ?? 1,
-            rollId: g.rolls,
-            color: current.color,
-            size: 64,
-            onTap: g.finished
-                ? null
-                : () {
-                    haptic(HapticWeight.medium);
-                    g.roll();
-                  },
+    ResultScope.of(context)?.subtitle = g.winner == null ? null : '${players[g.winner!].name} reached 100';
+    return MomentWatcher<int>(
+      value: g.rolls,
+      onChange: (fx, _, __) {
+        final m = g.message;
+        if (m.contains('Ladder!')) {
+          keyMoment(fx, 'LADDER!', sub: stripEmoji(m).replaceFirst('Ladder! ', ''), sound: 'jump');
+        } else if (m.contains('Snake!')) {
+          keyMoment(fx, 'SNAKE!', sub: stripEmoji(m).replaceFirst('Snake! ', ''), sound: 'lose', color: StatusColors.danger, buzz: HapticWeight.heavy, shake: true);
+        } else if (g.lastRoll == 6 && !g.finished) {
+          fx?.pop('ROLL AGAIN');
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
+        child: Column(children: [
+          ScoreHud(
+            title: 'Snakes & Ladders',
+            state: g.finished ? 'Game over' : '${current.name}: roll',
+            players: players,
+            turn: g.finished ? null : g.turn,
+            score: (i) => '${g.pos[i]}',
+            tag: (i) => i == g.turn && !g.finished ? 'ROLL' : null,
           ),
-        ),
-      ]),
+          const SizedBox(height: Space.s),
+          Expanded(
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: Semantics(
+                  label: 'Board. ${[for (var i = 0; i < players.length; i++) '${players[i].name} on ${g.pos[i]}'].join(', ')}',
+                  child: BoardFrame(child: RepaintBoundary(child: _Board(players: players, g: g))),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: Space.s),
+          DiceTray(
+            message: g.message,
+            player: current,
+            turnText: '${possessive(current.name)} roll',
+            dice: RollingDice(
+              value: g.lastRoll ?? 1,
+              rollId: g.rolls,
+              color: current.color,
+              size: 60,
+              onTap: g.finished
+                  ? null
+                  : () {
+                      haptic(HapticWeight.medium);
+                      GameAudio.sfx('throw');
+                      g.roll();
+                    },
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }
+
 class _Board extends StatelessWidget {
   final List<GpPlayer> players;
   final SnakesLaddersLogic g;
@@ -174,47 +210,39 @@ class _Board extends StatelessWidget {
         // Fan out tokens sharing a square.
         final same = [for (var q = 0; q < players.length; q++) if (g.pos[q] == n) q];
         final k = same.indexOf(p);
-        final off = same.length == 1 ? Offset.zero : Offset(cos(k * 2 * pi / same.length), sin(k * 2 * pi / same.length)) * s * 0.18;
+        final off = same.length == 1 ? Offset.zero : Offset(cos(k * 2 * pi / same.length), sin(k * 2 * pi / same.length)) * s * 0.2;
         tokens.add(AnimatedPositioned(
           key: ValueKey('t$p'),
-          duration: const Duration(milliseconds: 450),
-          curve: Curves.easeInOutBack,
-          left: col * s + s * 0.2 + off.dx,
-          top: row * s + s * 0.2 + off.dy,
-          width: s * 0.6,
-          height: s * 0.6,
-          child: _Token(color: players[p].color, active: p == g.turn),
+          duration: Motion.of(context, const Duration(milliseconds: 600)),
+          curve: Curves.easeInOutCubic,
+          left: col * s + s * 0.17 + off.dx,
+          top: row * s + s * 0.12 + off.dy,
+          width: s * 0.66,
+          height: s * 0.66,
+          child: CustomPaint(painter: PawnPainter(players[p].color, PlayerPalette.indexOf(players[p].color) ?? p, glow: p == g.turn && !g.finished)),
         ));
       }
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(children: [
-          const Positioned.fill(child: CustomPaint(painter: _SnlPainter())),
-          ...tokens,
-        ]),
-      );
+      return Stack(children: [
+        const Positioned.fill(child: RepaintBoundary(child: CustomPaint(painter: _SnlPainter()))),
+        ...tokens,
+      ]);
     });
   }
 }
 
-class _Token extends StatelessWidget {
-  final Color color;
-  final bool active;
-  const _Token({required this.color, required this.active});
-  @override
-  Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(center: const Alignment(-0.3, -0.4), colors: [Color.lerp(color, Colors.white, 0.45)!, color]),
-          border: Border.all(color: active ? Colors.white : Colors.black54, width: active ? 2.5 : 1.5),
-          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 3, offset: Offset(0, 2))],
-        ),
-      );
-}
-
+/// Paper board: alternating cream and pastel squares with Nunito numbers, wooden ladders
+/// and patterned snakes with heads, eyes and tongues. The 100 square has a flag.
 class _SnlPainter extends CustomPainter {
   const _SnlPainter();
-  static const _tiles = [Color(0xFFFFF3C4), Color(0xFFFFD6A5), Color(0xFFCAFFBF), Color(0xFF9BF6FF), Color(0xFFBDB2FF), Color(0xFFFFC6FF)];
+  static const _cream = Color(0xFFFFF8EC);
+  static const _pastels = [Color(0xFFFFE3B3), Color(0xFFD4F1D2), Color(0xFFD3E6FB), Color(0xFFF6D6E8), Color(0xFFE7DDF8)];
+  static const _ink = Color(0xFF5A4A3A);
+  static const _snakes = [
+    (Color(0xFF2EAA4F), Color(0xFF1B7A35)),
+    (Color(0xFFE53935), Color(0xFF9E1F1C)),
+    (Color(0xFF7B4DFF), Color(0xFF4B2BB0)),
+    (Color(0xFFFF8A3D), Color(0xFFB85A1A)),
+  ];
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -226,63 +254,103 @@ class _SnlPainter extends CustomPainter {
 
     for (var n = 1; n <= 100; n++) {
       final (c, r) = SnakesLaddersLogic.cell(n);
-      canvas.drawRect(Rect.fromLTWH(c * s, r * s, s, s), Paint()..color = _tiles[(c + r) % _tiles.length]);
-      final tp = TextPainter(
-        text: TextSpan(text: n == 100 ? '🏁' : '$n', style: TextStyle(color: const Color(0xFF5A4A6A), fontSize: s * 0.26, fontWeight: FontWeight.w800)),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(canvas, Offset(c * s + s * 0.08, r * s + s * 0.04));
+      final rect = Rect.fromLTWH(c * s, r * s, s, s);
+      canvas.drawRect(rect, Paint()..color = (c + r).isEven ? _cream : _pastels[(n ~/ 10) % _pastels.length]);
+      canvas.drawRect(
+          rect,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 0.6
+            ..color = const Color(0x22704A20));
+      if (n == 100) {
+        paintIcon(canvas, GameIcons.flag, Rect.fromCenter(center: rect.center, width: s * 0.62, height: s * 0.62));
+      } else {
+        final tp = TextPainter(
+          text: TextSpan(text: '$n', style: TextStyle(fontFamily: Fonts.body, color: _ink.withValues(alpha: 0.75), fontSize: s * 0.24, fontWeight: FontWeight.w900)),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, Offset(c * s + s * 0.08, r * s + s * 0.04));
+      }
     }
-    // Ladders.
+    // Ladders: two wooden rails with rungs and a soft shadow.
     SnakesLaddersLogic.ladders.forEach((from, to) {
       final a = centre(from), b = centre(to);
-      final dir = (b - a);
-      final normal = Offset(-dir.dy, dir.dx) / dir.distance * s * 0.17;
+      final dir = b - a;
+      final unit = dir / dir.distance;
+      final normal = Offset(-unit.dy, unit.dx) * s * 0.18;
+      final shadow = Paint()
+        ..color = const Color(0x40000000)
+        ..strokeWidth = s * 0.1
+        ..strokeCap = StrokeCap.round;
       final rail = Paint()
-        ..color = const Color(0xFF8B5A2B)
+        ..shader = LinearGradient(colors: const [Color(0xFFC68A4E), Color(0xFF8B5A2B)]).createShader(Rect.fromPoints(a, b))
         ..strokeWidth = s * 0.09
         ..strokeCap = StrokeCap.round;
-      canvas.drawLine(a + normal, b + normal, rail);
-      canvas.drawLine(a - normal, b - normal, rail);
-      final rungs = (dir.distance / (s * 0.45)).floor();
+      final rung = Paint()
+        ..color = const Color(0xFFB07A42)
+        ..strokeWidth = s * 0.065
+        ..strokeCap = StrokeCap.round;
+      final rungs = (dir.distance / (s * 0.42)).floor();
+      for (final side in [normal, -normal]) {
+        canvas.drawLine(a + side + const Offset(2, 3), b + side + const Offset(2, 3), shadow);
+      }
       for (var i = 1; i < rungs; i++) {
         final p = a + dir * (i / rungs);
-        canvas.drawLine(p + normal, p - normal, rail..strokeWidth = s * 0.07);
+        canvas.drawLine(p + normal, p - normal, rung);
       }
+      canvas.drawLine(a + normal, b + normal, rail);
+      canvas.drawLine(a - normal, b - normal, rail);
     });
-    // Snakes: wavy bodies from head to tail.
-    const snakeColors = [Color(0xFF2EAA4F), Color(0xFFE53935), Color(0xFF7B4DFF), Color(0xFFFF8A3D)];
+    // Snakes: a wavy body with a darker diamond pattern, a head with eyes and a tongue.
     var k = 0;
     SnakesLaddersLogic.snakes.forEach((head, tail) {
       final a = centre(head), b = centre(tail);
       final dir = b - a;
       final normal = Offset(-dir.dy, dir.dx) / dir.distance;
-      final path = Path()..moveTo(a.dx, a.dy);
-      const steps = 24;
-      for (var i = 1; i <= steps; i++) {
+      final pts = <Offset>[];
+      const steps = 32;
+      for (var i = 0; i <= steps; i++) {
         final t = i / steps;
-        final p = a + dir * t + normal * sin(t * pi * 3) * s * 0.35 * (1 - t * 0.5);
+        pts.add(a + dir * t + normal * sin(t * pi * 3) * s * 0.35 * (1 - t * 0.5));
+      }
+      final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+      for (final p in pts.skip(1)) {
         path.lineTo(p.dx, p.dy);
       }
-      final color = snakeColors[k++ % snakeColors.length];
-      canvas.drawPath(path, Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = s * 0.22
-        ..strokeCap = StrokeCap.round
-        ..color = Colors.black38);
-      canvas.drawPath(path, Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = s * 0.17
-        ..strokeCap = StrokeCap.round
-        ..color = color);
-      canvas.drawCircle(a, s * 0.2, Paint()..color = color);
-      canvas.drawCircle(a, s * 0.2, Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = s * 0.03
-        ..color = Colors.black45);
-      for (final side in [-1.0, 1.0]) {
-        canvas.drawCircle(a + normal * side * s * 0.08 - dir / dir.distance * s * 0.04, s * 0.045, Paint()..color = Colors.white);
-        canvas.drawCircle(a + normal * side * s * 0.08 - dir / dir.distance * s * 0.04, s * 0.02, Paint()..color = Colors.black);
+      final (body, dark) = _snakes[k++ % _snakes.length];
+      canvas.drawPath(
+          path.shift(const Offset(2, 3)),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = s * 0.2
+            ..strokeCap = StrokeCap.round
+            ..color = const Color(0x40000000));
+      // Taper: thicker near the head.
+      for (var i = 0; i < pts.length - 1; i++) {
+        final w = s * (0.22 - 0.12 * i / pts.length);
+        canvas.drawLine(
+            pts[i],
+            pts[i + 1],
+            Paint()
+              ..strokeWidth = w
+              ..strokeCap = StrokeCap.round
+              ..color = body);
+        if (i.isEven && i > 1) canvas.drawCircle(pts[i], w * 0.22, Paint()..color = dark);
+      }
+      final fwd = (pts[0] - pts[1]) / (pts[0] - pts[1]).distance;
+      final side = Offset(-fwd.dy, fwd.dx);
+      canvas.drawOval(Rect.fromCenter(center: a, width: s * 0.42, height: s * 0.42), Paint()..color = body);
+      canvas.drawLine(
+          a + fwd * s * 0.2,
+          a + fwd * s * 0.36,
+          Paint()
+            ..color = const Color(0xFFE53935)
+            ..strokeWidth = s * 0.035
+            ..strokeCap = StrokeCap.round);
+      for (final sgn in [-1.0, 1.0]) {
+        final e = a + side * sgn * s * 0.09 + fwd * s * 0.05;
+        canvas.drawCircle(e, s * 0.055, Paint()..color = Colors.white);
+        canvas.drawCircle(e + fwd * s * 0.012, s * 0.028, Paint()..color = Colors.black);
       }
     });
   }

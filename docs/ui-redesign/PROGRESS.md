@@ -167,3 +167,46 @@
 **Could not test**
 - The emulator still can't boot (not enough free RAM). Instead, `tool/pages_render_test.dart` rendered all nine pages in both flavors and I compared them with the Main / Hub / Lobby mockups.
 - On a real phone: the share sheet, online rooms and Wi-Fi hosting are all untested.
+
+## B1 — Board 1 (done)
+
+**Shared pieces added**
+- `ScoreHud`: game top bar + `PlayerScoreRow`.
+- `MomentWatcher` and `keyMoment()`: announcement + sound + haptic from a state change.
+- `possessive()` ("Your roll" / "Aarav's roll").
+- `DiceTray` restyled: player badge, turn line in the player colour, the last event.
+- 3D dice: rounded cube with a shaded edge and sunken pips.
+- `BoardFrame` is now the shared wood material.
+- `widgets/pawn.dart`: glossy dome token with the seat shape on top.
+
+**Per game**
+- **Ludo / Ludo 2 vs 2:**
+  - wood table with cream inlaid track, seat-coloured bases and paths, drawn star safe squares, a drawn trophy at the centre;
+  - dome tokens with shape marks and a gold ring when movable;
+  - score cards show tokens home (count + 4 pips), with ROLL / MOVE tags or TEAM A / TEAM B;
+  - moments: CAPTURED! (shake), HOME! (confetti), ALL HOME!, TURN LOST, ROLL AGAIN pop;
+  - results show tokens-home pips per row.
+- **Snakes & Ladders:**
+  - paper board with cream and pastel squares and Nunito 900 numbers, a flag on 100;
+  - wooden ladders with shadows; tapering patterned snakes with eyes and a tongue;
+  - dome tokens; LADDER! and SNAKE! moments, ROLL AGAIN pop.
+- **Checkers:**
+  - maple and walnut squares with grain inside the wood frame;
+  - stacked grooved discs with the seat shape, a crown for kings;
+  - picked piece lifts with a gold ring; movable pieces get a white ring, gold when a capture is compulsory; soft gold target dots;
+  - score cards at both ends (the far one rotated for the far player) with pieces left, YOUR TURN / MUST CAPTURE tags and a captured-pieces stack;
+  - moments: CAPTURE! pop, DOUBLE / MULTI JUMP! (shake), KING! (confetti).
+- **Connect Four:** score-card HUD, a gold line drawn through the winning four, FOUR IN A ROW! / DRAW! moments.
+- **Tic-Tac-Toe:** chalkboard kept; score cards show each player's X or O; THREE IN A ROW! / DRAW! moments.
+- **Dots & Boxes:** notebook kept; claimed boxes at 25 % with the owner's shape (no letter); score cards with box counts; BOX! Go again moment.
+
+**Kept the same:** all `LocalGameLogic`, bots, `RelaySpec` save/load/apply and rules. Only emoji were removed from the Checkers rule text.
+
+**Tests**
+- `flutter analyze` is clean and `flutter test` passes 830 tests. `ludo_teams_test` (TEAM A / TEAM B tags) and `bots_test` ("Your roll") were updated.
+- Debug builds pass for both flavors.
+- Each game was rendered mid-game with `tool/screens_test.dart` (now taps Start and a few spots).
+
+**Could not test**
+- Emulator (not enough RAM).
+- Online view of these games and two people on one real phone.

@@ -6,6 +6,9 @@ import '../../../core/ui/components.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/game_hud.dart';
+import '../../../core/audio/game_audio.dart';
+import '../party/party_widgets.dart' show GameTopBar;
+import '../shell/local_game_shell.dart' show ResultScope;
 import '../shell/ticking_play.dart';
 
 /// A move: from square, the squares landed on, and the pieces jumped.
@@ -175,7 +178,7 @@ final checkersInfo = LocalGameInfo(
   rules: const [
     'Move a piece one square diagonally forward. Tap a piece, then where it goes.',
     'Jump over a rival piece to capture it. Captures are compulsory and keep going if they can.',
-    'Reach the far side to become a king 👑, which moves backwards too.',
+    'Reach the far side to become a king, which moves backwards too.',
     'Take every rival piece (or leave them with no move) to win. Sit at opposite ends of the phone.',
   ],
   scoreUnit: 'wins',
@@ -228,43 +231,173 @@ class _CheckersTable extends StatelessWidget {
   final bool flipped; // online player 2 sees their own pieces at the bottom
   const _CheckersTable({required this.g, required this.players, this.flipped = false});
 
+  int get _kings => g.board.where(CheckersLogic.isKing).length;
+
   @override
   Widget build(BuildContext context) {
     final current = players[g.turn];
-    final status = g.draw
-        ? '🤝 DRAW: 80 moves without a capture'
-        : g.finished
-            ? '🏆 ${players[g.winner!].name.toUpperCase()} WINS!'
-            : g.legal.first.captured.isNotEmpty
-                ? '${current.whose} TURN: YOU MUST CAPTURE!'
-                : '${current.whose} TURN';
-    final banner = GameStatus(
-      player: g.finished && g.winner != null ? players[g.winner!] : current,
-      turnText: g.finished ? null : status,
-      message: g.finished ? status : null,
-      height: 44,
-    );
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
-      child: Column(children: [
-        GameHud(players: players, turn: g.finished ? null : g.turn, extra: (p) => '● ${g.pieces(p)}'),
-        const SizedBox(height: Space.s),
-        // Player 2's view of whose turn it is, upside down for the far side of the phone.
-        if (!flipped) RotatedBox(quarterTurns: 2, child: banner),
-        const SizedBox(height: Space.xs),
-        Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Board(g: g, players: players, flipped: flipped)))),
-        const SizedBox(height: Space.xs),
-        banner,
-      ]),
+    final mustCapture = !g.finished && g.legal.first.captured.isNotEmpty;
+    ResultScope.of(context)
+      ?..subtitle = g.draw ? 'Draw: 80 moves without a capture' : (g.winner == null ? null : '${g.pieces(g.winner!)} pieces left')
+      ..detail = (context, i) => _Captured(count: 12 - g.pieces(1 - i), color: players[1 - i].color);
+    Widget card(int p) => PlayerScoreCard(
+          seat: PlayerPalette.indexOf(players[p].color) ?? p,
+          color: players[p].color,
+          name: players[p].name,
+          score: '${g.pieces(p)}',
+          active: !g.finished && g.turn == p,
+          tag: !g.finished && g.turn == p ? (mustCapture ? 'MUST CAPTURE' : 'YOUR TURN') : null,
+          detail: _Captured(count: 12 - g.pieces(1 - p), color: players[1 - p].color),
+        );
+    // Player 2 sits at the far end: their card faces them (not when online: each phone is its own).
+    final far = flipped ? 0 : 1, near = flipped ? 1 : 0;
+    return MomentWatcher<(int, int)>(
+      value: (g.moveNo, _kings),
+      onChange: (fx, before, now) {
+        if (now.$1 == before.$1) return;
+        if (now.$2 > before.$2) {
+          keyMoment(fx, 'KING!', sub: '${players[1 - g.turn].name} is crowned', sound: 'coin', confetti: true);
+        } else if (g.lastCaptured.length > 1) {
+          keyMoment(fx, '${g.lastCaptured.length == 2 ? 'DOUBLE' : 'MULTI'} JUMP!', sub: '${g.lastCaptured.length} pieces taken', sound: 'boom', buzz: HapticWeight.heavy, shake: true);
+        } else if (g.lastCaptured.isNotEmpty) {
+          fx?.pop('CAPTURE!');
+          GameAudio.sfx('hit');
+          haptic(HapticWeight.medium);
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
+        child: Column(children: [
+          GameTopBar(
+            title: 'Checkers',
+            subtitle: g.draw ? 'Draw' : (g.finished ? '${players[g.winner!].name} wins' : (mustCapture ? '${current.name}: must capture' : '${possessive(current.name)} turn')),
+          ),
+          const SizedBox(height: Space.s),
+          if (flipped) card(far) else RotatedBox(quarterTurns: 2, child: Padding(padding: const EdgeInsets.only(bottom: 10), child: card(far))),
+          const SizedBox(height: Space.s),
+          Expanded(
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: Semantics(
+                  label: 'Checkers board. ${current.name} to move${mustCapture ? ', must capture' : ''}. ${players[0].name} ${g.pieces(0)} pieces, ${players[1].name} ${g.pieces(1)}.',
+                  child: _Board(g: g, players: players, flipped: flipped),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: Space.s),
+          Padding(padding: const EdgeInsets.only(top: 10), child: card(near)),
+        ]),
+      ),
     );
   }
 }
 
+/// Pieces a player has taken, as a small stack of discs in the rival's colour.
+class _Captured extends StatelessWidget {
+  final int count;
+  final Color color;
+  const _Captured({required this.count, required this.color});
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 14,
+        child: count == 0
+            ? Align(alignment: Alignment.centerLeft, child: Text('No captures yet', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w800, color: context.tk.flat ? FlatPalette.inkMuted : NeonPalette.label)))
+            : Stack(children: [
+                for (var i = 0; i < count; i++)
+                  Positioned(
+                    left: i * 9.0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: color, border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.2), boxShadow: const [BoxShadow(color: Color(0x66000000), offset: Offset(0, 1))]),
+                    ),
+                  ),
+              ]),
+      );
+}
+
 // Board palette: a wooden board with maple and walnut squares.
-const _frameWood = [Color(0xFF6B3F22), Color(0xFF3E2414)];
 const _lightSq = Color(0xFFF1DDB6);
 const _darkSq = Color(0xFF7A4B2E);
 const _lastSq = Color(0xFF9B6A45);
+
+/// Maple and walnut squares with a little grain; the last move's squares a shade lighter.
+class _SquaresPainter extends CustomPainter {
+  final bool flipped;
+  final int? from, to;
+  _SquaresPainter(this.flipped, this.from, this.to);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cell = size.width / 8;
+    final grain = Paint()
+      ..strokeWidth = 0.8
+      ..color = const Color(0x1F3A2010);
+    for (var i = 0; i < 64; i++) {
+      final sq = flipped ? 63 - i : i;
+      final dark = (sq ~/ 8 + sq % 8).isOdd;
+      final r = Rect.fromLTWH((i % 8) * cell, (i ~/ 8) * cell, cell, cell);
+      canvas.drawRect(r, Paint()..color = dark ? ((sq == from || sq == to) ? _lastSq : _darkSq) : _lightSq);
+      for (var k = 1; k < 4; k++) {
+        final y = r.top + r.height * k / 4 + sin(i + k) * 2;
+        canvas.drawLine(Offset(r.left, y), Offset(r.right, y + cos(i * 1.3 + k) * 2), grain);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SquaresPainter old) => old.flipped != flipped || old.from != from || old.to != to;
+}
+
+/// A checker: a stacked disc with a darker side band, grooved rings on top and the
+/// player's shape (or a crown for a king). [lifted] when picked.
+class _PiecePainter extends CustomPainter {
+  final Color color;
+  final int seat;
+  final bool king, lifted, ring, mustCapture;
+  _PiecePainter(this.color, this.seat, {this.king = false, this.lifted = false, this.ring = false, this.mustCapture = false});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.width / 2;
+    final lift = lifted ? r * 0.12 : 0.0;
+    canvas.drawOval(Rect.fromCenter(center: c + Offset(0, r * 0.22 + lift), width: r * 1.9 + lift, height: r * 1.5), Paint()
+      ..color = Color.fromRGBO(0, 0, 0, lifted ? 0.35 : 0.5)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, lifted ? 5 : 2));
+    final top = c - Offset(0, r * 0.12 + lift);
+    canvas.drawCircle(top + Offset(0, r * 0.16), r * 0.88, Paint()..color = Color.lerp(color, Colors.black, 0.45)!); // side band
+    canvas.drawCircle(top, r * 0.88, Paint()..shader = RadialGradient(center: const Alignment(-0.3, -0.35), colors: [Color.lerp(color, Colors.white, 0.3)!, color, Color.lerp(color, Colors.black, 0.2)!]).createShader(Rect.fromCircle(center: top, radius: r)));
+    final groove = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = r * 0.05;
+    for (final k in [0.7, 0.52]) {
+      canvas.drawCircle(top, r * k, groove..color = Color.lerp(color, Colors.black, 0.3)!.withValues(alpha: 0.7));
+      canvas.drawCircle(top + Offset(0, r * 0.03), r * k, groove..color = Colors.white.withValues(alpha: 0.25));
+    }
+    if (king) {
+      paintIcon(canvas, GameIcons.crownKing, Rect.fromCircle(center: top, radius: r * 0.5), color: Colors.white);
+    } else {
+      final m = r * 0.5;
+      canvas.save();
+      canvas.translate(top.dx - m / 2, top.dy - m / 2);
+      PlayerShapePainter(PlayerPalette.shape(seat), Colors.white.withValues(alpha: 0.5)).paint(canvas, Size(m, m));
+      canvas.restore();
+    }
+    if (ring || lifted || mustCapture) {
+      canvas.drawCircle(top, r * 0.92, Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = lifted ? r * 0.14 : r * 0.08
+        ..color = lifted || mustCapture ? Brand.gold : Colors.white.withValues(alpha: 0.85));
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PiecePainter o) => o.color != color || o.king != king || o.lifted != lifted || o.ring != ring || o.mustCapture != mustCapture || o.seat != seat;
+}
+
 /// The board. Pieces sit in a layer above the squares so a move can be shown: the piece
 /// slides square by square along its path and every piece it jumps fades away as it passes.
 class _Board extends StatefulWidget {
@@ -332,40 +465,18 @@ class _BoardState extends State<_Board> {
     final showing = _step != null && g.lastMove != null;
     final from = g.lastMove?.$1, to = g.lastMove?.$2;
 
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: _frameWood, begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: Radii.rMd,
-        boxShadow: const [BoxShadow(color: Colors.black54, offset: Offset(0, 6), blurRadius: 6)],
-      ),
+    final capturing = legal.isNotEmpty && legal.first.captured.isNotEmpty;
+    return BoardFrame(
       child: LayoutBuilder(builder: (context, c) {
         final cell = c.maxWidth / 8;
         Widget piece(int value, {bool selected = false, bool canMove = false}) {
           final owner = CheckersLogic.ownerOf(value);
           final col = widget.players[owner].color;
           return Padding(
-            padding: EdgeInsets.all(cell * 0.1),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(center: const Alignment(-0.3, -0.3), colors: [Color.lerp(col, Colors.white, 0.35)!, col, Color.lerp(col, Colors.black, 0.35)!]),
-                border: Border.all(color: selected ? Brand.gold : (canMove ? Colors.white : Colors.black26), width: selected ? 4 : 2),
-                boxShadow: [
-                  const BoxShadow(color: Colors.black45, offset: Offset(0, 3), blurRadius: 2),
-                  if (selected) BoxShadow(color: Brand.gold.withValues(alpha: 0.6), blurRadius: 10),
-                ],
-              ),
-              alignment: Alignment.center,
-              child: CheckersLogic.isKing(value)
-                  ? const FittedBox(child: Padding(padding: EdgeInsets.all(4), child: Text('👑', style: TextStyle(fontSize: 22))))
-                  : (PlayerPalette.indexOf(col) == null
-                      ? null
-                      : FractionallySizedBox(
-                          widthFactor: 0.34,
-                          heightFactor: 0.34,
-                          child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(PlayerPalette.indexOf(col)!), Colors.white.withValues(alpha: 0.45))),
-                        )),
+            padding: EdgeInsets.all(cell * 0.06),
+            child: CustomPaint(
+              painter: _PiecePainter(col, PlayerPalette.indexOf(col) ?? owner,
+                  king: CheckersLogic.isKing(value), lifted: selected, ring: canMove, mustCapture: canMove && capturing && !selected),
             ),
           );
         }
@@ -419,6 +530,7 @@ class _BoardState extends State<_Board> {
         }
 
         return Stack(children: [
+          Positioned.fill(child: RepaintBoundary(child: CustomPaint(painter: _SquaresPainter(widget.flipped, showing ? null : from, showing ? null : to)))),
           GridView.count(
             crossAxisCount: 8,
             physics: const NeverScrollableScrollPhysics(),
@@ -426,21 +538,24 @@ class _BoardState extends State<_Board> {
               for (var i = 0; i < 64; i++)
                 Builder(builder: (context) {
                   final sq = widget.flipped ? 63 - i : i;
-                  final dark = (sq ~/ 8 + sq % 8).isOdd;
-                  final isLast = !showing && (from == sq || to == sq);
                   return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: () {
                       haptic(HapticWeight.selection);
                       g.tap(sq);
                     },
-                    child: Container(
-                      color: dark ? (isLast ? _lastSq : _darkSq) : _lightSq,
-                      alignment: Alignment.center,
+                    child: Center(
                       child: targets.contains(sq)
                           ? FractionallySizedBox(
-                              widthFactor: 0.35,
-                              heightFactor: 0.35,
-                              child: Container(decoration: BoxDecoration(color: Brand.gold.withValues(alpha: 0.85), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2))),
+                              widthFactor: 0.3,
+                              heightFactor: 0.3,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Brand.gold.withValues(alpha: 0.75),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [BoxShadow(color: Brand.gold.withValues(alpha: 0.6), blurRadius: 8)],
+                                ),
+                              ),
                             )
                           : null,
                     ),
