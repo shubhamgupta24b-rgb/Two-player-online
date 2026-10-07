@@ -442,3 +442,40 @@ Checked with render PNGs; the emulator can't run on this machine.
 **Note:** messages that live in logic state and are relayed online (mini golf / slingshot / bottle smash `message`) are unchanged; `GameStatus` strips emoji when it displays them.
 
 **Tests:** analyze clean, 830 tests pass; debug builds pass for both flavors.
+
+## B7 + B8 — Solo games (all 20 in `solo/`, plus Fruit Merge solo from B6)
+
+Checked with render PNGs (a contact sheet of every solo game); the emulator can't run on this machine.
+
+**Shared (`SoloFrame`)**
+- An optional `lives` row of drawn hearts (used by Brick Breaker, Hangman, Space Shooter and Sudoku's mistakes).
+- The NEW BEST chip has a drawn trophy and uses Lilita.
+- All solo titles and subtitles are sentence case with no emoji (timer / flag / heart emoji were replaced with words or icons).
+
+**Drawn art instead of emoji**
+- **Dino Run:** a drawn dinosaur with a run cycle and a hurt tint, cactus and bird icons with a wing bob, and a cartoon burst on a crash. Dusk desert sky, mesas and sand; SceneFrame.
+- **Space Shooter:**
+  - a drawn ship (hull, cockpit, fins) with a two-tone engine flame;
+  - alien icons (purple-tinted shooters), UFO tanks with 3 health pips, and a glowing bolt power-up;
+  - a ringed planet; SceneFrame.
+- **Sky Jumper:** a drawn green hopper with big eyes.
+- **Classic Snake:** a checkered lawn, a blue snake and a drawn apple.
+- **Color Switch:** a drawn star.
+- **Whack-a-Mole:** mole, golden mole (glowing) and bomb icons.
+- **Minesweeper:** drawn bomb and flag in the cells, Lilita numbers, and a Dig / Flag pill toggle with icons.
+- **Sudoku:** pencil icon on the Notes key.
+
+**Restyled**
+- **2048:** wooden tray; tiles ramp from cream through orange to gold; Lilita numbers.
+- **Sliding Puzzle:** dark wooden frame; light wooden blocks with a bevel; tiles in their home spot get a green edge.
+- **Word Scramble:** wooden letter tiles; underlined answer slots that fill with tiles.
+- **Simon Says:** a round console with blue / orange / green / purple pads, rounded outer corners, and a centre hub showing the step count.
+- **Hangman:** a chalkboard in a wooden frame with a chalk gallows and figure, a category chip, and chalk keys (wrong ones greyed out with a red cross).
+- **Ball Sort and Word Scramble buttons:** now KitButton / GoldButton with drawn icons (undo, restart, flag, skip).
+- **gp_theme:** no longer used by any solo game.
+
+**Left as is** (they already matched the spec): Block Drop, Brick Breaker, Bubble Shooter, Flappy Jump, Piano Tiles, Stack Tower.
+
+**Note:** Hangman's category keys still contain emoji because they are game data; they are stripped when displayed.
+
+**Tests:** analyze clean, 830 tests pass.

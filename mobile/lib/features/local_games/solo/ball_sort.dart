@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
 import 'solo_common.dart';
@@ -136,7 +136,7 @@ final ballSortInfo = LocalGameInfo(
     create: () => BallSortLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: g.clearedAt != null ? '🎉 LEVEL ${g.level} CLEARED!' : '🧪 LEVEL ${g.level}',
+      title: g.clearedAt != null ? 'Level ${g.level} cleared!' : 'Level ${g.level}',
       score: g.score,
       extra: '${g.moves} moves · ${g.colors} colours',
       child: Column(children: [
@@ -155,11 +155,11 @@ final ballSortInfo = LocalGameInfo(
           }),
         ),
         Row(children: [
-          Expanded(child: GpButton('↶ UNDO', color: Colors.white, onPressed: g.undo)),
+          Expanded(child: KitButton('Undo', icon: GameIcons.undo, style: KitButtonStyle.soft, onPressed: g.undo)),
           const SizedBox(width: 8),
-          Expanded(child: GpButton('↻ RESET', color: Colors.white, onPressed: g.restart)),
+          Expanded(child: KitButton('Reset', icon: GameIcons.restart, style: KitButtonStyle.soft, onPressed: g.restart)),
           const SizedBox(width: 8),
-          Expanded(child: GpButton('🏁 DONE', onPressed: g.finish)),
+          Expanded(child: GoldButton('Done', icon: GameIcons.flag, height: 52, fontSize: 18, onPressed: g.finish)),
         ]),
       ]),
     ),
@@ -192,7 +192,7 @@ class _Tube extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(colors: [Colors.white.withValues(alpha: 0.22), Colors.white.withValues(alpha: 0.06)]),
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(width / 2), top: const Radius.circular(6)),
-            border: Border.all(color: done ? GpColors.yes : (picked ? GpColors.accent : Colors.white54), width: done || picked ? 3 : 2),
+            border: Border.all(color: done ? StatusColors.success : (picked ? Brand.gold : Colors.white54), width: done || picked ? 3 : 2),
           ),
           child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
             for (var i = balls.length - 1; i >= 0; i--)

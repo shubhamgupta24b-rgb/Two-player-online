@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
@@ -136,8 +137,8 @@ final spaceInfo = LocalGameInfo(
   tagline: 'Blast the alien waves!',
   rules: const [
     'Drag to fly your ship. It fires by itself.',
-    'Shoot the aliens: 👾 10, 👽 shooters 20, 🛸 tanks (3 hits) 50. Dodge their shots.',
-    'Grab ⚡ for double shots. You have 3 lives.',
+    'Shoot the aliens: green bugs 10, purple shooters 20, UFO tanks (3 hits) 50. Dodge their shots.',
+    'Grab the lightning bolt for double shots. You have 3 lives.',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -147,9 +148,10 @@ final spaceInfo = LocalGameInfo(
     create: () => SpaceLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🚀 WAVE ${max(1, g.wave)}',
+      title: 'Wave ${max(1, g.wave)}',
       score: g.score,
-      extra: '${'❤️' * g.lives}${g.now < g.doubleUntil ? '  ⚡ DOUBLE' : ''}',
+      extra: g.now < g.doubleUntil ? 'Double shots!' : null,
+      lives: g.lives,
       child: LayoutBuilder(builder: (context, c) {
         final w = min(c.maxWidth, c.maxHeight / SpaceLogic.viewH);
         return Center(
@@ -160,7 +162,7 @@ final spaceInfo = LocalGameInfo(
               behavior: HitTestBehavior.opaque,
               onPanDown: (d) => g.steer(d.localPosition.dx / w, d.localPosition.dy / w - 0.12),
               onPanUpdate: (d) => g.steer(d.localPosition.dx / w, d.localPosition.dy / w - 0.12),
-              child: ClipRRect(borderRadius: BorderRadius.circular(16), child: CustomPaint(painter: _SpacePainter(g, w))),
+              child: SceneFrame(child: CustomPaint(painter: _SpacePainter(g, w))),
             ),
           ),
         );
@@ -174,10 +176,33 @@ class _SpacePainter extends CustomPainter {
   final double s;
   _SpacePainter(this.g, this.s);
 
-  static final _cache = <String, TextPainter>{};
-  static void _e(Canvas canvas, String e, Offset at, double size) {
-    final tp = _cache.putIfAbsent('$e$size', () => TextPainter(text: TextSpan(text: e, style: TextStyle(fontSize: size)), textDirection: TextDirection.ltr)..layout());
-    tp.paint(canvas, at - Offset(tp.width / 2, tp.height / 2));
+  static void _icon(Canvas canvas, GameIcons icon, Offset at, double size, {Color? tint}) {
+    final r = Rect.fromCenter(center: at, width: size, height: size);
+    if (tint == null) return paintIcon(canvas, icon, r);
+    canvas.saveLayer(r.inflate(2), Paint()..colorFilter = ColorFilter.mode(tint, BlendMode.modulate));
+    paintIcon(canvas, icon, r);
+    canvas.restore();
+  }
+
+  /// The player's ship, nose up: a white hull, blue cockpit and red fins.
+  static void _ship(Canvas canvas, Offset c, double h) {
+    final w = h * 0.8;
+    Offset p(double x, double y) => c + Offset(x * w, y * h);
+    final fin = Paint()..color = const Color(0xFFE53935);
+    canvas.drawPath(Path()..addPolygon([p(-0.18, 0.05), p(-0.5, 0.42), p(-0.15, 0.32)], true), fin);
+    canvas.drawPath(Path()..addPolygon([p(0.18, 0.05), p(0.5, 0.42), p(0.15, 0.32)], true), fin);
+    final hull = Path()
+      ..moveTo(p(0, -0.5).dx, p(0, -0.5).dy)
+      ..quadraticBezierTo(p(0.24, -0.15).dx, p(0.24, -0.15).dy, p(0.17, 0.38).dx, p(0.17, 0.38).dy)
+      ..lineTo(p(-0.17, 0.38).dx, p(-0.17, 0.38).dy)
+      ..quadraticBezierTo(p(-0.24, -0.15).dx, p(-0.24, -0.15).dy, p(0, -0.5).dx, p(0, -0.5).dy)
+      ..close();
+    canvas.drawPath(hull, Paint()..shader = const LinearGradient(colors: [Color(0xFFFFFFFF), Color(0xFFB0BEC5)]).createShader(Rect.fromCenter(center: c, width: w, height: h)));
+    canvas.drawPath(hull, Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..color = const Color(0xFF455A64));
+    canvas.drawOval(Rect.fromCenter(center: p(0, -0.12), width: w * 0.2, height: h * 0.24), Paint()..color = const Color(0xFF29B6F6));
   }
 
   @override
@@ -191,12 +216,27 @@ class _SpacePainter extends CustomPainter {
       final y = (rng.nextDouble() * size.height + g.now * layer) % size.height;
       canvas.drawCircle(Offset(x, y), layer == 0.1 ? 1.6 : 1, Paint()..color = Colors.white.withValues(alpha: layer == 0.1 ? 0.9 : 0.5));
     }
+    // A distant ringed planet drifting down very slowly.
+    final pc = Offset(size.width * 0.78, (size.height * 0.22 + g.now * 0.004) % (size.height * 1.4) - size.height * 0.2);
+    final pr = size.width * 0.11;
+    canvas.drawCircle(pc, pr, Paint()..shader = const RadialGradient(center: Alignment(-0.4, -0.4), colors: [Color(0xFFFFB74D), Color(0xFFD84315), Color(0xFF4A1A0A)]).createShader(Rect.fromCircle(center: pc, radius: pr)));
+    canvas.drawOval(Rect.fromCenter(center: pc, width: pr * 3, height: pr * 0.7), Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..color = const Color(0x88FFE0B2));
     Offset o(double x, double y) => Offset(x * s, y * s);
     for (final p in g.powerUps) {
-      _e(canvas, '⚡', o(p.dx, p.dy), s * 0.06);
+      canvas.drawCircle(o(p.dx, p.dy), s * 0.04, Paint()..color = const Color(0x55FFEB3B));
+      _icon(canvas, GameIcons.bolt, o(p.dx, p.dy), s * 0.06);
     }
     for (final a in g.aliens) {
-      _e(canvas, const ['👾', '👽', '🛸'][a.kind], o(a.x, a.y), s * (a.kind == 2 ? 0.085 : 0.07));
+      _icon(canvas, a.kind == 2 ? GameIcons.ufo : GameIcons.alien, o(a.x, a.y), s * (a.kind == 2 ? 0.085 : 0.07), tint: a.kind == 1 ? const Color(0xFFB388FF) : null);
+      if (a.kind == 2) {
+        // Health pips under the tank.
+        for (var k = 0; k < 3; k++) {
+          canvas.drawCircle(o(a.x, a.y) + Offset((k - 1) * 8.0, s * 0.052), 3, Paint()..color = k < a.hp ? const Color(0xFF66BB6A) : const Color(0x55FFFFFF));
+        }
+      }
     }
     final laser = Paint()
       ..color = const Color(0xFF80DEEA)
@@ -212,8 +252,9 @@ class _SpacePainter extends CustomPainter {
     // The ship blinks while it's recovering from a hit.
     if (!(g.now < g.hitUntil && (g.now ~/ 120).isEven) && !g.over) {
       final flame = 0.6 + 0.4 * sin(g.now / 50);
-      canvas.drawCircle(o(g.shipX, g.shipY + 0.05), s * 0.018 * flame, Paint()..color = const Color(0xFFFFA726));
-      _e(canvas, '🚀', o(g.shipX, g.shipY), s * 0.085);
+      canvas.drawOval(Rect.fromCenter(center: o(g.shipX, g.shipY + 0.045), width: s * 0.022, height: s * 0.05 * flame), Paint()..color = const Color(0xFFFFA726));
+      canvas.drawOval(Rect.fromCenter(center: o(g.shipX, g.shipY + 0.04), width: s * 0.012, height: s * 0.028 * flame), Paint()..color = const Color(0xFFFFF59D));
+      _ship(canvas, o(g.shipX, g.shipY), s * 0.085);
     }
     for (final (x, y, ms) in g.booms) {
       final u = (g.now - ms) / 500;

@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
 import 'solo_common.dart';
@@ -92,7 +92,7 @@ final slidingInfo = LocalGameInfo(
     create: () => SlidingLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: g.solvedAt != null ? '🎉 SOLVED!' : '🔢 ${g.size}×${g.size} PUZZLE',
+      title: g.solvedAt != null ? 'Solved!' : '${g.size}×${g.size} puzzle',
       score: g.score,
       extra: '${g.moves} moves',
       child: Center(
@@ -100,7 +100,8 @@ final slidingInfo = LocalGameInfo(
           aspectRatio: 1,
           child: Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: const Color(0xFF283593), borderRadius: BorderRadius.circular(22), boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 6))]),
+            // A dark wooden frame around the tiles.
+            decoration: BoxDecoration(color: const Color(0xFF4A2C14), borderRadius: Radii.rBoard, border: Border.all(color: const Color(0xFF7A4A22), width: 4), boxShadow: Shadows.large),
             child: LayoutBuilder(builder: (context, c) {
               final cell = c.maxWidth / g.size;
               return Stack(children: [
@@ -120,15 +121,13 @@ final slidingInfo = LocalGameInfo(
                           margin: const EdgeInsets.all(4),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: g.tiles[i] == i + 1 ? const [Color(0xFF66BB6A), Color(0xFF2E7D32)] : const [Color(0xFFFFCA28), Color(0xFFFB8C00)],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: const [BoxShadow(color: Colors.black38, offset: Offset(0, 4))],
+                            // Light wooden blocks with a bevel; tiles in their home spot get a green edge.
+                            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFF3D19C), Color(0xFFD9A863), Color(0xFFC08A48)]),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: g.tiles[i] == i + 1 ? StatusColors.success : const Color(0x66FFF3D6), width: g.tiles[i] == i + 1 ? 3 : 1.5),
+                            boxShadow: const [BoxShadow(color: Color(0xFF3A200C), offset: Offset(0, 4))],
                           ),
-                          child: Text('${g.tiles[i]}', style: TextStyle(color: GpColors.ink, fontWeight: FontWeight.w900, fontSize: cell * 0.38)),
+                          child: Text('${g.tiles[i]}', style: TextStyle(fontFamily: Fonts.display, color: const Color(0xFF4A2C14), fontSize: cell * 0.42)),
                         ),
                       ),
                     ),

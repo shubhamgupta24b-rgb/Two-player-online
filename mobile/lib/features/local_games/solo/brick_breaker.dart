@@ -114,9 +114,9 @@ final brickBreakerInfo = LocalGameInfo(
     create: () => BrickBreakerLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🧱 LEVEL ${g.level}',
+      title: 'Level ${g.level}',
       score: g.score,
-      extra: '❤️' * max(0, g.lives),
+      lives: max(0, g.lives),
       child: Center(
         child: AspectRatio(
           aspectRatio: 1 / BrickBreakerLogic.height,

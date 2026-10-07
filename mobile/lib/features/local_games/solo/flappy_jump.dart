@@ -86,7 +86,7 @@ final flappyInfo = LocalGameInfo(
     create: () => FlappyLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🐦 FLAPPY JUMP',
+      title: 'Flappy Jump',
       score: g.score,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
@@ -73,7 +74,7 @@ final classicSnakeInfo = LocalGameInfo(
   tagline: 'Eat, grow, don\'t bite yourself!',
   rules: const [
     'Swipe on the board (or tap the arrows) to steer.',
-    'Eat the 🍎 to grow longer. You get faster as you grow.',
+    'Eat the apple to grow longer. You get faster as you grow.',
     'Hit a wall or your own tail and it\'s game over.',
   ],
   scoreUnit: 'apples',
@@ -84,7 +85,7 @@ final classicSnakeInfo = LocalGameInfo(
     create: () => ClassicSnakeLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🐍 CLASSIC SNAKE',
+      title: 'Classic Snake',
       score: g.score,
       child: Column(children: [
         Expanded(
@@ -122,15 +123,15 @@ class _SnakePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const c = ClassicSnakeLogic.cols;
     final s = size.width / c;
-    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(12)), Paint()..color = const Color(0xFF1B3A1B));
-    for (var i = 0; i < c * ClassicSnakeLogic.rows; i += 2) {
-      canvas.drawRect(Rect.fromLTWH((i % c) * s, (i ~/ c) * s, s, s), Paint()..color = const Color(0xFF1F441F));
+    // A lawn with checker shading.
+    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(12)), Paint()..color = const Color(0xFF4E9A3A));
+    for (var i = 0; i < c * ClassicSnakeLogic.rows; i++) {
+      if (((i % c) + (i ~/ c)).isEven) canvas.drawRect(Rect.fromLTWH((i % c) * s, (i ~/ c) * s, s, s), Paint()..color = const Color(0xFF5AA944));
     }
     Rect cell(int i, [double inset = 1]) => Rect.fromLTWH((i % c) * s + inset, (i ~/ c) * s + inset, s - 2 * inset, s - 2 * inset);
-    final tp = TextPainter(text: TextSpan(text: '🍎', style: TextStyle(fontSize: s * 0.8)), textDirection: TextDirection.ltr)..layout();
-    tp.paint(canvas, cell(g.food).center - Offset(tp.width / 2, tp.height / 2));
+    paintIcon(canvas, GameIcons.apple, cell(g.food, -s * 0.05));
     for (var k = g.body.length - 1; k >= 0; k--) {
-      final color = Color.lerp(const Color(0xFF8BE36B), const Color(0xFF3E8E2A), k / max(1, g.body.length - 1))!;
+      final color = Color.lerp(const Color(0xFF3B82F6), const Color(0xFF1D4ED8), k / max(1, g.body.length - 1))!;
       canvas.drawRRect(RRect.fromRectAndRadius(cell(g.body[k]), Radius.circular(s * 0.3)), Paint()..color = g.over ? Colors.redAccent : color);
     }
     // Eyes on the head.

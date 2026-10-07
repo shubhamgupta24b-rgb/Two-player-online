@@ -111,7 +111,7 @@ final skyInfo = LocalGameInfo(
   tagline: 'Bounce higher and higher into the sky!',
   rules: const [
     'You bounce by yourself. Slide your finger left and right to steer.',
-    'Land on platforms to keep climbing. 🟦 moving, 🟫 cracked ones break, 🟨 springs launch you high.',
+    'Land on platforms to keep climbing. Blue ones move, cracked stone breaks, yellow springs launch you high.',
     'Fall off the bottom and it\'s over. Score = how high you got.',
   ],
   scoreUnit: 'metres',
@@ -122,7 +122,7 @@ final skyInfo = LocalGameInfo(
     create: () => SkyLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🐸 SKY JUMPER',
+      title: 'Sky Jumper',
       score: g.score,
       child: LayoutBuilder(builder: (context, c) {
         final w = min(c.maxWidth, c.maxHeight / SkyLogic.viewH);
@@ -148,7 +148,27 @@ class _SkyPainter extends CustomPainter {
   final double s;
   _SkyPainter(this.g, this.s);
 
-  static final _frog = TextPainter(text: const TextSpan(text: '🐸', style: TextStyle(fontSize: 34)), textDirection: TextDirection.ltr)..layout();
+  /// The jumper: a round green hopper with big eyes, feet at [foot].
+  static void _jumper(Canvas canvas, Offset foot) {
+    const r = 15.0;
+    final c = foot - const Offset(0, r);
+    canvas.drawOval(Rect.fromCenter(center: foot + const Offset(-8, -2), width: 12, height: 6), Paint()..color = const Color(0xFF2E7D32));
+    canvas.drawOval(Rect.fromCenter(center: foot + const Offset(8, -2), width: 12, height: 6), Paint()..color = const Color(0xFF2E7D32));
+    canvas.drawCircle(c, r, Paint()..shader = const RadialGradient(center: Alignment(-0.3, -0.4), colors: [Color(0xFFA5E26B), Color(0xFF4CAF50), Color(0xFF2E7D32)]).createShader(Rect.fromCircle(center: c, radius: r)));
+    canvas.drawCircle(c, r, Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..color = const Color(0xFF1B5E20));
+    for (final dx in [-6.0, 6.0]) {
+      canvas.drawCircle(c + Offset(dx, -9), 5.5, Paint()..color = Colors.white);
+      canvas.drawCircle(c + Offset(dx + 1, -8.5), 2.6, Paint()..color = const Color(0xFF1B1B1B));
+    }
+    canvas.drawArc(Rect.fromCenter(center: c + const Offset(0, 2), width: 14, height: 8), 0.2, pi - 0.4, false, Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFF1B5E20));
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -192,8 +212,7 @@ class _SkyPainter extends CustomPainter {
         canvas.drawRect(Rect.fromCenter(center: Offset(p.x * s, sy(p.y) - 4), width: 16, height: 10), Paint()..color = const Color(0xFFFFD54F));
       }
     }
-    final frogY = sy(g.y) - _frog.height * 0.85;
-    _frog.paint(canvas, Offset(g.x * s - _frog.width / 2, frogY));
+    _jumper(canvas, Offset(g.x * s, sy(g.y)));
   }
 
   @override

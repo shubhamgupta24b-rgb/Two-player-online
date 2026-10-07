@@ -98,7 +98,7 @@ final pianoInfo = LocalGameInfo(
     create: () => PianoLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🎹 PIANO TILES',
+      title: 'Piano Tiles',
       score: g.score,
       child: LayoutBuilder(
         builder: (context, c) => GestureDetector(

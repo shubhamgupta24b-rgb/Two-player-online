@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
@@ -75,7 +76,7 @@ final whackInfo = LocalGameInfo(
   tagline: 'Bonk the moles, skip the bombs!',
   rules: const [
     'Moles pop out of the holes. Tap them before they hide!',
-    '🐹 +1 · 🌟 golden mole +3 · 💣 bomb −5.',
+    'Mole +1 · golden mole +3 · bomb -5.',
     '30 seconds, and they get faster. How many can you bonk?',
   ],
   scoreUnit: 'points',
@@ -86,9 +87,9 @@ final whackInfo = LocalGameInfo(
     create: () => WhackLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🔨 WHACK-A-MOLE',
+      title: 'Whack-a-Mole',
       score: g.score,
-      extra: '⏱${(g.msLeft / 1000).ceil()}s',
+      extra: '${(g.msLeft / 1000).ceil()}s',
       child: Center(
         child: AspectRatio(
           aspectRatio: 1,
@@ -126,7 +127,13 @@ final whackInfo = LocalGameInfo(
                               ? const SizedBox.shrink(key: ValueKey('empty'))
                               : FittedBox(
                                   key: ValueKey('${pop.until}'),
-                                  child: Text(switch (pop.kind) { Popper.mole => '🐹', Popper.golden => '🌟', Popper.bomb => '💣' }, style: const TextStyle(fontSize: 56)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6),
+                                    child: Container(
+                                      decoration: pop.kind == Popper.golden ? const BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Color(0xAAFFD54F), blurRadius: 18, spreadRadius: 2)]) : null,
+                                      child: GameIcon(switch (pop.kind) { Popper.mole => GameIcons.mole, Popper.golden => GameIcons.goldenMole, Popper.bomb => GameIcons.bomb }, size: 64),
+                                    ),
+                                  ),
                                 ),
                         ),
                       ),

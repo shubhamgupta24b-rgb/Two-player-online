@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../core/audio/game_audio.dart';
 import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
 import 'solo_common.dart';
@@ -94,15 +93,40 @@ final hangmanInfo = LocalGameInfo(
     create: () => HangmanLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: g.wonAt != null ? '🎉 GOT IT!' : (g.over ? '💀 IT WAS ${g.word}' : '🪢 HANGMAN'),
+      title: g.wonAt != null ? 'Got it!' : (g.over ? 'It was ${g.word}' : 'Hangman'),
       score: g.score,
-      extra: '${g.category} · ❤️ ${HangmanLogic.lives - g.wrong}',
+      extra: stripEmoji(g.category),
+      lives: HangmanLogic.lives - g.wrong,
+      maxLives: HangmanLogic.lives,
       child: Column(children: [
-        Expanded(flex: 5, child: CustomPaint(size: Size.infinite, painter: _GallowsPainter(g.wrong, g.over && !g.won))),
+        // A chalkboard in a wooden frame; the gallows and figure are drawn in chalk.
+        Expanded(
+          flex: 5,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF23423A),
+              borderRadius: Radii.rCard,
+              border: Border.all(color: const Color(0xFF8A5A2B), width: 6),
+              boxShadow: Shadows.large,
+            ),
+            child: Stack(children: [
+              Positioned.fill(child: CustomPaint(painter: _GallowsPainter(g.wrong, g.over && !g.won))),
+              Positioned(
+                left: 10,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(borderRadius: Radii.rChip, border: Border.all(color: Colors.white54, width: 1.5)),
+                  child: Text(stripEmoji(g.category).toUpperCase(), style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.4)),
+                ),
+              ),
+            ]),
+          ),
+        ),
         const SizedBox(height: 8),
         FittedBox(
           child: Text(g.shown,
-              style: TextStyle(color: g.wonAt != null ? GpColors.yes : (g.over ? GpColors.no : Colors.white), fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 2)),
+              style: TextStyle(color: g.wonAt != null ? StatusColors.success : (g.over ? const Color(0xFFFF6B6B) : Colors.white), fontSize: 36, fontFamily: Fonts.display, letterSpacing: 2)),
         ),
         const SizedBox(height: 14),
         // Keys at least 48dp wide: 7 a row where they fit, else 6.
@@ -119,10 +143,11 @@ final hangmanInfo = LocalGameInfo(
                   button: !g.guessed.contains(l),
                   label: g.guessed.contains(l) ? '$l, ${g.word.contains(l) ? 'in the word' : 'not in the word'}' : l,
                   excludeSemantics: true,
+                  // Chalk keys: unused keys are board-green with chalk letters; right guesses
+                  // turn green, wrong ones grey out with a red cross.
                   child: Material(
-                    color: !g.guessed.contains(l) ? Colors.white : (g.word.contains(l) ? fillFor(context.tk.success) : Colors.white12),
-                    borderRadius: Radii.rMd,
-                    elevation: g.guessed.contains(l) ? 0 : 2,
+                    color: !g.guessed.contains(l) ? const Color(0xFF2E5448) : (g.word.contains(l) ? fillFor(context.tk.success) : const Color(0xFF1A2A26)),
+                    shape: RoundedRectangleBorder(borderRadius: Radii.rMd, side: BorderSide(color: Colors.white.withValues(alpha: g.guessed.contains(l) ? 0.08 : 0.35))),
                     child: InkWell(
                       borderRadius: Radii.rMd,
                       onTap: g.guessed.contains(l)
@@ -132,10 +157,10 @@ final hangmanInfo = LocalGameInfo(
                               GameAudio.sfx(g.word.contains(l) ? 'pop' : 'tap');
                               g.guess(l);
                             },
-                      child: Center(
-                        child: Text(l,
-                            style: TextStyle(color: !g.guessed.contains(l) ? Brand.ink : (g.word.contains(l) ? Colors.white : Colors.white38), fontWeight: FontWeight.w900, fontSize: 19)),
-                      ),
+                      child: Stack(alignment: Alignment.center, children: [
+                        Text(l, style: TextStyle(fontFamily: Fonts.display, color: !g.guessed.contains(l) || g.word.contains(l) ? Colors.white : Colors.white30, fontSize: 21)),
+                        if (g.guessed.contains(l) && !g.word.contains(l)) const GameIcon(GameIcons.cross, size: 26, color: Color(0xCCFF6B6B)),
+                      ]),
                     ),
                   ),
                 ),
@@ -156,19 +181,19 @@ class _GallowsPainter extends CustomPainter {
     final h = size.height, w = size.width;
     final cx = w / 2;
     final wood = Paint()
-      ..color = const Color(0xFF8D6E63)
-      ..strokeWidth = 8
+      ..color = const Color(0xE6F4F1E8)
+      ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(Offset(cx - 90, h * 0.95), Offset(cx + 40, h * 0.95), wood);
     canvas.drawLine(Offset(cx - 60, h * 0.95), Offset(cx - 60, h * 0.06), wood);
     canvas.drawLine(Offset(cx - 60, h * 0.06), Offset(cx + 30, h * 0.06), wood);
     canvas.drawLine(Offset(cx - 60, h * 0.2), Offset(cx - 35, h * 0.06), wood..strokeWidth = 5);
     final rope = Paint()
-      ..color = const Color(0xFFD7CCC8)
+      ..color = const Color(0xB3F4F1E8)
       ..strokeWidth = 3;
     canvas.drawLine(Offset(cx + 30, h * 0.06), Offset(cx + 30, h * 0.18), rope);
     final body = Paint()
-      ..color = lost ? const Color(0xFFFF8A80) : Colors.white
+      ..color = lost ? const Color(0xFFFF8A80) : const Color(0xFFF4F1E8)
       ..strokeWidth = 5
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
