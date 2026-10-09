@@ -18,6 +18,11 @@ on:
       build_number:
         description: 'versionCode (must be higher than the last upload; blank = pubspec.yaml)'
         required: false
+      release_tag:
+        description: 'Also attach the .aab to this GitHub Release, e.g. v0.1.0 (blank = artifact only)'
+        required: false
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -62,3 +67,15 @@ jobs:
         with:
           name: party-games-${{ inputs.app_style }}-aab
           path: mobile/build/app/outputs/bundle/release/app-release.aab
+      - name: Attach to GitHub Release
+        if: inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          # Fixed asset names keep the README's releases/latest/download links working.
+          NAME=party-games.aab
+          if [ "${{ inputs.app_style }}" = "flat" ]; then NAME=party-games-flat.aab; fi
+          cp mobile/build/app/outputs/bundle/release/app-release.aab "$NAME"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes "Play Store bundles"
+          gh release upload "$TAG" "$NAME" --clobber
