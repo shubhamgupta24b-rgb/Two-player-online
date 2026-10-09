@@ -28,15 +28,6 @@ Release builds are signed with `mobile/android/upload-keystore.jks` + `key.prope
 **Back both files up**: without them you cannot publish updates. Without them builds fall back to the debug key.
 Players can still point the app at another server under Home > **Server**.
 
-### Download the Play Store bundle (.aab)
-- Party Games: [party-games.aab](https://github.com/shubhamgupta24b-rgb/Two-player-online/releases/latest/download/party-games.aab)
-- Party Games Flat: [party-games-flat.aab](https://github.com/shubhamgupta24b-rgb/Two-player-online/releases/latest/download/party-games-flat.aab)
-- All versions: [Releases](https://github.com/shubhamgupta24b-rgb/Two-player-online/releases)
-
-An .aab is for uploading to Play Console; phones can't install it directly (use the APK for that).
-To publish one: Actions > **Build Android AAB** > Run workflow > enter the server URL and a release tag
-(e.g. `v0.1.0`). It needs the signing secrets listed at the top of `.github/workflows/build-aab.yml`.
-
 ## Playing nearby (same Wi-Fi or a phone hotspot)
 - **Hotspot phone has mobile data:** everyone just uses the online server. Nothing to set up.
 - **No internet at all:** one laptop joins the Wi-Fi/hotspot and runs `cd server && npm start`.
