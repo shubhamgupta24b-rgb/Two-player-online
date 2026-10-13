@@ -39,15 +39,25 @@ const RELAY_GAMES = [
   { id: 'archery', min: 2, max: 4 },
   { id: 'shooting_gallery', min: 2, max: 4 },
   { id: 'bottle_smash', min: 2, max: 4 },
+  // RivalRoom-only games: playable when a host picks them, never chosen at random (Quick Play,
+  // party mode), so players on an app without them never land in one.
+  { id: 'chess', min: 2, max: 2, optIn: true },
+  { id: 'tug_of_war', min: 2, max: 2, optIn: true },
+  { id: 'darts', min: 2, max: 4, optIn: true },
+  { id: 'hot_potato', min: 2, max: 6, optIn: true },
+  { id: 'knife_hit', min: 2, max: 4, optIn: true },
+  { id: 'cup_pong', min: 2, max: 2, optIn: true },
+  { id: 'hungry_hippos', min: 2, max: 4, optIn: true },
+  { id: 'penguin_push', min: 2, max: 4, optIn: true },
 ];
 
 const MAX_STATE_BYTES = 64 * 1024;
 const MAX_QUEUE = 200;
 const NAME_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,23}$/;
 
-function createRelayGame({ id, min, max }) {
+function createRelayGame({ id, min, max, optIn = false }) {
   return {
-    id, minPlayers: min, maxPlayers: max, implemented: true, relay: true,
+    id, minPlayers: min, maxPlayers: max, implemented: true, relay: true, optIn,
 
     create(room) {
       if (room.players.length < min || room.players.length > max) throw new GameError('NOT_ENOUGH_PLAYERS');

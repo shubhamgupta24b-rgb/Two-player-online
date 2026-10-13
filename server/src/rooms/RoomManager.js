@@ -62,7 +62,7 @@ class RoomManager extends EventEmitter {
       const best = open.filter(r => r.players.length === most);
       return this.joinRoom(user, best[crypto.randomInt(best.length)].code);
     }
-    const pool = registry.list().filter(g => g.implemented && !NOT_IN_ROOMS.has(g.id) && g.minPlayers <= 2).map(g => g.id);
+    const pool = registry.list().filter(g => g.implemented && !g.optIn && !NOT_IN_ROOMS.has(g.id) && g.minPlayers <= 2).map(g => g.id);
     const room = this.createRoom(user, { gameType: gameType ?? pool[crypto.randomInt(pool.length)], maxPlayers: 6 });
     room.isPublic = true;
     return room;
@@ -136,7 +136,7 @@ class RoomManager extends EventEmitter {
     if (room.status !== 'lobby') throw new GameError('BAD_PHASE');
     if (!Number.isInteger(count) || count < 2 || count > 10) throw new GameError('INVALID_PAYLOAD');
     if (room.players.length < 2) throw new GameError('NOT_ENOUGH_PLAYERS');
-    const pool = this._fits(room);
+    const pool = this._fits(room).filter(id => !registry.get(id).optIn); // opt-in games only when picked
     for (let i = pool.length - 1; i > 0; i--) { const j = crypto.randomInt(i + 1); [pool[i], pool[j]] = [pool[j], pool[i]]; }
     const games = pool.slice(0, Math.min(count, pool.length));
     const prevType = room.gameType;
