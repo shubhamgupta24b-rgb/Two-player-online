@@ -14,17 +14,23 @@ import 'bottle_smash/bottle_smash_game.dart';
 import 'mini_golf/mini_golf_game.dart';
 import 'shooting_gallery/shooting_gallery_game.dart';
 import 'slingshot/slingshot_game.dart';
-import 'crush_it/crush_it_game.dart';
-import 'fruit_duel/fruit_duel_game.dart';
+import 'solo/fruit_cut.dart';
+import 'solo/chicken_jump.dart';
+import 'solo/knife_hit.dart';
+import 'solo/sweet_swap.dart';
+import 'bike_race/bike_race_game.dart';
+import 'hungry_hippos/hungry_hippos_game.dart';
+import 'tug_of_war/tug_of_war_game.dart';
+import 'carrom/carrom_game.dart';
+import 'eight_ball/eight_ball_game.dart';
+import 'minesweeper/mine_race_game.dart';
 import 'memory/memory_game.dart';
 import 'paint_fight/paint_fight_game.dart';
 import 'air_hockey/air_hockey_game.dart';
 import 'connect_four/connect_four_game.dart';
 import 'math_duel/math_duel_game.dart';
-import 'penalty/penalty_game.dart';
 import 'ping_pong/ping_pong_game.dart';
 import 'reaction_tap/reaction_tap_game.dart';
-import 'snake_duel/snake_duel_game.dart';
 import 'tic_tac_toe/tic_tac_toe_game.dart';
 import 'colour_clash/colour_clash_game.dart';
 import 'battleship/battleship_game.dart';
@@ -58,7 +64,6 @@ import 'solo/dino_run.dart';
 import 'solo/hangman.dart';
 import 'solo/sliding_puzzle.dart';
 import 'solo/sudoku.dart';
-import 'solo/classic_snake.dart';
 import 'solo/flappy_jump.dart';
 import 'solo/game_2048.dart';
 import 'solo/minesweeper.dart';
@@ -71,22 +76,50 @@ import 'shell/local_game_info.dart';
 import 'shell/game_art.dart';
 import 'shell/local_game_shell.dart';
 
-final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
-  drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo,
-  ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo, dotsBoxesInfo,
-  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo, bingoInfo, battleshipInfo, checkersInfo, smashKartsInfo,
+final localGames = <LocalGameInfo>[
+  colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo,
+  charadesInfo, snakesLaddersInfo,
+  drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, basketballInfo,
+  memoryInfo, paintFightInfo,
+  ticTacToeInfo, airHockeyInfo, pingPongInfo, reactionTapInfo, mathDuelInfo,
+  connectFourInfo, dotsBoxesInfo,
+  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo,
+  bingoInfo, battleshipInfo, checkersInfo, smashKartsInfo,
   golfInfo, slingInfo, archeryInfo, galleryInfo, bottleInfo,
   // Solo games (shown in their own section).
-  fruitMergeInfo, game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo,
+  fruitMergeInfo,
+  fruitCutInfo,
+  chickenJumpInfo,
+  knifeHitInfo,
+  sweetSwapInfo,
+  bikeRaceInfo,
+  hungryHipposInfo,
+  tugOfWarInfo,
+  carromInfo,
+  eightBallInfo,
+  mineRaceInfo,
+  game2048Info,
+  flappyInfo,
+  minesweeperInfo,
+  brickBreakerInfo,
+  whackInfo,
+  pianoInfo,
+  wordScrambleInfo,
+  stackInfo,
+  simonInfo,
   ballSortInfo, slidingInfo, sudokuInfo, hangmanInfo, dinoInfo,
-  blockDropInfo, bubbleInfo, skyInfo, spaceInfo, colorSwitchInfo];
+  blockDropInfo, bubbleInfo, skyInfo, spaceInfo, colorSwitchInfo
+];
 
 /// The hub's games plus their team versions (e.g. Ludo 2 vs 2), for online rooms.
-List<LocalGameInfo> get allLocalGames => [...localGames, for (final g in localGames) if (g.teamVariant != null) g.teamVariant!];
+List<LocalGameInfo> get allLocalGames => [
+      ...localGames,
+      for (final g in localGames)
+        if (g.teamVariant != null) g.teamVariant!
+    ];
 
 /// Everything in the hub: the shell games plus Guess the Person and Raja Mantri.
 int get totalGameCount => localGames.length + 2;
-
 
 /// A game in the list: one of the shell games, or Guess the Person / Raja Mantri.
 class _Entry {
@@ -109,7 +142,9 @@ class _Entry {
 }
 
 List<_Entry> _entries() {
-  GameCategory categoryOf(String id) => gameCatalog.where((g) => g.id == id).firstOrNull?.category ?? GameCategory.party;
+  GameCategory categoryOf(String id) =>
+      gameCatalog.where((g) => g.id == id).firstOrNull?.category ??
+      GameCategory.party;
   return [
     _Entry(
       id: 'guess_person',
@@ -209,15 +244,24 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
     final f = await Records.toggleFavourite(e.id);
     if (!mounted) return;
     setState(() => favourites = f);
-    showToast(context, f.contains(e.id) ? '${e.title} added to favourites' : '${e.title} removed from favourites', tone: Tone.info, duration: const Duration(milliseconds: 1400));
+    showToast(
+        context,
+        f.contains(e.id)
+            ? '${e.title} added to favourites'
+            : '${e.title} removed from favourites',
+        tone: Tone.info,
+        duration: const Duration(milliseconds: 1400));
   }
 
   bool _matches(_Entry e) {
     final q = _search.text.trim().toLowerCase();
-    if (q.isNotEmpty && !e.title.toLowerCase().contains(q) && !e.tagline.toLowerCase().contains(q)) return false;
+    if (q.isNotEmpty &&
+        !e.title.toLowerCase().contains(q) &&
+        !e.tagline.toLowerCase().contains(q)) return false;
     if (players case final n?) {
       if (e.solo) return false;
-      if (n >= 5 ? e.maxPlayers < 5 : (n < e.minPlayers || n > e.maxPlayers)) return false;
+      if (n >= 5 ? e.maxPlayers < 5 : (n < e.minPlayers || n > e.maxPlayers))
+        return false;
     }
     return switch (filter) {
       _Filter.all => true,
@@ -233,10 +277,13 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
   @override
   Widget build(BuildContext context) {
     final shown = _entriesList.where(_matches).toList();
-    final together = shown.where((e) => !e.solo).toList(), solo = shown.where((e) => e.solo).toList();
+    final together = shown.where((e) => !e.solo).toList(),
+        solo = shown.where((e) => e.solo).toList();
     final query = _search.text.trim();
     final browsing = filter == _Filter.all && query.isEmpty && players == null;
-    final recentEntries = [for (final id in recent) ..._entriesList.where((e) => e.id == id)];
+    final recentEntries = [
+      for (final id in recent) ..._entriesList.where((e) => e.id == id)
+    ];
     const gutter = EdgeInsets.symmetric(horizontal: 16);
     const ink = Color(0xFF1C1A17);
     const muted = Color(0xFF5C564C);
@@ -245,17 +292,31 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
     Widget section(String text) => SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text(text.toUpperCase(), style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.2, color: ink)),
+            child: Text(text.toUpperCase(),
+                style: const TextStyle(
+                    fontFamily: Fonts.body,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                    color: ink)),
           ),
         );
     Widget grid(List<_Entry> items) => SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           sliver: SliverGrid(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: cols, mainAxisSpacing: 14, crossAxisSpacing: 8, childAspectRatio: 0.72),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: cols,
+                mainAxisSpacing: 14,
+                crossAxisSpacing: 8,
+                childAspectRatio: 0.72),
             delegate: SliverChildBuilderDelegate(
               (_, i) {
                 final e = items[i];
-                return _HubIcon(entry: e, favourite: favourites.contains(e.id), onTap: () => _open(e), onStar: () => _toggleFavourite(e));
+                return _HubIcon(
+                    entry: e,
+                    favourite: favourites.contains(e.id),
+                    onTap: () => _open(e),
+                    onStar: () => _toggleFavourite(e));
               },
               childCount: items.length,
             ),
@@ -267,119 +328,202 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 12, 8),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  IconButton(tooltip: 'Back', onPressed: () => Navigator.maybePop(context), icon: const GameIcon(GameIcons.back, size: 20, color: ink)),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const Text('Games', style: TextStyle(fontFamily: Fonts.body, fontSize: 32, height: 1, fontWeight: FontWeight.w900, color: ink)),
-                        const SizedBox(height: 4),
-                        const Text('Choose a game and start playing', style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: muted)),
-                        Text('$totalGameCount games', style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: muted)),
-                      ]),
-                    ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(4, 4, 12, 8),
+              child:
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                IconButton(
+                    tooltip: 'Back',
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: const GameIcon(GameIcons.back, size: 20, color: ink)),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Games',
+                              style: TextStyle(
+                                  fontFamily: Fonts.body,
+                                  fontSize: 32,
+                                  height: 1,
+                                  fontWeight: FontWeight.w900,
+                                  color: ink)),
+                          const SizedBox(height: 4),
+                          const Text('Choose a game and start playing',
+                              style: TextStyle(
+                                  fontFamily: Fonts.body,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: muted)),
+                          Text('$totalGameCount games',
+                              style: const TextStyle(
+                                  fontFamily: Fonts.body,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: muted)),
+                        ]),
                   ),
-                  Padding(padding: const EdgeInsets.only(top: 8), child: _HubProfile(onTap: () => showSettingsSheet(context))),
-                ]),
-              ),
+                ),
+                Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child:
+                        _HubProfile(onTap: () => showSettingsSheet(context))),
+              ]),
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: gutter,
-                child: TextField(
-                  controller: _search,
-                  style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: ink),
-                  decoration: InputDecoration(
-                    hintText: 'Search games',
-                    hintStyle: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: muted),
-                    filled: true,
-                    fillColor: Colors.white,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    prefixIcon: const Padding(padding: EdgeInsets.only(left: 12, right: 8), child: GameIcon(GameIcons.search, size: 18, color: muted)),
-                    prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                    suffixIcon: query.isEmpty ? null : IconButton(tooltip: 'Clear', onPressed: _search.clear, icon: const GameIcon(GameIcons.close, size: 16, color: muted)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE4E0D8))),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: ink, width: 1.5)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE4E0D8))),
-                  ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: gutter,
+              child: TextField(
+                controller: _search,
+                style: const TextStyle(
+                    fontFamily: Fonts.body,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: ink),
+                decoration: InputDecoration(
+                  hintText: 'Search games',
+                  hintStyle: const TextStyle(
+                      fontFamily: Fonts.body,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: muted),
+                  filled: true,
+                  fillColor: Colors.white,
+                  isDense: true,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  prefixIcon: const Padding(
+                      padding: EdgeInsets.only(left: 12, right: 8),
+                      child:
+                          GameIcon(GameIcons.search, size: 18, color: muted)),
+                  prefixIconConstraints:
+                      const BoxConstraints(minWidth: 0, minHeight: 0),
+                  suffixIcon: query.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Clear',
+                          onPressed: _search.clear,
+                          icon: const GameIcon(GameIcons.close,
+                              size: 16, color: muted)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Color(0xFFE4E0D8))),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: ink, width: 1.5)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Color(0xFFE4E0D8))),
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(children: [
-                  for (final f in _Filter.values)
-                    Padding(padding: const EdgeInsets.only(right: 6), child: _LightChip(_filterLabels[f]!, selected: filter == f, onTap: () => setState(() => filter = f))),
-                ]),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: gutter,
-                child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
-                  const Padding(padding: EdgeInsets.only(right: 8), child: Text('PLAYERS', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w900, color: ink))),
-                  for (final n in _counts)
-                    Padding(
+          ),
+          SliverToBoxAdapter(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(children: [
+                for (final f in _Filter.values)
+                  Padding(
                       padding: const EdgeInsets.only(right: 6),
-                      child: _LightChip(n == null ? 'Any' : (n >= 5 ? '5–6' : '$n'), selected: players == n, onTap: () => setState(() => players = n)),
-                    ),
+                      child: _LightChip(_filterLabels[f]!,
+                          selected: filter == f,
+                          onTap: () => setState(() => filter = f))),
+              ]),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: gutter,
+              child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    const Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: Text('PLAYERS',
+                            style: TextStyle(
+                                fontFamily: Fonts.body,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                color: ink))),
+                    for (final n in _counts)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: _LightChip(
+                            n == null ? 'Any' : (n >= 5 ? '5–6' : '$n'),
+                            selected: players == n,
+                            onTap: () => setState(() => players = n)),
+                      ),
+                  ]),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          if (browsing && recentEntries.isNotEmpty) ...[
+            section('Recently played'),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 118,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: recentEntries.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (_, i) => _RecentTile(
+                      entry: recentEntries[i],
+                      onTap: () => _open(recentEntries[i])),
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          ],
+          if (shown.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(children: [
+                  GameIcon(
+                      filter == _Filter.favourites
+                          ? GameIcons.star
+                          : GameIcons.search,
+                      size: 44,
+                      color: const Color(0xFF5C564C)),
+                  const SizedBox(height: 10),
+                  Text(
+                    filter == _Filter.favourites && query.isEmpty
+                        ? 'No favourites yet. Tap the star on any game to add it here.'
+                        : 'No games match "$query".',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontFamily: Fonts.body,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF5C564C)),
+                  ),
+                  if (query.isNotEmpty || players != null) ...[
+                    const SizedBox(height: 12),
+                    KitButton('Clear search', style: KitButtonStyle.outline,
+                        onPressed: () {
+                      _search.clear();
+                      setState(() => players = null);
+                    }),
+                  ],
                 ]),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            if (browsing && recentEntries.isNotEmpty) ...[
-              section('Recently played'),
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 118,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: recentEntries.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 10),
-                    itemBuilder: (_, i) => _RecentTile(entry: recentEntries[i], onTap: () => _open(recentEntries[i])),
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          if (browsing) ...[
+            if (together.isNotEmpty) ...[
+              section('Play together'),
+              grid(together)
             ],
-            if (shown.isEmpty)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(children: [
-                    GameIcon(filter == _Filter.favourites ? GameIcons.star : GameIcons.search, size: 44, color: const Color(0xFF5C564C)),
-                    const SizedBox(height: 10),
-                    Text(
-                      filter == _Filter.favourites && query.isEmpty ? 'No favourites yet. Tap the star on any game to add it here.' : 'No games match "$query".',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF5C564C)),
-                    ),
-                    if (query.isNotEmpty || players != null) ...[
-                      const SizedBox(height: 12),
-                      KitButton('Clear search', style: KitButtonStyle.outline, onPressed: () {
-                        _search.clear();
-                        setState(() => players = null);
-                      }),
-                    ],
-                  ]),
-                ),
-              ),
-            if (browsing) ...[
-              if (together.isNotEmpty) ...[section('Play together'), grid(together)],
-              if (solo.isNotEmpty) ...[section('Solo games'), grid(solo)],
-            ] else
-              grid(shown),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ]),
-        ),
+            if (solo.isNotEmpty) ...[section('Solo games'), grid(solo)],
+          ] else
+            grid(shown),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ]),
+      ),
     );
   }
 }
@@ -403,8 +547,21 @@ class _RecentTile extends StatelessWidget {
           child: Column(children: [
             GameBadge(id: entry.id, color: entry.color, size: 64),
             const SizedBox(height: 6),
-            Text(entry.title, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF1C1A17))),
-            const Text('Play again', style: TextStyle(fontFamily: Fonts.body, fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF1F8A4C))),
+            Text(entry.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontFamily: Fonts.body,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1C1A17))),
+            const Text('Play again',
+                style: TextStyle(
+                    fontFamily: Fonts.body,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1F8A4C))),
           ]),
         ),
       ),
@@ -416,12 +573,17 @@ class _HubIcon extends StatelessWidget {
   final _Entry entry;
   final bool favourite;
   final VoidCallback onTap, onStar;
-  const _HubIcon({required this.entry, required this.favourite, required this.onTap, required this.onStar});
+  const _HubIcon(
+      {required this.entry,
+      required this.favourite,
+      required this.onTap,
+      required this.onStar});
 
   @override
   Widget build(BuildContext context) {
     final e = entry;
-    final count = e.maxPlayers <= 1 ? 'solo' : playersLabel(e.minPlayers, e.maxPlayers);
+    final count =
+        e.maxPlayers <= 1 ? 'solo' : playersLabel(e.minPlayers, e.maxPlayers);
     return Stack(children: [
       Semantics(
         button: true,
@@ -434,9 +596,22 @@ class _HubIcon extends StatelessWidget {
           },
           onLongPress: onStar,
           child: Column(children: [
-            Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: GameBadge(id: e.id, color: e.color)))),
+            Expanded(
+                child: Center(
+                    child: AspectRatio(
+                        aspectRatio: 1,
+                        child: GameBadge(id: e.id, color: e.color)))),
             const SizedBox(height: 6),
-            Text(e.title, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, fontSize: 12, height: 1.15, fontWeight: FontWeight.w800, color: Color(0xFF1C1A17))),
+            Text(e.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontFamily: Fonts.body,
+                    fontSize: 12,
+                    height: 1.15,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1C1A17))),
           ]),
         ),
       ),
@@ -449,7 +624,12 @@ class _HubIcon extends StatelessWidget {
             label: 'Unstar ${e.title}',
             child: GestureDetector(
               onTap: onStar,
-              child: const SizedBox(width: 28, height: 28, child: Center(child: GameIcon(GameIcons.star, size: 16, color: Color(0xFFF5C542)))),
+              child: const SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: Center(
+                      child: GameIcon(GameIcons.star,
+                          size: 16, color: Color(0xFFF5C542)))),
             ),
           ),
         ),
@@ -481,9 +661,17 @@ class _LightChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? const Color(0xFF1C1A17) : Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: selected ? const Color(0xFF1C1A17) : const Color(0xFFE4E0D8)),
+            border: Border.all(
+                color: selected
+                    ? const Color(0xFF1C1A17)
+                    : const Color(0xFFE4E0D8)),
           ),
-          child: Text(label, style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: selected ? Colors.white : const Color(0xFF1C1A17))),
+          child: Text(label,
+              style: TextStyle(
+                  fontFamily: Fonts.body,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: selected ? Colors.white : const Color(0xFF1C1A17))),
         ),
       ),
     );
@@ -515,7 +703,10 @@ class _HubProfile extends StatelessWidget {
               child: InkWell(
                 customBorder: const CircleBorder(),
                 onTap: onTap,
-                child: PlayerBadge(index: seat, size: 40, initial: name.isEmpty ? '?' : name[0].toUpperCase()),
+                child: PlayerBadge(
+                    index: seat,
+                    size: 40,
+                    initial: name.isEmpty ? '?' : name[0].toUpperCase()),
               ),
             );
           },

@@ -135,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
       emoji: null,
       title: 'Hosting on this phone',
       message: '1. Turn on this phone\'s hotspot (or stay on the same Wi-Fi as your friends).\n'
-          '2. Friends connect to it, open Party Games and tap Same Wi-Fi, then Join a friend.\n'
+          '2. Friends connect to it, open RivalRooms and tap Same Wi-Fi, then Join a friend.\n'
           '3. Create a room here and share the code (or use Quick Play).\n\n'
           'No internet needed. Keep this app open while you play.'
           '${ips.isEmpty ? '' : '\n\nThis phone: ${ips.join(' · ')}'}',
@@ -327,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Padding(
           padding: const EdgeInsets.all(18),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('PARTY GAMES', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.76, color: Brand.goldLine)),
+            const Text('RIVAL ROOMS', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.76, color: Brand.goldLine)),
             const SizedBox(height: 6),
             const SizedBox(width: 190, child: Text('Ready to play?', style: TextStyle(fontFamily: Fonts.display, fontSize: 30, height: 1.05, color: Colors.white))),
             const SizedBox(height: 8),
