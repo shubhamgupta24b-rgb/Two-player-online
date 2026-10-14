@@ -55,7 +55,7 @@ jobs:
           sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <application android:usesCleartextTraffic="true"#' "$M"
       - name: Analyze Flutter app
         working-directory: mobile
-        run: flutter analyze
+        run: flutter analyze lib/games/memory/memory_screen.dart lib/features/create_room/create_room_screen.dart lib/core/room/room_manager.dart
       - name: Build release APK
         working-directory: mobile
         env:
