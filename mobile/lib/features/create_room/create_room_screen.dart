@@ -219,7 +219,7 @@ class _MemorySetup extends StatelessWidget {
                     fontSize: 12,
                   ),
                   selectedColor: const Color(0xFF126BFA),
-                  backgroundColor: t.flat ? FlatPalette.canvas : const Color(0xFF202B40),
+                  backgroundColor: t.flat ? FlatPalette.surfaceStrong : const Color(0xFF202B40),
                   side: BorderSide(
                     color: selected == count
                         ? const Color(0xFF4DA3FF)
