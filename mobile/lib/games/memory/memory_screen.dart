@@ -72,7 +72,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
                   Container(
                     width: 40, height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(.07),
+                      color: Colors.white.withValues(alpha: .07),
                       borderRadius: BorderRadius.circular(13),
                     ),
                     child: const Icon(Icons.grid_view_rounded, color: _memoryGold, size: 21),
@@ -109,7 +109,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
                     if (i < players.length - 1)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 7),
-                        child: Text('VS', style: TextStyle(color: Colors.white.withOpacity(.35), fontSize: 9, fontWeight: FontWeight.w900)),
+                        child: Text('VS', style: TextStyle(color: Colors.white.withValues(alpha: .35), fontSize: 9, fontWeight: FontWeight.w900)),
                       ),
                   ],
                 ],
@@ -121,7 +121,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
                 decoration: BoxDecoration(
                   color: _memoryPanel,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white.withOpacity(.06)),
+                  border: Border.all(color: Colors.white.withValues(alpha: .06)),
                 ),
                 child: Row(
                   children: [
@@ -138,7 +138,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(.06), borderRadius: BorderRadius.circular(9)),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: .06), borderRadius: BorderRadius.circular(9)),
                       child: Text('$cardCount CARDS',
                         style: const TextStyle(color: Color(0xFFBBC8D9), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: .6)),
                     ),
@@ -181,7 +181,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
               ),
               const SizedBox(height: 5),
               Text('LIVE MULTIPLAYER MATCH',
-                style: TextStyle(color: Colors.white.withOpacity(.36), fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+                style: TextStyle(color: Colors.white.withValues(alpha: .36), fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
             ],
           ),
         ),
@@ -202,16 +202,16 @@ class _PlayerScore extends StatelessWidget {
     duration: const Duration(milliseconds: 220),
     padding: const EdgeInsets.all(9),
     decoration: BoxDecoration(
-      color: accent.withOpacity(isActive ? .16 : .07),
+      color: accent.withValues(alpha: isActive ? .16 : .07),
       borderRadius: BorderRadius.circular(15),
-      border: Border.all(color: accent.withOpacity(isActive ? .8 : .2), width: isActive ? 1.5 : 1),
+      border: Border.all(color: accent.withValues(alpha: isActive ? .8 : .2), width: isActive ? 1.5 : 1),
     ),
     child: Row(children: [
       Container(width: 5, height: 31, decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(5))),
       const SizedBox(width: 8),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(isMe ? 'YOU' : name.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis,
-          style: TextStyle(color: Colors.white.withOpacity(.65), fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: .7)),
+          style: TextStyle(color: Colors.white.withValues(alpha: .65), fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: .7)),
         const SizedBox(height: 3),
         Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
           style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
@@ -229,7 +229,7 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     constraints: const BoxConstraints(maxWidth: 130),
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
-    decoration: BoxDecoration(color: color.withOpacity(.12), borderRadius: BorderRadius.circular(99), border: Border.all(color: color.withOpacity(.38))),
+    decoration: BoxDecoration(color: color.withValues(alpha: .12), borderRadius: BorderRadius.circular(99), border: Border.all(color: color.withValues(alpha: .38))),
     child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
       style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: .45)),
   );
@@ -262,8 +262,8 @@ class _MemoryCard extends StatelessWidget {
                     colors: matched ? const [Color(0xFF183A42), Color(0xFF214B4D)] : const [Color(0xFFF7F3EB), Color(0xFFE5DED2)])
                 : const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF34445F), Color(0xFF202B40)]),
               borderRadius: BorderRadius.circular(dense ? 12 : 16),
-              border: Border.all(color: matched ? const Color(0xFF66D6B1) : revealed ? Colors.white.withOpacity(.65) : Colors.white.withOpacity(.12), width: matched ? 2 : 1),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(.16), blurRadius: dense ? 5 : 9, offset: const Offset(0, 4))],
+              border: Border.all(color: matched ? const Color(0xFF66D6B1) : revealed ? Colors.white.withValues(alpha: .65) : Colors.white.withValues(alpha: .12), width: matched ? 2 : 1),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .16), blurRadius: dense ? 5 : 9, offset: const Offset(0, 4))],
             ),
             child: Center(
               child: AnimatedSwitcher(
@@ -278,7 +278,7 @@ class _MemoryCard extends StatelessWidget {
                           style: TextStyle(color: matched ? const Color(0xFFBFF8E4) : _memoryInk, fontSize: dense ? 24 : 31, fontWeight: FontWeight.w800)),
                       ),
                     )
-                  : Icon(Icons.workspace_premium_rounded, key: const ValueKey('hidden'), size: dense ? 18 : 25, color: Colors.white.withOpacity(.24)),
+                  : Icon(Icons.workspace_premium_rounded, key: const ValueKey('hidden'), size: dense ? 18 : 25, color: Colors.white.withValues(alpha: .24)),
               ),
             ),
           ),
