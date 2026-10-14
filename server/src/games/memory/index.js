@@ -1,15 +1,19 @@
 const crypto = require('crypto');
 const { GameError } = require('../../errors');
-const SYMBOLS = ['🍎','🍌','🍇','🍉','🍓','🥝','🍒','🥭','🍑','🍍','🥥','🍋'];
+const SYMBOLS = ['🍎','🍌','🍇','🍉','🍓','🥝','🍒','🥭','🍑','🍍','🥥','🍋','🫐','🥑','🍐','🍊'];
 const shuffle = a => { const r=[...a]; for(let i=r.length-1;i>0;i--){const j=crypto.randomInt(i+1);[r[i],r[j]]=[r[j],r[i]];} return r; };
 function createMemory() {
   return {
     id:'memory', minPlayers:2, maxPlayers:4, implemented:true,
     create(room) {
-      const values=shuffle([...SYMBOLS,...SYMBOLS]);
+      const cardCount = room.memoryCardCount || 24;
+      if (![8,12,16,20,24,28,32].includes(cardCount)) throw new GameError('INVALID_PAYLOAD', 'invalid Memory card count');
+      const pairs = cardCount / 2;
+      const symbols = SYMBOLS.slice(0, pairs);
+      const values=shuffle([...symbols,...symbols]);
       return {players:room.players.map(p=>p.userId),names:Object.fromEntries(room.players.map(p=>[p.userId,p.username])),
         cards:values.map((value,id)=>({id,value,matched:false})),scores:Object.fromEntries(room.players.map(p=>[p.userId,0])),
-        turn:room.players[0].userId,picks:[],phase:'turn',mismatchUntil:null};
+        turn:room.players[0].userId,picks:[],phase:'turn',mismatchUntil:null,cardCount};
     },
     onAction(s,uid,{type,payload},now=Date.now()) {
       if(!s.players.includes(uid)) throw new GameError('NOT_IN_GAME');
@@ -37,7 +41,7 @@ function createMemory() {
     },
     getPublicState(s,uid) {
       const visible=new Set(s.picks);
-      return {gameType:'memory',phase:s.phase,turn:s.turn,scores:s.scores,
+      return {gameType:'memory',phase:s.phase,turn:s.turn,scores:s.scores,cardCount:s.cardCount || s.cards.length,
         players:s.players.map(u=>({userId:u,username:s.names[u]})),
         cards:s.cards.map(c=>({id:c.id,matched:c.matched,value:c.matched||visible.has(c.id)?c.value:null})),
         selected:s.picks,mismatchEndsAt:s.phase==='mismatch'?s.mismatchUntil:null,you:{userId:uid}};
