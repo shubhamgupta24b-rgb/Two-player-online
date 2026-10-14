@@ -18,6 +18,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: memory-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-server:
     runs-on: ubuntu-latest
@@ -43,7 +47,7 @@ jobs:
           java-version: "17"
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.38.6'
           cache: true
       - name: Generate Android project
         working-directory: mobile
