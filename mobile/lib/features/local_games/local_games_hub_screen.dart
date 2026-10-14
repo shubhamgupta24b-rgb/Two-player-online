@@ -270,11 +270,16 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-                child: PageHeader(
-                  label: 'Play on one phone',
-                  title: '$totalGameCount games',
-                  trailing: RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
-                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  PageHeader(
+                    label: 'Play on one phone',
+                    title: '$totalGameCount games',
+                    trailing: RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Pass this phone around. Search, filter by how many people, or long-press a game to favourite it.',
+                      style: t.styles.bodySmall.copyWith(color: t.onBgMuted)),
+                ]),
               ),
             ),
             SliverToBoxAdapter(

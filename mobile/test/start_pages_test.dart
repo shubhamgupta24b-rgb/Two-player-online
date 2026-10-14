@@ -153,14 +153,9 @@ void main() {
       }
 
       await openAndBack(find.text('Play on one phone'), LocalGamesHubScreen);
-      // Play online: a sheet with create, join and quick play.
+      expect(find.text('Play online'), findsOneWidget);
       for (final (label, page) in const [('Create room', CreateRoomScreen), ('Join room', JoinRoomScreen), ('Quick play', QuickPlayScreen)]) {
-        await open(find.text('Play online'));
-        await tester.tap(find.text(label));
-        await tester.pumpAndSettle();
-        expect(find.byType(page), findsOneWidget);
-        Navigator.of(tester.element(find.byType(page))).pop();
-        await tester.pumpAndSettle();
+        await openAndBack(find.text(label), page);
       }
       await openAndBack(find.text('My records'), RecordsScreen);
       await openAndBack(find.text('Memory'), LocalGameShell);

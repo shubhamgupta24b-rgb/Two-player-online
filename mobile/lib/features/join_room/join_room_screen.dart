@@ -36,6 +36,18 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
 
   bool get _complete => ctrl.text.length == _codeLength;
 
+  Future<void> _paste() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final raw = (data?.text ?? '').toUpperCase().replaceAll(RegExp('[^A-Z0-9]'), '');
+    if (raw.isEmpty) {
+      if (mounted) showToast(context, 'Copy the 6-letter code first, then paste it here', tone: Tone.info);
+      return;
+    }
+    ctrl.text = raw.length > _codeLength ? raw.substring(0, _codeLength) : raw;
+    setState(() => _error = null);
+    if (_complete) await _join();
+  }
+
   Future<void> _join() async {
     if (!_complete || busy) return;
     final rm = context.read<RoomManager>();
@@ -80,7 +92,10 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
                           ctrl: ctrl,
                           focus: focus,
                           error: _error != null,
-                          onChanged: () => setState(() => _error = null),
+                          onChanged: () {
+                            setState(() => _error = null);
+                            if (_complete) _join();
+                          },
                           onSubmit: _join,
                         ),
                       ),
@@ -98,7 +113,9 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
                                 ),
                               ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      KitButton('Paste code', icon: GameIcons.copy, style: KitButtonStyle.outline, height: 48, onPressed: busy ? null : _paste),
+                      const SizedBox(height: 12),
                       GoldButton(busy ? 'Joining…' : 'Join room', icon: GameIcons.forward, height: 58, onPressed: _complete && !busy ? _join : null),
                       const SizedBox(height: 24),
                       const _Tip(icon: GameIcons.wifi, text: 'Everyone plays on the same server: online, or the same Wi-Fi host.'),

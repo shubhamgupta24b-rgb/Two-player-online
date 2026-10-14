@@ -6,6 +6,7 @@ import '../core/room/room_manager.dart';
 import '../core/session/game_session_manager.dart';
 import '../core/ui/app_ui.dart';
 import '../features/guess_person/widgets/gp_theme.dart' show GpButton, GpColors;
+import '../features/local_games/shell/game_art.dart';
 import 'game_catalog.dart';
 import 'game_module.dart';
 
@@ -55,7 +56,7 @@ class GameHostScreen extends StatelessWidget {
   }
 }
 
-/// The game's emoji and name in its colour, plus the party progress.
+/// The game's art and name in its colour, plus the party progress.
 class _RoomBar extends StatelessWidget implements PreferredSizeWidget {
   final Room room;
   const _RoomBar({required this.room});
@@ -72,7 +73,7 @@ class _RoomBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: false,
       titleSpacing: 16,
       title: Row(children: [
-        Text(game.emoji, style: const TextStyle(fontSize: 24)),
+        GameThumb(id: game.id, color: game.color, size: 32, radius: 8),
         const SizedBox(width: 10),
         Expanded(child: Text(game.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19))),
         if (party != null)

@@ -137,7 +137,7 @@ class GameIntro extends StatelessWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
-              child: GoldButton('Start', height: 58, fontSize: 24, onPressed: onStart),
+              child: GoldButton('Start', icon: GameIcons.play, height: 58, fontSize: 24, onPressed: onStart),
             ),
           ),
         ),

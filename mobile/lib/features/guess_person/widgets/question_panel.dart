@@ -2,8 +2,31 @@ import 'package:flutter/material.dart';
 import '../logic/gp_rules.dart';
 import '../models/gp_question.dart';
 import '../../../core/ui/app_flavor.dart';
+import '../../../core/ui/icons/game_icons.dart';
 import 'gp_theme.dart';
 import 'person_portrait.dart' show traitColor;
+
+GameIcons gpCategoryIcon(String id) => switch (id) {
+      'gender' => GameIcons.people,
+      'eyes' => GameIcons.eye,
+      'hair' => GameIcons.drop,
+      'hair_color' => GameIcons.paintBrush,
+      'skin' => GameIcons.sun,
+      'accessories' => GameIcons.star,
+      'facial_hair' => GameIcons.mask,
+      _ => GameIcons.help,
+    };
+
+GameIcons gpAnswerIcon(String id) => switch (id) {
+      'male' || 'female' => GameIcons.people,
+      'long_hair' || 'short_hair' || 'curly' || 'bun' || 'bald' => GameIcons.drop,
+      'spiky' => GameIcons.bolt,
+      'glasses' => GameIcons.eye,
+      'hat' => GameIcons.crown,
+      'acc_earrings' || 'acc_necklace' || 'acc_bowtie' => GameIcons.star,
+      'beard' || 'mustache' => GameIcons.mask,
+      _ => GameIcons.help,
+    };
 
 /// Category tiles (GENDER, EYE COLOR, HAIR, ...). Tapping one shows its questions;
 /// asking returns to the tiles. Asked questions show their YES/NO and can't be re-asked.
@@ -40,7 +63,7 @@ class _CategoryPanelState extends State<CategoryPanel> {
           for (final cat in cats)
             _Tile(
               width: w,
-              emoji: cat.emoji,
+              icon: gpCategoryIcon(cat.id),
               label: cat.label,
               asked: widget.questions.where((q) => q.category == cat.id && widget.answerFor(q) != null).length,
               onTap: () => flatStyle ? _popup(cat) : setState(() => open = cat.id),
@@ -122,7 +145,9 @@ class _CategoryPanelState extends State<CategoryPanel> {
             icon: const Icon(Icons.arrow_back_rounded, color: GpCoral.tileInk),
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           ),
-          Text('${cat.emoji}  ${cat.label}', style: const TextStyle(color: GpCoral.tileInk, fontWeight: FontWeight.w900, fontSize: 16)),
+          GameIcon(gpCategoryIcon(cat.id), size: 22, color: GpCoral.tileInk),
+          const SizedBox(width: 8),
+          Flexible(child: Text(cat.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: GpCoral.tileInk, fontWeight: FontWeight.w900, fontSize: 16))),
         ]),
         const SizedBox(height: 6),
         Wrap(spacing: 8, runSpacing: 8, children: [
@@ -174,13 +199,6 @@ class _FlatOption extends StatelessWidget {
   final VoidCallback? onTap;
   const _FlatOption({required this.width, required this.question, required this.answer, required this.onTap});
 
-  static const _emoji = {
-    'male': '👨', 'female': '👩', //
-    'long_hair': '💇‍♀️', 'short_hair': '💇‍♂️', 'curly': '👩‍🦱', 'bun': '🎀', 'spiky': '⚡', 'bald': '👨‍🦲',
-    'glasses': '👓', 'hat': '🎩', 'acc_earrings': '💎', 'acc_necklace': '📿', 'acc_bowtie': '🎀',
-    'beard': '🧔', 'mustache': '🥸',
-  };
-
   Widget _icon() {
     final id = question.id;
     final cut = id.indexOf('_');
@@ -195,7 +213,7 @@ class _FlatOption extends StatelessWidget {
         child: kind == 'eyes' ? Container(width: 20, height: 20, decoration: BoxDecoration(color: swatch, shape: BoxShape.circle, border: Border.all(color: FlatColors.ink, width: 5))) : null,
       );
     }
-    return Text(_emoji[id] ?? '❓', style: const TextStyle(fontSize: 32));
+    return GameIcon(gpAnswerIcon(id), size: 32, color: FlatColors.ink);
   }
 
   @override
@@ -227,11 +245,11 @@ class _FlatOption extends StatelessWidget {
 
 class _Tile extends StatelessWidget {
   final double width;
-  final String emoji;
+  final GameIcons icon;
   final String label;
   final int asked;
   final VoidCallback onTap;
-  const _Tile({required this.width, required this.emoji, required this.label, required this.asked, required this.onTap});
+  const _Tile({required this.width, required this.icon, required this.label, required this.asked, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +269,7 @@ class _Tile extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text(emoji, style: const TextStyle(fontSize: 26)),
+                  GameIcon(icon, size: 26, color: GpCoral.tileInk),
                   const SizedBox(height: 2),
                   FittedBox(
                     fit: BoxFit.scaleDown,
