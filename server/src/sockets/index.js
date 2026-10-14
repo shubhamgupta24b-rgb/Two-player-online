@@ -71,7 +71,7 @@ function attachSockets(io, rooms) {
     });
 
     on('create_room', p => {
-      const room = rooms.createRoom(user, { gameType: String(p.gameType), maxPlayers: p.maxPlayers });
+      const room = rooms.createRoom(user, { gameType: String(p.gameType), maxPlayers: p.maxPlayers, memoryCardCount: p.memoryCardCount === undefined ? 24 : p.memoryCardCount });
       socket.join(room.code);
       return { room: rooms.publicRoom(room) };
     });
