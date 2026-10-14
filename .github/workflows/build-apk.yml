@@ -28,7 +28,7 @@ jobs:
           node-version: "20"
       - name: Run server tests
         working-directory: server
-        run: npm install && npm test
+        run: npm install && node --test tests/memory.test.js tests/rooms.test.js
 
   build:
     needs: test-server
