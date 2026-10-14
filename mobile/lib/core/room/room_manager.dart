@@ -12,7 +12,7 @@ class RoomPlayer {
 /// Party mode: a run of random games with a running points table.
 class Party {
   final List<String> games;
-  final int index; // game being played / just played
+  final int index;
   final Map<String, int> totals;
   final Map<String, int>? lastPoints;
   final bool done;
@@ -30,17 +30,20 @@ class Party {
 class Room {
   final String code, gameType, hostId, status;
   final int maxPlayers;
+  final int memoryCardCount;
   final List<RoomPlayer> players;
   final Party? party;
-  final Set<String> playable; // games that fit the players in the room right now
-  final bool isPublic; // a Quick Play room: strangers can be matched into it
-  Room(this.code, this.gameType, this.hostId, this.status, this.maxPlayers, this.players, {this.party, this.playable = const {}, this.isPublic = false});
+  final Set<String> playable;
+  final bool isPublic;
+  Room(this.code, this.gameType, this.hostId, this.status, this.maxPlayers, this.players,
+      {this.party, this.playable = const {}, this.isPublic = false, this.memoryCardCount = 24});
   factory Room.fromJson(Map j) => Room(
         j['code'], j['gameType'], j['hostId'], j['status'], j['maxPlayers'],
         (j['players'] as List).map((p) => RoomPlayer.fromJson(p as Map)).toList(),
         party: j['party'] == null ? null : Party.fromJson(j['party'] as Map),
         playable: {...((j['playable'] as List?) ?? const []).cast<String>()},
         isPublic: j['isPublic'] == true,
+        memoryCardCount: (j['memoryCardCount'] as num?)?.toInt() ?? 24,
       );
   bool get allReady => players.length >= 2 && players.every((p) => p.ready && p.connected);
 }
@@ -68,7 +71,7 @@ class RoomManager extends ChangeNotifier {
   final SocketManager _socket;
   late final StreamSubscription<SocketEvent> _sub;
   Room? room;
-  String? notice; // transient server notices, e.g. SESSION_REPLACED
+  String? notice;
 
   RoomManager(this._socket) {
     _sub = _socket.events.listen(_onEvent);
@@ -87,7 +90,6 @@ class RoomManager extends ChangeNotifier {
     }
   }
 
-  /// After every (re)connect ask the server what room we're in; null means the seat expired.
   Future<void> resync() async {
     final r = await _socket.request('resume_session');
     if (r['ok'] == true) {
@@ -99,7 +101,6 @@ class RoomManager extends ChangeNotifier {
   Future<String?> _roomCall(String event, [Map<String, dynamic>? p]) async {
     final r = await _socket.request(event, p);
     if (r['ok'] != true) {
-      // The room moved on without us noticing (e.g. a player left mid-game): catch up.
       if (r['error'] == 'BAD_PHASE') await resync();
       return errorMessage(r['error']?.toString());
     }
@@ -110,18 +111,19 @@ class RoomManager extends ChangeNotifier {
     return null;
   }
 
-  Future<String?> create(String gameType, int maxPlayers) => _roomCall('create_room', {'gameType': gameType, 'maxPlayers': maxPlayers});
+  Future<String?> create(String gameType, int maxPlayers, {int memoryCardCount = 24}) =>
+      _roomCall('create_room', {
+        'gameType': gameType,
+        'maxPlayers': maxPlayers,
+        if (gameType == 'memory') 'memoryCardCount': memoryCardCount,
+      });
   Future<String?> join(String code) => _roomCall('join_room', {'code': code.trim().toUpperCase()});
-
-  /// Quick Play: matched into a random open room (for [gameType], or any game).
   Future<String?> quickPlay([String? gameType]) => _roomCall('quick_play', {if (gameType != null) 'gameType': gameType});
   Future<String?> setReady(bool ready) => _roomCall(ready ? 'player_ready' : 'player_unready');
   Future<String?> start() => _roomCall('start_game');
   Future<String?> returnToLobby() => _roomCall('return_to_lobby');
   Future<String?> selectGame(String gameType) => _roomCall('select_game', {'gameType': gameType});
   Future<String?> startParty([int count = 5]) => _roomCall('start_party', {'count': count});
-
-  /// After a game: the next party game, [gameType], or the same game again.
   Future<String?> nextGame([String? gameType]) => _roomCall('next_game', {if (gameType != null) 'gameType': gameType});
 
   Future<void> leave() async {
@@ -131,7 +133,6 @@ class RoomManager extends ChangeNotifier {
   }
 
   void clearNotice() => notice = null;
-
   @override
   void dispose() {
     _sub.cancel();
