@@ -40,7 +40,7 @@ Widget _view(BuildContext context, WordTurnsLogic g, List players, int? me) => W
       players: players.cast(),
       g: g,
       me: me,
-      title: '🎬 DUMB CHARADES',
+      title: 'Dumb Charades',
       readyText: "You're acting! Hold the phone so only you can see.",
       watchText: 'Watch the actor and shout the movie name!',
       performerSeesWord: true,

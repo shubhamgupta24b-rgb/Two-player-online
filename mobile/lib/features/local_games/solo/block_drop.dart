@@ -182,7 +182,7 @@ final blockDropInfo = LocalGameInfo(
   color: const Color(0xFF7E57C2),
   tagline: 'Fit the falling blocks, clear the lines!',
   rules: const [
-    'Pieces fall. Swipe or tap ◀ ▶ to move, tap the board or ⟳ to rotate, swipe down or ⤓ to drop.',
+    'Pieces fall. Swipe or tap the arrows to move, tap the board or the rotate button to rotate, swipe down or tap drop to drop.',
     'Fill a whole row to clear it. Clear several at once for big points.',
     'Every 10 lines it gets faster. Stack to the top and it\'s over.',
   ],
@@ -194,7 +194,7 @@ final blockDropInfo = LocalGameInfo(
     create: () => BlockDropLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🧱 LEVEL ${g.level}',
+      title: 'Level ${g.level}',
       score: g.score,
       extra: '${g.lines} lines',
       child: Column(children: [

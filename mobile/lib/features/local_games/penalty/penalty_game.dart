@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/ui/components.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -99,7 +99,9 @@ final penaltyInfo = LocalGameInfo(
     create: (n) => PenaltyLogic(),
     save: (g) => {
       'goals': g.goals,
-      'kicks': [for (final k in g.kicks) [k.kicker, k.shot, k.dive]],
+      'kicks': [
+        for (final k in g.kicks) [k.kicker, k.shot, k.dive]
+      ],
       // Only whether each player has picked: the side stays secret until both have.
       'locked': [for (final p in g.picks) p != null],
       'showing': g.showingResult,
@@ -119,7 +121,7 @@ final penaltyInfo = LocalGameInfo(
       if (name == 'pick' && asInt(a[0]) == from) g.pick(from, asInt(a[1]));
     },
     view: (context, g, players, me) => Column(children: [
-      ScoreMiddleBar(players: players, scores: g.scores, label: g.kickNo < 2 * g.kicksEach ? 'KICK ${g.kickNo ~/ 2 + 1} OF ${g.kicksEach}' : 'SUDDEN DEATH'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: g.kickNo < 2 * g.kicksEach ? 'Kick ${g.kickNo ~/ 2 + 1} of ${g.kicksEach}' : 'Sudden death'),
       Expanded(child: _PenaltyHalf(player: players[me], index: me, g: g)),
     ]),
   ),
@@ -127,7 +129,7 @@ final penaltyInfo = LocalGameInfo(
     create: () => PenaltyLogic(),
     onFinished: onFinished,
     builder: (context, g) => SplitScreen(
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: g.kickNo < 2 * g.kicksEach ? 'KICK ${g.kickNo ~/ 2 + 1} OF ${g.kicksEach}' : 'SUDDEN DEATH'),
+      middle: ScoreMiddleBar(players: players, scores: g.scores, label: g.kickNo < 2 * g.kicksEach ? 'Kick ${g.kickNo ~/ 2 + 1} of ${g.kicksEach}' : 'Sudden death'),
       half: (i) => _PenaltyHalf(player: players[i], index: i, g: g),
     ),
   ),
@@ -150,16 +152,16 @@ class _PenaltyHalf extends StatelessWidget {
     String sub;
     if (g.showingResult && kick != null) {
       final mine = kick.kicker == index;
-      title = kick.goal ? (mine ? '⚽ GOAL!' : 'They scored…') : (mine ? 'SAVED!' : '🧤 GREAT SAVE!');
-      sub = 'Shot ${_side(kick.shot)} · dive ${_side(kick.dive)}';
+      title = kick.goal ? (mine ? 'GOAL!' : 'They scored') : (mine ? 'Saved!' : 'GREAT SAVE!');
+      sub = 'Shot ${_side(kick.shot)}, dive ${_side(kick.dive)}';
     } else if (g.picks[index] != null) {
-      title = 'LOCKED IN ✓';
-      sub = 'Waiting for your rival…';
+      title = 'Locked in';
+      sub = 'Waiting for your rival...';
     } else {
-      title = kicking ? 'YOU SHOOT' : 'YOU SAVE';
+      title = kicking ? 'You shoot' : 'You save';
       sub = kicking ? 'Pick where to shoot' : 'Pick where to dive';
     }
-    const labels = ['LEFT', 'MIDDLE', 'RIGHT'];
+    const labels = ['Left', 'Middle', 'Right'];
     final canPick = !g.showingResult && g.picks[index] == null && !g.finished;
     // A little pitch: striped grass, the goal with a net, three target zones inside it.
     return Container(
@@ -177,12 +179,20 @@ class _PenaltyHalf extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             child: Column(children: [
               Row(children: [
-                Flexible(child: PlayerTagSmall(player: player)),
+                PlayerBadge(index: PlayerPalette.indexOf(player.color) ?? index, size: 22, color: player.color, initial: player.name),
+                const SizedBox(width: 6),
+                Flexible(
+                    child: Text(player.name,
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(10)),
-                  child: Text(kicking ? '⚽ KICKER' : '🧤 KEEPER', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  decoration: BoxDecoration(color: Colors.black26, borderRadius: Radii.rChip),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    GameIcon(kicking ? GameIcons.football : GameIcons.glove, size: 16, color: Colors.white),
+                    const SizedBox(width: 5),
+                    Text(kicking ? 'KICKER' : 'KEEPER', style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.2)),
+                  ]),
                 ),
               ]),
               Expanded(
@@ -190,8 +200,13 @@ class _PenaltyHalf extends StatelessWidget {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Column(children: [
-                      Text(title, style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 3)])),
-                      Text(sub, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                      Text(title,
+                          style: TextStyle(
+                              fontFamily: Fonts.display,
+                              color: title == 'GOAL!' || title == 'GREAT SAVE!' ? Brand.gold : Colors.white,
+                              fontSize: 38,
+                              shadows: const [Shadow(color: Color(0x88000000), offset: Offset(0, 3), blurRadius: 3)])),
+                      Text(sub, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
                     ]),
                   ),
                 ),
@@ -215,19 +230,31 @@ class _PenaltyHalf extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
+                              excludeFromSemantics: true,
                               onTap: canPick
                                   ? () {
                                       if (g.pick(index, toAbsolute(shown))) HapticFeedback.selectionClick().ignore();
                                     }
                                   : null,
-                              child: SizedBox(
-                                height: 78,
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                                    Text(_zoneIcon(toAbsolute(shown), kick, kicking), style: const TextStyle(fontSize: 24)),
-                                    Text(labels[shown], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, shadows: [Shadow(color: Colors.black45, blurRadius: 2)])),
-                                  ]),
+                              child: Semantics(
+                                button: canPick,
+                                label: '${kicking ? 'Shoot' : 'Dive'} ${labels[shown].toLowerCase()}',
+                                excludeSemantics: true,
+                                child: SizedBox(
+                                  height: 78,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                                      SizedBox(
+                                        height: 30,
+                                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                          for (final ic in _zoneIcons(toAbsolute(shown), kick, kicking)) GameIcon(ic, size: 28, color: Colors.white),
+                                        ]),
+                                      ),
+                                      Text(labels[shown],
+                                          style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 15, shadows: [Shadow(color: Colors.black45, blurRadius: 2)])),
+                                    ]),
+                                  ),
                                 ),
                               ),
                             ),
@@ -244,23 +271,20 @@ class _PenaltyHalf extends StatelessWidget {
     );
   }
 
-  /// What a zone shows: after the kick, where the ball went (⚽) and where the keeper dove (🧤);
+  /// What a zone shows: after the kick, where the ball went and where the keeper dove;
   /// before it, a target (kicker) or a glove (keeper).
-  String _zoneIcon(int zone, Kick? kick, bool kicking) {
+  List<GameIcons> _zoneIcons(int zone, Kick? kick, bool kicking) {
     if (g.showingResult && kick != null) {
-      if (zone == kick.shot && zone == kick.dive) return '🧤⚽';
-      if (zone == kick.shot) return '⚽';
-      if (zone == kick.dive) return '🧤';
-      return '';
+      return [if (zone == kick.dive) GameIcons.glove, if (zone == kick.shot) GameIcons.football];
     }
-    if (g.picks[index] == zone) return '✓';
-    return kicking ? '🎯' : '🧤';
+    if (g.picks[index] == zone) return const [GameIcons.check];
+    return [kicking ? GameIcons.target : GameIcons.glove];
   }
 
   Color _zoneColor(int zone, Kick? kick) {
     if (g.showingResult && kick != null) {
-      if (zone == kick.shot && zone == kick.dive) return GpColors.no.withValues(alpha: 0.85);
-      if (zone == kick.shot) return GpColors.yes.withValues(alpha: 0.85);
+      if (zone == kick.shot && zone == kick.dive) return const Color(0xFFE5484D).withValues(alpha: 0.85);
+      if (zone == kick.shot) return StatusColors.success.withValues(alpha: 0.85);
       if (zone == kick.dive) return const Color(0xCC7A7A90);
       return Colors.transparent;
     }

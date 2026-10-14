@@ -40,4 +40,4 @@ final wouldRatherInfo = LocalGameInfo(
 
 PromptVoteLogic _create(int n) => PromptVoteLogic(mode: VoteMode.wouldRather, players: n, prompts: wouldRatherPrompts);
 Widget _view(BuildContext context, PromptVoteLogic g, List<GpPlayer> players, int? me) =>
-    PromptVoteView(players: players, g: g, me: me, title: '🤔 WOULD YOU RATHER', color: const Color(0xFF00B894));
+    PromptVoteView(players: players, g: g, me: me, title: 'Would You Rather', color: const Color(0xFF00B894));

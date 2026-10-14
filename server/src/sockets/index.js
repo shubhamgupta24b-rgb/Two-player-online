@@ -2,6 +2,7 @@ const { GameError } = require('../errors');
 const registry = require('../games/registry');
 const { verifyToken } = require('../auth/verify');
 const { upsertUser } = require('../database');
+const { playingNow, ranked } = require('../stats/board');
 
 const CODE_RE = /^[A-Z0-9]{6}$/;
 
@@ -70,7 +71,7 @@ function attachSockets(io, rooms) {
     });
 
     on('create_room', p => {
-      const room = rooms.createRoom(user, { gameType: String(p.gameType), maxPlayers: p.maxPlayers });
+      const room = rooms.createRoom(user, { gameType: String(p.gameType), maxPlayers: p.maxPlayers, memoryCardCount: p.memoryCardCount === undefined ? 24 : p.memoryCardCount });
       socket.join(room.code);
       return { room: rooms.publicRoom(room) };
     });
@@ -120,6 +121,8 @@ function attachSockets(io, rooms) {
       const room = rooms.roomOf(userId);
       return { room: room ? rooms.publicRoom(room) : null };
     });
+    on('online_counts', () => playingNow(rooms));
+    on('leaderboard', async () => ranked(20));
 
     socket.on('disconnect', () => {
       if (sockets.get(userId) !== socket) return;   // replaced by a newer connection

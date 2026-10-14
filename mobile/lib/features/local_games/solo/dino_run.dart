@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
@@ -80,7 +81,7 @@ final dinoInfo = LocalGameInfo(
   tagline: 'Jump the cacti, dodge the birds!',
   rules: const [
     'The dino runs by itself. Tap anywhere to jump.',
-    'Jump over cacti 🌵 and low birds. High birds fly over your head.',
+    'Jump over cacti and low birds. High birds fly over your head.',
     'It keeps getting faster. Score = metres run.',
   ],
   scoreUnit: 'metres',
@@ -91,13 +92,13 @@ final dinoInfo = LocalGameInfo(
     create: () => DinoLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🦖 DINO RUN',
+      title: 'Dino Run',
       score: g.score,
       extra: '${g.speed.toStringAsFixed(0)} m/s',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => g.jump(),
-        child: ClipRRect(borderRadius: BorderRadius.circular(18), child: CustomPaint(size: Size.infinite, painter: _DinoPainter(g))),
+        child: SceneFrame(child: CustomPaint(size: Size.infinite, painter: _DinoPainter(g))),
       ),
     ),
   ),
@@ -107,9 +108,62 @@ class _DinoPainter extends CustomPainter {
   final DinoLogic g;
   _DinoPainter(this.g);
 
-  static final _emoji = <String, TextPainter>{};
-  static TextPainter _tp(String e, double size) =>
-      _emoji.putIfAbsent('$e$size', () => TextPainter(text: TextSpan(text: e, style: TextStyle(fontSize: size)), textDirection: TextDirection.ltr)..layout());
+  /// The runner: a green dinosaur facing right, [feet] on the ground, [h] tall. Its legs
+  /// swap every few frames to run.
+  static void _dino(Canvas canvas, Offset feet, double h, bool stepA, bool hurt) {
+    final u = h / 10;
+    final body = Paint()..color = hurt ? const Color(0xFFE57373) : const Color(0xFF43A047);
+    final dark = Paint()..color = hurt ? const Color(0xFFC62828) : const Color(0xFF2E7D32);
+    final o = feet - Offset(0, h);
+    Offset p(double x, double y) => o + Offset(x * u, y * u);
+    // Tail and body.
+    canvas.drawPath(
+        Path()
+          ..moveTo(p(-3.5, 4.5).dx, p(-3.5, 4.5).dy)
+          ..quadraticBezierTo(p(-1, 3.5).dx, p(-1, 3.5).dy, p(0.5, 4).dx, p(0.5, 4).dy)
+          ..lineTo(p(0.5, 6.5).dx, p(0.5, 6.5).dy)
+          ..close(),
+        body);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromPoints(p(0, 3.6), p(4.6, 7.6)), Radius.circular(1.6 * u)), body);
+    // Neck and head.
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromPoints(p(2.8, 1.2), p(4.4, 4.6)), Radius.circular(0.6 * u)), body);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromPoints(p(2.6, 0), p(6.6, 2.4)), Radius.circular(0.9 * u)), body);
+    canvas.drawCircle(p(4.4, 0.9), 0.55 * u, Paint()..color = Colors.white);
+    canvas.drawCircle(p(4.6, 0.95), 0.28 * u, Paint()..color = const Color(0xFF1B1B1B));
+    canvas.drawLine(p(5.2, 1.9), p(6.3, 1.9), Paint()
+      ..color = const Color(0xFF1B5E20)
+      ..strokeWidth = 0.25 * u);
+    // Arm, belly and back spikes.
+    canvas.drawLine(p(4.2, 4.8), p(5.2, 5.6), dark..strokeWidth = 0.6 * u);
+    canvas.drawOval(Rect.fromPoints(p(1.4, 5.2), p(4.2, 7.4)), Paint()..color = const Color(0x33FFFFFF));
+    for (var k = 0; k < 3; k++) {
+      canvas.drawPath(Path()..addPolygon([p(0.6 + k * 1.1, 3.8), p(1.1 + k * 1.1, 2.9), p(1.6 + k * 1.1, 3.8)], true), dark);
+    }
+    // Legs.
+    final leg = Paint()
+      ..color = dark.color
+      ..strokeWidth = 1.0 * u
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(p(1.4, 7.2), p(stepA ? 1.0 : 1.6, stepA ? 9.6 : 9.0), leg);
+    canvas.drawLine(p(3.4, 7.2), p(stepA ? 3.8 : 3.2, stepA ? 9.0 : 9.6), leg);
+  }
+
+  /// A cartoon burst for the crash.
+  static void _boom(Canvas canvas, Offset c, double r) {
+    Path star(double rr) {
+      final path = Path();
+      for (var k = 0; k < 16; k++) {
+        final a = k * pi / 8;
+        final d = k.isEven ? rr : rr * 0.55;
+        final pt = c + Offset(cos(a), sin(a)) * d;
+        k == 0 ? path.moveTo(pt.dx, pt.dy) : path.lineTo(pt.dx, pt.dy);
+      }
+      return path..close();
+    }
+
+    canvas.drawPath(star(r), Paint()..color = const Color(0xFFFF7043));
+    canvas.drawPath(star(r * 0.6), Paint()..color = const Color(0xFFFFEB3B));
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -117,13 +171,22 @@ class _DinoPainter extends CustomPainter {
     final ground = size.height * 0.72;
     // Sky turns to sunset and night as you go further.
     final t = (g.distance % 1500) / 1500;
-    final sky = Color.lerp(const Color(0xFF81D4FA), const Color(0xFFFF8A65), (sin(t * 2 * pi) + 1) / 2 * 0.6)!;
-    canvas.drawRect(Offset.zero & size, Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [sky, const Color(0xFFFFF3E0)]).createShader(Offset.zero & size));
+    final sky = Color.lerp(const Color(0xFF6A7BD8), const Color(0xFF3A2F6B), (sin(t * 2 * pi) + 1) / 2 * 0.6)!;
+    canvas.drawRect(Offset.zero & size, Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [sky, const Color(0xFFF59E6B), const Color(0xFFFFD9A0)]).createShader(Offset.zero & size));
     // Far hills and clouds, slower than the ground (parallax).
-    final hills = Paint()..color = const Color(0xFFA5D6A7);
+    // Distant flat-topped mesas.
+    final mesa = Paint()..color = const Color(0xFFC0714A);
     for (var i = -1; i < 6; i++) {
       final x = i * size.width * 0.4 - (g.distance * m * 0.15) % (size.width * 0.4);
-      canvas.drawCircle(Offset(x, ground + size.width * 0.15), size.width * 0.26, hills);
+      final mh = size.width * (0.12 + 0.05 * (i % 2).abs());
+      canvas.drawPath(
+          Path()
+            ..moveTo(x - size.width * 0.16, ground)
+            ..lineTo(x - size.width * 0.1, ground - mh)
+            ..lineTo(x + size.width * 0.1, ground - mh)
+            ..lineTo(x + size.width * 0.16, ground)
+            ..close(),
+          mesa);
     }
     final cloud = Paint()..color = Colors.white.withValues(alpha: 0.85);
     for (var i = 0; i < 4; i++) {
@@ -133,7 +196,7 @@ class _DinoPainter extends CustomPainter {
       canvas.drawOval(Rect.fromCenter(center: Offset(x + 18, y - 8), width: 40, height: 22), cloud);
     }
     // Ground with moving stones.
-    canvas.drawRect(Rect.fromLTRB(0, ground, size.width, size.height), Paint()..color = const Color(0xFFD7B98E));
+    canvas.drawRect(Rect.fromLTRB(0, ground, size.width, size.height), Paint()..color = const Color(0xFFE8C48A));
     canvas.drawLine(Offset(0, ground), Offset(size.width, ground), Paint()
       ..color = const Color(0xFF795548)
       ..strokeWidth = 3);
@@ -147,31 +210,23 @@ class _DinoPainter extends CustomPainter {
       final x = o.x * m;
       if (o.bird) {
         final by = ground - (o.high ? 2.1 : 0.7) * m;
-        final flap = (g.now ~/ 140).isEven ? '🦅' : '🐦';
-        final tp = _tp(flap, m * 0.9);
+        final bob = (g.now ~/ 140).isEven ? -m * 0.06 : m * 0.06; // wing flap
+        final bs = m * 0.9;
         canvas.save();
-        canvas.translate(x + tp.width, by - tp.height);
+        canvas.translate(x + bs, by - bs + bob);
         canvas.scale(-1, 1); // flying towards the dino
-        tp.paint(canvas, Offset.zero);
+        paintIcon(canvas, GameIcons.bird, Rect.fromLTWH(0, 0, bs, bs));
         canvas.restore();
       } else {
-        final tp = _tp('🌵', m * (0.8 + o.width * 0.5));
-        tp.paint(canvas, Offset(x, ground - tp.height * 0.92));
+        final ch = m * (0.8 + o.width * 0.5);
+        paintIcon(canvas, GameIcons.cactus, Rect.fromLTWH(x, ground - ch * 0.98, ch * 0.85, ch));
       }
     }
     // The dino (facing right), with a shadow that shrinks as it jumps.
     final dx = g.dinoX * m - m * 0.5;
     canvas.drawOval(Rect.fromCenter(center: Offset(dx + m * 0.55, ground + 4), width: m * (0.9 - min(0.5, g.y * 0.15)), height: 7), Paint()..color = Colors.black26);
-    final dino = _tp('🦖', m * 1.25);
-    canvas.save();
-    canvas.translate(dx + dino.width, ground - g.y * m - dino.height * 0.95);
-    canvas.scale(-1, 1);
-    dino.paint(canvas, Offset.zero);
-    canvas.restore();
-    if (g.over) {
-      final boom = _tp('💥', m * 1.2);
-      boom.paint(canvas, Offset(dx + m * 0.3, ground - g.y * m - m * 1.3));
-    }
+    _dino(canvas, Offset(dx + m * 0.2, ground - g.y * m), m * 1.15, g.y > 0 || (g.now ~/ 110).isEven, g.over);
+    if (g.over) _boom(canvas, Offset(dx + m * 0.9, ground - g.y * m - m * 0.8), m * 0.55);
   }
 
   @override

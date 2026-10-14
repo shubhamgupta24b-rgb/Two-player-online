@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import '../logic/gp_rules.dart';
 import '../logic/guess_person_controller.dart';
 import '../models/gp_player.dart';
@@ -17,10 +18,10 @@ class ResultView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (emoji, title, sub, color) = switch (result.outcome) {
-      RoundOutcome.correct => ('🎉', 'CORRECT!', 'YOU FOUND THE PERSON!', GpColors.yes),
-      RoundOutcome.wrong => ('❌', 'WRONG GUESS', 'The correct person was:', GpColors.no),
-      RoundOutcome.timeUp => ('⏰', 'TIME UP!', 'The correct person was:', Colors.orangeAccent),
+    final (icon, title, sub, color) = switch (result.outcome) {
+      RoundOutcome.correct => (GameIcons.check, 'CORRECT!', 'YOU FOUND THE PERSON!', GpColors.yes),
+      RoundOutcome.wrong => (GameIcons.cross, 'WRONG GUESS', 'The correct person was:', GpColors.no),
+      RoundOutcome.timeUp => (GameIcons.lock, 'TIME UP!', 'The correct person was:', Colors.orangeAccent),
     };
     final found = result.outcome == RoundOutcome.correct;
     final secretCard = SizedBox(
@@ -38,7 +39,9 @@ class ResultView extends StatelessWidget {
             child: DarkPanel(
               padding: const EdgeInsets.all(20),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('$emoji $title', textAlign: TextAlign.center, style: TextStyle(color: color, fontSize: 34, fontWeight: FontWeight.w900)),
+              GameIcon(icon, size: 40, color: color),
+              const SizedBox(height: 4),
+              Text(title, textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, color: color, fontSize: 34)),
               const SizedBox(height: 6),
               Text(sub, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
               const SizedBox(height: 16),

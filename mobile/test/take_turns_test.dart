@@ -84,7 +84,7 @@ void main() {
     expect(find.textContaining('3 min on the whole screen'), findsOneWidget);
     await tapText(tester, 'START');
     expect(find.text('3:00'), findsOneWidget);
-    expect(find.text('SWIPE UP TO SHOOT'), findsOneWidget, reason: 'one big court, not two halves');
+    expect(find.text('Swipe up to shoot'), findsOneWidget, reason: 'one big court, not two halves');
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));
   });

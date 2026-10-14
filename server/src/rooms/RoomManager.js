@@ -34,14 +34,15 @@ class RoomManager extends EventEmitter {
   }
   _changed(room) { this.emit('room_changed', room.code); }
 
-  createRoom(user, { gameType, maxPlayers }) {
+  createRoom(user, { gameType, maxPlayers, memoryCardCount = 24 }) {
     if (this.userRoom.has(user.userId)) throw new GameError('ALREADY_IN_ROOM');
     const game = registry.get(gameType);
     if (!game) throw new GameError('INVALID_PAYLOAD', 'unknown gameType');
     // The room size is independent of the game: the host can switch games in the lobby.
     if (![2, 3, 4, 5, 6].includes(maxPlayers)) throw new GameError('INVALID_PAYLOAD', 'maxPlayers must be 2 to 6');
+    if (gameType === 'memory' && ![8, 12, 16, 20, 24, 28, 32].includes(memoryCardCount)) throw new GameError('INVALID_PAYLOAD', 'invalid Memory card count');
     const code = this._code();
-    const room = { code, gameType, maxPlayers, hostId: user.userId, status: 'lobby', players: [], game: null, seqs: {}, party: null, createdAt: Date.now() };
+    const room = { code, gameType, maxPlayers, memoryCardCount: gameType === 'memory' ? memoryCardCount : 24, hostId: user.userId, status: 'lobby', players: [], game: null, seqs: {}, party: null, createdAt: Date.now() };
     room.players.push({ ...user, ready: true, connected: true });
     this.store.set(code, room);
     this.userRoom.set(user.userId, code);
@@ -285,7 +286,7 @@ class RoomManager extends EventEmitter {
 
   publicRoom(room) {
     return {
-      code: room.code, gameType: room.gameType, maxPlayers: room.maxPlayers, hostId: room.hostId, status: room.status,
+      code: room.code, gameType: room.gameType, maxPlayers: room.maxPlayers, memoryCardCount: room.memoryCardCount || 24, hostId: room.hostId, status: room.status,
       isPublic: !!room.isPublic, party: this._publicParty(room), playable: this._fits(room),
       players: room.players.map(({ userId, username, avatar, ready, connected }) => ({ userId, username, avatar, ready, connected })),
     };

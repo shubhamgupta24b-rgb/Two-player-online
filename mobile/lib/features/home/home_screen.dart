@@ -168,9 +168,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _playOnline() async {
+  /// Play-online actions always use the internet server, even if this phone was hosting on Wi-Fi.
+  Future<void> _playOnline(Widget page) async {
     if (AppConfig.mode == ServerMode.wifi) await _useOnline();
-    if (mounted) await _rooms();
+    if (mounted) _open(page);
   }
 
   Future<void> _sameWifi() async {
@@ -217,9 +218,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 16),
                 _hero(),
                 const SizedBox(height: 16),
+                Text('Play online', style: TextStyle(fontFamily: Fonts.display, fontSize: 22, height: 1.1, color: t.onBg)),
+                const SizedBox(height: 4),
+                Text('Share a room code — friends can join from anywhere', style: t.styles.bodySmall.copyWith(color: t.onBgMuted)),
+                const SizedBox(height: 10),
+                _SheetOption(icon: GameIcons.plus, tint: PlayerPalette.colors[0], title: 'Create room', text: 'Host a game and share a 6-letter code', onTap: () => _playOnline(const CreateRoomScreen())),
+                const SizedBox(height: 10),
+                _SheetOption(icon: GameIcons.forward, tint: PlayerPalette.colors[1], title: 'Join room', text: "Type a friend's code — or paste it", onTap: () => _playOnline(const JoinRoomScreen())),
+                const SizedBox(height: 10),
+                _SheetOption(icon: GameIcons.bolt, tint: PlayerPalette.colors[2], title: 'Quick play', text: 'Jump into an open room with anyone', onTap: () => _playOnline(const QuickPlayScreen())),
+                const SizedBox(height: 12),
                 Row(children: [
-                  Expanded(child: _ModeTile(icon: GameIcons.globe, tint: PlayerPalette.colors[0], ink: PlayerPalette.tints[0], label: 'Play online', onTap: _playOnline)),
-                  const SizedBox(width: 10),
                   Expanded(child: _ModeTile(icon: GameIcons.wifi, tint: PlayerPalette.colors[2], ink: PlayerPalette.tints[2], label: 'Same Wi-Fi', onTap: _sameWifi)),
                   const SizedBox(width: 10),
                   Expanded(child: _ModeTile(icon: GameIcons.trophy, tint: Brand.gold, ink: const Color(0xFFFFE08A), label: 'My records', onTap: () => _open(const RecordsScreen()))),
@@ -323,8 +332,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(width: 190, child: Text('Ready to play?', style: TextStyle(fontFamily: Fonts.display, fontSize: 30, height: 1.05, color: Colors.white))),
             const SizedBox(height: 8),
             SizedBox(
-              width: 200,
-              child: Text('$totalGameCount games · 2–6 players · no internet needed',
+              width: 220,
+              child: Text('$totalGameCount games · pass one phone around, or play with a room code',
                   style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFFD6DAF7))),
             ),
             const SizedBox(height: 14),

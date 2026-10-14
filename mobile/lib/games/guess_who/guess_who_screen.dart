@@ -274,7 +274,7 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
         child: DarkPanel(
           padding: const EdgeInsets.all(20),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(iWon ? '🎉 YOU WIN THE ROUND!' : '😅 ${opp['username']} wins the round',
+            Text(iWon ? 'YOU WIN THE ROUND!' : '${opp['username']} wins the round',
                 textAlign: TextAlign.center, style: TextStyle(color: iWon ? GpColors.yes : GpColors.no, fontSize: 24, fontWeight: FontWeight.w900)),
             const SizedBox(height: 6),
             Text(why, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),

@@ -39,7 +39,8 @@ class PersonCard extends StatelessWidget {
     Widget card = AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       decoration: BoxDecoration(
-        color: Colors.white,
+        // Paper, like the other card games.
+        gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFFFDF6), Color(0xFFF5E9D2)]),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: border, width: mark == CardMark.none || out ? 2 : 4),
         boxShadow: [

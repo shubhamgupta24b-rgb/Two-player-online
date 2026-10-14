@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
-import '../../guess_person/widgets/gp_theme.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
 import 'solo_common.dart';
@@ -142,7 +141,7 @@ final sudokuInfo = LocalGameInfo(
   tagline: 'The classic number puzzle!',
   rules: const [
     'Fill the grid so every row, column and 3×3 box has the numbers 1 to 9 once.',
-    'Tap a square, then a number. ✏️ NOTES lets you pencil in ideas.',
+    'Tap a square, then a number. Notes (the pencil) lets you pencil in ideas.',
     '3 mistakes and the game is over. Solve it fast for more points!',
   ],
   scoreUnit: 'points',
@@ -153,9 +152,11 @@ final sudokuInfo = LocalGameInfo(
     create: () => SudokuLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: g.over && g.solved ? '🎉 SOLVED!' : '📝 SUDOKU',
+      title: g.over && g.solved ? 'Solved!' : 'Sudoku',
       score: g.score,
-      extra: '❌ ${g.mistakes}/${SudokuLogic.maxMistakes} · ⏱ ${g.now ~/ 60000}:${(g.now ~/ 1000 % 60).toString().padLeft(2, '0')}',
+      extra: '${g.now ~/ 60000}:${(g.now ~/ 1000 % 60).toString().padLeft(2, '0')}',
+      lives: SudokuLogic.maxMistakes - g.mistakes,
+      maxLives: SudokuLogic.maxMistakes,
       child: Column(children: [
         Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Grid(g: g)))),
         const SizedBox(height: 10),
@@ -189,8 +190,8 @@ final sudokuInfo = LocalGameInfo(
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                                    const Text('✏️', style: TextStyle(fontSize: 18)),
-                                    Text(g.notes ? 'NOTES ON' : 'NOTES', style: const TextStyle(color: Brand.ink, fontWeight: FontWeight.w900, fontSize: 10.5)),
+                                    const GameIcon(GameIcons.pencil, size: 20, color: Brand.ink),
+                                    Text(g.notes ? 'NOTES ON' : 'NOTES', style: const TextStyle(fontFamily: Fonts.body, color: Brand.ink, fontWeight: FontWeight.w900, fontSize: 10.5)),
                                   ]),
                                 ),
                               ),
@@ -281,7 +282,7 @@ class _Grid extends StatelessWidget {
                     alignment: Alignment.center,
                     child: g.cells[i] != 0
                         ? Text('${g.cells[i]}',
-                            style: TextStyle(fontSize: cell * 0.55, fontWeight: g.puzzle[i] != 0 ? FontWeight.w900 : FontWeight.w700, color: g.puzzle[i] != 0 ? GpColors.ink : const Color(0xFF3949AB)))
+                            style: TextStyle(fontSize: cell * 0.55, fontWeight: g.puzzle[i] != 0 ? FontWeight.w900 : FontWeight.w700, color: g.puzzle[i] != 0 ? const Color(0xFF1E1B3A) : const Color(0xFF3949AB)))
                         : g.marks[i].isEmpty
                             ? null
                             : Padding(

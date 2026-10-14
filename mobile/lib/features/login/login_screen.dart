@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 2),
                     Semantics(header: true, child: Text("Who's playing?", textAlign: TextAlign.center, style: t.styles.h1.copyWith(color: t.onBg))),
                     const SizedBox(height: 4),
-                    Text('Party games for friends: on one phone or online.', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
+                    Text('Pick a nickname and a colour. No account needed — then play on this phone or with friends.', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
                     const SizedBox(height: 22),
                     Center(
                       child: AnimatedSwitcher(

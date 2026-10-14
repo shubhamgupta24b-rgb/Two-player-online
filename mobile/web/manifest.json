@@ -1,6 +1,6 @@
 {
-    "name": "multiplayer_game",
-    "short_name": "multiplayer_game",
+    "name": "RivalRooms",
+    "short_name": "RivalRooms",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

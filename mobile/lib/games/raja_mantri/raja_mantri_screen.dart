@@ -114,7 +114,7 @@ class _RajaMantriScreenState extends State<RajaMantriScreen> {
       }
       if (over) {
         if (id == accused) {
-          badge = caught ? '🚨 CAUGHT!' : '👉 ACCUSED';
+          badge = caught ? 'CAUGHT!' : 'ACCUSED';
           badgeColor = Colors.white;
         } else if (role == RmcsRole.chor) {
           badge = 'ESCAPED!';
@@ -139,16 +139,16 @@ class _RajaMantriScreenState extends State<RajaMantriScreen> {
 
     final Widget headline = switch (phase) {
       'dealing' => RmcsHeadline(
-          title: myRole == null ? '🃏 Dealing…' : (_peeking ? 'You are the ${myRole.title} ${myRole.emoji}' : '🤫 Check your card'),
+          title: myRole == null ? 'Dealing…' : (_peeking ? 'You are the ${myRole.title}' : 'Check your card'),
           subtitle: _peeking ? '${myRole!.subtitle} · ${myRole.pointsLine}' : "Only you can see it. Raja revealed in ${(msLeft / 1000).ceil()}s.",
         ),
       'raja' => RmcsHeadline(
-          title: '👑 ${raja == null ? '?' : name(raja)} is the RAJA!',
-          subtitle: '🧠 ${mantri == null ? '?' : name(mantri)} is the Mantri and must find the Chor.',
+          title: '${raja == null ? '?' : name(raja)} is the RAJA!',
+          subtitle: '${mantri == null ? '?' : name(mantri)} is the Mantri and must find the Chor.',
         ),
       'guessing' => RmcsHeadline(
-          title: iAmMantri ? '🧠 Who is the CHOR?' : '🧠 ${mantri == null ? 'The Mantri' : name(mantri)} is choosing…',
-          subtitle: iAmMantri ? 'Tap ${suspects.map(name).join(' or ')}.' : (myRole == RmcsRole.chor ? 'Act natural… 😇' : 'Who will they pick?'),
+          title: iAmMantri ? 'Who is the CHOR?' : '${mantri == null ? 'The Mantri' : name(mantri)} is choosing…',
+          subtitle: iAmMantri ? 'Tap ${suspects.map(name).join(' or ')}.' : (myRole == RmcsRole.chor ? 'Act natural…' : 'Who will they pick?'),
           trailing: CountdownRing(msLeft: msLeft, totalMs: guessMs, size: 52),
         ),
       _ => ResultBanner(caught: caught, timedOut: result?['timedOut'] == true),

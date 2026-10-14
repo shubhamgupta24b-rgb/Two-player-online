@@ -80,7 +80,7 @@ final stackInfo = LocalGameInfo(
     create: () => StackLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: g.lastPerfectAt != null && g.now - g.lastPerfectAt! < 900 ? '✨ PERFECT!' : '🏗️ STACK TOWER',
+      title: g.lastPerfectAt != null && g.now - g.lastPerfectAt! < 900 ? 'Perfect!' : 'Stack Tower',
       score: g.score,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

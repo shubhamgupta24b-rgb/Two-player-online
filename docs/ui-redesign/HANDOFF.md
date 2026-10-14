@@ -1,6 +1,6 @@
 # Handoff: finish the Party Games UI redesign
 
-You are continuing a UI redesign of the Flutter app in `mobile/` (repo `Two-player-online`, branch `feature/ui-redesign`). About 60% of the work is left: 54 of 62 games still need their own redesign, plus the final pass. Everything listed under "Already done" is committed and pushed. Work only on this branch and push after every batch.
+All phases (Prompts 0-4, B1-B8 and the final pass) are done, committed and pushed on `feature/ui-redesign`. Remaining known gaps are listed in CHECKLIST.md (Smash Karts park art, Draw & Guess brushes, Guess the Person attribute chips). What is left is testing on real phones.
 
 ## Read first
 1. `docs/ui-redesign/UI_SPEC.md`: the spec. Section 0 is strict, section 5 describes every game, and sections 8 and 9 are the quality bar and the done checklist.
@@ -17,14 +17,8 @@ You are continuing a UI redesign of the Flutter app in `mobile/` (repo `Two-play
 - If a change would need logic or network changes, stop and ask.
 
 ## Remaining work, in order
-- **B2 (rest):**
-  - Bingo (`bingo/bingo_game.dart`);
-  - Colour Clash (`colour_clash/colour_clash_game.dart`; logic is in `colour_clash_logic.dart`, don't touch it);
-  - Raja Mantri Chor Sipahi (`features/raja_mantri/*`, spec 4.13).
-- **B3 — Party 1:** Guess the Person (`features/guess_person/*`, spec 4.12: keep `person_portrait.dart`, merge `gp_theme.dart` colours into tokens), Find the Spy, Undercover, Mafia, Dumb Charades, Heads Up.
-- **B4 — Party 2:** Draw & Guess, Quiz Battle, Most Likely To, Would You Rather, Truth or Dare, Hand Cricket, Rock Paper Scissors.
-- **B5 — Action 1:** Crush It, Basketball Hoops, Fruit Duel, Paint Fight, Air Hockey, Ping Pong, Snake Duel, Reaction Tap, Penalty Shootout.
-- **B6 — Action 2:** Math Duel, Smash Karts (mockups/smash_karts), Mini Golf, Slingshot, Archery (mockups/archery), Shooting Gallery, Bottle Smash, Fruit Merge Battle.
+- **B5 — Action 1 (DONE):** Crush It, Basketball Hoops, Fruit Duel, Paint Fight, Air Hockey, Ping Pong, Snake Duel, Reaction Tap, Penalty Shootout.
+- **B6 — Action 2 (DONE; Smash Karts park not redrawn):** Math Duel, Smash Karts (mockups/smash_karts), Mini Golf, Slingshot, Archery (mockups/archery), Shooting Gallery, Bottle Smash, Fruit Merge Battle.
 - **B7 — Solo 1:** Fruit Merge, 2048, Classic Snake, Flappy Jump, Minesweeper, Brick Breaker, Whack-a-Mole, Piano Tiles, Word Scramble, Stack Tower.
 - **B8 — Solo 2:** Simon Says, Ball Sort, Sliding Puzzle, Sudoku, Hangman, Dino Run, Block Drop, Bubble Shooter, Sky Jumper, Space Shooter, Color Switch.
 - **Prompt 13 — final pass:**
@@ -78,7 +72,10 @@ For each game:
 - **Tokens and dice:** `widgets/pawn.dart` (`PawnPainter` dome token), `widgets/dice.dart` (3D die).
 - **Finished games, as examples:**
   - B1: Ludo, Snakes & Ladders, Checkers, Connect Four, Tic-Tac-Toe, Dots & Boxes.
-  - B2 part 1: Memory, Battleship. Copy their patterns.
+  - B2: Memory, Battleship, Bingo, Colour Clash, Raja Mantri.
+  - B3: Charades / Heads Up (`party/word_turns.dart`), Find the Spy, Undercover, Mafia, Guess the Person.
+  - B4: Most Likely / Would Rather (`party/prompt_vote.dart`), Truth or Dare, RPS, Hand Cricket, Quiz Battle, Draw & Guess. Copy their patterns (split-screen zones: pass `colors:` to `PlayerZones`; scale small zones down with a design height + FittedBox).
+  - The online Raja Mantri screen (`games/raja_mantri/raja_mantri_screen.dart`) still has emoji in its headlines; clean them up in the final pass.
 
 ## After every batch
 1. `cd mobile && flutter analyze && flutter test` (830 tests at the moment). Update tests only for changed labels; never weaken what a test checks.

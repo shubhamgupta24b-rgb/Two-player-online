@@ -19,6 +19,7 @@ class CreateRoomScreen extends StatefulWidget {
 class _CreateRoomScreenState extends State<CreateRoomScreen> {
   String gameId = gameCatalog.first.id;
   int players = 4;
+  int memoryCardCount = 24;
   bool busy = false;
 
   GameInfo get game => gameCatalog.firstWhere((g) => g.id == gameId);
@@ -28,7 +29,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
     final nav = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => busy = true);
-    final err = await rm.create(gameId, players);
+    final err = await rm.create(gameId, players, memoryCardCount: memoryCardCount);
     if (!mounted) return;
     if (err != null) {
       setState(() => busy = false);
@@ -57,6 +58,14 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
               child: _RoomSize(players: players, onPlayers: (n) => setState(() => players = n)),
             ),
+            if (gameId == 'memory')
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
+                child: _MemorySetup(
+                  selected: memoryCardCount,
+                  onChanged: (n) => setState(() => memoryCardCount = n),
+                ),
+              ),
             Expanded(
               child: GameGrid(
                 selectedId: gameId,
@@ -159,6 +168,69 @@ class _BottomPanel extends StatelessWidget {
         SizedBox(height: compact ? 8 : 14),
         GoldButton(busy ? 'Creating…' : 'Create room', icon: GameIcons.plus, onPressed: busy ? null : onCreate),
       ]),
+    );
+  }
+}
+
+
+class _MemorySetup extends StatelessWidget {
+  const _MemorySetup({required this.selected, required this.onChanged});
+  final int selected;
+  final ValueChanged<int> onChanged;
+
+  static const _counts = [8, 12, 16, 20, 24, 28, 32];
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    final ink = t.flat ? FlatPalette.ink : Colors.white;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: t.flat ? Colors.white : NeonPalette.sheet,
+        borderRadius: Radii.rLg,
+        border: Border.all(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: .12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(children: [
+            Icon(Icons.grid_view_rounded, size: 17, color: t.flat ? FlatPalette.inkMuted : Brand.gold),
+            const SizedBox(width: 8),
+            Expanded(child: Text('MEMORY BOARD SIZE', style: t.styles.label.copyWith(color: ink))),
+            Text('$selected cards · ${selected ~/ 2} pairs',
+                style: t.styles.label.copyWith(color: t.flat ? FlatPalette.inkMuted : Brand.gold)),
+          ]),
+          const SizedBox(height: 9),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final count in _counts)
+                ChoiceChip(
+                  label: Text('$count'),
+                  selected: selected == count,
+                  onSelected: (_) => onChanged(count),
+                  visualDensity: VisualDensity.compact,
+                  labelStyle: TextStyle(
+                    color: selected == count ? Colors.white : ink,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                  selectedColor: const Color(0xFF126BFA),
+                  backgroundColor: t.flat ? FlatPalette.surfaceStrong : const Color(0xFF202B40),
+                  side: BorderSide(
+                    color: selected == count
+                        ? const Color(0xFF4DA3FF)
+                        : (t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: .12)),
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

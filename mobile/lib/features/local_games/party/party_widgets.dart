@@ -251,19 +251,23 @@ class _HoldToRevealState extends State<HoldToReveal> with SingleTickerProviderSt
 }
 
 /// The card for words, prompts, roles and secrets (spec 2.14): paper, a category label in
-/// the card colour, large Lilita text and an optional drawn icon.
+/// the card colour, large Lilita text and an optional drawn [icon] (or an [emoji] key that
+/// maps to one). [dark] makes a night card for hidden roles (the spy, the mafia).
 class PromptCard extends StatelessWidget {
   final String header;
   final String text;
   final String? emoji; // drawn as its icon when there is one, otherwise left out
+  final GameIcons? icon;
   final String? footer;
   final Color color;
-  const PromptCard({super.key, required this.header, required this.text, this.emoji, this.footer, this.color = const Color(0xFF7B4DFF)});
+  final bool dark;
+  const PromptCard({super.key, required this.header, required this.text, this.emoji, this.icon, this.footer, this.color = const Color(0xFF7B4DFF), this.dark = false});
 
   @override
   Widget build(BuildContext context) {
     final band = fillFor(color);
-    final icon = emoji == null ? null : leadingRuleIcon(emoji!);
+    final icon = this.icon ?? (emoji == null ? null : leadingRuleIcon(emoji!));
+    final ink = dark ? Colors.white : Brand.onGold;
     return TweenAnimationBuilder<double>(
       key: ValueKey(header + text),
       tween: Tween(begin: Motion.reduced(context) ? 1 : 0.88, end: 1),
@@ -276,7 +280,7 @@ class PromptCard extends StatelessWidget {
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFFFDF6), Color(0xFFF5E9D2)]),
+            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: dark ? const [Color(0xFF2A2350), Color(0xFF14102E)] : const [Color(0xFFFFFDF6), Color(0xFFF5E9D2)]),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: band, width: 3),
             boxShadow: const [BoxShadow(color: Color(0x59000000), offset: Offset(0, 6), blurRadius: 14)],
@@ -290,11 +294,11 @@ class PromptCard extends StatelessWidget {
                   textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.6, color: onColor(band))),
             ),
             const SizedBox(height: Space.m),
-            if (icon != null) ...[GameIcon(icon, size: 56, color: band), const SizedBox(height: Space.s)],
-            Text(stripEmoji(text), textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.display, fontSize: 30, height: 1.1, color: Brand.onGold)),
+            if (icon != null) ...[GameIcon(icon, size: 56, color: dark ? Colors.white : band), const SizedBox(height: Space.s)],
+            Text(stripEmoji(text), textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, fontSize: 30, height: 1.1, color: ink)),
             if (footer != null) ...[
               const SizedBox(height: Space.s),
-              Text(stripEmoji(footer!), textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, color: FlatPalette.inkMuted, fontWeight: FontWeight.w800, fontSize: 13.5, height: 1.3)),
+              Text(stripEmoji(footer!), textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, color: dark ? NeonPalette.textMuted : FlatPalette.inkMuted, fontWeight: FontWeight.w800, fontSize: 13.5, height: 1.3)),
             ],
           ]),
         ),

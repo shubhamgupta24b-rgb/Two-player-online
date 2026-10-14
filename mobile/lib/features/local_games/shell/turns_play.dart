@@ -86,7 +86,7 @@ class _TurnsPlayState extends State<TurnsPlay> {
             player: p,
             title: index == 0 ? '${p.whose} TURN FIRST' : 'PASS THE PHONE TO',
             big: p.name,
-            line: '${_time(widget.durationMs)} on the whole screen. Everyone else, just watch! 👀',
+            line: '${_time(widget.durationMs)} on the whole screen. Everyone else, just watch!',
             button: 'START',
             onTap: () => setState(() => step = _Step.playing),
             scores: scores,
@@ -166,7 +166,7 @@ class _Card extends StatelessWidget {
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Stack(clipBehavior: Clip.none, children: [
                       PlayerAvatar(name: player.name, color: c, size: 96),
-                      Positioned(right: -14, bottom: -6, child: ExcludeSemantics(child: Text(scored ? '⭐' : '📲', style: const TextStyle(fontSize: 34)))),
+                      Positioned(right: -14, bottom: -6, child: ExcludeSemantics(child: GameIcon(scored ? GameIcons.star : GameIcons.forward, size: 34, color: Brand.gold))),
                     ]),
                     const SizedBox(height: Space.l),
                     Text(title, textAlign: TextAlign.center, style: t.styles.label),

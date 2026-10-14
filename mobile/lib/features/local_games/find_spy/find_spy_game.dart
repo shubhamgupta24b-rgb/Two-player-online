@@ -2,7 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../shell/game_hud.dart' show MomentWatcher, keyMoment;
+import '../shell/local_game_shell.dart' show ResultScope;
 import '../party/party_widgets.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
@@ -198,6 +199,53 @@ class _SpyView extends StatefulWidget {
   State<_SpyView> createState() => _SpyViewState();
 }
 
+/// A drawn icon for each location (the logic keeps its emoji keys).
+const _placeIcons = [
+  GameIcons.sun, GameIcons.pencil, GameIcons.medical, GameIcons.arrowUp, GameIcons.clapper, GameIcons.cherry, //
+  GameIcons.rocket, GameIcons.bat, GameIcons.clock, GameIcons.heart, GameIcons.coin, GameIcons.rabbit, //
+  GameIcons.home, GameIcons.star, GameIcons.mysteryBox, GameIcons.shield, GameIcons.flag, GameIcons.drop, //
+  GameIcons.target, GameIcons.hammer, GameIcons.scroll, GameIcons.home, GameIcons.apple, GameIcons.pencil, //
+  GameIcons.pig, GameIcons.crown, GameIcons.sound, GameIcons.moon, GameIcons.arrowRight, GameIcons.cherry,
+];
+GameIcons _placeIcon(int i) => i < _placeIcons.length ? _placeIcons[i] : GameIcons.flag;
+
+/// A small location card: drawn icon and name on paper.
+class _PlaceChip extends StatelessWidget {
+  final int place;
+  final VoidCallback? onTap;
+  const _PlaceChip(this.place, {this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final name = FindSpyLogic.places[place].$1;
+    return Semantics(
+      button: onTap != null,
+      label: name,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap == null
+            ? null
+            : () {
+                haptic(HapticWeight.medium);
+                onTap!();
+              },
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(8, 6, 10, 6),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFFFDF6), Color(0xFFF5E9D2)]),
+            borderRadius: Radii.rCard,
+            boxShadow: const [BoxShadow(color: Color(0x40000000), offset: Offset(0, 2), blurRadius: 3)],
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            GameIcon(_placeIcon(place), size: onTap == null ? 16 : 22, color: const Color(0xFF7B4DFF)),
+            const SizedBox(width: 6),
+            Flexible(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w900, fontSize: onTap == null ? 12.5 : 14, color: Brand.onGold))),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
 class _SpyViewState extends State<_SpyView> {
   bool _shown = false; // one phone: the current player's card is showing
 
@@ -208,28 +256,48 @@ class _SpyViewState extends State<_SpyView> {
   List<int> get options => g.options;
 
   Widget _secret(int p) => p == spy
-      ? const PromptCard(header: 'YOU ARE THE', text: 'SPY', emoji: '🕵️', footer: "You don't know the location. Listen, blend in, and work out where you are!", color: GpColors.no)
-      : PromptCard(header: 'LOCATION', text: FindSpyLogic.places[place].$1, emoji: FindSpyLogic.places[place].$2, footer: 'One of you is the spy. Ask questions to find them, without giving the place away!');
+      ? const PromptCard(header: 'You are the', text: 'SPY', icon: GameIcons.magnifier, dark: true, footer: "You don't know the location. Listen, blend in, and work out where you are!", color: Color(0xFFFF5E5B))
+      : PromptCard(header: 'Location', text: FindSpyLogic.places[place].$1, icon: _placeIcon(place), footer: 'One of you is the spy. Ask questions to find them, without giving the place away!');
 
   @override
   Widget build(BuildContext context) {
     final me = widget.me;
+    ResultScope.of(context)?.subtitle = g.phase.index >= SpyPhase.result.index ? (g.spyWins ? 'The spy wins' : 'The town wins') : null;
+    final Widget view = _phase(context, me);
+    return MomentWatcher<SpyPhase>(
+      value: g.phase,
+      onChange: (fx, _, now) {
+        if (now == SpyPhase.spyGuess) keyMoment(fx, 'SPY CAUGHT!', sub: '${players[spy].name} gets one last guess', sound: 'hit');
+        if (now == SpyPhase.result) {
+          if (g.spyWins) {
+            keyMoment(fx, 'SPY WINS!', sub: g.accused == spy ? 'They guessed the place' : 'Nobody caught them', sound: 'lose', color: const Color(0xFFFF8E8B));
+          } else {
+            keyMoment(fx, 'TOWN WINS!', sub: '${players[spy].name} was the spy', sound: 'win', confetti: true);
+          }
+        }
+      },
+      child: view,
+    );
+  }
+
+  Widget _phase(BuildContext context, int? me) {
+    final t = context.tk;
     switch (g.phase) {
       case SpyPhase.reveal:
         if (me != null) {
           final ready = g.seen.contains(me);
           return PartyFrame(
-            title: 'YOUR SECRET',
-            subtitle: ready ? 'Waiting for the others (${g.seen.length}/${players.length})' : 'Remember it, then tap READY',
+            title: 'Find the Spy',
+            subtitle: ready ? 'Waiting for the others (${g.seen.length}/${players.length})' : 'Remember it, then tap Ready',
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Expanded(child: Center(child: SingleChildScrollView(child: _secret(me)))),
-              GpButton(ready ? 'READY ✓' : "I'M READY", onPressed: ready ? null : () => g.seenCard(me)),
+              GoldButton(ready ? 'Ready' : "I'm ready", icon: ready ? GameIcons.check : null, height: 58, onPressed: ready ? null : () => g.seenCard(me)),
             ]),
           );
         }
         final p = g.revealTurn;
         return PartyFrame(
-          title: 'SECRET CARDS',
+          title: 'Find the Spy',
           subtitle: '${g.seen.length} of ${players.length} have looked',
           child: PassAndReveal(
             player: players[p],
@@ -244,32 +312,27 @@ class _SpyViewState extends State<_SpyView> {
         );
       case SpyPhase.discuss:
         return PartyFrame(
-          title: 'ASK QUESTIONS!',
-          subtitle: 'Take turns asking anyone a question about the place.',
+          title: 'Find the Spy',
+          subtitle: 'Ask questions!',
           trailing: TimeChip(g.msLeft),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            const Text('POSSIBLE LOCATIONS', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900, letterSpacing: 1.2, fontSize: 12)),
+            TurnBanner(text: 'Take turns asking', sub: 'Ask anyone a question about the place', color: Brand.gold, kind: TurnBannerKind.info, icon: GameIcons.speech, compact: true),
+            const SizedBox(height: 10),
+            Text('POSSIBLE LOCATIONS', style: t.styles.label),
             const SizedBox(height: 6),
             Expanded(
               child: SingleChildScrollView(
-                child: Wrap(spacing: 6, runSpacing: 6, children: [
-                  for (final (name, emoji) in FindSpyLogic.places)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                      decoration: BoxDecoration(color: context.tk.glassStrong, borderRadius: Radii.rMd),
-                      child: Text('$emoji $name', style: TextStyle(color: context.tk.onBg, fontWeight: FontWeight.w700, fontSize: 13)),
-                    ),
-                ]),
+                child: Wrap(spacing: 6, runSpacing: 6, children: [for (var i = 0; i < FindSpyLogic.places.length; i++) _PlaceChip(i)]),
               ),
             ),
             const SizedBox(height: 10),
-            GpButton("WE'RE READY TO VOTE", icon: Icons.how_to_vote_rounded, onPressed: g.startVote),
+            GoldButton("We're ready to vote", icon: GameIcons.people, height: 58, onPressed: g.startVote),
           ]),
         );
       case SpyPhase.vote:
         if (me != null) {
           return PartyFrame(
-            title: 'WHO IS THE SPY?',
+            title: 'Who is the spy?',
             subtitle: 'Your vote · ${g.votesIn}/${players.length} voted',
             child: Center(
               child: SingleChildScrollView(
@@ -279,59 +342,53 @@ class _SpyViewState extends State<_SpyView> {
           );
         }
         return PartyFrame(
-          title: 'WHO IS THE SPY?',
-          subtitle: 'Talk it over, agree, then tap the player you accuse.',
+          title: 'Who is the spy?',
+          subtitle: 'Agree, then tap who you accuse',
           child: Center(child: SingleChildScrollView(child: PlayerPicker(players: players, onPick: g.accuse))),
         );
       case SpyPhase.spyGuess:
         final canGuess = me == null || me == spy;
         return PartyFrame(
-          title: '🎯 SPY CAUGHT: ${players[spy].name.toUpperCase()}!',
-          subtitle: canGuess ? 'Spy, one last chance: guess the location to steal the win.' : '${players[spy].name} is guessing the location…',
+          title: 'Spy caught: ${players[spy].name}!',
+          subtitle: canGuess ? 'One last chance: guess the place' : '${players[spy].name} is guessing…',
           child: canGuess
               ? GridView.count(
                   crossAxisCount: 2,
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
-                  childAspectRatio: 2.4,
-                  children: [
-                    for (final o in options)
-                      GpButton('${FindSpyLogic.places[o].$2} ${FindSpyLogic.places[o].$1}', color: Colors.white, onPressed: () {
-                        haptic(HapticWeight.medium);
-                        g.guess(o);
-                      }),
-                  ],
+                  childAspectRatio: 2.6,
+                  children: [for (final o in options) _PlaceChip(o, onTap: () => g.guess(o))],
                 )
               : const WaitingNote('The spy is guessing…'),
         );
       case SpyPhase.result:
       case SpyPhase.done:
         final caught = g.accused == spy;
-        final headline = !caught
-            ? (g.accused < 0 ? "🤷 TIE VOTE: THE SPY ESCAPES!" : '❌ WRONG! ${players[g.accused].name} was innocent')
-            : (g.spyWins ? '😈 THE SPY GUESSED THE PLACE!' : '✅ SPY CAUGHT!');
+        final (String head, String sub) = !caught
+            ? (g.accused < 0 ? ('Tie vote', 'The spy escapes!') : ('Wrong!', '${players[g.accused].name} was innocent'))
+            : (g.spyWins ? ('The spy guessed it!', 'The place was found out') : ('Spy caught!', 'The town wins'));
         return PartyFrame(
-          title: g.spyWins ? 'SPY WINS' : 'TOWN WINS',
+          title: g.spyWins ? 'Spy wins' : 'Town wins',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
                   child: Column(children: [
-                    Text(headline, textAlign: TextAlign.center, style: TextStyle(color: g.spyWins ? GpColors.no : GpColors.yes, fontWeight: FontWeight.w900, fontSize: 22)),
+                    TurnBanner(text: head, sub: sub, color: Brand.gold, kind: g.spyWins ? TurnBannerKind.miss : TurnBannerKind.success, icon: g.spyWins ? GameIcons.cross : GameIcons.check),
                     const SizedBox(height: 16),
                     PromptCard(
-                      header: 'THE SPY WAS',
+                      header: 'The spy was',
                       text: players[spy].name,
-                      emoji: '🕵️',
-                      footer: 'Location: ${FindSpyLogic.places[place].$2} ${FindSpyLogic.places[place].$1}'
-                          '${g.spyGuess != null ? '\nSpy guessed: ${FindSpyLogic.places[g.spyGuess!].$1}' : ''}',
+                      icon: GameIcons.magnifier,
+                      dark: true,
+                      footer: 'Location: ${FindSpyLogic.places[place].$1}${g.spyGuess != null ? '\nSpy guessed: ${FindSpyLogic.places[g.spyGuess!].$1}' : ''}',
                       color: players[spy].color,
                     ),
                   ]),
                 ),
               ),
             ),
-            GpButton('SEE SCORES', icon: Icons.emoji_events_rounded, onPressed: g.finish),
+            GoldButton('See scores', icon: GameIcons.trophy, height: 58, onPressed: g.finish),
           ]),
         );
     }

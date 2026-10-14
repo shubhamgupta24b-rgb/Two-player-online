@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
@@ -102,7 +103,7 @@ final colorSwitchInfo = LocalGameInfo(
   rules: const [
     'Tap to hop up. Don\'t fall off the bottom.',
     'Pass through a spinning ring only where it\'s the same colour as your ball.',
-    'The 🔘 orb above each ring changes your colour. Every ⭐ is a point.',
+    'The colour orb above each ring changes your colour. Every star is a point.',
   ],
   scoreUnit: 'stars',
   splitScreen: false,
@@ -112,7 +113,7 @@ final colorSwitchInfo = LocalGameInfo(
     create: () => SwitchLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🎨 COLOR SWITCH',
+      title: 'Color Switch',
       score: g.score,
       extra: g.started ? null : 'Tap to start',
       child: LayoutBuilder(builder: (context, c) {
@@ -134,7 +135,7 @@ class _SwitchPainter extends CustomPainter {
   final double s;
   _SwitchPainter(this.g, this.s);
 
-  static final _star = TextPainter(text: const TextSpan(text: '⭐', style: TextStyle(fontSize: 26)), textDirection: TextDirection.ltr)..layout();
+
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -151,7 +152,7 @@ class _SwitchPainter extends CustomPainter {
           ..strokeWidth = SwitchLogic.thick * s
           ..color = switchColors[q]);
       }
-      if (r.star) _star.paint(canvas, c - Offset(_star.width / 2, _star.height / 2));
+      if (r.star) paintIcon(canvas, GameIcons.star, Rect.fromCenter(center: c, width: 28, height: 28));
       if (r.orb) {
         final oc = Offset(cx, sy(r.y + r.radius + 0.17));
         for (var q = 0; q < 4; q++) {

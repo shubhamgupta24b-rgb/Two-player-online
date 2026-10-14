@@ -8,7 +8,7 @@ plugins {
 }
 
 // The flat app (--dart-define=APP_STYLE=flat) is a second app: its own id and name, so it
-// installs next to Party Games. Flutter hands the dart-defines to Gradle base64-encoded.
+// installs next to RivalRooms. Flutter hands the dart-defines to Gradle base64-encoded.
 val dartDefines: List<String> = (project.findProperty("dart-defines") as String?)
     ?.split(",")
     ?.map { String(Base64.getDecoder().decode(it)) }
@@ -38,7 +38,7 @@ android {
 
     defaultConfig {
         applicationId = if (flatApp) "com.shubhamgupta.partygames.flat" else "com.shubhamgupta.partygames"
-        manifestPlaceholders["appLabel"] = if (flatApp) "Party Games Flat" else "Party Games"
+        manifestPlaceholders["appLabel"] = if (flatApp) "RivalRooms Flat" else "RivalRooms"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

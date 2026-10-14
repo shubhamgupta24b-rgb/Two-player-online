@@ -77,3 +77,22 @@ test('memory ends when every pair is found; winners and ties',()=>{
   const s2=g.create(room('a','b'));
   assert.deepStrictEqual(g.getResult(s2).winners,['a','b'],'0-0 is a shared win');
 });
+
+test('memory supports every selectable board size with exact matching pairs',()=>{
+  const g=createMemory();
+  for (const cardCount of [8,12,16,20,24,28,32]) {
+    const s=g.create({...room('a','b'),memoryCardCount:cardCount});
+    assert.strictEqual(s.cards.length,cardCount);
+    assert.strictEqual(s.cardCount,cardCount);
+    const counts={};
+    for (const c of s.cards) counts[c.value]=(counts[c.value]||0)+1;
+    assert.strictEqual(Object.keys(counts).length,cardCount/2);
+    assert.ok(Object.values(counts).every(n=>n===2));
+    assert.strictEqual(g.getPublicState(s,'a').cardCount,cardCount);
+  }
+});
+
+test('memory rejects unsupported board sizes',()=>{
+  const g=createMemory();
+  assert.throws(()=>g.create({...room('a','b'),memoryCardCount:18}),/invalid Memory card count/);
+});

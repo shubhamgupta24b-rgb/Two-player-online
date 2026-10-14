@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
+import '../../../core/ui/components.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -82,7 +83,7 @@ final reactionTapInfo = LocalGameInfo(
   color: const Color(0xFFFFC93C),
   tagline: 'Fastest finger wins!',
   rules: const [
-    'Your side turns RED: wait…',
+    'Your side turns RED: wait...',
     'When it turns GREEN, tap as fast as you can. First tap wins the point.',
     'Tap while it is still red and you LOSE a point. First to 5 wins. 2 to 6 players.',
   ],
@@ -108,7 +109,7 @@ final reactionTapInfo = LocalGameInfo(
       if (name == 'tap' && asInt(a[0]) == from) g.tap(from);
     },
     view: (context, g, players, me) => Column(children: [
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
       Expanded(child: _ReactionHalf(player: players[me], index: me, g: g)),
     ]),
   ),
@@ -117,8 +118,9 @@ final reactionTapInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => PlayerZones(
       count: players.length,
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
-      center: ZoneCenterChip('FIRST TO ${g.target}'),
+      colors: [for (final p in players) p.color],
+      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
+      center: ZoneCenterChip('First to ${g.target}'),
       zone: (i) => _ReactionHalf(player: players[i], index: i, g: g),
     ),
   ),
@@ -132,34 +134,67 @@ class _ReactionHalf extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (Color bg, String big, String small) = switch (g.phase) {
-      ReactionPhase.wait => (const Color(0xFFE5484D), 'WAIT…', "Don't tap yet!"),
-      ReactionPhase.go => (const Color(0xFF2FB36D), 'TAP!', 'NOW!'),
+    final won = g.phase == ReactionPhase.result && !g.falseStart && g.lastTapper == index;
+    final (Color bg, Color lamp, GameIcons icon, String big, String small) = switch (g.phase) {
+      ReactionPhase.wait => (const Color(0xFF3A1420), const Color(0xFFE5484D), GameIcons.lock, 'Wait...', "Don't tap yet!"),
+      ReactionPhase.go => (const Color(0xFF0E3A26), const Color(0xFF2FD47A), GameIcons.bolt, 'TAP!', 'Now!'),
       ReactionPhase.result => g.falseStart
           ? (g.lastTapper == index
-              ? (const Color(0xFF3A3846), 'TOO EARLY!', '−1 point · wait for green')
-              : (player.color, 'PHEW!', 'Someone tapped too early'))
-          : (g.lastTapper == index
-              ? (player.color, 'YOU WIN!', '+1 · ${g.reactionMs} ms')
-              : (const Color(0xFF3A3846), 'TOO SLOW', 'Someone was faster')),
+              ? (const Color(0xFF22202C), const Color(0xFF6B6878), GameIcons.cross, 'Too early!', '-1 point: wait for green')
+              : (const Color(0xFF22202C), player.color, GameIcons.check, 'Phew!', 'Someone tapped too early'))
+          : (won
+              ? (Color.lerp(player.color, Colors.black, 0.55)!, Brand.gold, GameIcons.star, 'You win!', '+1 in ${g.reactionMs} ms')
+              : (const Color(0xFF22202C), const Color(0xFF6B6878), GameIcons.cross, 'Too slow', 'Someone was faster')),
     };
     return Listener(
       behavior: HitTestBehavior.opaque,
       onPointerDown: (_) {
         if (g.tap(index)) HapticFeedback.mediumImpact().ignore();
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        margin: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(28), border: Border.all(color: player.color, width: 4)),
-        child: Center(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('${player.name.toUpperCase()} · ${g.score[index]}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-              Text(big, style: const TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.w900)),
-              Text(small, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-            ]),
+      child: Semantics(
+        button: true,
+        label: '${player.name}: $big $small',
+        excludeSemantics: true,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          margin: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: RadialGradient(colors: [Color.lerp(bg, lamp, 0.25)!, bg], radius: 0.9),
+            borderRadius: Radii.rLg,
+            border: Border.all(color: player.color, width: 4),
+          ),
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    PlayerBadge(index: PlayerPalette.indexOf(player.color) ?? index, size: 22, color: player.color, initial: player.name),
+                    const SizedBox(width: 6),
+                    Text('${player.name}  ${g.score[index]}', style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+                  ]),
+                  const SizedBox(height: 12),
+                  // The signal lamp.
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 120),
+                    width: 110,
+                    height: 110,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(center: const Alignment(-0.3, -0.35), colors: [Color.lerp(lamp, Colors.white, 0.45)!, lamp, Color.lerp(lamp, Colors.black, 0.3)!]),
+                      border: Border.all(color: const Color(0xFF15131C), width: 6),
+                      boxShadow: [BoxShadow(color: lamp.withValues(alpha: 0.6), blurRadius: 30, spreadRadius: 4)],
+                    ),
+                    child: GameIcon(icon, size: 52, color: Colors.white),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(big, style: TextStyle(fontFamily: Fonts.display, color: won ? Brand.gold : Colors.white, fontSize: 52, height: 1.05)),
+                  Text(small, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+                ]),
+              ),
+            ),
           ),
         ),
       ),

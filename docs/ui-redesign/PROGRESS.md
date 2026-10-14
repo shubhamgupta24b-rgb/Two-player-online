@@ -264,3 +264,240 @@
 - analyze clean, 830 tests pass; `raja_mantri_test` was updated for the new labels.
 - Debug builds pass for both flavors.
 - Renders: `tool/screens_test.dart` (bingo, colour_clash) and the new `tool/rmcs_render_test.dart`.
+
+## B3 — Party 1 (done)
+
+**Dumb Charades / Heads Up** (`party/word_turns.dart`)
+- Ready screen with the player's big badge and "Name's turn".
+- Charades: the movie is on a clapperboard card that the actor holds to read.
+- Heads Up: the word is huge on a paper card, with full-height Skip (left) and Got it (right) side zones.
+- Everyone else sees a big ring timer with the count.
+- Got it flashes green with a +1 pop; Skip flashes orange.
+- Turn summary uses player score cards.
+
+**Find the Spy**
+- Each of the 30 locations has a drawn icon (the logic keeps its emoji keys).
+- The location is a paper card; the spy gets a dark "You are the SPY" card with a magnifier.
+- Possible locations show as paper chips; the spy's guess is a grid of location cards.
+- Result banner; moments: SPY CAUGHT!, SPY WINS!, TOWN WINS! (confetti).
+
+**Undercover**
+- Clue rounds show each player in speaking order with a speech-bubble tag.
+- The voted-out card flips to show their word.
+- The final reveal shows both words side by side.
+- Moments: VOTED OUT, CAUGHT! (confetti), UNDERCOVER WINS!
+
+**Mafia**
+- Role cards use drawn emblems: mafia mask, doctor cross, detective magnifier, villager house. The mafia card is dark.
+- Night happens under a starry sky with a moon; morning under a day sky, cross-fading between them.
+- The detective's check is a success / miss banner.
+- The final reveal lists every role.
+- Moments: NIGHT N, MORNING, MAFIA WINS!, TOWN WINS!
+
+**Guess the Person (spec 4.12)**
+- `gp_theme.dart` now uses the tokens:
+  - night background (sky with "?" marks in the flat app);
+  - felt board under the grid; cream paper person cards (portraits kept);
+  - round close button, sheet-coloured panels, badge + name chips.
+- `GpButton` is now a chunky Lilita button with a sinking edge. It is shared by the not-yet-redesigned games too, which therefore already get the new button look.
+- Hand-off screen with badge and name; how-to-play with drawn step icons.
+- Game over uses the shared `ResultScreen`; the final guess is a gold `TurnBanner`.
+- Emoji removed from its texts.
+
+**Also:** `PromptCard` gained `icon:` and `dark:`.
+
+**Tests**
+- analyze clean, 830 tests pass; the GP widget test was updated (two labels lost their emoji).
+- Debug builds pass for both flavors.
+- New render tools: `tool/gp_render_test.dart`; word games rendered with `tool/screens_test.dart`.
+
+## B4 — Party 2 (done)
+
+**Most Likely To / Would You Rather** (`party/prompt_vote.dart`)
+- The question is a paper card with a drawn icon.
+- Would You Rather: two big A (blue) / B (red) choice cards. The reveal is a split bar with the counts, each side's voters as badges, and the majority side glowing gold.
+- Most Likely To: the reveal is player rows with the voters' badges stacking in, and a crown for the winners.
+- Moments: winner name + confetti, or "A perfect split!".
+
+**Truth or Dare**
+- Round table: wood rim around felt.
+- A see-through glass bottle with highlights, a paper label and a cork.
+- Seat chips with badge + name; the picked player is ringed gold.
+- Big TRUTH (blue) / DARE (orange) cards; the prompt is a paper card.
+- Skip / "Did it +1" (gold), with a +1 pop.
+
+**Rock Paper Scissors**
+- Drawn rock, paper and scissors hands on round buttons in the player's colour, with zone tints.
+- The reveal shows a big hand, gold when it wins, plus the other players' hands with their badges.
+- SHOOT! moment.
+
+**Hand Cricket**
+- Stadium scoreboard with LED-style digits (both scores, innings / target, ball) and pause.
+- The number pad is drawn hands showing 1–5 fingers, with a thumbs-up for 6.
+- The reveal shows both hands, and an OUT! red stamp.
+- Moments: OUT!, SIX!, FOUR!, INNINGS 2.
+- Halves scale down on short screens.
+
+**Quiz Battle**
+- Category chips: each emoji key is shown as a drawn icon + word (Bollywood, Cricket, India, …).
+- Question in Lilita; player-colour answer buttons; a lock over a player's buttons after a wrong answer; first-to-N pips.
+- A correct answer flashes green with a "+1 Name" pop.
+- Small sideways zones lay out at 270 px tall and scale down.
+
+**Draw & Guess**
+- Hold the eye button to peek at the word; a round clear button; a paper sheet with a soft shadow.
+- Guesser chips with badges; a typed-guess field for online.
+- End banner "The word was…"; moments GOT IT! (confetti) or NOBODY GOT IT.
+- Not done: brush colours / sizes / eraser. They would need colour in the stroke data, which changes the logic and the relay JSON, so the pencil stays one colour.
+
+**Tests:** analyze clean, 830 tests pass; debug builds pass for both flavors.
+
+## B5 — Action 1 (Crush It, Basketball Hoops, Fruit Duel, Paint Fight, Air Hockey, Ping Pong, Snake Duel, Reaction Tap, Penalty Shootout)
+
+Checked with render PNGs (`tool/screens_test.dart`); the emulator can't run on this machine. **All B5 games:** zone tints via `PlayerZones(colors:)`, badge headers, Lilita text, no emoji in the UI, gp_theme removed.
+
+**Crush It**
+- A squash pad with a hammer icon that springs back on every tap.
+- Burst rays and a floating +1 on each tap; the leader's pad glows gold.
+- The result subtitle shows the winning tap count.
+
+**Fruit Duel**
+- Wooden lanes; drawn fruit replaces the emoji (the logic keeps its emoji keys and maps them to icons).
+- A slice shows a blade arc and a juice splash, and the fruit splits into two falling halves.
+- "+N" / "MISS" in Lilita.
+
+**Basketball Hoops**
+- The existing drawn court is kept. Name badge; Lilita for the clock, SWISH / MISS text and the "Swipe up to shoot" hint.
+- The online top bar uses EdgeTags.
+
+**Paint Fight**
+- Badge HUD with a big percentage, plus a coverage split bar.
+- Painted cells are drawn as overlapping blobs with drops; the empty paper has dot texture.
+
+**Air Hockey**
+- The table now leaves room for its rail, so it no longer pokes past the screen edge.
+- "GOAL!" in Lilita, in the scorer's colour.
+
+**Ping Pong**
+- Lilita point text.
+
+**Snake Duel**
+- Chunky player-colour buttons with drawn left/right arrows (they replace ◀ ▶) and semantic labels.
+- The arena gets the board radius and a shadow.
+- The rule text no longer uses arrow glyphs.
+
+**Reaction Tap**
+- A signal lamp with an icon for each state: red with a lock, green with a bolt, gold with a star for the winner.
+- Name and score badge; sentence-case calls.
+
+**Penalty Shootout**
+- Football, glove, target and check icons replace the emoji.
+- KICKER / KEEPER chip with an icon; Lilita titles (GOAL! / GREAT SAVE! in gold); zone semantics.
+
+**Tests:** analyze clean, 830 tests pass (two tests now expect the "Swipe up to shoot" copy); debug builds pass for both flavors.
+
+## B6 — Action 2 (Math Duel, Smash Karts, Mini Golf, Slingshot, Archery, Shooting Gallery, Bottle Smash, Fruit Merge Battle)
+
+Checked with render PNGs; the emulator can't run on this machine.
+
+**Math Duel**
+- A chalkboard card shows the sum; each zone has chunky answer buttons with an edge.
+- A wrong answer puts a lock over that zone; first-to-7 pips.
+- A correct answer flashes green with a "+1 Name" pop.
+- Zone tints; small zones scale down from a 250 px design height.
+
+**Smash Karts**
+- Every emoji is now a drawn icon: weapons (rocket, triple rocket, mine, gun, bolt, shield) on the karts, in the kill feed, on the FIRE button and on the controls strip; hearts and the mystery box are icons too.
+- Rank medals (1/2/3 circles) with player badges.
+- Lilita clock and announcements; kit overlay chips.
+- Not done: redrawing the park itself (sunset palette, rear-view karts). The existing drawn arena is kept.
+
+**Archery**
+- Golden-hour sky and warm hills; mowed-grass stripes.
+- A striped windsock that stretches with the wind, and a "WIND n" chip with a drawn arrow.
+- A straw target boss; a drawn archer in the shooter's colour (replaces 🧍).
+- The range sits in a SceneFrame; the HUD shows "n left" (replaces the bow emoji).
+
+**Shooting Gallery**
+- Striped awning with a scalloped edge and chasing bulbs.
+- Tin-plate targets with drawn duck / rabbit / star / bomb (replace the emoji); Lilita +/- points.
+- Start overlay with badge, "Name's turn" and a gold Start button.
+- SceneFrame.
+
+**Bottle Smash**
+- Shaded glass bottles with an outline, cork, paper label and highlights.
+- SceneFrame; the turn text shows "n balls left" (replaces the emoji).
+
+**Slingshot**
+- Birds in the shooter's colour; SceneFrame; "n birds left / n pigs left" text.
+
+**Mini Golf**
+- The flag is in the current player's colour; walls get a bevel highlight; SceneFrame.
+
+**Fruit Merge (solo + battle)**
+- Drawn fruit icons for the whole chain, cherry to watermelon (the logic keeps its emoji list).
+- Glass-jar reflections; badge header; "Box full!" in Lilita.
+- Timer label without the emoji.
+
+**Note:** messages that live in logic state and are relayed online (mini golf / slingshot / bottle smash `message`) are unchanged; `GameStatus` strips emoji when it displays them.
+
+**Tests:** analyze clean, 830 tests pass; debug builds pass for both flavors.
+
+## B7 + B8 — Solo games (all 20 in `solo/`, plus Fruit Merge solo from B6)
+
+Checked with render PNGs (a contact sheet of every solo game); the emulator can't run on this machine.
+
+**Shared (`SoloFrame`)**
+- An optional `lives` row of drawn hearts (used by Brick Breaker, Hangman, Space Shooter and Sudoku's mistakes).
+- The NEW BEST chip has a drawn trophy and uses Lilita.
+- All solo titles and subtitles are sentence case with no emoji (timer / flag / heart emoji were replaced with words or icons).
+
+**Drawn art instead of emoji**
+- **Dino Run:** a drawn dinosaur with a run cycle and a hurt tint, cactus and bird icons with a wing bob, and a cartoon burst on a crash. Dusk desert sky, mesas and sand; SceneFrame.
+- **Space Shooter:**
+  - a drawn ship (hull, cockpit, fins) with a two-tone engine flame;
+  - alien icons (purple-tinted shooters), UFO tanks with 3 health pips, and a glowing bolt power-up;
+  - a ringed planet; SceneFrame.
+- **Sky Jumper:** a drawn green hopper with big eyes.
+- **Classic Snake:** a checkered lawn, a blue snake and a drawn apple.
+- **Color Switch:** a drawn star.
+- **Whack-a-Mole:** mole, golden mole (glowing) and bomb icons.
+- **Minesweeper:** drawn bomb and flag in the cells, Lilita numbers, and a Dig / Flag pill toggle with icons.
+- **Sudoku:** pencil icon on the Notes key.
+
+**Restyled**
+- **2048:** wooden tray; tiles ramp from cream through orange to gold; Lilita numbers.
+- **Sliding Puzzle:** dark wooden frame; light wooden blocks with a bevel; tiles in their home spot get a green edge.
+- **Word Scramble:** wooden letter tiles; underlined answer slots that fill with tiles.
+- **Simon Says:** a round console with blue / orange / green / purple pads, rounded outer corners, and a centre hub showing the step count.
+- **Hangman:** a chalkboard in a wooden frame with a chalk gallows and figure, a category chip, and chalk keys (wrong ones greyed out with a red cross).
+- **Ball Sort and Word Scramble buttons:** now KitButton / GoldButton with drawn icons (undo, restart, flag, skip).
+- **gp_theme:** no longer used by any solo game.
+
+**Left as is** (they already matched the spec): Block Drop, Brick Breaker, Bubble Shooter, Flappy Jump, Piano Tiles, Stack Tower.
+
+**Note:** Hangman's category keys still contain emoji because they are game data; they are stripped when displayed.
+
+**Tests:** analyze clean, 830 tests pass.
+
+## Prompt 13 — Final pass
+
+**Emoji in the UI removed from:**
+- the online Raja Mantri screen (headlines, CAUGHT / ACCUSED badge);
+- the party results (rank medals are now gold / silver / bronze circles);
+- the online Guess Who round result and the online Fruit Duel lane (drawn apple);
+- the turns overlay badge (star / arrow icons);
+- the Guess the Person result (check / cross / lock icons) and timer label;
+- the settings sheet title;
+- inline rule texts (Snakes & Ladders, RPS, Most Likely, Draw & Guess);
+- dialogs and empty states (they draw the matching icon, or none).
+
+**Still emoji on screen:** the Guess the Person attribute question chips (noted in CHECKLIST.md).
+
+**Docs:** `CHECKLIST.md` has one row per game (62) with its status and notes, plus what could not be tested.
+
+**Tests and builds:**
+- Analyze clean; 830 tests pass (online test strings updated to match the new headlines).
+- Debug builds pass for both flavors; the release APK builds and was copied to `PartyGames.apk`.
+
+**Not tested:** online play and Wi-Fi hosting on real phones, touch / haptics / sound on a device, tablets.

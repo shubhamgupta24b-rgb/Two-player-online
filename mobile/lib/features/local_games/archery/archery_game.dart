@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/ui/components.dart';
 import '../../../core/audio/game_audio.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
@@ -145,7 +146,7 @@ final archeryInfo = LocalGameInfo(
   tagline: 'Draw, aim for the gold, mind the wind!',
   rules: const [
     'Pull back anywhere on the screen to draw the bow (further = stronger), aim, and let go.',
-    'The wind (🌬️ at the top) pushes your arrow. The target moves up and down between shots.',
+    'The wind (the windsock at the top) pushes your arrow. The target moves up and down between shots.',
     'Gold centre = 10 points, rings out to 1. 5 arrows each, taking turns. 1 to 4 players.',
   ],
   scoreUnit: 'points',
@@ -243,7 +244,7 @@ class _ArcheryViewState extends State<_ArcheryView> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
       child: Column(children: [
-        GameHud(players: widget.players, scores: g.score, turn: g.finished ? null : g.turn, extra: (i) => '🏹${g.arrowsEach - g.shots[i].length}'),
+        GameHud(players: widget.players, scores: g.score, turn: g.finished ? null : g.turn, extra: (i) => '${g.arrowsEach - g.shots[i].length} left'),
         const SizedBox(height: 8),
         Expanded(
           child: LayoutBuilder(builder: (context, c) {
@@ -267,7 +268,7 @@ class _ArcheryViewState extends State<_ArcheryView> {
                 child: SizedBox(
                   width: w,
                   height: min(c.maxHeight, w * 1.15), // extra sky above the range on tall screens
-                  child: ClipRRect(borderRadius: BorderRadius.circular(18), child: CustomPaint(painter: _RangePainter(g, widget.players, w))),
+                  child: SceneFrame(child: CustomPaint(painter: _RangePainter(g, widget.players, w))),
                 ),
               ),
             );
@@ -278,7 +279,7 @@ class _ArcheryViewState extends State<_ArcheryView> {
           player: current,
           height: 52,
           turnText: g.finished ? 'All arrows shot!' : (_myTurn ? '${current.whose} TURN · pull back and let go' : '${current.name} is aiming…'),
-          message: showLast ? (g.lastScore == 0 ? 'MISS!' : (g.lastScore == 10 ? '🎯 BULLSEYE! +10' : '+${g.lastScore}')) : null,
+          message: showLast ? (g.lastScore == 0 ? 'MISS!' : (g.lastScore == 10 ? 'BULLSEYE! +10' : '+${g.lastScore}')) : null,
         ),
       ]),
     );
@@ -294,31 +295,58 @@ class _RangePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     Offset o(double x, double y) => Offset(x * s, y * s);
-    // Sky, hills, grass.
-    canvas.drawRect(Offset.zero & size, Paint()..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF1E88E5), Color(0xFF64B5F6), Color(0xFFE1F5FE)]).createShader(Offset.zero & size));
+    // Golden-hour sky with a low sun, warm hills and mowed grass (spec 5.3 #38).
+    canvas.drawRect(Offset.zero & size, Paint()..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF4F6BD8), Color(0xFFF7A15C), Color(0xFFFFE2A6)]).createShader(Offset.zero & size));
     drawSkyExtras(canvas, size, s, size.height - ArcheryLogic.h * s, g.now);
     canvas.translate(0, size.height - ArcheryLogic.h * s); // the range sits at the bottom
-    canvas.drawCircle(o(0.3, 0.75), 0.35 * s, Paint()..color = const Color(0xFF81C784));
-    canvas.drawCircle(o(0.85, 0.8), 0.4 * s, Paint()..color = const Color(0xFF66BB6A));
-    canvas.drawRect(Rect.fromLTRB(0, 0.52 * s, size.width, size.height), Paint()..color = const Color(0xFF4CAF50));
-    // Wind sock and value.
-    final wPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 3;
-    canvas.drawLine(o(0.5, 0.04), o(0.5 + g.wind * 0.3, 0.04), wPaint);
-    canvas.drawCircle(o(0.5 + g.wind * 0.3, 0.04), 4, Paint()..color = const Color(0xFFFF7043));
+    canvas.drawCircle(o(0.3, 0.78), 0.36 * s, Paint()..color = const Color(0xFF8DB55A));
+    canvas.drawCircle(o(0.85, 0.82), 0.42 * s, Paint()..color = const Color(0xFF6E9E45));
+    canvas.drawRect(Rect.fromLTRB(0, 0.52 * s, size.width, size.height), Paint()..color = const Color(0xFF5E9B3A));
+    final stripe = Paint()..color = const Color(0x14FFFFFF);
+    for (var k = 0; k < 6; k++) {
+      canvas.drawRect(Rect.fromLTRB(0, (0.52 + k * 0.08) * s, size.width, (0.56 + k * 0.08) * s), stripe);
+    }
+    // Windsock on a pole: it points downwind and stretches with the wind.
+    final pole = o(0.5, 0.03);
+    canvas.drawLine(pole, o(0.5, 0.16), Paint()
+      ..color = const Color(0xFF5D4037)
+      ..strokeWidth = 3);
+    final dir = g.wind >= 0 ? 1.0 : -1.0;
+    final len = (0.05 + min(g.wind.abs(), 1.5) * 0.08) * s;
+    for (var k = 0; k < 4; k++) {
+      final x0 = pole.dx + dir * len * k / 4, x1 = pole.dx + dir * len * (k + 1) / 4;
+      final h0 = 0.026 * s * (1 - k * 0.15), h1 = 0.026 * s * (1 - (k + 1) * 0.15);
+      canvas.drawPath(
+          Path()
+            ..moveTo(x0, pole.dy - h0 / 2)
+            ..lineTo(x1, pole.dy - h1 / 2)
+            ..lineTo(x1, pole.dy + h1 / 2)
+            ..lineTo(x0, pole.dy + h0 / 2)
+            ..close(),
+          Paint()..color = k.isEven ? const Color(0xFFFF6B3D) : Colors.white);
+    }
+    // Wind chip: a drawn arrow and the strength.
     final wt = TextPainter(
-      text: TextSpan(text: '🌬️ ${g.wind >= 0 ? '→' : '←'} ${(g.wind.abs() * 20).toStringAsFixed(1)}', style: const TextStyle(color: Color(0xFF263238), fontWeight: FontWeight.w900, fontSize: 13)),
+      text: TextSpan(text: 'WIND ${(g.wind.abs() * 20).toStringAsFixed(1)}', style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 13)),
       textDirection: TextDirection.ltr,
     )..layout();
-    wt.paint(canvas, o(0.5, 0.06) - Offset(wt.width / 2, 0));
-    // Target on its stand.
+    final chip = RRect.fromRectAndRadius(Rect.fromCenter(center: o(0.5, 0.2), width: wt.width + 34, height: wt.height + 8), const Radius.circular(20));
+    canvas.drawRRect(chip, Paint()..color = const Color(0x8C1B1036));
+    wt.paint(canvas, Offset(chip.left + 8, chip.center.dy - wt.height / 2));
+    paintIcon(canvas, g.wind >= 0 ? GameIcons.arrowRight : GameIcons.arrowLeft, Rect.fromLTWH(chip.right - 22, chip.center.dy - 8, 16, 16), color: Colors.white);
+    // Target on its wooden stand, with a straw boss behind the face.
     final tc = o(ArcheryLogic.targetX, g.targetY);
     final legs = Paint()
       ..color = const Color(0xFF6D4C41)
       ..strokeWidth = 4;
     canvas.drawLine(tc, o(ArcheryLogic.targetX - 0.03, 0.56), legs);
     canvas.drawLine(tc, o(ArcheryLogic.targetX + 0.03, 0.56), legs);
+    final boss = ArcheryLogic.ringR * 1.15 * s;
+    canvas.drawOval(Rect.fromCenter(center: tc + Offset(boss * 0.12, 0), width: boss * 0.7, height: boss * 2), Paint()..color = const Color(0xFFD9B060));
+    canvas.drawOval(Rect.fromCenter(center: tc + Offset(boss * 0.12, 0), width: boss * 0.7, height: boss * 2), Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..color = const Color(0xFF9C7430));
     const ringColors = [Colors.white, Colors.white, Color(0xFF212121), Color(0xFF212121), Color(0xFF1E88E5), Color(0xFF1E88E5), Color(0xFFE53935), Color(0xFFE53935), Color(0xFFFFD600), Color(0xFFFFD600)];
     for (var i = 0; i < 10; i++) {
       final r = ArcheryLogic.ringR * (10 - i) / 10 * s;
@@ -336,10 +364,9 @@ class _RangePainter extends CustomPainter {
         ..color = players[p % players.length].color
         ..strokeWidth = 3);
     }
-    // The archer and the bow, drawn back while pulling.
+    // The archer (in the shooter's colour) and the bow, drawn back while pulling.
     final bow = o(ArcheryLogic.bowX, ArcheryLogic.bowY);
-    final archer = TextPainter(text: TextSpan(text: '🧍', style: TextStyle(fontSize: 0.1 * s)), textDirection: TextDirection.ltr)..layout();
-    archer.paint(canvas, bow - Offset(archer.width * 0.7, archer.height * 0.55));
+    _archer(canvas, bow, players[g.turn % players.length].color);
     canvas.save();
     canvas.translate(bow.dx, bow.dy);
     canvas.rotate(g.aimAngle);
@@ -387,6 +414,33 @@ class _RangePainter extends CustomPainter {
         ..color = players[g.turn % players.length].color
         ..strokeWidth = 2);
     }
+  }
+
+  /// A simple standing archer behind the bow: legs, body in the player's colour, head, and
+  /// the bow arm reaching forward.
+  void _archer(Canvas canvas, Offset bow, Color color) {
+    final u = 0.01 * s;
+    final hip = bow + Offset(-4.2 * u, 3.2 * u);
+    final ink = Paint()
+      ..color = const Color(0xFF2B2235)
+      ..strokeWidth = 1.6 * u
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(hip, hip + Offset(-1.6 * u, 5.4 * u), ink);
+    canvas.drawLine(hip, hip + Offset(1.6 * u, 5.4 * u), ink);
+    final body = RRect.fromRectAndRadius(Rect.fromCenter(center: hip - Offset(0, 2.6 * u), width: 3.6 * u, height: 5.6 * u), Radius.circular(1.6 * u));
+    canvas.drawRRect(body, Paint()..color = color);
+    canvas.drawRRect(body, Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5 * u
+      ..color = const Color(0xFF2B2235));
+    final arm = Paint()
+      ..color = const Color(0xFFF2C29B)
+      ..strokeWidth = 1.2 * u
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(hip - Offset(0, 4.4 * u), bow - Offset(2 * u, 0), arm);
+    final head = hip - Offset(0, 7.4 * u);
+    canvas.drawCircle(head, 1.8 * u, Paint()..color = const Color(0xFFF2C29B));
+    canvas.drawArc(Rect.fromCircle(center: head, radius: 1.9 * u), pi, pi, true, Paint()..color = const Color(0xFF4A2E1E));
   }
 
   @override

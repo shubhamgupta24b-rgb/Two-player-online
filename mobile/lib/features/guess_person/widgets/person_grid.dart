@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/person.dart';
+import '../../../core/ui/app_flavor.dart';
+import '../../../core/ui/materials/materials.dart';
 import 'gp_theme.dart';
 import 'person_card.dart';
 
@@ -24,9 +26,12 @@ class PersonGrid extends StatelessWidget {
     if (people.isEmpty) {
       return const Center(child: Text('No characters available', style: TextStyle(color: Colors.white)));
     }
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: GpCoral.board, borderRadius: BorderRadius.circular(26)),
+    // A felt board under the cards (the flat app: its dark-blue board).
+    return CustomPaint(
+      painter: flatStyle ? null : const FeltPainter(radius: 26),
+      child: Container(
+      padding: const EdgeInsets.all(10),
+      decoration: flatStyle ? BoxDecoration(color: GpCoral.board, borderRadius: BorderRadius.circular(26)) : null,
       child: LayoutBuilder(builder: (context, c) {
         const gap = 7.0;
         final cols = columnsFor(people.length, c.maxWidth);
@@ -52,6 +57,7 @@ class PersonGrid extends StatelessWidget {
           },
         );
       }),
+    ),
     );
   }
 }

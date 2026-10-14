@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
 import 'package:flutter/services.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
@@ -96,7 +97,7 @@ final minesweeperInfo = LocalGameInfo(
   rules: const [
     'Tap a square to dig. Your first tap is always safe.',
     'Numbers show how many mines touch that square.',
-    'Long-press (or switch to 🚩 mode) to flag a mine. Clear every safe square to win!',
+    'Long-press (or switch to Flag mode) to flag a mine. Clear every safe square to win!',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -125,9 +126,9 @@ class _MinesViewState extends State<_MinesView> {
     final g = widget.g;
     const n = MinesweeperLogic.size;
     return SoloFrame(
-      title: g.won ? '🎉 CLEARED!' : (g.exploded != null ? '💥 BOOM!' : '💣 MINESWEEPER'),
+      title: g.won ? 'Cleared!' : (g.exploded != null ? 'Boom!' : 'Minesweeper'),
       score: g.score,
-      extra: '🚩${g.minesLeft} ⏱${g.seconds}s',
+      extra: '${g.minesLeft} flags left · ${g.seconds}s',
       child: Column(children: [
         Expanded(
           child: Center(
@@ -154,13 +155,33 @@ class _MinesViewState extends State<_MinesView> {
           ),
         ),
         const SizedBox(height: 10),
-        SegmentedButton<bool>(
-          segments: const [
-            ButtonSegment(value: false, label: Text('⛏️ DIG')),
-            ButtonSegment(value: true, label: Text('🚩 FLAG')),
-          ],
-          selected: {_flagMode},
-          onSelectionChanged: (s) => setState(() => _flagMode = s.first),
+        // Dig / Flag mode pill.
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(color: NeonPalette.overlay, borderRadius: Radii.rChip, border: Border.all(color: Colors.white24)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            for (final flag in [false, true])
+              Semantics(
+                button: true,
+                selected: _flagMode == flag,
+                label: flag ? 'Flag mode' : 'Dig mode',
+                excludeSemantics: true,
+                child: GestureDetector(
+                  onTap: () => setState(() => _flagMode = flag),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    decoration: BoxDecoration(color: _flagMode == flag ? Brand.gold : Colors.transparent, borderRadius: Radii.rChip),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      GameIcon(flag ? GameIcons.flag : GameIcons.hammer, size: 20, color: _flagMode == flag ? Brand.onGold : Colors.white),
+                      const SizedBox(width: 6),
+                      Text(flag ? 'Flag' : 'Dig', style: TextStyle(fontFamily: Fonts.display, fontSize: 18, color: _flagMode == flag ? Brand.onGold : Colors.white)),
+                    ]),
+                  ),
+                ),
+              ),
+          ]),
         ),
       ]),
     );
@@ -189,10 +210,11 @@ class _MinesViewState extends State<_MinesView> {
         child: FittedBox(
           child: Padding(
             padding: const EdgeInsets.all(3),
-            child: Text(
-              showMine ? '💣' : (flagged ? '🚩' : (isOpen && c > 0 ? '$c' : '')),
-              style: TextStyle(color: _numColors[c], fontWeight: FontWeight.w900, fontSize: 20),
-            ),
+            child: showMine
+                ? const GameIcon(GameIcons.bomb, size: 22)
+                : flagged
+                    ? const GameIcon(GameIcons.flag, size: 22, color: Color(0xFFE53935))
+                    : Text(isOpen && c > 0 ? '$c' : '', style: TextStyle(fontFamily: Fonts.display, color: _numColors[c], fontSize: 22)),
           ),
         ),
       ),

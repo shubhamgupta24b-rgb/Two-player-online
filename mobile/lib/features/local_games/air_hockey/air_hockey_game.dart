@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
+import '../../../core/ui/components.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -223,7 +224,8 @@ class _TableViewState extends State<TableView> {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, c) {
       // Fit a 1 x length table into the space.
-      final w = min(c.maxWidth, c.maxHeight / AirHockeyLogic.length);
+      // Leave room for the rail drawn around the ice (3.5% of the width each side).
+      final w = min(c.maxWidth / 1.07, c.maxHeight / (AirHockeyLogic.length + 0.07));
       final h = w * AirHockeyLogic.length;
       _table = Rect.fromLTWH((c.maxWidth - w) / 2, (c.maxHeight - h) / 2, w, h);
       void move(PointerEvent e) {
@@ -324,7 +326,10 @@ class _TablePainter extends CustomPainter {
     }
     if (g.paused && g.lastGoalBy != null) {
       final tp = TextPainter(
-        text: const TextSpan(text: 'GOAL!', style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 3))])),
+        text: TextSpan(
+          text: 'GOAL!',
+          style: TextStyle(fontFamily: Fonts.display, color: colors[g.lastGoalBy!], fontSize: s * 0.16, shadows: const [Shadow(color: Color(0x99000000), blurRadius: 8, offset: Offset(0, 4))]),
+        ),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, table.center - Offset(tp.width / 2, tp.height / 2));

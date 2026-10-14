@@ -2,7 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../guess_person/models/gp_player.dart';
-import '../../guess_person/widgets/gp_theme.dart';
+import '../../../core/ui/components.dart';
+import '../shell/game_hud.dart' show MomentWatcher;
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/split_screen.dart';
@@ -150,18 +151,27 @@ final mathDuelInfo = LocalGameInfo(
       if (name == 'answer' && asInt(a[0]) == from) g.answer(from, asInt(a[1]));
     },
     view: (context, g, players, me) => Column(children: [
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
       Expanded(child: _MathHalf(player: players[me], index: me, g: g)),
     ]),
   ),
   play: (players, onFinished) => TickingPlay<MathDuelLogic>(
     create: () => MathDuelLogic(players: players.length),
     onFinished: onFinished,
-    builder: (context, g) => PlayerZones(
-      count: players.length,
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
-      center: ZoneCenterChip('FIRST TO ${g.target}'),
-      zone: (i) => _MathHalf(player: players[i], index: i, g: g),
+    builder: (context, g) => MomentWatcher<int?>(
+      value: g.solvedBy,
+      onChange: (fx, _, who) {
+        if (who == null) return;
+        fx?.flash(StatusColors.success);
+        fx?.pop('+1 ${players[who].name}');
+      },
+      child: PlayerZones(
+        count: players.length,
+        colors: [for (final p in players) p.color],
+        middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
+        center: ZoneCenterChip('First to ${g.target}'),
+        zone: (i) => _MathHalf(player: players[i], index: i, g: g),
+      ),
     ),
   ),
 );
@@ -178,46 +188,84 @@ class _MathHalf extends StatelessWidget {
     final status = g.solvedBy == null
         ? (locked ? (g.betweenQuestions ? 'Nobody got it! = ${g.question.answer}' : 'Wrong! Wait for the next one') : '')
         : (g.solvedBy == index ? 'Correct! +1' : 'Too slow! = ${g.question.answer}');
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(children: [
-        Row(children: [
-          PlayerTagSmall(player: player),
-          Text('  ${g.score[index]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(status, textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-          ),
-        ]),
-        Expanded(
-          child: Center(
-            child: FittedBox(
-              child: Text('${g.question.text} = ?', style: const TextStyle(color: Colors.white, fontSize: 56, fontWeight: FontWeight.w900)),
-            ),
-          ),
-        ),
-        Row(children: [
-          for (final v in g.question.options)
+    final seat = PlayerPalette.indexOf(player.color) ?? index;
+    // Small zones (3-4 players sit sideways): lay out at 250 px tall and scale down to fit.
+    return LayoutBuilder(builder: (context, c) {
+      const design = 250.0;
+      final half = _half(locked, status, seat);
+      return c.maxHeight >= design ? half : FittedBox(child: SizedBox(width: c.maxWidth * design / c.maxHeight, height: design, child: half));
+    });
+  }
+
+  Widget _half(bool locked, String status, int seat) => Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(children: [
+          Row(children: [
+            PlayerBadge(index: seat, size: 22, color: player.color, initial: player.name),
+            const SizedBox(width: 6),
+            Flexible(child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, color: nameColor(player.color), fontWeight: FontWeight.w900, fontSize: 14))),
+            const SizedBox(width: 6),
+            Text('${g.score[index]}', style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 22)),
+            const SizedBox(width: 8),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: _AnswerButton(
-                  value: v,
-                  color: player.color,
-                  state: g.solvedBy != null && v == g.question.answer
-                      ? 1
-                      : (locked && !g.betweenQuestions ? -1 : 0),
-                  onTap: () {
-                    final r = g.answer(index, v);
-                    if (r != null) (r ? HapticFeedback.lightImpact() : HapticFeedback.heavyImpact()).ignore();
-                  },
+              child: Text(status,
+                  textAlign: TextAlign.right,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w900, color: g.solvedBy == index ? StatusColors.success : (status.isEmpty ? Colors.white : const Color(0xFFFF8E8B)))),
+            ),
+          ]),
+          const SizedBox(height: 4),
+          Align(alignment: Alignment.centerLeft, child: Pips(filled: g.score[index], total: g.target, color: player.color, size: 9)),
+          const SizedBox(height: 8),
+          // The sum, chalked on a little blackboard.
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF23423A),
+                borderRadius: Radii.rCard,
+                border: Border.all(color: const Color(0xFF8A5A2B), width: 5),
+                boxShadow: Shadows.small,
+              ),
+              child: Center(
+                child: FittedBox(
+                  child: Text('${g.question.text} = ?', style: const TextStyle(fontFamily: Fonts.display, color: Color(0xFFF4F1E8), fontSize: 56, shadows: [Shadow(color: Color(0x55FFFFFF), blurRadius: 6)])),
                 ),
               ),
             ),
+          ),
+          const SizedBox(height: 10),
+          Stack(alignment: Alignment.center, children: [
+            Row(children: [
+              for (final v in g.question.options)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: _AnswerButton(
+                      value: v,
+                      color: player.color,
+                      state: g.solvedBy != null && v == g.question.answer ? 1 : (locked && !g.betweenQuestions ? -1 : 0),
+                      onTap: () {
+                        final r = g.answer(index, v);
+                        if (r != null) (r ? HapticFeedback.lightImpact() : HapticFeedback.heavyImpact()).ignore();
+                      },
+                    ),
+                  ),
+                ),
+            ]),
+            if (locked && !g.betweenQuestions)
+              IgnorePointer(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: NeonPalette.overlay, shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFF8E8B), width: 2)),
+                  child: const GameIcon(GameIcons.lock, size: 26, color: Color(0xFFFF8E8B)),
+                ),
+              ),
+          ]),
         ]),
-      ]),
-    );
-  }
+      );
 }
 
 class _AnswerButton extends StatelessWidget {
@@ -228,19 +276,28 @@ class _AnswerButton extends StatelessWidget {
   const _AnswerButton({required this.value, required this.color, required this.state, required this.onTap});
 
   @override
-  Widget build(BuildContext context) => Opacity(
-        opacity: state == -1 ? 0.4 : 1,
-        child: Material(
-          color: state == 1 ? GpColors.yes : color,
-          borderRadius: BorderRadius.circular(18),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: onTap,
-            child: SizedBox(
-              height: 72,
-              child: Center(child: FittedBox(child: Text('$value', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900)))),
+  Widget build(BuildContext context) {
+    final fill = state == 1 ? StatusColors.success : color;
+    return Opacity(
+      opacity: state == -1 ? 0.35 : 1,
+      child: Semantics(
+        button: true,
+        label: '$value',
+        excludeSemantics: true,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 66,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color.lerp(fill, Colors.white, 0.18)!, fill]),
+              borderRadius: Radii.rButton,
+              boxShadow: Shadows.edge(Color.lerp(fill, Colors.black, 0.45)!, depth: 5),
             ),
+            child: FittedBox(child: Text('$value', style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 32, fontFeatures: [FontFeature.tabularFigures()]))),
           ),
         ),
-      );
+      ),
+    );
+  }
 }

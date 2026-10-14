@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../core/ui/components.dart';
+import '../../../core/ui/materials/materials.dart';
 import 'package:flutter/services.dart';
 import '../shell/local_game_info.dart';
 import '../shell/ticking_play.dart';
@@ -109,7 +111,7 @@ final game2048Info = LocalGameInfo(
     create: () => Game2048Logic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🔢 2048',
+      title: '2048',
       score: g.score,
       extra: 'BEST TILE ${g.best}',
       child: GestureDetector(
@@ -121,7 +123,7 @@ final game2048Info = LocalGameInfo(
         child: Column(children: [
           Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Board(g: g)))),
           const SizedBox(height: 8),
-          Text(g.over ? 'No moves left!' : 'Swipe to move the tiles', style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.w800)),
+          Text(g.over ? 'No moves left!' : 'Swipe to move the tiles', style: TextStyle(fontFamily: Fonts.display, fontSize: 16, color: g.over ? const Color(0xFFFF8E8B) : Colors.white60)),
         ]),
       ),
     ),
@@ -133,31 +135,30 @@ class _Board extends StatelessWidget {
   const _Board({required this.g});
 
   static Color tileColor(int v) => switch (v) {
-        0 => const Color(0x22FFFFFF),
-        2 => const Color(0xFFEEE4DA),
-        4 => const Color(0xFFEDE0C8),
-        8 => const Color(0xFFF2B179),
-        16 => const Color(0xFFF59563),
-        32 => const Color(0xFFF67C5F),
-        64 => const Color(0xFFF65E3B),
-        128 => const Color(0xFFEDCF72),
-        256 => const Color(0xFFEDCC61),
-        512 => const Color(0xFFEDC850),
-        1024 => const Color(0xFFEDC53F),
-        2048 => const Color(0xFFEDC22E),
-        _ => const Color(0xFF3C3A32),
+        // Cream through orange to gold (spec 5.4 #43).
+        0 => const Color(0x33000000),
+        2 => const Color(0xFFFFF4DC),
+        4 => const Color(0xFFFFE6B8),
+        8 => const Color(0xFFFFC58A),
+        16 => const Color(0xFFFFA866),
+        32 => const Color(0xFFFF8A4C),
+        64 => const Color(0xFFFF6B35),
+        128 => const Color(0xFFFFD45C),
+        256 => const Color(0xFFFFC93C),
+        512 => const Color(0xFFFFBE21),
+        1024 => const Color(0xFFF5B000),
+        2048 => const Color(0xFFE8A400),
+        _ => const Color(0xFF6B3FA0),
       };
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF5C4F44),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF7A6A5C), width: 2),
-          boxShadow: const [BoxShadow(color: Colors.black54, offset: Offset(0, 6), blurRadius: 8)],
-        ),
-        child: GridView.count(
+        // A warm wooden tray; the empty slots are recessed (darker, inset).
+        decoration: BoxDecoration(borderRadius: Radii.rBoard, boxShadow: Shadows.large),
+        foregroundDecoration: BoxDecoration(borderRadius: Radii.rBoard, border: Border.all(color: const Color(0x55FFE0B2), width: 1.5)),
+        child: CustomPaint(
+          painter: const WoodPainter(radius: Radii.board),
+          child: Padding(padding: const EdgeInsets.all(10), child: GridView.count(
           crossAxisCount: Game2048Logic.n,
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
@@ -182,12 +183,14 @@ class _Board extends StatelessWidget {
                       : Padding(
                           padding: const EdgeInsets.all(6),
                           child: FittedBox(
-                            child: Text('${g.grid[i]}', style: TextStyle(color: g.grid[i] <= 4 ? const Color(0xFF776E65) : Colors.white, fontWeight: FontWeight.w900, fontSize: 30)),
+                            child: Text('${g.grid[i]}',
+                                style: TextStyle(fontFamily: Fonts.display, color: g.grid[i] <= 4 ? const Color(0xFF6B4A2B) : Colors.white, fontSize: 30, shadows: g.grid[i] <= 4 ? null : const [Shadow(color: Color(0x66000000), offset: Offset(0, 2))])),
                           ),
                         ),
                 ),
               ),
           ],
+        )),
         ),
       );
 }

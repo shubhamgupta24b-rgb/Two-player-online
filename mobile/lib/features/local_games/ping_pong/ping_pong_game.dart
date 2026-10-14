@@ -264,7 +264,7 @@ class _PongPainter extends CustomPainter {
     if (g.waitingToServe) {
       final text = g.lastPointTo == null ? 'GET READY' : 'POINT!';
       final tp = TextPainter(
-        text: TextSpan(text: text, style: const TextStyle(color: Brand.gold, fontSize: 40, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 3))])),
+        text: TextSpan(text: text, style: const TextStyle(fontFamily: Fonts.display, color: Brand.gold, fontSize: 44, shadows: [Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 3))])),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, table.center - Offset(tp.width / 2, tp.height / 2));

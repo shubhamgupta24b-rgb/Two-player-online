@@ -23,7 +23,7 @@ final mostLikelyInfo = LocalGameInfo(
   rules: const [
     'A question appears: "Who is most likely to…?"',
     'Everyone secretly votes for a player (yes, you can vote for yourself).',
-    'The most-voted player gets a 👑 point. 8 questions. 3 to 6 players.',
+    'The most-voted player gets a crown point. 8 questions. 3 to 6 players.',
   ],
   scoreUnit: 'crowns',
   splitScreen: false,
@@ -39,4 +39,4 @@ final mostLikelyInfo = LocalGameInfo(
 
 PromptVoteLogic _create(int n) => PromptVoteLogic(mode: VoteMode.mostLikely, players: n, prompts: mostLikelyPrompts);
 Widget _view(BuildContext context, PromptVoteLogic g, List<GpPlayer> players, int? me) =>
-    PromptVoteView(players: players, g: g, me: me, title: '👉 MOST LIKELY TO', color: const Color(0xFFFF9F43));
+    PromptVoteView(players: players, g: g, me: me, title: 'Most Likely To', color: const Color(0xFFFF9F43));

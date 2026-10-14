@@ -222,7 +222,7 @@ final bubbleInfo = LocalGameInfo(
     create: () => BubbleLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🫧 BUBBLE SHOOTER',
+      title: 'Bubble Shooter',
       score: g.score,
       extra: 'New rows in ${BubbleLogic.shotsPerRow - g.shotsSincePop} shots',
       child: LayoutBuilder(builder: (context, c) {

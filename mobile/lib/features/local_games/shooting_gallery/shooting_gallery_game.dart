@@ -135,7 +135,7 @@ final galleryInfo = LocalGameInfo(
   color: const Color(0xFFC62828),
   tagline: 'Pop the ducks, dodge the bombs!',
   rules: const [
-    'Tap a target to shoot it: 🦆 10, 🐰 20, ⭐ 50. Shooting a 💣 costs 30!',
+    'Tap a target to shoot it: duck 10, rabbit 20, star 50. Shooting a bomb costs 30!',
     '6 shots, then a short reload. Each player gets 20 seconds at the gallery.',
     'Two turns each, one after another. Most points wins. 1 to 4 players.',
   ],
@@ -236,23 +236,25 @@ class _GalleryView extends StatelessWidget {
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTapDown: _mine && !g.waiting ? (d) => g.shoot(g.turn, d.localPosition.dx / w, d.localPosition.dy / h) : null,
-                  child: ClipRRect(borderRadius: BorderRadius.circular(18), child: CustomPaint(size: Size(w, h), painter: _GalleryPainter(g))),
+                  child: SceneFrame(child: CustomPaint(size: Size(w, h), painter: _GalleryPainter(g))),
                 ),
               ),
               if (g.waiting && !g.finished)
                 Center(
                   child: Container(
                     padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(20), border: Border.all(color: current.color, width: 3)),
+                    decoration: BoxDecoration(color: NeonPalette.overlay, borderRadius: Radii.rCard, border: Border.all(color: current.color, width: 3), boxShadow: Shadows.large),
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      Text('ROUND ${g.round}/${GalleryLogic.rounds}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800, letterSpacing: 2)),
+                      Text('ROUND ${g.round} / ${GalleryLogic.rounds}', style: const TextStyle(fontFamily: Fonts.body, color: Colors.white70, fontWeight: FontWeight.w900, letterSpacing: 2)),
+                      const SizedBox(height: 8),
+                      PlayerBadge(index: PlayerPalette.indexOf(current.color) ?? g.turn, size: 44, color: current.color, initial: current.name),
                       const SizedBox(height: 6),
-                      Text('${current.whose} TURN', style: TextStyle(color: current.color, fontSize: 24, fontWeight: FontWeight.w900)),
+                      Text('${possessive(current.name)} turn', style: TextStyle(fontFamily: Fonts.display, color: nameColor(current.color), fontSize: 26)),
                       const SizedBox(height: 12),
                       if (_mine)
-                        AppButton('🔫 START', color: current.color, onPressed: () => g.begin(g.turn))
+                        GoldButton('Start', icon: GameIcons.gun, height: 52, fontSize: 20, onPressed: () => g.begin(g.turn))
                       else
-                        Text('${current.name} is getting ready…', style: const TextStyle(color: Colors.white70)),
+                        Text('${current.name} is getting ready...', style: const TextStyle(fontFamily: Fonts.body, color: Colors.white70, fontWeight: FontWeight.w700)),
                     ]),
                   ),
                 ),
@@ -267,7 +269,7 @@ class _GalleryView extends StatelessWidget {
             excludeSemantics: true,
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               if (g.reloading)
-                Text('RELOADING…', style: context.tk.styles.title.copyWith(color: Brand.gold, fontSize: 16, letterSpacing: 2))
+                Text('Reloading...', style: context.tk.styles.title.copyWith(color: Brand.gold, fontSize: 16, letterSpacing: 2))
               else
                 for (var i = 0; i < GalleryLogic.clip; i++)
                   Padding(
@@ -296,15 +298,31 @@ class _GalleryPainter extends CustomPainter {
 
   static final _cache = <String, TextPainter>{};
   static TextPainter _t(String s, double size, [Color color = Colors.white]) => _cache.putIfAbsent('$s$size$color',
-      () => TextPainter(text: TextSpan(text: s, style: TextStyle(fontSize: size, color: color, fontWeight: FontWeight.w900)), textDirection: TextDirection.ltr)..layout());
+      () => TextPainter(
+          text: TextSpan(text: s, style: TextStyle(fontFamily: Fonts.display, fontSize: size, color: color, shadows: const [Shadow(color: Color(0x99000000), offset: Offset(0, 2))])),
+          textDirection: TextDirection.ltr)
+        ..layout());
+
+  static const _kinds = [GameIcons.duck, GameIcons.rabbit, GameIcons.star, GameIcons.bomb];
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     // Dark red booth with gold trim and three wooden rails.
     canvas.drawRect(Offset.zero & size, Paint()..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF4A0E0E), Color(0xFF1F0606)]).createShader(Offset.zero & size));
+    // Striped awning with a scalloped edge, then a row of chasing bulbs.
+    final aw = h * 0.07, stripeW = w / 10;
     for (var i = 0; i < 10; i++) {
-      canvas.drawCircle(Offset((i + 0.5) * w / 10, h * 0.04), 5, Paint()..color = (g.now ~/ 300 + i).isEven ? const Color(0xFFFFEB3B) : const Color(0xFFFF9800));
+      final paint = Paint()..color = i.isEven ? const Color(0xFFE53935) : const Color(0xFFFFF3E0);
+      canvas.drawRect(Rect.fromLTWH(i * stripeW, 0, stripeW, aw), paint);
+      canvas.drawArc(Rect.fromLTWH(i * stripeW, aw - stripeW / 2, stripeW, stripeW), 0, pi, true, paint);
+    }
+    canvas.drawRect(Rect.fromLTWH(0, 0, w, aw), Paint()..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x33000000), Color(0x00000000)]).createShader(Rect.fromLTWH(0, 0, w, aw)));
+    for (var i = 0; i < 10; i++) {
+      final on = (g.now ~/ 300 + i).isEven;
+      final bulb = Offset((i + 0.5) * w / 10, aw + stripeW * 0.5 + 8);
+      if (on) canvas.drawCircle(bulb, 9, Paint()..color = const Color(0x55FFEB3B));
+      canvas.drawCircle(bulb, 4.5, Paint()..color = on ? const Color(0xFFFFF59D) : const Color(0xFFB26A00));
     }
     final targetSize = min(w * 0.11, h * 0.12);
     for (var l = 0; l < 3; l++) {
@@ -326,14 +344,20 @@ class _GalleryPainter extends CustomPainter {
       canvas.drawLine(p + Offset(0, targetSize * 0.3), p + Offset(0, targetSize * 0.6), Paint()
         ..color = const Color(0xFFBCAAA4)
         ..strokeWidth = 3);
-      final glyph = _t(const ['🦆', '🐰', '⭐', '💣'][t.kind], targetSize * 0.8);
       canvas.save();
       if (GalleryLogic.laneSpeed[t.lane] < 0 && t.kind < 2) {
         canvas.translate(p.dx, 0);
         canvas.scale(-1, 1);
         canvas.translate(-p.dx, 0);
       }
-      glyph.paint(canvas, p - Offset(glyph.width / 2, glyph.height / 2));
+      // A tin cut-out: a pressed-metal plate with a rim, the figure painted on it.
+      canvas.drawCircle(p + const Offset(0, 3), targetSize * 0.5, Paint()..color = const Color(0x66000000));
+      canvas.drawCircle(p, targetSize * 0.5, Paint()..shader = const RadialGradient(center: Alignment(-0.3, -0.4), colors: [Color(0xFFF5F7F8), Color(0xFFB0BEC5)]).createShader(Rect.fromCircle(center: p, radius: targetSize * 0.5)));
+      canvas.drawCircle(p, targetSize * 0.5, Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = t.kind == 3 ? const Color(0xFFE53935) : const Color(0xFF78909C));
+      paintIcon(canvas, _kinds[t.kind], Rect.fromCenter(center: p, width: targetSize * 0.78, height: targetSize * 0.78));
       canvas.restore();
     }
     // Hit and miss marks.
@@ -348,7 +372,7 @@ class _GalleryPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 4
         ..color = (pts > 0 ? const Color(0xFFFFEB3B) : const Color(0xFFFF5252)).withValues(alpha: 1 - u));
-      final label = _t(pts > 0 ? '+$pts' : '$pts', 18, pts > 0 ? const Color(0xFFFFEB3B) : const Color(0xFFFF5252));
+      final label = _t(pts > 0 ? '+$pts' : '$pts', 22, pts > 0 ? Brand.gold : const Color(0xFFFF5252));
       label.paint(canvas, p - Offset(label.width / 2, targetSize * 0.6 + u * 30));
     }
   }

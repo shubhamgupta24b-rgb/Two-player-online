@@ -235,7 +235,7 @@ class _RelayPlayState extends State<RelayPlay> with SingleTickerProviderStateMix
             IconButton(
               tooltip: 'Sound and settings',
               constraints: const BoxConstraints(minWidth: kTouchTarget, minHeight: 40),
-              onPressed: () => showAppSheet<void>(context, title: '⚙️ Settings', builder: (_) => SettingsPanel(color: widget.game.color)),
+              onPressed: () => showAppSheet<void>(context, title: 'Settings', builder: (_) => SettingsPanel(color: widget.game.color)),
               icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
             ),
           ]),

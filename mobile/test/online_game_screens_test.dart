@@ -418,7 +418,7 @@ void main() {
         reveal: {'secrets': {'me': 2, 'op': 1}, 'winner': 'me', 'guessedBy': 'me', 'guess': 1, 'correct': true},
       ));
       await pumpGame(tester, const GuessWhoScreen(), s);
-      expect(find.text('🎉 YOU WIN THE ROUND!'), findsOneWidget);
+      expect(find.text('YOU WIN THE ROUND!'), findsOneWidget);
       expect(find.text('You guessed right!'), findsOneWidget);
       expect(find.text('Tom'), findsOneWidget);
       expect(find.text('Lucy'), findsOneWidget);

@@ -32,13 +32,13 @@ void main() {
 
       await tapText(tester, find.text('RANDOM'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('🎲 Selected: '), findsOneWidget, reason: 'named even if the card is scrolled away');
+      expect(find.textContaining('Selected: '), findsOneWidget, reason: 'named even if the card is scrolled away');
       await tapText(tester, find.text('CONFIRM'));
       await tester.pumpAndSettle();
       await tapText(tester, find.text('CONFIRM PERSON'));
       await tester.pumpAndSettle();
 
-      expect(find.text('🔒 PERSON SELECTED'), findsOneWidget);
+      expect(find.text('PERSON SELECTED'), findsOneWidget);
       expect(find.text('SELECTED'), findsNothing);
       await tapText(tester, find.text("I'M READY"));
       await tester.pumpAndSettle();

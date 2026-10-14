@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_shell.dart' show PauseButton;
@@ -9,6 +10,16 @@ import 'smash_karts_logic.dart';
 
 export 'smash_karts_logic.dart';
 
+/// Drawn icons for the power-ups (the logic's emoji map stays for the online screens).
+const _weaponIcon = {
+  Weapon.rocket: GameIcons.rocket,
+  Weapon.triple: GameIcons.tripleRocket,
+  Weapon.mine: GameIcons.mine,
+  Weapon.gun: GameIcons.gun,
+  Weapon.boost: GameIcons.bolt,
+  Weapon.shield: GameIcons.shield,
+};
+
 final LocalGameInfo smashKartsInfo = LocalGameInfo(
   id: 'smash_karts',
   title: 'Smash Karts',
@@ -16,9 +27,9 @@ final LocalGameInfo smashKartsInfo = LocalGameInfo(
   color: const Color(0xFFFF5722),
   tagline: 'Grab a box, wreck your friends!',
   rules: const [
-    'Drag the joystick to drive round Sunset Park. Drive through a ❓ box for a power-up, then tap FIRE.',
-    '🚀 Rocket, 🎆 Triple rocket and 💣 Mine wreck a kart in one hit · 🔫 Machine gun: 1 damage a bullet · ⚡ Boost · 🛡️ Shield.',
-    'Karts have 3 ❤️. A wrecked kart respawns with a shield. Yellow pads give a speed boost.',
+    'Drag the joystick to drive round Sunset Park. Drive through a mystery box for a power-up, then tap FIRE.',
+    'Rocket, Triple rocket and Mine wreck a kart in one hit. Machine gun: 1 damage a bullet. Boost. Shield.',
+    'Karts have 3 hearts. A wrecked kart respawns with a shield. Yellow pads give a speed boost.',
     'Most wrecks in 2 minutes wins! Playing alone, the camera follows your kart. 2 to 4 players.',
   ],
   scoreUnit: 'wrecks',
@@ -486,8 +497,8 @@ class _ParkPainter extends CustomPainter {
       );
     }
     if (k.weapon != Weapon.none) {
-      final wtp = _tp(weaponEmoji[k.weapon]!, max(10.0, 0.04 * s));
-      wtp.paint(canvas, Offset(tag.right + 2, tag.top - 2));
+      final ws = max(12.0, 0.045 * s);
+      paintIcon(canvas, _weaponIcon[k.weapon]!, Rect.fromLTWH(tag.right + 2, tag.center.dy - ws / 2, ws, ws), color: Colors.white);
     }
   }
 
@@ -575,14 +586,28 @@ class _Hud extends StatelessWidget {
               for (var r = 0; r < order.length; r++)
                 Container(
                   margin: const EdgeInsets.only(bottom: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.fromLTRB(3, 3, 10, 3),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(10),
+                    color: NeonPalette.overlay,
+                    borderRadius: Radii.rChip,
                     border: Border.all(color: order[r] == me ? Colors.white : players[order[r]].color, width: order[r] == me ? 2 : 1.5),
                   ),
-                  child: Text('${const ['🥇', '🥈', '🥉', '4'][r]} ${players[order[r]].name}  ${g.kills[order[r]]}',
-                      style: TextStyle(color: Color.lerp(players[order[r]].color, Colors.white, 0.45), fontWeight: FontWeight.w900, fontSize: 12)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    // Rank medal: gold, silver, bronze.
+                    Container(
+                      width: 18,
+                      height: 18,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: const [Brand.gold, Color(0xFFC7CEDB), Color(0xFFD08A4E), Color(0xFF5A6072)][r]),
+                      child: Text('${r + 1}', style: const TextStyle(fontFamily: Fonts.display, fontSize: 11, color: Color(0xFF2A1E05), height: 1)),
+                    ),
+                    const SizedBox(width: 5),
+                    PlayerBadge(index: PlayerPalette.indexOf(players[order[r]].color) ?? order[r], size: 16, color: players[order[r]].color, initial: players[order[r]].name),
+                    const SizedBox(width: 5),
+                    Text(players[order[r]].name, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                    const SizedBox(width: 8),
+                    Text('${g.kills[order[r]]}', style: const TextStyle(fontFamily: Fonts.display, color: Brand.gold, fontSize: 15, height: 1)),
+                  ]),
                 ),
             ]),
             // Centre top: the clock.
@@ -591,10 +616,9 @@ class _Hud extends StatelessWidget {
               child: Container(
                 margin: const EdgeInsets.only(top: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white24)),
+                decoration: BoxDecoration(color: NeonPalette.overlay, borderRadius: Radii.rChip, border: Border.all(color: Colors.white24)),
                 child: Text('${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}',
-                    style: TextStyle(
-                        color: s <= 10 ? const Color(0xFFFF5252) : Colors.white, fontWeight: FontWeight.w900, fontSize: 20, fontFeatures: const [FontFeature.tabularFigures()])),
+                    style: TextStyle(fontFamily: Fonts.display, color: s <= 10 ? const Color(0xFFFF5252) : Colors.white, fontSize: 22, fontFeatures: const [FontFeature.tabularFigures()])),
               ),
             ),
             // Right: the kill feed.
@@ -607,14 +631,17 @@ class _Hud extends StatelessWidget {
                     Container(
                       margin: const EdgeInsets.only(bottom: 4),
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(color: NeonPalette.overlay, borderRadius: Radii.rChip),
                       child: Text.rich(
                           TextSpan(children: [
                             TextSpan(text: players[f.killer].name, style: TextStyle(color: Color.lerp(players[f.killer].color, Colors.white, 0.35))),
-                            TextSpan(text: '  ${weaponEmoji[f.weapon]}  '),
+                            WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
+                              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 5), child: GameIcon(_weaponIcon[f.weapon] ?? GameIcons.bomb, size: 14, color: Colors.white)),
+                            ),
                             TextSpan(text: players[f.victim].name, style: TextStyle(color: Color.lerp(players[f.victim].color, Colors.white, 0.35))),
                           ]),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                          style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
                     ),
                 ]),
               ),
@@ -631,17 +658,17 @@ class _Hud extends StatelessWidget {
                   builder: (_, v, child) => Transform.scale(scale: v, child: child),
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Text(
-                      g.wrecked(me!) ? '💥 WRECKED!' : event!,
+                      g.wrecked(me!) ? 'WRECKED!' : stripEmoji(event!),
                       style: TextStyle(
-                        color: (event ?? '').startsWith('+') ? const Color(0xFFFFEB3B) : const Color(0xFFFF5252),
-                        fontSize: 34,
-                        fontWeight: FontWeight.w900,
+                        fontFamily: Fonts.display,
+                        color: (event ?? '').startsWith('+') ? Brand.gold : const Color(0xFFFF5252),
+                        fontSize: 38,
                         shadows: const [Shadow(color: Colors.black87, offset: Offset(0, 3), blurRadius: 6)],
                       ),
                     ),
                     if (g.wrecked(me!))
-                      const Text('Respawning…',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
+                      const Text('Respawning...',
+                          style: TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
                   ]),
                 ),
               ),
@@ -709,12 +736,23 @@ class _ControlsState extends State<_Controls> {
                 alignment: Alignment.bottomCenter,
                 child: Column(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
                   if (widget.compact)
-                    Text(widget.player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
-                  Text(has ? weaponName[weapon]! : 'Find a ❓ box',
-                      textAlign: TextAlign.center, style: TextStyle(color: has ? Colors.white : Colors.white60, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.6)),
+                    Text(widget.player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, color: nameColor(c), fontWeight: FontWeight.w900, fontSize: 13)),
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    GameIcon(has ? _weaponIcon[weapon]! : GameIcons.mysteryBox, size: 16, color: Colors.white),
+                    const SizedBox(width: 5),
+                    Text(has ? weaponName[weapon]! : 'Find a box',
+                        textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, color: has ? Colors.white : Colors.white60, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.6)),
+                  ]),
                   const SizedBox(height: 4),
                   // Health hearts.
-                  Text(List.generate(SmashKartsLogic.maxHp, (h) => h < g.karts[i].hp ? '❤️' : '🖤').join(), style: const TextStyle(fontSize: 14)),
+                  Semantics(
+                    label: '${g.karts[i].hp} of ${SmashKartsLogic.maxHp} hearts',
+                    excludeSemantics: true,
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      for (var h = 0; h < SmashKartsLogic.maxHp; h++)
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 1.5), child: GameIcon(h < g.karts[i].hp ? GameIcons.heart : GameIcons.heartEmpty, size: 16, color: const Color(0xFFFF5B6E))),
+                    ]),
+                  ),
                 ]),
               ),
             ),
@@ -749,8 +787,12 @@ class _ControlsState extends State<_Controls> {
                   child: FittedBox(
                     child: Padding(
                       padding: const EdgeInsets.all(8),
-                      child: Text(has ? weaponEmoji[weapon]! : 'FIRE',
-                          style: TextStyle(color: Colors.white.withValues(alpha: has ? 1 : 0.5), fontWeight: FontWeight.w900, fontSize: 26)),
+                      child: has
+                          ? Column(mainAxisSize: MainAxisSize.min, children: [
+                              GameIcon(_weaponIcon[weapon]!, size: 34, color: Colors.white),
+                              const Text('FIRE', style: TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 16, height: 1)),
+                            ])
+                          : Text('FIRE', style: TextStyle(fontFamily: Fonts.display, color: Colors.white.withValues(alpha: 0.5), fontSize: 26)),
                     ),
                   ),
                 ),

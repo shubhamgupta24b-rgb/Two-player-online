@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/audio/game_audio.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
@@ -240,14 +241,14 @@ class _BottleViewState extends State<_BottleView> {
                       g.throwBall(g.turn, t.dx / w, ((0.62 - (t.dy - top) / w) / 0.6).clamp(0.0, 1.0));
                     }
                   : null,
-              child: ClipRRect(borderRadius: BorderRadius.circular(18), child: CustomPaint(size: Size(w, h), painter: _StallPainter(g, _from, _to))),
+              child: SceneFrame(child: CustomPaint(size: Size(w, h), painter: _StallPainter(g, _from, _to))),
             );
           }),
         ),
         const SizedBox(height: 10),
         GameStatus(
           player: current,
-          turnText: g.finished ? 'All rounds done!' : (_myTurn ? '${current.whose} TURN · ${'⚾' * g.balls}' : '${current.name} is throwing…'),
+          turnText: g.finished ? 'All rounds done!' : (_myTurn ? '${current.whose} TURN · ${g.balls} ${g.balls == 1 ? 'ball' : 'balls'} left' : '${current.name} is throwing…'),
           message: showMsg ? g.message : null,
         ),
       ]),
@@ -345,14 +346,39 @@ class _StallPainter extends CustomPainter {
     }
   }
 
+  /// A green glass bottle: shaded body and neck, a dark outline, a paper label, a cork and
+  /// two highlights so it reads as glass.
   void _bottle(Canvas canvas, double w, double h, {double alpha = 1}) {
-    final glass = Paint()..color = const Color(0xFF43A047).withValues(alpha: 0.85 * alpha);
-    final body = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(0, h * 0.12), width: w * 0.8, height: h * 0.7), Radius.circular(w * 0.2));
-    canvas.drawRRect(body, glass);
-    canvas.drawRect(Rect.fromCenter(center: Offset(0, -h * 0.3), width: w * 0.3, height: h * 0.3), glass);
-    canvas.drawRect(Rect.fromCenter(center: Offset(0, -h * 0.47), width: w * 0.34, height: h * 0.06), Paint()..color = const Color(0xFFFFC107).withValues(alpha: alpha));
-    canvas.drawRect(Rect.fromCenter(center: Offset(0, h * 0.15), width: w * 0.8, height: h * 0.2), Paint()..color = Colors.white.withValues(alpha: 0.85 * alpha));
-    canvas.drawRect(Rect.fromLTWH(-w * 0.28, -h * 0.15, w * 0.1, h * 0.5), Paint()..color = Colors.white.withValues(alpha: 0.35 * alpha));
+    final bodyRect = Rect.fromCenter(center: Offset(0, h * 0.12), width: w * 0.8, height: h * 0.7);
+    final body = RRect.fromRectAndRadius(bodyRect, Radius.circular(w * 0.2));
+    final neck = Rect.fromCenter(center: Offset(0, -h * 0.3), width: w * 0.3, height: h * 0.32);
+    final shape = Path()
+      ..addRRect(body)
+      ..addRRect(RRect.fromRectAndRadius(neck, Radius.circular(w * 0.05)));
+    final full = Rect.fromLTRB(bodyRect.left, neck.top, bodyRect.right, bodyRect.bottom);
+    canvas.drawPath(
+        shape,
+        Paint()
+          ..shader = LinearGradient(colors: [
+            const Color(0xFF1B5E20).withValues(alpha: 0.9 * alpha),
+            const Color(0xFF4CAF50).withValues(alpha: 0.85 * alpha),
+            const Color(0xFF2E7D32).withValues(alpha: 0.9 * alpha),
+          ], stops: const [0, 0.4, 1]).createShader(full));
+    canvas.drawPath(
+        shape,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = max(1.0, w * 0.04)
+          ..color = const Color(0xFF0E3B12).withValues(alpha: alpha));
+    // Cork.
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(0, -h * 0.47), width: w * 0.32, height: h * 0.07), Radius.circular(w * 0.04)), Paint()..color = const Color(0xFFC08A4E).withValues(alpha: alpha));
+    // Paper label.
+    final label = Rect.fromCenter(center: Offset(0, h * 0.15), width: w * 0.8, height: h * 0.2);
+    canvas.drawRect(label, Paint()..color = const Color(0xFFFFF4DC).withValues(alpha: 0.95 * alpha));
+    canvas.drawRect(Rect.fromCenter(center: label.center, width: label.width, height: label.height * 0.25), Paint()..color = const Color(0xFFE53935).withValues(alpha: 0.85 * alpha));
+    // Glass highlights.
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(-w * 0.28, -h * 0.13, w * 0.09, h * 0.22), Radius.circular(w * 0.05)), Paint()..color = Colors.white.withValues(alpha: 0.45 * alpha));
+    canvas.drawRect(Rect.fromLTWH(-w * 0.1, -h * 0.42, w * 0.05, h * 0.18), Paint()..color = Colors.white.withValues(alpha: 0.35 * alpha));
   }
 
   @override

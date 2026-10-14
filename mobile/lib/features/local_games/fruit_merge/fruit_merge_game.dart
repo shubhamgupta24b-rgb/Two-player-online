@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/split_screen.dart';
@@ -13,7 +14,7 @@ export 'fruit_merge_logic.dart';
 
 const _rules = [
   'Drag to aim, let go to drop the fruit.',
-  'Two of the same fruit touching merge into a bigger one: 🍒 → 🍓 → 🍇 → 🍊 → 🍋 → 🍎 → 🍐 → 🍑 → 🍍 → 🍈 → 🍉',
+  'Two of the same fruit touching merge into a bigger one: cherry, strawberry, grapes, orange, lemon, apple, pear, peach, pineapple, melon, watermelon.',
   'Bigger fruits score more. Keep the pile below the red line!',
 ];
 
@@ -37,9 +38,9 @@ final fruitMergeInfo = LocalGameInfo(
     create: () => FruitMergeSolo(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🍉 FRUIT MERGE',
+      title: 'Fruit Merge',
       score: g.score,
-      extra: 'Biggest: ${fruitEmoji[g.box.biggest]}',
+      extra: 'Biggest: ${_fruitNames[g.box.biggest]}',
       child: FruitBoxView(box: g.box, onAim: g.aim, onDrop: g.drop, showNext: true),
     ),
   ),
@@ -101,8 +102,8 @@ final LocalGameInfo fruitBattleInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => PlayerZones(
       count: players.length,
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: '⏱ ${g.secondsLeft}s'),
-      center: ZoneCenterChip('⏱ ${g.secondsLeft}s'),
+      middle: ScoreMiddleBar(players: players, scores: g.scores, label: '${g.secondsLeft}s'),
+      center: ZoneCenterChip('${g.secondsLeft}s'),
       zone: (i) => _BattleZone(g: g, player: players[i], index: i),
     ),
   ),
@@ -184,10 +185,11 @@ class _BattleZone extends StatelessWidget {
       padding: const EdgeInsets.all(6),
       child: Column(children: [
         Row(children: [
-          PlayerTagSmall(player: player),
-          const Spacer(),
-          if (box.over) const Text('BOX FULL! ', style: TextStyle(color: Color(0xFFFF6B6B), fontWeight: FontWeight.w900)),
-          Text('${box.score}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
+          PlayerBadge(index: PlayerPalette.indexOf(player.color) ?? index, size: 22, color: player.color, initial: player.name),
+          const SizedBox(width: 6),
+          Expanded(child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, color: nameColor(player.color), fontWeight: FontWeight.w900, fontSize: 14))),
+          if (box.over) const Text('Box full!  ', style: TextStyle(fontFamily: Fonts.display, color: Color(0xFFFF6B6B), fontSize: 15)),
+          Text('${box.score}', style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 22, fontFeatures: [FontFeature.tabularFigures()])),
         ]),
         const SizedBox(height: 4),
         Expanded(
@@ -213,24 +215,23 @@ class _BattleOnline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(children: [
-        ScoreMiddleBar(players: players, scores: g.scores, label: '⏱ ${g.secondsLeft}s'),
+        ScoreMiddleBar(players: players, scores: g.scores, label: '${g.secondsLeft}s'),
         Expanded(child: _BattleZone(g: g, player: players[me], index: me)),
       ]);
 }
+
+/// The merge chain drawn as fruit (the logic keeps its emoji list for the online screens).
+const _fruitIcons = [
+  GameIcons.cherry, GameIcons.strawberry, GameIcons.grapes, GameIcons.orange, GameIcons.lemon, GameIcons.apple,
+  GameIcons.pear, GameIcons.peach, GameIcons.pineapple, GameIcons.melon, GameIcons.watermelon,
+];
+const _fruitNames = ['cherry', 'strawberry', 'grapes', 'orange', 'lemon', 'apple', 'pear', 'peach', 'pineapple', 'melon', 'watermelon'];
 
 class _BoxPainter extends CustomPainter {
   final FruitBox box;
   final bool showNext;
   _BoxPainter(this.box, this.showNext);
 
-  static final _emojiCache = <(int, int), TextPainter>{};
-  static TextPainter _emoji(int level, double size) {
-    final key = (level, size.round());
-    return _emojiCache.putIfAbsent(key, () {
-      if (_emojiCache.length > 300) _emojiCache.clear();
-      return TextPainter(text: TextSpan(text: fruitEmoji[level], style: TextStyle(fontSize: size)), textDirection: TextDirection.ltr)..layout();
-    });
-  }
 
   void _fruit(Canvas canvas, Offset c, double r, int level, {double alpha = 1}) {
     final col = _fruitColors[level];
@@ -248,8 +249,7 @@ class _BoxPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = max(1.0, r * 0.06)
       ..color = Color.lerp(col, Colors.black, 0.4)!.withValues(alpha: 0.6 * alpha));
-    final tp = _emoji(level, r * 1.15);
-    if (alpha >= 1) tp.paint(canvas, c - Offset(tp.width / 2, tp.height / 2));
+    if (alpha >= 1) paintIcon(canvas, _fruitIcons[level], Rect.fromCenter(center: c, width: r * 1.45, height: r * 1.45));
   }
 
   @override
@@ -261,6 +261,9 @@ class _BoxPainter extends CustomPainter {
       Offset.zero & size,
       Paint()..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFFF5E1), Color(0xFFF1D9A8)]).createShader(Offset.zero & size),
     );
+    // Glass jar reflections down the left and right.
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(size.width * 0.04, size.height * 0.1, size.width * 0.035, size.height * 0.75), const Radius.circular(8)), Paint()..color = const Color(0x55FFFFFF));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(size.width * 0.93, size.height * 0.2, size.width * 0.015, size.height * 0.5), const Radius.circular(8)), Paint()..color = const Color(0x40FFFFFF));
     // Danger line (flashes red when fruit is over it).
     final dy = FruitBox.dangerY * s;
     final flash = box.inDanger && (box.nowMs ~/ 250).isEven;
@@ -304,7 +307,7 @@ class _BoxPainter extends CustomPainter {
       canvas.drawCircle(c, r * 1.7, Paint()..color = const Color(0x22000000));
       _fruit(canvas, c, r, box.after);
       final tp = TextPainter(
-        text: const TextSpan(text: 'NEXT', style: TextStyle(color: Color(0xAA5A4630), fontSize: 10, fontWeight: FontWeight.w900)),
+        text: const TextSpan(text: 'NEXT', style: TextStyle(fontFamily: Fonts.body, color: Color(0xAA5A4630), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, c + Offset(-tp.width / 2, r * 1.8));
