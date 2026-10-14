@@ -16,6 +16,9 @@ dev_dependencies:
   flutter_lints: ^4.0.0
 flutter:
   uses-material-design: true
+  assets:
+    - assets/start/start_table.jpg
+    - assets/start/air_hockey.jpg
   # Bundled OFL fonts (licences in assets/fonts/OFL-*.txt). Nunito static weights come from
   # Fontsource's build of the Google Fonts family (Latin subset).
   fonts:

@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { GameError } = require('../errors');
 const registry = require('../games/registry');
 const { MemoryRoomStore } = require('./RoomStore');
+const { noteResult } = require('../stats/board');
 
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 // Games the app no longer offers in rooms; never picked for party mode.
@@ -188,6 +189,7 @@ class RoomManager extends EventEmitter {
       party.done = party.index >= party.games.length - 1;
       result = { ...result, party: this._publicParty(room) };
     }
+    noteResult(room, result);
     return result;
   }
 

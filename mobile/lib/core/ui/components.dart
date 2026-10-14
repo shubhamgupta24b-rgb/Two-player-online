@@ -915,10 +915,11 @@ class _ProfileEditorState extends State<_ProfileEditor> {
 }
 
 /// Opens the settings sheet.
-Future<void> showSettingsSheet(BuildContext context, {bool profile = true}) => showAppSheet<void>(context,
+Future<void> showSettingsSheet(BuildContext context, {bool profile = true, List<Widget> trailing = const []}) => showAppSheet<void>(context,
     title: 'Settings',
     builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           SettingsPanel(showProfile: profile),
+          ...trailing,
           // Debug builds only: the design gallery (materials and icons).
           if (kDebugMode) ...[
             const SizedBox(height: Space.m),

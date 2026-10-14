@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/auth/authentication_manager.dart';
 import '../../core/records/records.dart';
+import '../../core/settings/app_settings.dart';
 import '../../core/ui/components.dart';
 import '../../games/game_catalog.dart';
 import '../guess_person/screens/guess_person_menu_screen.dart';
-import '../../core/ui/app_ui.dart' show AppBackground;
 import '../raja_mantri/rmcs_screen.dart';
 import 'archery/archery_game.dart';
 import 'basketball/basketball_game.dart';
@@ -230,32 +232,30 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tk;
     final shown = _entriesList.where(_matches).toList();
     final together = shown.where((e) => !e.solo).toList(), solo = shown.where((e) => e.solo).toList();
     final query = _search.text.trim();
     final browsing = filter == _Filter.all && query.isEmpty && players == null;
     final recentEntries = [for (final id in recent) ..._entriesList.where((e) => e.id == id)];
     const gutter = EdgeInsets.symmetric(horizontal: 16);
+    const ink = Color(0xFF1C1A17);
+    const muted = Color(0xFF5C564C);
+    final cols = MediaQuery.sizeOf(context).width >= 900 ? 6 : 4;
 
-    Widget section(String text) => SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 10), child: SectionHeader(text)));
+    Widget section(String text) => SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Text(text.toUpperCase(), style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.2, color: ink)),
+          ),
+        );
     Widget grid(List<_Entry> items) => SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 230, mainAxisSpacing: 10, crossAxisSpacing: 10, mainAxisExtent: 196),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: cols, mainAxisSpacing: 14, crossAxisSpacing: 8, childAspectRatio: 0.72),
             delegate: SliverChildBuilderDelegate(
               (_, i) {
                 final e = items[i];
-                return GameTile(
-                  id: e.id,
-                  title: e.title,
-                  color: e.color,
-                  minPlayers: e.minPlayers,
-                  maxPlayers: e.maxPlayers,
-                  favourite: favourites.contains(e.id),
-                  onTap: () => _open(e),
-                  onStar: () => _toggleFavourite(e),
-                );
+                return _HubIcon(entry: e, favourite: favourites.contains(e.id), onTap: () => _open(e), onStar: () => _toggleFavourite(e));
               },
               childCount: items.length,
             ),
@@ -263,43 +263,60 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
         );
 
     return Scaffold(
-      body: AppBackground(
-        child: SafeArea(
-          bottom: false,
-          child: CustomScrollView(slivers: [
+      backgroundColor: const Color(0xFFF6F7F9),
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  PageHeader(
-                    label: 'Play on one phone',
-                    title: '$totalGameCount games',
-                    trailing: RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
+                padding: const EdgeInsets.fromLTRB(4, 4, 12, 8),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  IconButton(tooltip: 'Back', onPressed: () => Navigator.maybePop(context), icon: const GameIcon(GameIcons.back, size: 20, color: ink)),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        const Text('Games', style: TextStyle(fontFamily: Fonts.body, fontSize: 32, height: 1, fontWeight: FontWeight.w900, color: ink)),
+                        const SizedBox(height: 4),
+                        const Text('Choose a game and start playing', style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: muted)),
+                        Text('$totalGameCount games', style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: muted)),
+                      ]),
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Text('Pass this phone around. Search, filter by how many people, or long-press a game to favourite it.',
-                      style: t.styles.bodySmall.copyWith(color: t.onBgMuted)),
+                  Padding(padding: const EdgeInsets.only(top: 8), child: _HubProfile(onTap: () => showSettingsSheet(context))),
                 ]),
               ),
             ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: gutter,
-                child: KitField(
+                child: TextField(
                   controller: _search,
-                  hint: 'Search games',
-                  icon: GameIcons.search,
-                  suffix: query.isEmpty ? null : IconButton(tooltip: 'Clear', onPressed: _search.clear, icon: GameIcon(GameIcons.close, size: 16, color: t.onBgMuted)),
+                  style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: ink),
+                  decoration: InputDecoration(
+                    hintText: 'Search games',
+                    hintStyle: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: muted),
+                    filled: true,
+                    fillColor: Colors.white,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    prefixIcon: const Padding(padding: EdgeInsets.only(left: 12, right: 8), child: GameIcon(GameIcons.search, size: 18, color: muted)),
+                    prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                    suffixIcon: query.isEmpty ? null : IconButton(tooltip: 'Clear', onPressed: _search.clear, icon: const GameIcon(GameIcons.close, size: 16, color: muted)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE4E0D8))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: ink, width: 1.5)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE4E0D8))),
+                  ),
                 ),
               ),
             ),
             SliverToBoxAdapter(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(children: [
                   for (final f in _Filter.values)
-                    Padding(padding: const EdgeInsets.only(right: 6), child: KitChip(_filterLabels[f]!, selected: filter == f, onTap: () => setState(() => filter = f))),
+                    Padding(padding: const EdgeInsets.only(right: 6), child: _LightChip(_filterLabels[f]!, selected: filter == f, onTap: () => setState(() => filter = f))),
                 ]),
               ),
             ),
@@ -307,11 +324,11 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
               child: Padding(
                 padding: gutter,
                 child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
-                  Padding(padding: const EdgeInsets.only(right: 8), child: Text('PLAYERS', style: t.styles.label.copyWith(fontWeight: FontWeight.w900))),
+                  const Padding(padding: EdgeInsets.only(right: 8), child: Text('PLAYERS', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w900, color: ink))),
                   for (final n in _counts)
                     Padding(
                       padding: const EdgeInsets.only(right: 6),
-                      child: KitChip(n == null ? 'Any' : (n >= 5 ? '5–6' : '$n'), outline: true, selected: players == n, onTap: () => setState(() => players = n)),
+                      child: _LightChip(n == null ? 'Any' : (n >= 5 ? '5–6' : '$n'), selected: players == n, onTap: () => setState(() => players = n)),
                     ),
                 ]),
               ),
@@ -321,7 +338,7 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
               section('Recently played'),
               SliverToBoxAdapter(
                 child: SizedBox(
-                  height: 68,
+                  height: 118,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -338,12 +355,12 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Column(children: [
-                    GameIcon(filter == _Filter.favourites ? GameIcons.star : GameIcons.search, size: 44, color: t.onBgMuted),
+                    GameIcon(filter == _Filter.favourites ? GameIcons.star : GameIcons.search, size: 44, color: const Color(0xFF5C564C)),
                     const SizedBox(height: 10),
                     Text(
                       filter == _Filter.favourites && query.isEmpty ? 'No favourites yet. Tap the star on any game to add it here.' : 'No games match "$query".',
                       textAlign: TextAlign.center,
-                      style: t.styles.body.copyWith(color: t.onBgMuted),
+                      style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF5C564C)),
                     ),
                     if (query.isNotEmpty || players != null) ...[
                       const SizedBox(height: 12),
@@ -363,52 +380,147 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ]),
         ),
-      ),
     );
   }
 }
 
-/// A recently played game: its art, name and "Play again".
+/// A recently played game: its icon, name and "Play again".
 class _RecentTile extends StatelessWidget {
   final _Entry entry;
   final VoidCallback onTap;
   const _RecentTile({required this.entry, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    final t = context.tk;
     return Semantics(
       button: true,
       label: 'Play ${entry.title} again',
       excludeSemantics: true,
-      child: Material(
-        color: t.flat ? Colors.white : Colors.white.withValues(alpha: 0.06),
-        shape: RoundedRectangleBorder(borderRadius: Radii.rLg, side: BorderSide(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.12))),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            width: 196,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(children: [
-                GameThumb(id: entry.id, color: entry.color, size: 52, radius: 12),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(entry.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 15, color: t.flat ? FlatPalette.ink : Colors.white)),
-                    const SizedBox(height: 2),
-                    Row(children: [
-                      GameIcon(GameIcons.play, size: 12, color: t.flat ? FlatPalette.ink : Brand.gold),
-                      const SizedBox(width: 4),
-                      Flexible(child: Text('Play again', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w900, color: t.flat ? FlatPalette.ink : Brand.gold))),
-                    ]),
-                  ]),
-                ),
-              ]),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          width: 84,
+          child: Column(children: [
+            GameBadge(id: entry.id, color: entry.color, size: 64),
+            const SizedBox(height: 6),
+            Text(entry.title, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF1C1A17))),
+            const Text('Play again', style: TextStyle(fontFamily: Fonts.body, fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF1F8A4C))),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class _HubIcon extends StatelessWidget {
+  final _Entry entry;
+  final bool favourite;
+  final VoidCallback onTap, onStar;
+  const _HubIcon({required this.entry, required this.favourite, required this.onTap, required this.onStar});
+
+  @override
+  Widget build(BuildContext context) {
+    final e = entry;
+    final count = e.maxPlayers <= 1 ? 'solo' : playersLabel(e.minPlayers, e.maxPlayers);
+    return Stack(children: [
+      Semantics(
+        button: true,
+        label: '${e.title}, $count${favourite ? ', favourite' : ''}',
+        excludeSemantics: true,
+        child: GestureDetector(
+          onTap: () {
+            haptic(HapticWeight.selection);
+            onTap();
+          },
+          onLongPress: onStar,
+          child: Column(children: [
+            Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: GameBadge(id: e.id, color: e.color)))),
+            const SizedBox(height: 6),
+            Text(e.title, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, fontSize: 12, height: 1.15, fontWeight: FontWeight.w800, color: Color(0xFF1C1A17))),
+          ]),
+        ),
+      ),
+      if (favourite)
+        Positioned(
+          top: 0,
+          right: 0,
+          child: Semantics(
+            button: true,
+            label: 'Unstar ${e.title}',
+            child: GestureDetector(
+              onTap: onStar,
+              child: const SizedBox(width: 28, height: 28, child: Center(child: GameIcon(GameIcons.star, size: 16, color: Color(0xFFF5C542)))),
             ),
           ),
         ),
+    ]);
+  }
+}
+
+class _LightChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _LightChip(this.label, {required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: () {
+          haptic(HapticWeight.selection);
+          onTap();
+        },
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 36),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFF1C1A17) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: selected ? const Color(0xFF1C1A17) : const Color(0xFFE4E0D8)),
+          ),
+          child: Text(label, style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: selected ? Colors.white : const Color(0xFF1C1A17))),
+        ),
       ),
+    );
+  }
+}
+
+class _HubProfile extends StatelessWidget {
+  final VoidCallback onTap;
+  const _HubProfile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    var authName = '';
+    try {
+      authName = context.watch<AuthenticationManager>().displayName;
+    } on ProviderNotFoundException {
+      authName = '';
+    }
+    return ValueListenableBuilder<String>(
+      valueListenable: AppSettings.playerName,
+      builder: (context, saved, _) {
+        return ValueListenableBuilder<int>(
+          valueListenable: AppSettings.playerColor,
+          builder: (context, seat, _) {
+            final name = saved.isNotEmpty ? saved : authName;
+            return Semantics(
+              button: true,
+              label: 'Profile and settings',
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onTap,
+                child: PlayerBadge(index: seat, size: 40, initial: name.isEmpty ? '?' : name[0].toUpperCase()),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

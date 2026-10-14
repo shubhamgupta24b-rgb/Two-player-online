@@ -352,9 +352,10 @@ class _GameTileState extends State<GameTile> {
           clipBehavior: Clip.antiAlias,
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
-              child: Stack(fit: StackFit.expand, children: [
-                CustomPaint(painter: GameArtPainter(w.id, w.color)),
-              ]),
+              child: ColoredBox(
+                color: Color.lerp(w.color, flat ? Colors.white : const Color(0xFF10142E), flat ? 0.72 : 0.55)!,
+                child: Center(child: GameBadge(id: w.id, color: w.color, size: 84)),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
@@ -422,7 +423,7 @@ class PlayersChip extends StatelessWidget {
   }
 }
 
-/// A square of a game's art, e.g. for list rows and the lobby's next-game card.
+/// A square of a game's icon, e.g. for list rows and the lobby's next-game card.
 class GameThumb extends StatelessWidget {
   final String id;
   final Color color;
@@ -431,10 +432,82 @@ class GameThumb extends StatelessWidget {
   const GameThumb({super.key, required this.id, required this.color, this.size = 52, this.radius = 14});
 
   @override
-  Widget build(BuildContext context) => ExcludeSemantics(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(radius),
-          child: SizedBox(width: size, height: size, child: CustomPaint(painter: GameArtPainter(id, color, iconScale: 0.62))),
-        ),
+  Widget build(BuildContext context) => ExcludeSemantics(child: GameBadge(id: id, color: color, size: size, radius: radius));
+}
+
+/// The rounded game picture used on the games grid and anywhere a game is listed.
+/// Every game id gets its own colour, gloss and drawn symbol.
+class GameBadge extends StatelessWidget {
+  final String id;
+  final Color color;
+  final double size;
+  final double radius;
+  const GameBadge({super.key, required this.id, required this.color, this.size = 76, this.radius = 0});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(painter: GameBadgePainter(id, color, radius: radius)),
       );
+}
+
+class GameBadgePainter extends CustomPainter {
+  final String id;
+  final Color color;
+  final double radius;
+  const GameBadgePainter(this.id, this.color, {this.radius = 0});
+
+  static int _mix(String id) {
+    var h = 0;
+    for (final c in id.codeUnits) {
+      h = (h * 33 + c) & 0x7fffffff;
+    }
+    return h;
+  }
+
+  static Color _hsl(Color c, double hue, double light) {
+    final h = HSLColor.fromColor(c);
+    return h.withHue((h.hue + hue) % 360).withLightness((h.lightness + light).clamp(0.28, 0.78)).withSaturation((h.saturation + 0.08).clamp(0.45, 1)).toColor();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.shortestSide;
+    final rect = Offset.zero & Size(s, s);
+    final r = RRect.fromRectAndRadius(rect, Radius.circular(radius > 0 ? radius : s * 0.24));
+    canvas.save();
+    canvas.clipRRect(r);
+    final mix = _mix(id);
+    final top = _hsl(color, (mix % 28) - 10, 0.16);
+    final bottom = _hsl(color, ((mix >> 3) % 24) - 8, -0.16);
+    canvas.drawRect(rect, Paint()..shader = LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [top, color, bottom]).createShader(rect));
+    // Gloss, like a physical app icon.
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(s * 0.5, s * 0.08), width: s * 1.15, height: s * 0.55),
+      Paint()..color = Colors.white.withValues(alpha: 0.28),
+    );
+    final spot = Offset(s * (0.32 + (mix % 5) * 0.08), s * (0.28 + ((mix >> 2) % 4) * 0.06));
+    canvas.drawCircle(spot, s * 0.34, Paint()..color = Colors.white.withValues(alpha: 0.10));
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(s * 0.5, s * 0.78), width: s * 0.46, height: s * 0.08),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.22)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+    final icon = s * 0.56;
+    final ink = bottom.computeLuminance() > 0.62 ? const Color(0xFF1C1A17) : Colors.white;
+    paintIcon(canvas, gameIconFor(id), Rect.fromCenter(center: Offset(s * 0.5, s * 0.48), width: icon, height: icon), color: ink);
+    canvas.restore();
+    canvas.drawRRect(
+      r.deflate(0.8),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = Colors.white.withValues(alpha: 0.35),
+    );
+  }
+
+  @override
+  bool shouldRepaint(GameBadgePainter old) => old.id != id || old.color != color || old.radius != radius;
 }

@@ -4,12 +4,14 @@ import 'package:multiplayer_game/core/auth/authentication_manager.dart';
 import 'package:multiplayer_game/core/network/socket_manager.dart';
 import 'package:multiplayer_game/core/room/room_manager.dart';
 import 'package:multiplayer_game/core/ui/app_ui.dart';
+import 'package:multiplayer_game/core/ui/components.dart';
 import 'package:multiplayer_game/features/create_room/create_room_screen.dart';
 import 'package:multiplayer_game/features/home/home_screen.dart';
 import 'package:multiplayer_game/features/join_room/join_room_screen.dart';
 import 'package:multiplayer_game/features/privacy/privacy_screen.dart';
 import 'package:multiplayer_game/features/quick_play/quick_play_screen.dart';
 import 'package:multiplayer_game/features/records/records_screen.dart';
+import 'package:multiplayer_game/features/leaderboard/leaderboard_screen.dart';
 import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dart';
 import 'package:multiplayer_game/features/local_games/shell/local_game_shell.dart';
 import 'package:multiplayer_game/features/login/login_screen.dart';
@@ -57,8 +59,8 @@ void main() {
   testWidgets('first launch: splash -> login -> home with your name', (tester) async {
     final (auth, socket) = await pumpApp(tester, const SplashScreen(minShow: Duration.zero));
     await tester.pump(const Duration(milliseconds: 400)); // the splash fades in
-    expect(find.bySemanticsLabel('Party Games'), findsWidgets, reason: 'logo and name');
-    expect(find.text('Party Games'), findsOneWidget);
+    expect(find.bySemanticsLabel('RivalRooms'), findsWidgets, reason: 'logo and name');
+    expect(find.text('RivalRooms'), findsOneWidget);
     await bootSplash(tester);
     expect(find.byType(LoginScreen), findsOneWidget);
 
@@ -78,7 +80,7 @@ void main() {
     });
     await tester.pumpAndSettle();
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text('Hi, asha'), findsOneWidget);
+    expect(find.text('Play Local'), findsOneWidget);
     expect(auth.displayName, 'asha');
     expect(socket.connects.single, auth.token, reason: 'connects in the background');
   });
@@ -88,7 +90,7 @@ void main() {
     await bootSplash(tester);
     await tester.pumpAndSettle();
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text('Hi, Ravi'), findsOneWidget);
+    expect(find.text('Play Online'), findsOneWidget);
     expect(socket.connects, ['dev:u1:Ravi']);
   });
 
@@ -134,15 +136,26 @@ void main() {
       final (auth, _) = await pumpApp(tester, const HomeScreen(), prefs: {'uid': 'u1', 'name': 'A very long player name'}, size: size);
       await tester.runAsync(auth.restore);
       await tester.pump();
-      expect(find.text('Offline'), findsOneWidget);
-      expect(find.text('Ready to play?'), findsOneWidget);
+      expect(find.text('Play Online'), findsOneWidget);
+      expect(find.text('Play Local'), findsOneWidget);
+      expect(find.text('Play with Friends'), findsOneWidget);
+      expect(find.text('TWO PLAYER GAMES'), findsOneWidget);
+
+      final vertical = find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down);
+
+      /// Scrolls the main vertical list until [target] is on screen, then taps it.
+      Future<void> tapOnScreen(Finder target, {Finder? scrollable}) async {
+        final scroller = scrollable ?? vertical.first;
+        await tester.scrollUntilVisible(target, 200, scrollable: scroller);
+        await tester.pumpAndSettle();
+        final hit = target.hitTestable();
+        expect(hit, findsOneWidget);
+        await tester.tap(hit);
+        await tester.pumpAndSettle();
+      }
 
       Future<void> open(Finder target) async {
-        await tester.scrollUntilVisible(target, 120, scrollable: find.byType(Scrollable).first);
-        await tester.ensureVisible(target); // also scrolls the sideways featured row
-        await tester.pumpAndSettle();
-        await tester.tap(target);
-        await tester.pumpAndSettle();
+        await tapOnScreen(target);
       }
 
       Future<void> openAndBack(Finder target, Type page) async {
@@ -152,22 +165,63 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      await openAndBack(find.text('Play on one phone'), LocalGamesHubScreen);
-      expect(find.text('Play online'), findsOneWidget);
-      for (final (label, page) in const [('Create room', CreateRoomScreen), ('Join room', JoinRoomScreen), ('Quick play', QuickPlayScreen)]) {
-        await openAndBack(find.text(label), page);
+      await tester.scrollUntilVisible(find.byType(PlayerBadge), 40, scrollable: vertical.first);
+      await tester.tap(find.byType(PlayerBadge));
+      await tester.pumpAndSettle();
+      expect(find.text('Settings'), findsOneWidget);
+      for (final (label, page) in const [('Leaderboard', LeaderboardScreen), ('My records', RecordsScreen), ('Privacy', PrivacyScreen)]) {
+        await tester.ensureVisible(find.text(label));
+        await tester.tap(find.text(label));
+        await tester.pumpAndSettle();
+        expect(find.byType(page), findsOneWidget);
+        if (page == LeaderboardScreen) expect(find.text('Ranked by games won'), findsOneWidget);
+        Navigator.of(tester.element(find.byType(page))).pop();
+        await tester.pumpAndSettle();
+        if (page != PrivacyScreen) await tapOnScreen(find.byType(PlayerBadge));
       }
-      await openAndBack(find.text('My records'), RecordsScreen);
-      await openAndBack(find.text('Memory'), LocalGameShell);
-      // Featured games scroll sideways.
-      await tester.dragUntilVisible(find.text('Raja Mantri'), find.byType(ListView).last, const Offset(-150, 0));
-      await openAndBack(find.text('Raja Mantri'), RmcsMenuScreen);
-      await openAndBack(find.text('See all'), LocalGamesHubScreen);
-      await openAndBack(find.text('Privacy'), PrivacyScreen);
-      // No server addresses on screen: just the connection pill.
-      expect(find.textContaining('Server: '), findsNothing);
-      await tester.scrollUntilVisible(find.text('Same Wi-Fi'), -120, scrollable: find.byType(Scrollable).first);
+
+      await openAndBack(find.text('Play Local'), LocalGamesHubScreen);
+      for (final (label, page) in const [('Create room', CreateRoomScreen), ('Join room', JoinRoomScreen), ('Quick play', QuickPlayScreen)]) {
+        await open(find.text('Play Online'));
+        await tester.tap(find.text(label));
+        await tester.pumpAndSettle();
+        expect(find.byType(page), findsOneWidget);
+        Navigator.of(tester.element(find.byType(page))).pop();
+        await tester.pumpAndSettle();
+      }
+      await open(find.text('Play Local'));
+      Future<void> tapGame(String title) async {
+        final label = find.text(title);
+        final grid = find.descendant(
+          of: find.byType(LocalGamesHubScreen),
+          matching: find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down),
+        ).first;
+        for (var i = 0; i < 24; i++) {
+          await tester.drag(grid, const Offset(0, 700));
+          await tester.pump();
+        }
+        for (var i = 0; i < 80 && label.hitTestable().evaluate().isEmpty; i++) {
+          await tester.drag(grid, const Offset(0, -220));
+          await tester.pump();
+        }
+        expect(label.hitTestable(), findsOneWidget, reason: '$title is on screen');
+        await tester.tap(label.hitTestable());
+        await tester.pumpAndSettle();
+      }
+
+      await tapGame('Memory');
+      expect(find.byType(LocalGameShell), findsOneWidget);
+      Navigator.of(tester.element(find.byType(LocalGameShell))).pop();
+      await tester.pumpAndSettle();
+      await tapGame('Raja Mantri Chor Sipahi');
+      expect(find.byType(RmcsMenuScreen), findsOneWidget);
+      Navigator.of(tester.element(find.byType(RmcsMenuScreen))).pop();
+      await tester.pumpAndSettle();
+      Navigator.of(tester.element(find.byType(LocalGamesHubScreen))).pop();
+      await tester.pumpAndSettle();
+      await open(find.text('Play with Friends'));
       expect(find.text('Same Wi-Fi'), findsOneWidget);
+      expect(find.textContaining('Server: '), findsNothing);
     });
   }
 }

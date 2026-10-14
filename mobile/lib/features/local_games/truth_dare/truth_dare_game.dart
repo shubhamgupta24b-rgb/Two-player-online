@@ -63,7 +63,7 @@ class TruthDareLogic extends LocalGameLogic {
     'Make up a 4-line rap about the person on your left.',
     'Walk like a model across the room.',
     'Hold a plank for 30 seconds.',
-    'Say "I love Party Games" in three different voices.',
+    'Say "I love RivalRooms" in three different voices.',
     'Let someone draw a tiny smiley on your hand.',
     'Pretend to be a news reporter for 30 seconds.',
     'Speak only in questions until your next turn.',

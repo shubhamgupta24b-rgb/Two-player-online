@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'tokens.dart';
 
-/// Which app this build is. The second app ("Party Games Flat") is built from the same
+/// Which app this build is. The second app ("RivalRooms Flat") is built from the same
 /// code with `--dart-define=APP_STYLE=flat`: Guess the Person, Memory and the word games
 /// get a bright flat board-game look (sky blue, white cards, dark name strips).
 /// It is a compile-time constant, so colours can switch inside `const` expressions.
 const bool flatStyle = String.fromEnvironment('APP_STYLE') == 'flat';
 
-const String appName = flatStyle ? 'Party Games Flat' : 'Party Games';
+const String appName = flatStyle ? 'RivalRooms Flat' : 'RivalRooms';
 
 /// Games that use the flat look in the flat app: the ones that are mostly words and cards.
 const flatGames = {'memory', 'charades', 'heads_up', 'find_spy', 'undercover', 'mafia', 'most_likely', 'would_rather', 'truth_dare'};

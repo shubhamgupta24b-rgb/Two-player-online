@@ -290,7 +290,7 @@ class _CodeCard extends StatelessWidget {
             if (context.mounted) showToast(context, 'Room code $code copied', tone: Tone.success);
           }),
           const SizedBox(width: 8),
-          small(GameIcons.share, 'Share', () => shareText(context, 'Join my Party Games room: $code', copied: 'Room code $code copied')),
+          small(GameIcons.share, 'Share', () => shareText(context, 'Join my RivalRooms room: $code', copied: 'Room code $code copied')),
         ]),
         const SizedBox(height: 10),
         Text(quickPlay ? 'New players are matched in automatically, or join with this code' : 'Friends tap Join room and enter this code',

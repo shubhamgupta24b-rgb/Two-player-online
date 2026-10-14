@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'app_flavor.dart';
 
 /// The Party Games app icon, drawn in code so it is sharp at any size: a split game
 /// controller (the blue and orange halves are players 1 and 2, the buttons are the player
@@ -215,7 +216,7 @@ class PartyLogoIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
         image: true,
-        label: 'Party Games',
+        label: appName,
         child: SizedBox(width: size, height: size, child: const CustomPaint(painter: PartyLogoPainter())),
       );
 }
@@ -228,7 +229,7 @@ class PartyLogoFull extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        label: 'Party Games',
+        label: appName,
         child: ExcludeSemantics(
           child: SizedBox(
             width: width,
@@ -265,16 +266,16 @@ class PartyWordmark extends StatelessWidget {
           ..color = const Color(0xFF2A0B3D));
     Widget outlined(String t, Color fill) => Stack(children: [Text(t, style: stroke()), Text(t, style: word(fill))]);
     return Semantics(
-      label: 'Party Games',
+      label: appName,
       child: ExcludeSemantics(
         child: SizedBox(
           width: width,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             FittedBox(
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                outlined('PARTY', Colors.white),
+                outlined('RIVAL', Colors.white),
                 SizedBox(width: 12 * f),
-                outlined('GAMES', const Color(0xFFFFC93C)),
+                outlined('ROOMS', const Color(0xFFFFC93C)),
               ]),
             ),
             SizedBox(height: 10 * f),
