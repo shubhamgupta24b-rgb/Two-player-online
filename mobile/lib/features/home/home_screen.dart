@@ -6,15 +6,21 @@ import '../../core/lan/lan_host.dart';
 import '../../core/network/lan_discovery.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/room/room_manager.dart';
+import '../../core/ui/app_ui.dart';
+import '../../core/records/records.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/ui/components.dart';
+import '../../core/ui/materials/materials.dart';
 import '../create_room/create_room_screen.dart';
+import '../guess_person/screens/guess_person_menu_screen.dart';
 import '../join_room/join_room_screen.dart';
 import '../lobby/lobby_screen.dart';
 import '../local_games/local_games_hub_screen.dart';
+import '../local_games/shell/game_art.dart';
+import '../local_games/shell/local_game_shell.dart';
 import '../privacy/privacy_screen.dart';
-import '../leaderboard/leaderboard_screen.dart';
 import '../quick_play/quick_play_screen.dart';
+import '../raja_mantri/rmcs_screen.dart';
 import '../records/records_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -26,6 +32,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late final SocketManager _socket = context.read<SocketManager>();
   bool _rejoined = false;
+  String? _recent; // last game played on this phone
 
   @override
   void initState() {
@@ -33,11 +40,11 @@ class _HomeScreenState extends State<HomeScreen> {
     // The server connects in the background, so check both now and once it comes up.
     WidgetsBinding.instance.addPostFrameCallback((_) => _rejoinRoom());
     _socket.connected.addListener(_onConnection);
+    _loadRecent();
   }
 
   void _onConnection() {
-    if (!_socket.connected.value) return;
-    _rejoinRoom();
+    if (_socket.connected.value) _rejoinRoom();
   }
 
   /// If the server still has us in a room (e.g. app restarted), jump back in.
@@ -128,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
       emoji: null,
       title: 'Hosting on this phone',
       message: '1. Turn on this phone\'s hotspot (or stay on the same Wi-Fi as your friends).\n'
-          '2. Friends connect to it, open RivalRooms and tap Same Wi-Fi, then Join a friend.\n'
+          '2. Friends connect to it, open Party Games and tap Same Wi-Fi, then Join a friend.\n'
           '3. Create a room here and share the code (or use Quick Play).\n\n'
           'No internet needed. Keep this app open while you play.'
           '${ips.isEmpty ? '' : '\n\nThis phone: ${ips.join(' · ')}'}',
@@ -161,10 +168,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Play online always uses the internet server, then the same create / join / quick-play sheet as before.
-  Future<void> _openPlayOnline() async {
+  /// Play-online actions always use the internet server, even if this phone was hosting on Wi-Fi.
+  Future<void> _playOnline(Widget page) async {
     if (AppConfig.mode == ServerMode.wifi) await _useOnline();
-    if (mounted) await _rooms();
+    if (mounted) _open(page);
   }
 
   Future<void> _sameWifi() async {
@@ -173,236 +180,75 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted && AppConfig.mode == ServerMode.wifi && (before != ServerMode.wifi || _socket.connected.value)) await _rooms();
   }
 
-  /// Private rooms: create, join, or move onto the same Wi-Fi as a friend.
-  Future<void> _withFriends() async {
-    await showAppSheet<void>(
-      context,
-      title: 'Play with friends',
-      builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        _SheetOption(icon: GameIcons.plus, tint: PlayerPalette.colors[0], title: 'Create room', text: 'Host a game and share the code', onTap: () {
-          Navigator.pop(ctx);
-          _open(const CreateRoomScreen());
-        }),
-        const SizedBox(height: 10),
-        _SheetOption(icon: GameIcons.forward, tint: PlayerPalette.colors[1], title: 'Join room', text: "Enter a friend's 6-letter code", onTap: () {
-          Navigator.pop(ctx);
-          _open(const JoinRoomScreen());
-        }),
-        const SizedBox(height: 10),
-        _SheetOption(icon: GameIcons.wifi, tint: PlayerPalette.colors[3], title: 'Same Wi-Fi', text: 'Host on this phone, or join a friend nearby', onTap: () {
-          Navigator.pop(ctx);
-          _sameWifi();
-        }),
-      ]),
-    );
+  /// The last game played on this phone, for "Continue".
+  Future<void> _loadRecent() async {
+    try {
+      final r = await Records.recent();
+      if (mounted && r.isNotEmpty) setState(() => _recent = r.first);
+    } catch (_) {}
   }
 
-  void _openSettings() {
-    showSettingsSheet(context, trailing: [
-      const SizedBox(height: 8),
-      _SettingsLink(label: 'Leaderboard', onTap: () => _open(const LeaderboardScreen())),
-      _SettingsLink(label: 'My records', onTap: () => _open(const RecordsScreen())),
-      _SettingsLink(label: 'Privacy', onTap: () => _open(const PrivacyScreen())),
-    ]);
+  (String, Color, Widget)? _game(String id) {
+    if (id == 'guess_person') return ('Guess the Person', const Color(0xFFFFC93C), const GuessPersonMenuScreen());
+    if (id == 'raja_mantri') return ('Raja Mantri', const Color(0xFF8A1C3A), const RmcsMenuScreen());
+    for (final g in localGames) {
+      if (g.id == id) return (g.title, g.color, LocalGameShell(game: g));
+    }
+    return null;
+  }
+
+  Future<void> _openGame(Widget page) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    _loadRecent();
   }
 
   @override
   Widget build(BuildContext context) {
     final name = context.watch<AuthenticationManager>().displayName;
-    final initial = name.isEmpty ? '?' : name[0].toUpperCase();
+    final t = context.tk;
+    final recent = _recent == null ? null : _game(_recent!);
     return Scaffold(
-      backgroundColor: const Color(0xFF100E0C),
-      body: Stack(fit: StackFit.expand, children: [
-        const Image(image: AssetImage('assets/start/air_hockey.jpg'), fit: BoxFit.cover),
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              stops: [0, 0.28, 0.48, 1],
-              colors: [Color(0x99000000), Color(0x33000000), Color(0x00000000), Color(0xF20A0C12)],
-            ),
-          ),
-        ),
-        SafeArea(
-          child: LayoutBuilder(builder: (context, constraints) {
-            final short = constraints.maxHeight < 640;
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(18, short ? 4 : 8, 18, 8),
-                    child: Column(children: [
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: _RoundIconButton(tooltip: 'Settings', icon: GameIcons.settings, onPressed: _openSettings),
-                      ),
-                      GameIcon(GameIcons.crown, size: short ? 22 : 28, color: const Color(0xFFF5C542)),
-                      const SizedBox(height: 4),
-                      Text.rich(
-                        const TextSpan(children: [
-                          TextSpan(text: 'Rival', style: TextStyle(color: Colors.white)),
-                          TextSpan(text: 'Rooms', style: TextStyle(color: Color(0xFFF5C542))),
-                        ]),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontFamily: Fonts.body, fontSize: short ? 32 : 40, fontWeight: FontWeight.w900, height: 1, letterSpacing: -0.6),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text('TWO PLAYER GAMES', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 2.2, color: Color(0xE6FFFFFF))),
-                      const SizedBox(height: 4),
-                      const Text('Play mini games with your friends', style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xCCFFFFFF))),
-                      const Spacer(),
-                      _MenuButton(
-                        compact: short,
-                        gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-                        icon: GameIcons.people,
-                        iconColor: Colors.white,
-                        title: 'Play Online',
-                        subtitle: 'With Friends Anywhere',
-                        ink: Colors.white,
-                        subInk: const Color(0xE6FFFFFF),
-                        onTap: _openPlayOnline,
-                      ),
-                      SizedBox(height: short ? 6 : 10),
-                      _MenuButton(
-                        compact: short,
-                        color: Colors.white,
-                        icon: GameIcons.play,
-                        iconColor: const Color(0xFF1C1A17),
-                        title: 'Play Local',
-                        subtitle: 'On Same Device',
-                        ink: const Color(0xFF1C1A17),
-                        subInk: const Color(0xFF5C564C),
-                        onTap: () => _open(const LocalGamesHubScreen()),
-                      ),
-                      SizedBox(height: short ? 6 : 10),
-                      _MenuButton(
-                        compact: short,
-                        color: const Color(0xFF2A3142),
-                        icon: GameIcons.people,
-                        iconColor: Colors.white,
-                        title: 'Play with Friends',
-                        subtitle: 'Create or Join Room',
-                        ink: Colors.white,
-                        subInk: const Color(0xCCFFFFFF),
-                        onTap: _withFriends,
-                      ),
-                      SizedBox(height: short ? 8 : 16),
-                      const Row(children: [
-                        _Caption(icon: GameIcons.trophy, color: Color(0xFFF5C542), text: 'Multiple Mini Games'),
-                        _Caption(icon: GameIcons.people, color: Color(0xFF60A5FA), text: '2-4 Players'),
-                        _Caption(icon: GameIcons.play, color: Color(0xFF4ADE80), text: 'Fun with Friends'),
-                      ]),
-                      const SizedBox(height: 12),
-                      _BottomNav(
-                        initial: initial,
-                        seat: AppSettings.playerColor.value,
-                        onGames: () => _open(const LocalGamesHubScreen()),
-                        onRooms: _withFriends,
-                        onProfile: _openSettings,
-                      ),
-                    ]),
+      body: AppBackground(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 22), children: [
+                _header(name),
+                const SizedBox(height: 16),
+                _hero(),
+                const SizedBox(height: 16),
+                Text('Play online', style: TextStyle(fontFamily: Fonts.display, fontSize: 22, height: 1.1, color: t.onBg)),
+                const SizedBox(height: 4),
+                Text('Share a room code — friends can join from anywhere', style: t.styles.bodySmall.copyWith(color: t.onBgMuted)),
+                const SizedBox(height: 10),
+                _SheetOption(icon: GameIcons.plus, tint: PlayerPalette.colors[0], title: 'Create room', text: 'Host a game and share a 6-letter code', onTap: () => _playOnline(const CreateRoomScreen())),
+                const SizedBox(height: 10),
+                _SheetOption(icon: GameIcons.forward, tint: PlayerPalette.colors[1], title: 'Join room', text: "Type a friend's code — or paste it", onTap: () => _playOnline(const JoinRoomScreen())),
+                const SizedBox(height: 10),
+                _SheetOption(icon: GameIcons.bolt, tint: PlayerPalette.colors[2], title: 'Quick play', text: 'Jump into an open room with anyone', onTap: () => _playOnline(const QuickPlayScreen())),
+                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(child: _ModeTile(icon: GameIcons.wifi, tint: PlayerPalette.colors[2], ink: PlayerPalette.tints[2], label: 'Same Wi-Fi', onTap: _sameWifi)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _ModeTile(icon: GameIcons.trophy, tint: Brand.gold, ink: const Color(0xFFFFE08A), label: 'My records', onTap: () => _open(const RecordsScreen()))),
+                ]),
+                if (recent != null) ...[
+                  const SizedBox(height: 16),
+                  _ContinueChip(id: _recent!, title: recent.$1, color: recent.$2, onTap: () => _openGame(recent.$3)),
+                ],
+                const SizedBox(height: 16),
+                SectionHeader('Featured games', action: 'See all', onAction: () => _open(const LocalGamesHubScreen())),
+                const SizedBox(height: 8),
+                _featured(),
+                const SizedBox(height: 18),
+                Center(
+                  child: TextButton(
+                    style: TextButton.styleFrom(minimumSize: const Size(kTouchTarget, kTouchTarget), foregroundColor: t.onBgMuted),
+                    onPressed: () => _open(const PrivacyScreen()),
+                    child: Text('Privacy', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: t.onBgMuted)),
                   ),
                 ),
-              ),
-            );
-          }),
-        ),
-      ]),
-    );
-  }
-
-}
-
-class _RoundIconButton extends StatelessWidget {
-  final String tooltip;
-  final GameIcons icon;
-  final VoidCallback onPressed;
-  const _RoundIconButton({required this.tooltip, required this.icon, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: const Color(0xCC1A1D27),
-        shape: const CircleBorder(side: BorderSide(color: Color(0x55FFFFFF))),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () {
-            haptic(HapticWeight.selection);
-            onPressed();
-          },
-          customBorder: const CircleBorder(),
-          child: SizedBox(width: 44, height: 44, child: Center(child: GameIcon(icon, size: 20, color: Colors.white))),
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuButton extends StatelessWidget {
-  final List<Color>? gradient;
-  final Color? color;
-  final bool compact;
-  final GameIcons icon;
-  final Color iconColor, ink, subInk;
-  final String title, subtitle;
-  final VoidCallback onTap;
-  const _MenuButton({
-    this.gradient,
-    this.color,
-    this.compact = false,
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.ink,
-    required this.subInk,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: '$title. $subtitle',
-      excludeSemantics: true,
-      child: Material(
-        color: color ?? Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () {
-            haptic(HapticWeight.selection);
-            onTap();
-          },
-          child: Ink(
-            decoration: BoxDecoration(
-              color: color,
-              gradient: gradient == null ? null : LinearGradient(colors: gradient!),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14, vertical: compact ? 8 : 12),
-              child: Row(children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(color: ink == Colors.white ? Colors.white.withValues(alpha: 0.16) : const Color(0xFFF1F2F4), shape: BoxShape.circle),
-                  child: GameIcon(icon, size: 20, color: iconColor),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(title, style: TextStyle(fontFamily: Fonts.body, fontSize: 17, fontWeight: FontWeight.w900, color: ink, height: 1.1)),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w700, color: subInk)),
-                  ]),
-                ),
-                GameIcon(GameIcons.forward, size: 16, color: subInk),
               ]),
             ),
           ),
@@ -410,79 +256,212 @@ class _MenuButton extends StatelessWidget {
       ),
     );
   }
-}
 
-class _Caption extends StatelessWidget {
-  final GameIcons icon;
-  final Color color;
-  final String text;
-  const _Caption({required this.icon, required this.color, required this.text});
+  Widget _header(String name) {
+    final t = context.tk;
+    final seat = AppSettings.playerColor.value;
+    return Row(children: [
+      Container(
+        decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: PlayerPalette.color(seat).withValues(alpha: 0.25), spreadRadius: 3)]),
+        child: PlayerBadge(index: seat, size: 44, initial: name.isEmpty ? '?' : name),
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Welcome back', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: t.flat ? t.onBg : NeonPalette.label)),
+          Text(name.isEmpty ? 'Hi there' : 'Hi, $name', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 22, height: 1.1, color: t.onBg)),
+        ]),
+      ),
+      _status(),
+      const SizedBox(width: 4),
+      RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
+    ]);
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(children: [
-        GameIcon(icon, size: 22, color: color),
-        const SizedBox(height: 4),
-        Text(text, textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, fontSize: 11, height: 1.2, fontWeight: FontWeight.w800, color: Colors.white)),
+  /// Online / Hosting on this phone / On a Wi-Fi host / Offline. Tap to retry when offline.
+  Widget _status() => ValueListenableBuilder<bool>(
+        valueListenable: _socket.connected,
+        builder: (context, online, _) {
+          final t = context.tk;
+          final wifi = AppConfig.mode == ServerMode.wifi;
+          final label = !online ? 'Offline' : (wifi ? (AppConfig.hosting ? 'Hosting' : 'Wi-Fi host') : 'Online');
+          final c = online ? (wifi ? PlayerPalette.colors[3] : StatusColors.success) : (t.flat ? FlatPalette.inkMuted : NeonPalette.label);
+          return Semantics(
+            button: !online,
+            label: online ? '$label: connected' : 'Offline. Tap to try again',
+            excludeSemantics: true,
+            child: InkWell(
+              borderRadius: Radii.rChip,
+              onTap: online ? null : _connect,
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 32),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: t.flat ? Colors.white : c.withValues(alpha: 0.14),
+                  borderRadius: Radii.rChip,
+                  border: Border.all(color: c.withValues(alpha: 0.5)),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+                  const SizedBox(width: 6),
+                  Text(label,
+                      style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w900, color: t.flat ? FlatPalette.ink : (online ? Color.lerp(c, Colors.white, 0.55) : NeonPalette.textMuted))),
+                ]),
+              ),
+            ),
+          );
+        },
+      );
+
+  Widget _hero() {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Brand.indigo, Brand.indigoDeep]),
+        borderRadius: Radii.rBoard,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        boxShadow: Shadows.large,
+      ),
+      child: Stack(children: [
+        const Positioned(right: -6, top: 6, child: ExcludeSemantics(child: SizedBox(width: 150, height: 120, child: CustomPaint(painter: _HeroArt())))),
+        Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('PARTY GAMES', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.76, color: Brand.goldLine)),
+            const SizedBox(height: 6),
+            const SizedBox(width: 190, child: Text('Ready to play?', style: TextStyle(fontFamily: Fonts.display, fontSize: 30, height: 1.05, color: Colors.white))),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: 220,
+              child: Text('$totalGameCount games · pass one phone around, or play with a room code',
+                  style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFFD6DAF7))),
+            ),
+            const SizedBox(height: 14),
+            IntrinsicWidth(child: GoldButton('Play on one phone', height: 50, fontSize: 19, onPressed: () => _open(const LocalGamesHubScreen()))),
+          ]),
+        ),
       ]),
+    );
+  }
+
+  Widget _featured() {
+    final picks = [
+      for (final id in ['smash_karts', 'memory', 'ludo', 'colour_clash', 'raja_mantri', 'archery', 'guess_person', 'air_hockey'])
+        if (_game(id) case final g?) (id, g),
+    ];
+    final info = {for (final g in localGames) g.id: g};
+    return SizedBox(
+      height: 178,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        itemCount: picks.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, i) {
+          final (id, (title, color, page)) = picks[i];
+          final g = info[id];
+          return SizedBox(
+            width: 150,
+            child: GameTile(
+              id: id,
+              title: title,
+              color: color,
+              minPlayers: g?.minPlayers ?? (id == 'raja_mantri' ? 4 : 2),
+              maxPlayers: g?.maxPlayers ?? (id == 'raja_mantri' ? 4 : 6),
+              onTap: () => _openGame(page),
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
-class _BottomNav extends StatelessWidget {
-  final String initial;
-  final int seat;
-  final VoidCallback onGames, onRooms, onProfile;
-  const _BottomNav({required this.initial, required this.seat, required this.onGames, required this.onRooms, required this.onProfile});
+/// A big square choice on Home: icon in a colour, Lilita label.
+class _ModeTile extends StatelessWidget {
+  final GameIcons icon;
+  final Color tint, ink;
+  final String label;
+  final VoidCallback onTap;
+  const _ModeTile({required this.icon, required this.tint, required this.ink, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    Widget item(String label, {GameIcons? icon, Widget? mark, bool selected = false, VoidCallback? onTap}) {
-      final color = selected ? const Color(0xFF3B82F6) : const Color(0xCCFFFFFF);
-      return Expanded(
+    final flat = context.tk.flat;
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        color: flat ? Colors.white : tint.withValues(alpha: 0.15),
+        shape: RoundedRectangleBorder(borderRadius: Radii.rButton, side: BorderSide(color: flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.12))),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              mark ?? GameIcon(icon!, size: 22, color: color),
-              const SizedBox(height: 3),
-              Text(label, style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w800, color: color)),
+          onTap: () {
+            haptic(HapticWeight.selection);
+            onTap();
+          },
+          child: SizedBox(
+            height: 104,
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              GameIcon(icon, size: 30, color: flat ? fillFor(tint) : ink),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: FittedBox(fit: BoxFit.scaleDown, child: Text(label, style: TextStyle(fontFamily: Fonts.display, fontSize: 15, color: flat ? FlatPalette.ink : Colors.white))),
+              ),
             ]),
           ),
         ),
-      );
-    }
-
-    return Container(
-      decoration: BoxDecoration(color: const Color(0xF0141824), borderRadius: BorderRadius.circular(22), border: Border.all(color: const Color(0x33FFFFFF))),
-      child: Row(children: [
-        item('Home', icon: GameIcons.home, selected: true),
-        item('Games', icon: GameIcons.play, onTap: onGames),
-        item('Rooms', icon: GameIcons.people, onTap: onRooms),
-        item('Profile', onTap: onProfile, mark: PlayerBadge(index: seat, size: 22, initial: initial)),
-      ]),
+      ),
     );
   }
 }
 
-class _SettingsLink extends StatelessWidget {
-  final String label;
+/// "Continue: play Archery again".
+class _ContinueChip extends StatelessWidget {
+  final String id, title;
+  final Color color;
   final VoidCallback onTap;
-  const _SettingsLink({required this.label, required this.onTap});
+  const _ContinueChip({required this.id, required this.title, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: TextButton(
-        onPressed: () {
-          Navigator.pop(context);
-          onTap();
-        },
-        child: Text(label, style: const TextStyle(fontFamily: Fonts.body, fontSize: 16, fontWeight: FontWeight.w800)),
+    final flat = context.tk.flat;
+    final ink = flat ? FlatPalette.ink : Colors.white;
+    return Semantics(
+      button: true,
+      label: 'Continue: play $title again',
+      excludeSemantics: true,
+      child: Material(
+        color: flat ? Colors.white : Colors.white.withValues(alpha: 0.06),
+        shape: RoundedRectangleBorder(borderRadius: Radii.rLg, side: BorderSide(color: flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.12))),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: 52,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(children: [
+                GameThumb(id: id, color: color, size: 32, radius: 9),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(children: [
+                      TextSpan(text: 'Continue: ', style: TextStyle(color: flat ? FlatPalette.inkMuted : const Color(0xFFD6DAF7), fontWeight: FontWeight.w800)),
+                      TextSpan(text: 'play $title again', style: TextStyle(color: ink, fontWeight: FontWeight.w900)),
+                    ]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontFamily: Fonts.body, fontSize: 14),
+                  ),
+                ),
+                GameIcon(GameIcons.forward, size: 18, color: flat ? FlatPalette.ink : Brand.gold),
+              ]),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -494,8 +473,7 @@ class _SheetOption extends StatelessWidget {
   final Color tint;
   final String title, text;
   final VoidCallback onTap;
-  final bool onLight;
-  const _SheetOption({required this.icon, required this.tint, required this.title, required this.text, required this.onTap, this.onLight = false});
+  const _SheetOption({required this.icon, required this.tint, required this.title, required this.text, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -505,8 +483,8 @@ class _SheetOption extends StatelessWidget {
       label: title,
       excludeSemantics: true,
       child: Material(
-        color: onLight ? Colors.white : (t.flat ? FlatPalette.option : Colors.white.withValues(alpha: 0.06)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(onLight ? 22 : Radii.lg), side: BorderSide(color: onLight ? leaderboardInk : (t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.12)), width: onLight ? 1.5 : 1)),
+        color: t.flat ? FlatPalette.option : Colors.white.withValues(alpha: 0.06),
+        shape: RoundedRectangleBorder(borderRadius: Radii.rLg, side: BorderSide(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.12))),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () {
@@ -520,23 +498,73 @@ class _SheetOption extends StatelessWidget {
                 width: 44,
                 height: 44,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(color: onLight ? tint : tint.withValues(alpha: t.flat ? 0.9 : 0.22), borderRadius: Radii.rCard),
-                child: GameIcon(icon, size: 22, color: onLight ? (tint.computeLuminance() > 0.55 ? leaderboardInk : Colors.white) : (t.flat ? onColor(tint) : Color.lerp(tint, Colors.white, 0.5)!)),
+                decoration: BoxDecoration(color: tint.withValues(alpha: t.flat ? 0.9 : 0.22), borderRadius: Radii.rCard),
+                child: GameIcon(icon, size: 22, color: t.flat ? onColor(tint) : Color.lerp(tint, Colors.white, 0.5)!),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(title, style: TextStyle(fontFamily: Fonts.display, fontSize: 18, color: onLight ? leaderboardInk : t.text)),
-                  Text(text, style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w700, color: onLight ? const Color(0xFF5C564C) : t.textMuted)),
+                  Text(title, style: TextStyle(fontFamily: Fonts.display, fontSize: 18, color: t.text)),
+                  Text(text, style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w700, color: t.textMuted)),
                 ]),
               ),
-              GameIcon(GameIcons.forward, size: 16, color: onLight ? leaderboardInk : t.textMuted),
+              GameIcon(GameIcons.forward, size: 16, color: t.textMuted),
             ]),
           ),
         ),
       ),
     );
   }
+}
+
+/// The hero card picture: a die and two cards (Main mockup).
+class _HeroArt extends CustomPainter {
+  const _HeroArt();
+  @override
+  void paint(Canvas canvas, Size size) {
+    void card(Offset at, double angle, Color edge, {bool back = false}) {
+      canvas.save();
+      canvas.translate(at.dx, at.dy);
+      canvas.rotate(angle);
+      const r = Rect.fromLTWH(-24, -33, 48, 66);
+      canvas.drawRRect(RRect.fromRectAndRadius(r.shift(const Offset(1, 4)), const Radius.circular(8)), Paint()..color = Colors.black.withValues(alpha: 0.3));
+      if (back) {
+        canvas.translate(r.left, r.top);
+        const CardBackPainter(radius: 8).paint(canvas, r.size);
+      } else {
+        canvas.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(8)), Paint()..color = const Color(0xFFFFF8EC));
+        canvas.drawRRect(RRect.fromRectAndRadius(r.deflate(1.5), const Radius.circular(7)), Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5
+          ..color = edge);
+        paintIcon(canvas, GameIcons.cherry, Rect.fromCenter(center: Offset.zero, width: 32, height: 32));
+      }
+      canvas.restore();
+    }
+
+    card(const Offset(62, 64), -0.22, PlayerPalette.colors[0], back: true);
+    card(const Offset(100, 58), 0.16, PlayerPalette.colors[1]);
+    // A die.
+    canvas.save();
+    canvas.translate(46, 92);
+    canvas.rotate(0.2);
+    const d = Rect.fromLTWH(-15, -15, 30, 30);
+    canvas.drawRRect(RRect.fromRectAndRadius(d.shift(const Offset(0, 3)), const Radius.circular(7)), Paint()..color = Colors.black.withValues(alpha: 0.3));
+    canvas.drawRRect(RRect.fromRectAndRadius(d, const Radius.circular(7)), Paint()..color = Colors.white);
+    final pip = Paint()..color = Brand.onGold;
+    for (final p in const [Offset(-7, -7), Offset(7, -7), Offset(0, 0), Offset(-7, 7), Offset(7, 7)]) {
+      canvas.drawCircle(p, 2.8, pip);
+    }
+    canvas.restore();
+    // Sparkles.
+    final s = Paint()..color = Brand.gold;
+    for (final (x, y, r) in const [(20.0, 22.0, 2.5), (136.0, 18.0, 2.0), (130.0, 104.0, 2.4)]) {
+      canvas.drawCircle(Offset(x, y), r, s);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_HeroArt old) => false;
 }
 
 /// Same Wi-Fi / hotspot: Host on this phone (pops [host]) or Join a friend, which searches
