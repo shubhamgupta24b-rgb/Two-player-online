@@ -1,65 +1,70 @@
-# RivalRooms Development Tracker
+# RivalRooms / Party Games — Development Tracker
 
 Last updated: 2026-10-15
-Repository requested: https://github.com/shubhamgupta24b-rgb/RivalRooms
-Repository access: Not available to the connected GitHub account (GitHub returned 404). The existing accessible repository is https://github.com/shubhamgupta24b-rgb/Two-player-online; do not modify it as a substitute unless confirmed.
 
-## Product requirements
-- Home screen: one page only, with clear entry choices: Online, Single Player, Multiplayer, Offline/Local.
-- No unnecessary marketing/description text on the home screen.
-- Privacy Policy must live in Settings only, not on the home screen.
-- Visual reference: Basketball Hoops and Fruit Cut main gameplay UI that the user liked. Natural game-specific palette and artwork, simple readable controls, minimal overlays; avoid generic neon blue/purple AI-looking layouts.
-- Start by improving two games: Basketball Hoops and Fruit Cut, then add 8 distinct games per planned development batch/session, selected from the existing repo games.
-- Support modes according to each game capability: solo/practice, same-device local, online room/match, offline local. The interface must not imply a mode when the game doesn't support it.
-- Maintain gameplay rules, scoring, timers, navigation, and synchronized server-authoritative online match state.
-- Keep this file updated whenever a feature is changed: design/implementation status, files changed, test/build result, deployment status, and known issues.
-- Backend intended for Render. APK requested for user testing and in-sandbox testing where possible; also prepare AAB for Play Console later.
-- Do not claim deployment, APK generation, sandbox testing, or Play Console upload unless actually completed.
+> **Repository access note:** The user requested https://github.com/shubhamgupta24b-rgb/RivalRooms, but the connected GitHub account returns 404 for that repository. Work below is tracked in the accessible repository https://github.com/shubhamgupta24b-rgb/Two-player-online only because it is the available candidate; no game code is being changed until the target is confirmed or RivalRooms access is granted.
 
-## Plan
-1. Obtain access to the requested RivalRooms repository, or get explicit confirmation to use Two-player-online instead.
-2. Inspect project structure, branches, current home screen, game implementations, server protocol, tests, and Android build/signing setup.
-3. Create this tracker (or merge it into the repo’s existing tracker if one exists) and define a one-page home:
-   - Play Online
-   - Single Player
-   - Multiplayer (room / invite)
-   - Offline / Local
-   - Settings entry; Privacy Policy only inside Settings.
-4. Review Basketball Hoops and Fruit Cut implementations and existing UI. Preserve game logic. Refine one game at a time; implement mode availability truthfully.
-5. Add/update tests for navigation, solo/local modes, multiplayer state handling, score/timer behavior, and responsive layouts.
-6. Build and test Android debug/release APK locally or via GitHub Actions; verify actual artifact before sharing.
-7. Deploy the server to Render, configure production auth and environment variables, verify /health and end-to-end multiplayer.
-8. Continue through the next 8 distinct games per batch, recording progress here.
-9. Once stable, generate a signed AAB, check privacy/data-safety and store assets, then prepare for Play Console release.
+## Decisions / requirements
+- Home is **one page**, concise, with clear entry choices: **Online**, **Single Player**, **Multiplayer**, and **Offline/Local**.
+- Remove unnecessary explanatory paragraphs, featured-game clutter, and marketing copy from Home.
+- Privacy Policy is accessible from **Settings only**, never Home.
+- Reference visual style: the user likes the **main gameplay UI** designs for Basketball Hoops and Fruit Cut. Use natural, game-specific artwork/colors and clear gameplay area. Avoid generic AI-looking blue/purple gradients and excess decorative copy.
+- Start by improving **Basketball Hoops** and **Fruit Cut**, one by one. Then select 8 distinct games from the existing catalogue per next batch.
+- Keep mode options truthful to each game: solo/practice, same-device local, online rooms and offline/LAN only where supported.
+- Preserve actual game mechanics, score calculations, timers, navigation, and server-authoritative online synchronization. Do not replace working logic with mock data.
+- Maintain this tracker as the single source of progress: status, files touched, test/build output, deployment status, known issues.
+- Deployment target is Render. Provide APK for user testing and sandbox testing where build/test tools permit. Prepare signed AAB and Play Console checks later.
+- Never claim tests, live deployment, APK creation, sandbox tests, or store upload unless actually completed.
 
-## Screen/mode behavior
-- Single player: no server requirement; practice/AI implementation only where actually supported.
-- Multiplayer online: join/create room; server-authoritative room membership, turns/actions, scores, timers and results.
-- Local/offline: shared device or local network only where implemented; clearly label local requirements.
-- Settings: sound, haptics, display/accessibility options where supported, server configuration if already available, and Privacy Policy link.
-- Home: compact game entry and mode actions, no long paragraphs or privacy text.
+## Agreed implementation plan
+1. Confirm target repository access; inspect current branches and project before code edits.
+2. Inspect Home, Settings/privacy navigation, game catalogue, Basketball Hoops, Fruit Cut, server event protocol, tests, and Android build/signing.
+3. Simplify Home to one page with four mode choices, no filler copy; move Privacy into Settings.
+4. Improve Basketball Hoops main gameplay UI without changing timing/scoring/state events.
+5. Improve Fruit Cut main gameplay UI without changing slicing/scoring/state events.
+6. Add/adjust tests; run Flutter analyzer/tests and server tests as available.
+7. Build a verified APK (debug for testing, release if signing config is available). Share only an actual artifact. Test local/sandbox execution if an emulator/runtime is available.
+8. Deploy/verify Render server using its health endpoint and end-to-end online smoke tests; ensure public auth and privacy config are production-ready before release.
+9. Work through next batches of 8 distinct existing games, updating this tracker after each batch.
+10. Before Play Console: verify signed AAB, package ID, upload key backup, privacy policy, Data safety form, content rating, screenshots, and online match testing.
 
-## Progress
+## Current repository investigation (accessible candidate only)
+- Candidate repository: https://github.com/shubhamgupta24b-rgb/Two-player-online (public; default branch `main`; connector reports push permission).
+- Flutter app under `mobile/`, server under `server/` using Node/Socket.IO; `render.yaml` exists.
+- README states the app has 41 party games and documents Flutter tests/builds and Render hosting. The free Render plan sleeps after idle, so it is not guaranteed always-online; Starter avoids sleeping.
+- Current Home implementation path: `mobile/lib/features/home/home_screen.dart`. It currently shows welcome header, hero panel, mode tiles for Play online/Same Wi-Fi/My records, recent/featured games, and a Privacy button at the bottom. Privacy should be moved into Settings and removed from Home.
+- Basketball implementation: `mobile/lib/games/basketball_hoops/basketball_hoops_screen.dart`. Existing gameplay uses `GameSessionManager`, server-provided phase/endsAt/target/score/shots/nextShotAt and action `basketball:shoot`; use those values and preserve action payload.
+- Fruit implementation: `mobile/lib/games/fruit_duel/fruit_duel_screen.dart`. Existing gameplay uses server-provided phase/endsAt/fruitLane/fruitId/players and action `fruit_duel:slash`; preserve its payload and lane/fruit ID behavior.
+- Game catalogue path: `mobile/lib/games/game_catalog.dart`; includes many local games and online-capable entries.
+- Render config: `render.yaml` deploys a Docker web service from `server/`, with `/health` and a privacy contact environment variable. README warns guest/development auth is not suitable for store release.
+- Flutter package uses Provider, Socket.IO client and SharedPreferences.
+
+## Progress status
 | Item | Status | Notes |
 |---|---|---|
-| Plan | Drafted | Based on user requirements |
-| Confirm target repo | Blocked | RivalRooms returns 404 via connected GitHub integration |
-| Inspect accessible existing repo | Partial | Two-player-online has mobile Flutter app, server Node/Socket.IO and render.yaml |
-| One-page home redesign | Not started | Await target repo access/confirmation |
-| Basketball Hoops | Not started | First game after repository access |
-| Fruit Cut | Not started | Second game after repository access |
-| Render deployment | Not started | Existing Render blueprint exists in accessible repo, not yet verified live |
-| APK artifact | Not started | Need build environment / CI artifact |
-| APK testing | Not started | Must build and verify before claiming tests |
-| Play Console AAB | Not started | After gameplay and release checks |
+| Requested RivalRooms repository | **Blocked** | Connector returns 404; repo may be private or not installed for connector |
+| Accessible candidate repo inspection | Partial | Existing Party Games repo inspected as fallback candidate |
+| Tracker file | Complete (initial) | Committed to accessible candidate at `docs/RIVALROOMS_DEVELOPMENT_TRACKER.md`; no application code changed |
+| One-page Home redesign | Not started | Need confirm target repository |
+| Privacy only in Settings | Not started | Current candidate Home has a Privacy button that needs relocation |
+| Basketball Hoops redesign | Not started | Existing screen and server action inspected |
+| Fruit Cut/Fruit Duel redesign | Not started | Existing screen and server action inspected |
+| Flutter tests/analyzer | Not run | No local repository checkout/runtime setup performed |
+| Render deployment | Not verified | Blueprint exists; live URL not provided/verified |
+| APK build | Not built | Must build from real checkout and verify artifact |
+| APK/sandbox testing | Not done | Requires generated APK and available Android runtime |
+| Play Store AAB | Not built | After QA and release signing/privacy checks |
 
-## Batches
-### Batch 1 — first two games
-1. Basketball Hoops — pending code inspection and implementation.
-2. Fruit Cut — pending code inspection and implementation.
+## Next 8-game batch
+Do not select until confirming target repo and inspecting full catalogue. Choose eight distinct games; track each separately:
+1. Pending
+2. Pending
+3. Pending
+4. Pending
+5. Pending
+6. Pending
+7. Pending
+8. Pending
 
-### Batch 2 — next 8 distinct games
-Select only after inventorying current game list; avoid duplicate or removed games. Track each game's solo/local/online support and tests here.
-
-## Log
-- 2026-10-15: Initial plan/tracker drafted. GitHub connector could access Two-player-online but returned 404 for RivalRooms. No code changes made.
+## Work log
+- 2026-10-15: Plan and first tracker committed to accessible candidate repo. Inspected Home, game catalogue, Basketball Hoops, Fruit Duel, README, and Render config. No production/game code changed because the exact requested RivalRooms repository was not accessible.
