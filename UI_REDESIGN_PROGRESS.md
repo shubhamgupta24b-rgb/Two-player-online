@@ -3,22 +3,41 @@
 Last updated: 2026-10-17
 Branch: `feature/memory-game`
 Baseline commit before this work: `c6a55b8aec9807f48a0d93d7ce03a9b493ec9f84`
-Latest commit: the redesign milestone on `feature/memory-game` that adds this file
-Completed phases: 18 of 18
+Latest commit: `23cf61b` added `DONE.md` on this branch. The lavender home changes are in the working tree and are not committed yet.
+Completed phases: 18 of 18 for the first redesign, plus the lavender navigation pass below
 Games audited: 67 games on the home and hub list (`listedGames()`), plus online-only ids and retired source ids covered by the preview manifest
-Unique previews: 74, one scene per id in `gamePreviewManifest`
-Six-card layout: verified. At 390dp and 411dp, All Games is 3 columns. At 320dp it is 2 columns. `mobile/test/home_redesign_test.dart` expects a batch of 6 at 390dp.
-Gameplay and multiplayer regression: `flutter test` on 2026-10-17 finished 863 passed, 5 failed. The 5 failures are the same ones that failed on `c6a55b8` before this work. No new failures. A live two-phone match was not run.
-Current blockers: none in the home UI.
-Next steps: none. The redesign is in the working tree for the milestone commit. The commit SHA is that commit.
+Unique previews: 74, one scene per id in `gamePreviewManifest`. The lavender pass did not redraw them.
+Six-card layout: verified. At 390dp and 411dp, All Games is 3 columns. At 320dp it is 2 columns. `mobile/test/home_redesign_test.dart` expects a batch of 6 at 390dp. The home widget test passed again at 320, 411, and 800 after the lavender pass.
+Gameplay and multiplayer regression: the full `flutter test` on 2026-10-17, before this lavender pass, finished 863 passed, 5 failed. Those 5 failures were already present on `c6a55b8`. This pass re-ran `home_redesign_test.dart` (4 passed) and the home layout test at three sizes (3 passed). The full suite and a new APK were not re-run.
+Current blockers: none in the home navigation.
+Next steps: commit the lavender home when asked. A full `flutter test` and a release APK were not repeated for this pass.
+
+## Lavender home pass
+
+Reference: `two_player_game_home_preview_lavender_final.html`. Solid `#F2EEFF` background, white cards, purple `#8655F6` for the active tab and the Online / Wi-Fi button. Game preview painters were not edited.
+
+1. Audit. Status: COMPLETED. Flutter app on `feature/memory-game`. Home is `home_screen.dart`. Games come from `listedGames()`. Rooms, sockets, and the privacy screen were already present.
+2. Preview. Status: COMPLETED. Header, tabs, 3-column cards, mode buttons, and a leaderboard card. Sample names in the HTML are not app data.
+3. Existing features. Status: COMPLETED. Socket `connected` is the status dot. Settings already persist music, vibration, and reduce motion. Privacy is `PrivacyScreen`. Same-network play is `LanHost` and `LanDiscovery`. There is no notification setting.
+4. Main and All Games. Status: COMPLETED. Trending keeps cards, Online / Wi-Fi, Offline, and the leaderboard. All Games keeps search and filters and hides those controls.
+5. Profile status and menu. Status: COMPLETED. Green when the socket is connected, amber while this screen is connecting, grey otherwise. The avatar opens Profile, Settings, and Privacy Policy.
+6. Settings and privacy. Status: COMPLETED. `SettingsScreen` uses the existing switches and shows version `0.1.0+1`. Privacy opens the existing screen.
+7. Online / Wi-Fi. Status: COMPLETED. Same host uses the existing hotspot sheet. Online uses Create room, Join room, and Quick play.
+8. Offline and leaderboard. Status: COMPLETED. Offline lists `listedGames()` only. The leaderboard stays on Trending and still uses server or on-phone wins.
+9. Tests. Status: COMPLETED for the home tests named above. Full suite not re-run.
+10. Docs. Status: COMPLETED. `README.md` and this file match the new home flow.
+
+Files: `home_chrome.dart`, `home_screen.dart`, `game_card.dart`, `settings_screen.dart`, `components.dart` (`SettingsPanel.showPreferences`), `start_pages_test.dart`, `README.md`, this file.
 
 ## Design notes
 
-`home-final.html` is a 390px phone. Top to bottom: safe header with avatar, "Welcome", and the name; Trending and All Games with a gold underline; image cards with a title; Online and Offline; a top-3 leaderboard. Sample names and scores in that file are not app data. The HTML grid is two columns. All Games in the app uses three columns from 340dp so a full pair of rows is six cards.
+The current home uses the lavender preview, described in the pass above. The notes below are the earlier night-theme pass and are kept as history.
 
-`RivalRooms Game Previews.html` draws a small scene per game, with gloss and gradients. The app keeps the idea of a distinct scene and drops the gloss, the highlight ellipse, and the heavy gradient.
+`home-final.html` was the first phone reference: safe header, Trending and All Games, image cards, Online and Offline, then a top-3 leaderboard. Sample names in that file were not copied into the app.
 
-Tokens live in `mobile/lib/features/home/home_chrome.dart`. Night colors match the HTML (`#0B0E2E` background, `#151A45` cards, `#252B55` borders, `#FFC93C` selected tab, `#2E8BFF` active button). Flat builds use light surfaces and the same layout. Cards use one shadow, `0 2px 8px` at 14% black. Pressed cards fade to 0.82 opacity. Motion follows the app reduce-motion setting.
+`RivalRooms Game Previews.html` draws a small scene per game. The app keeps one painted scene per game id. The lavender pass did not change those paintings.
+
+Tokens live in `mobile/lib/features/home/home_chrome.dart`. The home now uses `#F2EEFF`, white cards, and `#8655F6`. Cards use one shadow, `0 3px 12px` at about 8% of `#433078`. Pressed cards fade to 0.82 opacity. Motion follows the app reduce-motion setting.
 
 ## Phase 1. Repository audit and baseline
 

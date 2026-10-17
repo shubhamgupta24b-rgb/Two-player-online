@@ -828,17 +828,20 @@ class SettingSwitch extends StatelessWidget {
 /// the player's name and colour).
 class SettingsPanel extends StatelessWidget {
   final bool showProfile;
+  final bool showPreferences;
   final Color? color;
-  const SettingsPanel({super.key, this.showProfile = false, this.color});
+  const SettingsPanel({super.key, this.showProfile = false, this.showPreferences = true, this.color});
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: Listenable.merge([AppSettings.haptics, Motion.reduceSetting, AppSettings.playerName, AppSettings.playerColor]),
       builder: (context, _) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        SoundControls(color: color ?? context.tk.accent),
-        SettingSwitch(emoji: '📳', label: 'Vibration', hint: 'Buzz on hits, wins and turns', value: AppSettings.haptics.value, onChanged: AppSettings.setHaptics, color: color),
-        SettingSwitch(emoji: '🐢', label: 'Reduce motion', hint: 'Fewer animations and effects', value: Motion.reduceSetting.value, onChanged: AppSettings.setReduceMotion, color: color),
+        if (showPreferences) ...[
+          SoundControls(color: color ?? context.tk.accent),
+          SettingSwitch(emoji: '📳', label: 'Vibration', hint: 'Buzz on hits, wins and turns', value: AppSettings.haptics.value, onChanged: AppSettings.setHaptics, color: color),
+          SettingSwitch(emoji: '🐢', label: 'Reduce motion', hint: 'Fewer animations and effects', value: Motion.reduceSetting.value, onChanged: AppSettings.setReduceMotion, color: color),
+        ],
         if (showProfile) const _ProfileEditor(),
       ]),
     );

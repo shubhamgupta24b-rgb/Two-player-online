@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../config.dart';
 import '../../core/auth/authentication_manager.dart';
@@ -17,7 +18,7 @@ import '../lobby/lobby_screen.dart';
 import '../local_games/local_games_hub_screen.dart';
 import '../privacy/privacy_screen.dart';
 import '../quick_play/quick_play_screen.dart';
-import '../records/records_screen.dart';
+import '../settings/settings_screen.dart';
 import 'game_card.dart';
 import 'home_chrome.dart';
 import 'home_layout.dart';
@@ -45,9 +46,10 @@ const _filterLabels = {
 class _HomeScreenState extends State<HomeScreen> {
   late final SocketManager _socket = context.read<SocketManager>();
   bool _rejoined = false;
-  String? _recent;
+  bool _linking = false;
   var _tab = _HomeTab.trending;
   final _search = TextEditingController();
+  final _searchFocus = FocusNode();
   var _filter = _HomeFilter.all;
   int? _players;
   Set<String> _favourites = {};
@@ -63,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _search.addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) => _rejoinRoom());
     _socket.connected.addListener(_onConnection);
-    _loadRecent();
     _loadFavourites();
     _loadTrending();
     _loadBoard();
@@ -89,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _socket.connected.removeListener(_onConnection);
     _search.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -98,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _connect({String? done}) async {
     final token = context.read<AuthenticationManager>().token;
     final wifi = AppConfig.mode == ServerMode.wifi;
+    if (mounted) setState(() => _linking = true);
     try {
       await _socket.connect(AppConfig.serverUrl, token);
       if (mounted) showToast(context, done ?? 'Connected!', tone: Tone.success);
@@ -109,6 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
         tone: Tone.warn,
         duration: const Duration(seconds: 4),
       );
+    } finally {
+      if (mounted) setState(() => _linking = false);
     }
   }
 
@@ -162,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
       emoji: null,
       title: 'Hosting on this phone',
       message: '1. Turn on this phone\'s hotspot (or stay on the same Wi-Fi as your friends).\n'
-          '2. Friends connect to it, open RivalRooms and tap Same Wi-Fi, then Join a friend.\n'
+          '2. Friends connect to it, open RivalRooms and tap Online / Wi-Fi, then Same host.\n'
           '3. Create a room here and share the code (or use Quick Play).\n\n'
           'No internet needed. Keep this app open while you play.'
           '${ips.isEmpty ? '' : '\n\nThis phone: ${ips.join(' · ')}'}',
@@ -193,6 +198,72 @@ class _HomeScreenState extends State<HomeScreen> {
         }),
       ]),
     );
+  }
+
+  /// Online / Wi-Fi: same-network host, or the internet server. Each path is the existing one.
+  Future<void> _chooseLink() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: HomeColors.lavender.card,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => _MenuSheet(
+        title: 'Online / Wi-Fi',
+        children: [
+          _MenuRow(icon: GameIcons.wifi, label: 'Same host', onTap: () => Navigator.pop(ctx, 'host')),
+          _MenuRow(icon: GameIcons.globe, label: 'Online', onTap: () => Navigator.pop(ctx, 'online')),
+        ],
+      ),
+    );
+    if (!mounted || choice == null) return;
+    if (choice == 'host') {
+      await _sameWifi();
+    } else if (choice == 'online') {
+      await _onOnline();
+    }
+  }
+
+  /// Games that open on this phone. The hub list is that set; online-only catalog ids are not included.
+  Future<void> _offlineGames() async {
+    final games = listedGames();
+    final picked = await showModalBottomSheet<ListedGame>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: HomeColors.lavender.card,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => _MenuSheet(
+        title: 'On this phone',
+        height: MediaQuery.sizeOf(ctx).height * 0.72,
+        children: [
+          for (final game in games) _MenuRow(icon: GameIcons.play, label: game.title, onTap: () => Navigator.pop(ctx, game)),
+        ],
+      ),
+    );
+    if (picked != null && mounted) await _openListed(picked);
+  }
+
+  Future<void> _profileMenu() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: HomeColors.lavender.card,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => _MenuSheet(
+        title: 'Account',
+        children: [
+          _MenuRow(icon: GameIcons.people, label: 'Profile', onTap: () => Navigator.pop(ctx, 'profile')),
+          _MenuRow(icon: GameIcons.settings, label: 'Settings', onTap: () => Navigator.pop(ctx, 'settings')),
+          _MenuRow(icon: GameIcons.shield, label: 'Privacy Policy', onTap: () => Navigator.pop(ctx, 'privacy')),
+        ],
+      ),
+    );
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case 'profile':
+        _open(const ProfileScreen());
+      case 'settings':
+        _open(const SettingsScreen());
+      case 'privacy':
+        _open(const PrivacyScreen());
+    }
   }
 
   /// Play-online actions always use the internet server, even if this phone was hosting on Wi-Fi.
@@ -286,17 +357,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted && AppConfig.mode == ServerMode.wifi && (before != ServerMode.wifi || _socket.connected.value)) await _rooms();
   }
 
-  /// The last game played on this phone, for "Continue".
-  Future<void> _loadRecent() async {
-    try {
-      final r = await Records.recent();
-      if (mounted && r.isNotEmpty) setState(() => _recent = r.first);
-    } catch (_) {}
-  }
-
   Future<void> _openListed(ListedGame game) async {
     await Navigator.push(context, MaterialPageRoute(builder: game.open));
-    _loadRecent();
   }
 
   @override
@@ -304,8 +366,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final name = context.watch<AuthenticationManager>().displayName;
     final colors = HomeColors.of(context);
     final games = _visibleGames();
-    final recent = _recent == null ? null : listedGames().where((g) => g.id == _recent).firstOrNull;
     final onlineMode = AppConfig.mode == ServerMode.online;
+    final trending = _tab == _HomeTab.trending;
     return Scaffold(
       backgroundColor: colors.bg,
       body: SafeArea(
@@ -319,8 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListView(
                   padding: const EdgeInsets.only(bottom: 18),
                   children: [
-                    if (recent != null) _continue(recent, colors),
-                    if (_tab == _HomeTab.all) ...[
+                    if (!trending) ...[
                       _searchField(colors),
                       _filters(colors),
                     ],
@@ -337,22 +398,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       )
                     else
                       _grid(games),
-                    _modes(onlineMode, colors),
-                    _leaderboard(colors),
-                    Center(
-                      child: TextButton(
-                        style: TextButton.styleFrom(minimumSize: const Size(kTouchTarget, kTouchTarget), foregroundColor: colors.muted),
-                        onPressed: () => _open(const RecordsScreen()),
-                        child: Text('My records', style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w800, color: colors.muted)),
-                      ),
-                    ),
-                    Center(
-                      child: TextButton(
-                        style: TextButton.styleFrom(minimumSize: const Size(kTouchTarget, kTouchTarget), foregroundColor: colors.muted),
-                        onPressed: () => _open(const PrivacyScreen()),
-                        child: Text('Privacy', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: colors.muted)),
-                      ),
-                    ),
+                    if (trending) ...[
+                      _modes(onlineMode, colors),
+                      _leaderboard(colors),
+                    ],
                   ],
                 ),
               ),
@@ -367,44 +416,60 @@ class _HomeScreenState extends State<HomeScreen> {
     final seat = AppSettings.playerColor.value;
     final shown = name.trim().isEmpty ? 'Player' : name.trim();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 8, 4),
+      padding: const EdgeInsets.fromLTRB(20, 8, 12, 4),
       child: Row(children: [
         ValueListenableBuilder<bool>(
           valueListenable: _socket.connected,
-          builder: (context, online, _) => Semantics(
-            label: online ? 'Connected' : 'Not connected',
-            child: SizedBox(
-              width: HomeMetrics.headerAvatar,
-              height: HomeMetrics.headerAvatar,
-              child: Stack(children: [
-                Container(
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: colors.blue, width: 2)),
-                  child: PlayerBadge(index: seat, size: 40, initial: shown == 'Player' ? '?' : shown[0].toUpperCase()),
+          builder: (context, online, _) {
+            final connecting = _linking && !online;
+            final dot = online ? colors.online : (connecting ? HomeColors.connecting : HomeColors.offlineDot);
+            final status = online ? 'Connected' : (connecting ? 'Connecting' : 'Offline');
+            return Semantics(
+              button: true,
+              label: 'Profile, $status',
+              child: InkWell(
+                key: const Key('home-profile'),
+                customBorder: const CircleBorder(),
+                onTap: _profileMenu,
+                child: SizedBox(
+                  width: HomeMetrics.headerAvatar,
+                  height: HomeMetrics.headerAvatar,
+                  child: Stack(children: [
+                    Container(
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: colors.avatar),
+                      child: PlayerBadge(index: seat, size: 44, initial: shown == 'Player' ? '?' : shown[0].toUpperCase()),
+                    ),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(color: dot, shape: BoxShape.circle, border: Border.all(color: colors.bg, width: 2)),
+                      ),
+                    ),
+                  ]),
                 ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(color: online ? colors.online : colors.tabIdle, shape: BoxShape.circle, border: Border.all(color: colors.bg, width: 2)),
-                  ),
-                ),
-              ]),
-            ),
-          ),
+              ),
+            );
+          },
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Welcome', style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w600, color: colors.muted)),
-            Text(shown, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 18, height: 1.15, fontWeight: FontWeight.w800, color: colors.text)),
+            Text('Welcome', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w600, color: colors.muted)),
+            Text(shown, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 19, height: 1.15, fontWeight: FontWeight.w800, color: colors.text)),
           ]),
         ),
         IconButton(
-          tooltip: 'Settings',
-          onPressed: () => showSettingsSheet(context),
-          icon: GameIcon(GameIcons.settings, size: 20, color: colors.text),
+          key: const Key('home-search'),
+          tooltip: 'Search games',
+          onPressed: () {
+            setState(() => _tab = _HomeTab.all);
+            _searchFocus.requestFocus();
+          },
+          icon: GameIcon(GameIcons.search, size: 20, color: colors.text),
+          style: IconButton.styleFrom(backgroundColor: const Color(0xFFE9E1FF), minimumSize: const Size(kTouchTarget, kTouchTarget)),
         ),
       ]),
     );
@@ -425,8 +490,8 @@ class _HomeScreenState extends State<HomeScreen> {
             constraints: const BoxConstraints(minHeight: kTouchTarget),
             alignment: Alignment.center,
             padding: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: selected ? colors.gold : Colors.transparent, width: 2))),
-            child: Text(label, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: selected ? colors.text : colors.tabIdle)),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: selected ? colors.blue : Colors.transparent, width: 2))),
+            child: Text(label, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: selected ? colors.blue : colors.tabIdle)),
           ),
         ),
       );
@@ -443,37 +508,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _continue(ListedGame game, HomeColors colors) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Material(
-        color: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: colors.border)),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => _openListed(game),
-          child: SizedBox(
-            height: 48,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(children: [
-                Expanded(
-                  child: Text('Continue: ${game.title}', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w800, color: colors.text)),
-                ),
-                GameIcon(GameIcons.forward, size: 16, color: colors.gold),
-              ]),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _searchField(HomeColors colors) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: TextField(
         controller: _search,
+        focusNode: _searchFocus,
         style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: colors.text),
         decoration: InputDecoration(
           hintText: 'Search games',
@@ -483,7 +523,7 @@ class _HomeScreenState extends State<HomeScreen> {
           fillColor: colors.card,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: colors.border)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: colors.gold, width: 1.5)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: BorderSide(color: colors.blue, width: 1.5)),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: colors.border)),
         ),
       ),
@@ -543,7 +583,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _grid(List<ListedGame> games) {
     return LayoutBuilder(builder: (context, constraints) {
       final width = constraints.maxWidth;
-      final cols = _tab == _HomeTab.all ? allGamesColumns(width) : (width >= 700 ? 4 : 2);
+      final cols = allGamesColumns(width);
       final scale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.8);
       final cardW = (width - HomeMetrics.gridPad * 2 - HomeMetrics.gridGap * (cols - 1)) / cols;
       final titleBlock = (8 + 10 + HomeMetrics.titleSize * 1.2 * 2) * scale;
@@ -582,8 +622,14 @@ class _HomeScreenState extends State<HomeScreen> {
             child: InkWell(
               onTap: onTap,
               child: SizedBox(
-                height: 48,
-                child: Center(child: Text(label, style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: active ? Colors.white : colors.text))),
+                height: 44,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(label, style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: active ? Colors.white : colors.text)),
+                  ),
+                ),
               ),
             ),
           ),
@@ -594,9 +640,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Row(children: [
-        button('Online', onlineMode, _onOnline),
-        const SizedBox(width: 8),
-        button('Offline', !onlineMode, _sameWifi),
+        button('Online / Wi-Fi', onlineMode, _chooseLink),
+        const SizedBox(width: 9),
+        button('Offline', false, _offlineGames),
       ]),
     );
   }
@@ -614,7 +660,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Leaderboard Top 3', style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: colors.gold)),
+              Row(children: [
+                Expanded(child: Text('Leaderboard', style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: colors.text))),
+                Text('View all', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w700, color: colors.muted)),
+              ]),
               const SizedBox(height: 8),
               if (rows == null)
                 Text('Loading scores', style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: colors.muted))
@@ -641,27 +690,84 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _rank(int place, BoardRow row, HomeColors colors) {
-    final bg = switch (place) {
-      1 => colors.gold,
-      2 => const Color(0xFFA0A8C0),
-      3 => const Color(0xFFC47B5A),
-      _ => colors.blue,
+    final (Color bg, Color ink) = switch (place) {
+      1 => (colors.gold, const Color(0xFF49320A)),
+      2 => (const Color(0xFFD9DCE5), const Color(0xFF454957)),
+      3 => (const Color(0xFFE7A06B), const Color(0xFF5D2F0D)),
+      _ => (colors.blue, Colors.white),
     };
-    final ink = place <= 3 ? const Color(0xFF111111) : Colors.white;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(children: [
         Container(
-          width: 22,
-          height: 22,
+          width: 23,
+          height: 23,
           alignment: Alignment.center,
-          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-          child: Text('$place', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: ink)),
+          decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+          child: Text('$place', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w800, color: ink)),
         ),
         const SizedBox(width: 10),
         Expanded(child: Text(row.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: colors.text))),
-        Text('${row.wins} wins', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: colors.muted)),
+        Text('${row.wins}', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: colors.text)),
       ]),
+    );
+  }
+}
+
+class _MenuSheet extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+  final double? height;
+  const _MenuSheet({required this.title, required this.children, this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = HomeColors.lavender;
+    final titleStyle = TextStyle(fontFamily: Fonts.body, fontSize: 18, fontWeight: FontWeight.w800, color: colors.text);
+    final list = height == null
+        ? Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: children)
+        : Expanded(child: ListView(children: children));
+    return CallbackShortcuts(
+      bindings: {SingleActivator(LogicalKeyboardKey.escape): () => Navigator.pop(context)},
+      child: Focus(
+        autofocus: true,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+            child: SizedBox(
+              height: height,
+              child: Column(mainAxisSize: height == null ? MainAxisSize.min : MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Text(title, textAlign: TextAlign.center, style: titleStyle),
+                const SizedBox(height: 8),
+                list,
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuRow extends StatelessWidget {
+  final GameIcons icon;
+  final String label;
+  final VoidCallback onTap;
+  const _MenuRow({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = HomeColors.lavender;
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: kTouchTarget),
+        child: Row(children: [
+          GameIcon(icon, size: 20, color: colors.blue),
+          const SizedBox(width: 12),
+          Expanded(child: Text(label, style: TextStyle(fontFamily: Fonts.body, fontSize: 16, fontWeight: FontWeight.w800, color: colors.text))),
+        ]),
+      ),
     );
   }
 }
@@ -800,10 +906,10 @@ class _WifiSearchSheetState extends State<_WifiSearchSheet> {
           ),
         ] else ...[
           Text(
-            '1. One friend taps Same Wi-Fi, then Host on this phone, and turns on their hotspot.\n'
+            '1. One friend taps Online / Wi-Fi, then Same host, and turns on their hotspot.\n'
             '2. Connect this phone to that hotspot (Settings, Wi-Fi).\n'
             '3. Tap Search again.\n\n'
-            'Have internet? Use Play online instead.',
+            'Have internet? Choose Online instead.',
             style: muted,
           ),
           const SizedBox(height: 14),

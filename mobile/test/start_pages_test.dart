@@ -7,6 +7,7 @@ import 'package:multiplayer_game/core/ui/app_ui.dart';
 import 'package:multiplayer_game/features/create_room/create_room_screen.dart';
 import 'package:multiplayer_game/features/home/home_screen.dart';
 import 'package:multiplayer_game/features/join_room/join_room_screen.dart';
+import 'package:multiplayer_game/features/settings/settings_screen.dart';
 import 'package:multiplayer_game/features/privacy/privacy_screen.dart';
 import 'package:multiplayer_game/features/quick_play/quick_play_screen.dart';
 import 'package:multiplayer_game/features/records/records_screen.dart';
@@ -159,6 +160,8 @@ void main() {
       await openAndBack(find.text('Memory'), LocalGameShell);
 
       Future<void> openRoom(String label, Type page) async {
+        await tester.tap(find.text('Online / Wi-Fi'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Online'));
         await tester.pumpAndSettle();
         await tester.tap(find.text(label));
@@ -171,17 +174,60 @@ void main() {
       await openRoom('Create room', CreateRoomScreen);
       await openRoom('Join room', JoinRoomScreen);
       await openRoom('Quick play', QuickPlayScreen);
+
+      await tester.tap(find.byKey(const Key('home-profile')));
+      await tester.pumpAndSettle();
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Privacy Policy'), findsOneWidget);
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ProfileScreen), findsOneWidget);
       await openAndBack(find.text('My records'), RecordsScreen);
+      Navigator.of(tester.element(find.byType(ProfileScreen))).pop();
+      await tester.pumpAndSettle();
+
       await tester.tap(find.byKey(const Key('home-tab-all')));
       await tester.pumpAndSettle();
+      expect(find.text('Leaderboard'), findsNothing);
+      expect(find.text('Online / Wi-Fi'), findsNothing);
+      expect(find.text('Offline'), findsNothing);
       final grid = tester.widget<GridView>(find.byKey(const Key('all-games-grid')));
       final cols = (grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount).crossAxisCount;
       expect(cols, size.width >= 340 ? 3 : 2, reason: 'six cards per two rows on supported phones');
       expect(grid.childrenDelegate.estimatedChildCount, greaterThan(6));
       await openAndBack(find.text('Raja Mantri Chor Sipahi'), RmcsMenuScreen);
-      await openAndBack(find.text('Privacy'), PrivacyScreen);
+
+      await tester.tap(find.byKey(const Key('home-profile')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Privacy Policy'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PrivacyScreen), findsOneWidget);
+      Navigator.of(tester.element(find.byType(PrivacyScreen))).pop();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('home-profile')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SettingsScreen), findsOneWidget);
+      expect(find.text('Music'), findsOneWidget);
+      expect(find.text('Vibration'), findsOneWidget);
+      Navigator.of(tester.element(find.byType(SettingsScreen))).pop();
+      await tester.pumpAndSettle();
+
       expect(find.textContaining('Server: '), findsNothing);
+      await tester.tap(find.byKey(const Key('home-tab-trending')));
+      await tester.pumpAndSettle();
+      expect(find.text('Leaderboard'), findsOneWidget);
       await tester.tap(find.text('Offline'));
+      await tester.pumpAndSettle();
+      expect(find.text('On this phone'), findsOneWidget);
+      expect(find.text('Memory'), findsWidgets);
+      Navigator.of(tester.element(find.text('On this phone'))).pop();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Online / Wi-Fi'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Same host'));
       await tester.pumpAndSettle();
       expect(find.text('Same Wi-Fi'), findsOneWidget);
       Navigator.of(tester.element(find.text('Same Wi-Fi'))).pop();

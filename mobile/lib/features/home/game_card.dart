@@ -37,7 +37,7 @@ class _HomeGameCardState extends State<HomeGameCard> {
           color: colors.card,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(HomeMetrics.cardRadius),
-            side: BorderSide(color: selected ? colors.gold : colors.border, width: selected ? 2 : 1),
+            side: BorderSide(color: selected ? colors.blue : colors.border, width: selected ? 2 : 1),
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
