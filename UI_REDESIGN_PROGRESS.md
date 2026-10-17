@@ -22,7 +22,9 @@ Trending still has cards, Online / Wi-Fi, Offline, and the leaderboard. All Game
 
 The full leaderboard page background and title follow the lamp. Rank cards keep their gold, silver, and bronze fills. Privacy stays on the existing policy screen. There is no separate presence service: the avatar dot is the socket connection.
 
-Tests on 2026-10-17: `home_redesign_test.dart` 5 passed, `leaderboard_test.dart` 5 passed, the home layout test passed at 320, 411, and 800, and the lamp widget test passed. The full `flutter test` suite was not re-run. The APK is recorded after the build.
+Tests on 2026-10-17: `home_redesign_test.dart` 5 passed, `leaderboard_test.dart` 5 passed, the home layout test passed at 320, 411, and 800, and the lamp widget test passed. The full `flutter test` suite was not re-run.
+
+Release APK built from commit `12f30621638aff30b18ac4d437b67c29939440a9` with `flutter build apk --release --dart-define=SERVER_URL=https://two-player-online-m9jy.onrender.com`. Flutter reported 59.3 MB. Copy: `C:\Users\sg857\Desktop\Two Player\PartyGames.apk`. Build output: `mobile/build/app/outputs/flutter-apk/app-release.apk`. The upload keystore was present on this machine. The APK is not in git. No emulator install was run.
 
 ## Lavender home pass
 
