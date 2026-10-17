@@ -1,7 +1,7 @@
-import 'dart:math';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../core/ui/components.dart';
 import '../../../core/ui/materials/materials.dart';
+import '../../home/game_preview.dart';
 
 /// Each game's drawn icon (no emoji in game UI). Used by the intro header, How to play,
 /// results, the hub tiles, rooms and records.
@@ -354,9 +354,9 @@ class GameArt extends StatelessWidget {
   }
 }
 
-/// "2–4 players", "2 players" or SOLO.
+/// "2â€“4 players", "2 players" or SOLO.
 String playersLabel(int min, int max) =>
-    max <= 1 ? 'SOLO' : (max > min ? '$min–$max players' : '$max players');
+    max <= 1 ? 'SOLO' : (max > min ? '$minâ€“$max players' : '$max players');
 
 /// A game in a grid (spec 4.4, Hub mockup): drawn art, name in Lilita, a player-count chip
 /// and an optional star. Pressing sinks it; long-press also stars it.
@@ -407,44 +407,31 @@ class _GameTileState extends State<GameTile> {
           w.onTap();
         },
         onLongPress: w.onStar,
-        child: AnimatedContainer(
+        child: AnimatedOpacity(
           duration: Motion.of(context, Motion.fast),
-          transform: Matrix4.translationValues(0, _down ? 3 : 0, 0),
+          opacity: _down ? 0.82 : 1,
+          child: AnimatedContainer(
+          duration: Motion.of(context, Motion.fast),
           decoration: BoxDecoration(
             color: flat ? Colors.white : const Color(0xFF151A45),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
                 color: w.selected
                     ? (flat ? FlatPalette.ink : Brand.gold)
                     : (flat
                         ? FlatPalette.stroke
-                        : Colors.white.withValues(alpha: 0.12)),
-                width: w.selected ? 2.5 : 1),
+                        : const Color(0xFF252B55)),
+                width: w.selected ? 2 : 1),
             boxShadow: _down
                 ? null
-                : [
-                    flat
-                        ? const BoxShadow(
-                            color: Color(0x38000000), offset: Offset(0, 4))
-                        : const BoxShadow(
-                            color: Color(0x40000000),
-                            blurRadius: 10,
-                            offset: Offset(0, 4))
+                : const [
+                    BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 2))
                   ],
           ),
           clipBehavior: Clip.antiAlias,
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Expanded(
-              child: ColoredBox(
-                color: Color.lerp(
-                    w.color,
-                    flat ? Colors.white : const Color(0xFF10142E),
-                    flat ? 0.72 : 0.55)!,
-                child: Center(
-                    child: GameBadge(id: w.id, color: w.color, size: 84)),
-              ),
-            ),
+            Expanded(child: GamePreview(id: w.id)),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
               child: Column(
@@ -464,6 +451,7 @@ class _GameTileState extends State<GameTile> {
                   ]),
             ),
           ]),
+          ),
         ),
       ),
     );
@@ -508,7 +496,7 @@ class _GameTileState extends State<GameTile> {
   }
 }
 
-/// The small "2–4 players" / SOLO chip on tiles.
+/// The small "2â€“4 players" / SOLO chip on tiles.
 class PlayersChip extends StatelessWidget {
   final int min, max;
   const PlayersChip({super.key, required this.min, required this.max});
@@ -557,7 +545,7 @@ class GameThumb extends StatelessWidget {
 }
 
 /// The rounded game picture used on the games grid and anywhere a game is listed.
-/// Every game id gets its own colour, gloss and drawn symbol.
+/// Every known game id draws its own flat preview.
 class GameBadge extends StatelessWidget {
   final String id;
   final Color color;
@@ -585,302 +573,28 @@ class GameBadgePainter extends CustomPainter {
   final double radius;
   const GameBadgePainter(this.id, this.color, {this.radius = 0});
 
-  static int _mix(String id) {
-    var h = 0;
-    for (final c in id.codeUnits) {
-      h = (h * 33 + c) & 0x7fffffff;
-    }
-    return h;
-  }
-
-  static Color _hsl(Color c, double hue, double light) {
-    final h = HSLColor.fromColor(c);
-    return h
-        .withHue((h.hue + hue) % 360)
-        .withLightness((h.lightness + light).clamp(0.28, 0.78))
-        .withSaturation((h.saturation + 0.08).clamp(0.45, 1))
-        .toColor();
-  }
-
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.shortestSide;
     final rect = Offset.zero & Size(s, s);
-    final r = RRect.fromRectAndRadius(
-        rect, Radius.circular(radius > 0 ? radius : s * 0.24));
+    final r = RRect.fromRectAndRadius(rect, Radius.circular(radius > 0 ? radius : 0));
     canvas.save();
-    canvas.clipRRect(r);
-    final mix = _mix(id);
-    final top = _hsl(color, (mix % 28) - 10, 0.16);
-    final bottom = _hsl(color, ((mix >> 3) % 24) - 8, -0.16);
-    canvas.drawRect(
-        rect,
-        Paint()
-          ..shader = LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [top, color, bottom]).createShader(rect));
-    // Gloss, like a physical app icon.
-    canvas.drawOval(
-      Rect.fromCenter(
-          center: Offset(s * 0.5, s * 0.08), width: s * 1.15, height: s * 0.55),
-      Paint()..color = Colors.white.withValues(alpha: 0.28),
-    );
-    final spot = Offset(
-        s * (0.32 + (mix % 5) * 0.08), s * (0.28 + ((mix >> 2) % 4) * 0.06));
-    canvas.drawCircle(
-        spot, s * 0.34, Paint()..color = Colors.white.withValues(alpha: 0.10));
-    canvas.drawOval(
-      Rect.fromCenter(
-          center: Offset(s * 0.5, s * 0.78), width: s * 0.46, height: s * 0.08),
-      Paint()
-        ..color = Colors.black.withValues(alpha: 0.22)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
-    );
-    final ink = bottom.computeLuminance() > 0.62
-        ? const Color(0xFF1C1A17)
-        : Colors.white;
-    if (!_paintBoard(canvas, id, s, ink)) {
+    if (radius > 0) canvas.clipRRect(r);
+    if (hasUniquePreview(id)) {
+      GamePreviewPainter(id).paint(canvas, Size(s, s));
+    } else {
+      canvas.drawRect(rect, Paint()..color = Color.lerp(color, const Color(0xFF10142E), 0.35)!);
       paintIcon(
-          canvas,
-          gameIconFor(id),
-          Rect.fromCenter(
-              center: Offset(s * 0.5, s * 0.48),
-              width: s * 0.56,
-              height: s * 0.56),
-          color: ink);
+        canvas,
+        gameIconFor(id),
+        Rect.fromCenter(center: Offset(s * 0.5, s * 0.5), width: s * 0.46, height: s * 0.46),
+        color: Colors.white,
+      );
     }
     canvas.restore();
-    canvas.drawRRect(
-      r.deflate(0.8),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2
-        ..color = Colors.white.withValues(alpha: 0.35),
-    );
-  }
-
-  /// A still picture of the real board, drawn instead of a generic icon.
-  bool _paintBoard(Canvas canvas, String id, double s, Color ink) {
-    final board = Rect.fromLTWH(s * 0.12, s * 0.16, s * 0.76, s * 0.62);
-    final fill = Paint()..color = const Color(0xCC101410);
-    final mark = Paint()..color = ink;
-    switch (id) {
-      case 'connect_four':
-        canvas.drawRRect(
-            RRect.fromRectAndRadius(board, const Radius.circular(6)), fill);
-        for (var c = 0; c < 7; c++) {
-          for (var r = 0; r < 5; r++) {
-            final on = r > 2 && (c + r).isEven;
-            canvas.drawCircle(
-                Offset(board.left + (c + 0.5) * board.width / 7,
-                    board.top + (r + 0.5) * board.height / 5),
-                s * 0.035,
-                Paint()
-                  ..color = on
-                      ? (c.isEven
-                          ? const Color(0xFFE53935)
-                          : const Color(0xFFFDD835))
-                      : const Color(0xFF263238));
-          }
-        }
-        return true;
-      case 'battleship':
-      case 'minesweeper':
-      case 'minesweeper_race':
-        canvas.drawRRect(
-            RRect.fromRectAndRadius(board, const Radius.circular(4)), fill);
-        for (var i = 1; i < 5; i++) {
-          canvas.drawLine(
-              Offset(board.left + board.width * i / 5, board.top),
-              Offset(board.left + board.width * i / 5, board.bottom),
-              mark..strokeWidth = 1);
-          canvas.drawLine(Offset(board.left, board.top + board.height * i / 5),
-              Offset(board.right, board.top + board.height * i / 5), mark);
-        }
-        canvas.drawRRect(
-            RRect.fromRectAndRadius(
-                Rect.fromLTWH(board.left + 4, board.top + board.height * 0.4,
-                    board.width * 0.45, board.height * 0.16),
-                const Radius.circular(3)),
-            Paint()..color = const Color(0xFFB0BEC5));
-        return true;
-      case 'ball_sort':
-        for (var t = 0; t < 4; t++) {
-          final x = board.left + (t + 0.5) * board.width / 4;
-          final path = Path();
-          for (var k = 0; k < 6; k++) {
-            final a = (k / 6) * 6.283 + 0.5;
-            final p = Offset(
-                x + cos(a) * s * 0.07, board.center.dy + sin(a) * s * 0.11);
-            if (k == 0) {
-              path.moveTo(p.dx, p.dy);
-            } else {
-              path.lineTo(p.dx, p.dy);
-            }
-          }
-          path.close();
-          canvas.drawPath(
-              path,
-              Paint()
-                ..color = Colors.white54
-                ..style = PaintingStyle.stroke
-                ..strokeWidth = 2);
-          for (var b = 0; b < 3; b++) {
-            canvas.drawCircle(
-                Offset(x, board.bottom - 10 - b * 12),
-                5,
-                Paint()
-                  ..color = [
-                    const Color(0xFFE53935),
-                    const Color(0xFF1E88E5),
-                    const Color(0xFF43A047),
-                    const Color(0xFFFDD835)
-                  ][t]);
-          }
-        }
-        return true;
-      case 'fruit_cut':
-        canvas.drawCircle(Offset(board.left + 24, board.bottom - 20), 12,
-            Paint()..color = const Color(0xFFE53935));
-        canvas.drawCircle(Offset(board.center.dx, board.center.dy), 11,
-            Paint()..color = const Color(0xFFFDD835));
-        canvas.drawCircle(Offset(board.right - 22, board.top + 18), 10,
-            Paint()..color = const Color(0xFF263238));
-        return true;
-      case 'carrom':
-      case 'eight_ball':
-        canvas.drawRRect(
-            RRect.fromRectAndRadius(board, const Radius.circular(8)),
-            Paint()
-              ..color = id == 'carrom'
-                  ? const Color(0xFFE6D3A3)
-                  : const Color(0xFF1B5E20));
-        for (final o in [
-          const Offset(8, 8),
-          const Offset(-8, 8),
-          const Offset(8, -8),
-          const Offset(-8, -8)
-        ]) {
-          final corner = o.dx > 0
-              ? (o.dy > 0 ? board.topLeft : board.bottomLeft)
-              : (o.dy > 0 ? board.topRight : board.bottomRight);
-          canvas.drawCircle(corner + o, 4, Paint()..color = Colors.black);
-        }
-        canvas.drawCircle(
-            board.center,
-            6,
-            Paint()
-              ..color =
-                  id == 'carrom' ? const Color(0xFFE53935) : Colors.white);
-        canvas.drawCircle(board.center + const Offset(14, 4), 5,
-            Paint()..color = const Color(0xFFFDD835));
-        return true;
-      case 'sweet_swap':
-        const shades = [
-          Color(0xFFE53935),
-          Color(0xFF1E88E5),
-          Color(0xFF43A047),
-          Color(0xFFFDD835),
-          Color(0xFF8E24AA)
-        ];
-        for (var r = 0; r < 4; r++) {
-          for (var c = 0; c < 4; c++) {
-            canvas.drawRRect(
-              RRect.fromRectAndRadius(
-                  Rect.fromLTWH(
-                      board.left + c * board.width / 4 + 2,
-                      board.top + r * board.height / 4 + 2,
-                      board.width / 4 - 4,
-                      board.height / 4 - 4),
-                  const Radius.circular(4)),
-              Paint()..color = shades[(r + c) % shades.length],
-            );
-          }
-        }
-        return true;
-      case 'bike_race':
-        canvas.drawRRect(
-            RRect.fromRectAndRadius(board, const Radius.circular(6)),
-            Paint()..color = const Color(0xFF1B5E20));
-        canvas.drawLine(
-            Offset(board.center.dx, board.top),
-            Offset(board.center.dx, board.bottom),
-            Paint()..color = Colors.white24);
-        canvas.drawCircle(Offset(board.center.dx * 0.7, board.bottom - 16), 8,
-            Paint()..color = const Color(0xFFFFB300));
-        canvas.drawRRect(
-            RRect.fromRectAndRadius(
-                Rect.fromLTWH(board.right - board.width / 2 + 6, board.top + 20,
-                    board.width / 2 - 16, 10),
-                const Radius.circular(3)),
-            Paint()..color = const Color(0xFFFFC107));
-        return true;
-      case 'chicken_jump':
-        canvas.drawRect(
-            Rect.fromLTWH(board.right - 28, board.top, 12, board.height * 0.3),
-            Paint()..color = const Color(0xFF2E7D32));
-        canvas.drawRect(
-            Rect.fromLTWH(board.right - 28, board.bottom - board.height * 0.3,
-                12, board.height * 0.3),
-            Paint()..color = const Color(0xFF2E7D32));
-        canvas.drawCircle(Offset(board.left + 28, board.center.dy), 10,
-            Paint()..color = const Color(0xFFFFB300));
-        return true;
-      case 'hangman':
-        canvas.drawLine(Offset(board.left + 16, board.bottom - 8),
-            Offset(board.left + 70, board.bottom - 8), mark..strokeWidth = 2);
-        canvas.drawLine(Offset(board.left + 28, board.bottom - 8),
-            Offset(board.left + 28, board.top + 8), mark);
-        canvas.drawLine(Offset(board.left + 28, board.top + 8),
-            Offset(board.left + 52, board.top + 8), mark);
-        canvas.drawCircle(Offset(board.left + 52, board.top + 20), 6,
-            mark..style = PaintingStyle.stroke);
-        return true;
-      case 'color_switch':
-        canvas.drawCircle(Offset(board.center.dx, board.bottom - 16), 8,
-            Paint()..color = const Color(0xFFE53935));
-        canvas.drawArc(Rect.fromCircle(center: board.center, radius: s * 0.16),
-            0, 1.6, true, Paint()..color = const Color(0xFF1E88E5));
-        canvas.drawArc(Rect.fromCircle(center: board.center, radius: s * 0.16),
-            1.6, 1.6, true, Paint()..color = const Color(0xFFFDD835));
-        return true;
-      case 'knife_hit':
-        canvas.drawCircle(
-            board.center, s * 0.14, Paint()..color = const Color(0xFF8D6E63));
-        canvas.drawLine(
-            board.center + const Offset(0, 8),
-            board.center + Offset(0, s * 0.28),
-            Paint()
-              ..color = Colors.white
-              ..strokeWidth = 3);
-        return true;
-      case 'hungry_hippos':
-        canvas.drawCircle(Offset(board.center.dx, board.bottom - 8), 12,
-            Paint()..color = const Color(0xFF7CB342));
-        canvas.drawCircle(Offset(board.center.dx, board.top + 8), 12,
-            Paint()..color = const Color(0xFF1E88E5));
-        canvas.drawCircle(board.center, 5, Paint()..color = Colors.white);
-        return true;
-      case 'tug_of_war':
-        canvas.drawLine(
-            Offset(board.left + 8, board.center.dy),
-            Offset(board.right - 8, board.center.dy),
-            Paint()
-              ..color = const Color(0xFFFFE0B2)
-              ..strokeWidth = 4);
-        canvas.drawCircle(Offset(board.left + 16, board.center.dy), 10,
-            Paint()..color = const Color(0xFFE53935));
-        canvas.drawCircle(Offset(board.right - 16, board.center.dy), 10,
-            Paint()..color = const Color(0xFF1E88E5));
-        canvas.drawCircle(board.center, 6, Paint()..color = Colors.white);
-        return true;
-      default:
-        return false;
-    }
   }
 
   @override
-  bool shouldRepaint(GameBadgePainter old) =>
-      old.id != id || old.color != color || old.radius != radius;
+  bool shouldRepaint(GameBadgePainter old) => old.id != id || old.color != color || old.radius != radius;
 }
+

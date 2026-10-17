@@ -75,6 +75,7 @@ import 'solo/word_scramble.dart';
 import 'shell/local_game_info.dart';
 import 'shell/game_art.dart';
 import 'shell/local_game_shell.dart';
+import '../home/home_layout.dart';
 
 final localGames = <LocalGameInfo>[
   colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo,
@@ -122,13 +123,13 @@ List<LocalGameInfo> get allLocalGames => [
 int get totalGameCount => localGames.length + 2;
 
 /// A game in the list: one of the shell games, or Guess the Person / Raja Mantri.
-class _Entry {
+class ListedGame {
   final String id, title, tagline;
   final int minPlayers, maxPlayers;
   final Color color;
   final GameCategory category;
   final WidgetBuilder open;
-  const _Entry({
+  const ListedGame({
     required this.id,
     required this.title,
     required this.tagline,
@@ -141,12 +142,12 @@ class _Entry {
   bool get solo => maxPlayers <= 1;
 }
 
-List<_Entry> _entries() {
+List<ListedGame> listedGames() {
   GameCategory categoryOf(String id) =>
       gameCatalog.where((g) => g.id == id).firstOrNull?.category ??
       GameCategory.party;
   return [
-    _Entry(
+    ListedGame(
       id: 'guess_person',
       title: 'Guess the Person',
       tagline: 'Ask questions, find the secret person',
@@ -156,7 +157,7 @@ List<_Entry> _entries() {
       category: GameCategory.party,
       open: (_) => const GuessPersonMenuScreen(),
     ),
-    _Entry(
+    ListedGame(
       id: 'raja_mantri',
       title: 'Raja Mantri Chor Sipahi',
       tagline: 'Can the Mantri catch the Chor?',
@@ -167,7 +168,7 @@ List<_Entry> _entries() {
       open: (_) => const RmcsMenuScreen(),
     ),
     for (final g in localGames)
-      _Entry(
+      ListedGame(
         id: g.id,
         title: g.title,
         tagline: g.tagline,
@@ -204,7 +205,7 @@ class LocalGamesHubScreen extends StatefulWidget {
 }
 
 class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
-  final _entriesList = _entries();
+  final _entriesList = listedGames();
   final _search = TextEditingController();
   var filter = _Filter.all;
   int? players; // null: any
@@ -234,12 +235,12 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
     super.dispose();
   }
 
-  Future<void> _open(_Entry e) async {
+  Future<void> _open(ListedGame e) async {
     await Navigator.push(context, MaterialPageRoute(builder: e.open));
     _load(); // a game may have just been played
   }
 
-  Future<void> _toggleFavourite(_Entry e) async {
+  Future<void> _toggleFavourite(ListedGame e) async {
     haptic(HapticWeight.medium);
     final f = await Records.toggleFavourite(e.id);
     if (!mounted) return;
@@ -253,7 +254,7 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
         duration: const Duration(milliseconds: 1400));
   }
 
-  bool _matches(_Entry e) {
+  bool _matches(ListedGame e) {
     final q = _search.text.trim().toLowerCase();
     if (q.isNotEmpty &&
         !e.title.toLowerCase().contains(q) &&
@@ -287,7 +288,7 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
     const gutter = EdgeInsets.symmetric(horizontal: 16);
     const ink = Color(0xFF1C1A17);
     const muted = Color(0xFF5C564C);
-    final cols = MediaQuery.sizeOf(context).width >= 900 ? 6 : 4;
+    final cols = allGamesColumns(MediaQuery.sizeOf(context).width);
 
     Widget section(String text) => SliverToBoxAdapter(
           child: Padding(
@@ -301,7 +302,7 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
                     color: ink)),
           ),
         );
-    Widget grid(List<_Entry> items) => SliverPadding(
+    Widget grid(List<ListedGame> items) => SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           sliver: SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -530,7 +531,7 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
 
 /// A recently played game: its icon, name and "Play again".
 class _RecentTile extends StatelessWidget {
-  final _Entry entry;
+  final ListedGame entry;
   final VoidCallback onTap;
   const _RecentTile({required this.entry, required this.onTap});
   @override
@@ -570,7 +571,7 @@ class _RecentTile extends StatelessWidget {
 }
 
 class _HubIcon extends StatelessWidget {
-  final _Entry entry;
+  final ListedGame entry;
   final bool favourite;
   final VoidCallback onTap, onStar;
   const _HubIcon(

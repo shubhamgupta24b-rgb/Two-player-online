@@ -1,0 +1,185 @@
+# UI redesign progress
+
+Last updated: 2026-10-17
+Branch: `feature/memory-game`
+Baseline commit before this work: `c6a55b8aec9807f48a0d93d7ce03a9b493ec9f84`
+Latest commit: the redesign milestone on `feature/memory-game` that adds this file
+Completed phases: 18 of 18
+Games audited: 67 games on the home and hub list (`listedGames()`), plus online-only ids and retired source ids covered by the preview manifest
+Unique previews: 74, one scene per id in `gamePreviewManifest`
+Six-card layout: verified. At 390dp and 411dp, All Games is 3 columns. At 320dp it is 2 columns. `mobile/test/home_redesign_test.dart` expects a batch of 6 at 390dp.
+Gameplay and multiplayer regression: `flutter test` on 2026-10-17 finished 863 passed, 5 failed. The 5 failures are the same ones that failed on `c6a55b8` before this work. No new failures. A live two-phone match was not run.
+Current blockers: none in the home UI.
+Next steps: none. The redesign is in the working tree for the milestone commit. The commit SHA is that commit.
+
+## Design notes
+
+`home-final.html` is a 390px phone. Top to bottom: safe header with avatar, "Welcome", and the name; Trending and All Games with a gold underline; image cards with a title; Online and Offline; a top-3 leaderboard. Sample names and scores in that file are not app data. The HTML grid is two columns. All Games in the app uses three columns from 340dp so a full pair of rows is six cards.
+
+`RivalRooms Game Previews.html` draws a small scene per game, with gloss and gradients. The app keeps the idea of a distinct scene and drops the gloss, the highlight ellipse, and the heavy gradient.
+
+Tokens live in `mobile/lib/features/home/home_chrome.dart`. Night colors match the HTML (`#0B0E2E` background, `#151A45` cards, `#252B55` borders, `#FFC93C` selected tab, `#2E8BFF` active button). Flat builds use light surfaces and the same layout. Cards use one shadow, `0 2px 8px` at 14% black. Pressed cards fade to 0.82 opacity. Motion follows the app reduce-motion setting.
+
+## Phase 1. Repository audit and baseline
+
+Status: COMPLETED
+
+The branch was `feature/memory-game` at `c6a55b8`. Flutter app in `mobile/`, Node server in `server/`. Home was `mobile/lib/features/home/home_screen.dart` (room buttons, a hero, a horizontal featured row). The game list is `listedGames()` in the hub. Online games are `gameCatalog`. Previews were `GameBadgePainter` in `game_art.dart`, one glossy gradient with a shared icon, plus a few board sketches.
+
+Untracked files left untouched: `DONE.md`, `mobile/devtools_options.yaml`. `mobile/tool/layout_preview_test.dart` was untracked and was extended for screenshots.
+
+Baseline, 2026-10-17, `flutter test` in `mobile/`: 859 passed, 5 failed.
+
+Pre-existing failures:
+
+- `batch3_games_test.dart` expects `penalty` in the live game set. Penalty is not in the hub list.
+- `local_games_widget_test.dart` hub scroll throws `Bad state: No element`.
+- `local_games_widget_test.dart` Ball Sort overflows on a small phone.
+- `online_game_screens_test.dart` Memory screen does not find "Your turn" or "Opponent's turn".
+
+No server `node_modules` was present, so `npm test` was not part of the baseline.
+
+Files expected to change: home screen, game art, hub grid, tests, README, this file.
+
+## Phase 2. Design reference analysis
+
+Status: COMPLETED
+
+See Design notes. No sample users were copied into the app.
+
+## Phase 3. Design system
+
+Status: COMPLETED
+
+`home_chrome.dart` and `home_layout.dart`. Column rule: under 340dp use 2, from 340dp use 3, from 900dp use 6.
+
+## Phase 4. Home header
+
+Status: COMPLETED
+
+Avatar with a connection dot, "Welcome", the saved name or "Player", and Settings. SafeArea supplies the status inset. The old hero is gone.
+
+## Phase 5. Trending and All Games
+
+Status: COMPLETED
+
+Trending reads `online_counts`. All Games is `listedGames()` with search, categories, favourites, and player filters. The selected tab uses a gold underline. Card taps still open the existing game route.
+
+## Phase 6. Six-card All Games layout
+
+Status: COMPLETED
+
+`GridView.count` with `allGamesColumns`. `mobile/test/home_redesign_test.dart` expects batch size 6 at 390dp. The home widget test checks 2 columns at 320 and 3 columns at 411 and 800 (the home column is capped at 640, so 800 still lays out as 3).
+
+## Phase 7. Reusable game cards
+
+Status: COMPLETED
+
+`HomeGameCard` in `game_card.dart`. `GameTile` uses the same preview, a flat border, and a small shadow. The 3px press sink is gone.
+
+## Phase 8. Game and artwork audit
+
+Status: COMPLETED
+
+Each manifest entry names the scene from the game that is actually in the repo: pairs for Memory, discs for Connect Four, a sea grid for Battleship, a Ludo board, sliced fruit, a pool table, and so on. Retired ids are included so they do not fall through to a shared icon.
+
+## Phase 9. Unique previews
+
+Status: COMPLETED
+
+Painted in `game_preview.dart`. Flat shapes, no gloss, no extruded text. The test paints every scene and one missing id.
+
+## Phase 10. Artwork integration
+
+Status: COMPLETED
+
+`GameBadgePainter` draws `GamePreviewPainter` when the id is in the manifest. Otherwise it draws the existing icon on a flat fill. No network images.
+
+## Phase 11. Upper game-selection area
+
+Status: COMPLETED
+
+Header, tabs, then the grid. Trending stays a short 2-column set (4 columns from 700dp). Titles stay on the card. No per-card descriptions.
+
+## Phase 12. Online, offline, and social features
+
+Status: COMPLETED
+
+Online calls the existing internet connection and opens Create room, Join room, and Quick play. Offline opens the existing Same Wi-Fi sheet. The leaderboard uses `rowsFromLeaderboardJson` and phone records, with loading, empty, offline, and error text. Settings, My records, and Privacy remain.
+
+## Phase 13. Remove unnecessary 3D effects
+
+Status: COMPLETED
+
+Removed from the home and from game badges: gloss ovals, gradient icon fills, the hero gradient card, and the badge blur. Card flip in Memory, the Smash Karts board tilt, and Raja Mantri role flips stay. Those are gameplay.
+
+## Phase 14. Responsive design and accessibility
+
+Status: COMPLETED
+
+Home widget test at 320x568, 411x914, and 800x1280. Tabs and mode buttons are at least 48dp. Titles use two lines and ellipsis. Pressed and selected states are on the card and the tabs. `Motion.of` honors reduce motion.
+
+## Phase 15. Gameplay and multiplayer
+
+Status: COMPLETED
+
+`flutter test` in `mobile/` on 2026-10-17: 863 passed, 5 failed. Baseline before the redesign was 859 passed, 5 failed. The four new tests are in `home_redesign_test.dart`. The five failures are unchanged:
+
+- music test expects `penalty`, which is not in the hub list
+- hub scroll test throws `Bad state: No element`
+- Ball Sort overflows on a small phone
+- online Memory screen tests do not find "Your turn" or "Opponent's turn"
+
+Memory counts 8, 12, 16, 20, 24, 28, and 32 are still the create-room chips and the server check. This redesign did not change Memory rules, scoring, or the relay. Screenshot: `docs/ui-redesign/screenshots/preview_memory_setup.png`.
+
+Not done: a live two-phone match.
+
+## Phase 16. Tests and visual verification
+
+Status: COMPLETED
+
+- `flutter test test/home_redesign_test.dart` passed (columns, trending parser, preview coverage, paint)
+- `flutter test test/games_hub_test.dart` passed
+- `flutter test test/leaderboard_test.dart` passed
+- `flutter test test/start_pages_test.dart --name "home lays out"` passed at 320, 411, and 800
+- `flutter test` full suite: 863 passed, 5 failed, as in phase 15
+- `flutter test tool/layout_preview_test.dart` passed
+
+Screenshots, also copied to `docs/ui-redesign/screenshots/`:
+
+- `preview_home.png` Trending
+- `preview_all_games.png` six-card rows
+- `preview_all_games_later.png` a later batch
+- `preview_all_games_narrow.png` 320dp, two columns
+- `preview_home_narrow.png`
+- `preview_memory_setup.png`
+- `preview_games.png` the games hub
+
+Originals from the test run are under `mobile/build/screens/`.
+
+## Phase 17. Performance and release preparation
+
+Status: COMPLETED
+
+Previews are drawn in the app. No new dependency was added. Unused glossy board painting in `game_art.dart` was removed after the preview painter replaced it.
+
+`flutter build apk --release` from `mobile/` finished on 2026-10-17. Output: `mobile/build/app/outputs/flutter-apk/app-release.apk`, 62,086,365 bytes (Flutter reported 59.2 MB). No `SERVER_URL` dart-define was passed, so this APK uses the default `http://10.0.2.2:3000`. `mobile/android/key.properties` and `upload-keystore.jks` were present on this machine and are not in git. The APK itself is a build output and is not committed. Gradle printed upcoming-support warnings for Gradle 8.14.3, Android Gradle Plugin 8.11.1, and Kotlin 2.2.20. The task still succeeded.
+
+## Phase 18. Final verification
+
+Status: COMPLETED
+
+Home follows the `home-final.html` hierarchy. All Games is three columns from 340dp, so a full pair of rows is six cards, and every listed game stays in the grid. 67 hub games were audited. 74 preview scenes are mapped. Glossy shared badges are gone from the home cards and hub tiles. Gameplay transforms were left in place.
+
+`flutter test` in `mobile/`: 863 passed, 5 failed. Those five failed on `c6a55b8` before this work. A live two-phone match was not run. `npm test` in `server/` was not run because `server/node_modules` was not installed. The release APK path is in phase 17. Nothing was pushed.
+
+## Results log
+
+Home layout test, 2026-10-17: passed on 320, 411, and 800.
+
+Full `flutter test`, 2026-10-17: 863 passed, 5 failed. Same five failures as the baseline. Four new tests passed.
+
+Screenshot test passed. Files listed in phase 16.
+
+Release APK, 2026-10-17: `flutter build apk --release` succeeded. See phase 17.
+

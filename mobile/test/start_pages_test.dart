@@ -10,7 +10,6 @@ import 'package:multiplayer_game/features/join_room/join_room_screen.dart';
 import 'package:multiplayer_game/features/privacy/privacy_screen.dart';
 import 'package:multiplayer_game/features/quick_play/quick_play_screen.dart';
 import 'package:multiplayer_game/features/records/records_screen.dart';
-import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dart';
 import 'package:multiplayer_game/features/local_games/shell/local_game_shell.dart';
 import 'package:multiplayer_game/features/login/login_screen.dart';
 import 'package:multiplayer_game/features/raja_mantri/rmcs_screen.dart';
@@ -78,7 +77,8 @@ void main() {
     });
     await tester.pumpAndSettle();
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text('Hi, asha'), findsOneWidget);
+    expect(find.text('Welcome'), findsOneWidget);
+    expect(find.text('asha'), findsOneWidget);
     expect(auth.displayName, 'asha');
     expect(socket.connects.single, auth.token, reason: 'connects in the background');
   });
@@ -88,7 +88,8 @@ void main() {
     await bootSplash(tester);
     await tester.pumpAndSettle();
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text('Hi, Ravi'), findsOneWidget);
+    expect(find.text('Welcome'), findsOneWidget);
+    expect(find.text('Ravi'), findsOneWidget);
     expect(socket.connects, ['dev:u1:Ravi']);
   });
 
@@ -135,11 +136,14 @@ void main() {
       await tester.runAsync(auth.restore);
       await tester.pump();
       expect(find.text('Offline'), findsOneWidget);
-      expect(find.text('Ready to play?'), findsOneWidget);
+      expect(find.text('Welcome'), findsOneWidget);
+      expect(find.text('Trending'), findsOneWidget);
+      expect(find.text('All Games'), findsOneWidget);
 
       Future<void> open(Finder target) async {
-        await tester.scrollUntilVisible(target, 120, scrollable: find.byType(Scrollable).first);
-        await tester.ensureVisible(target); // also scrolls the sideways featured row
+        final list = find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down).first;
+        await tester.scrollUntilVisible(target, 400, scrollable: list, maxScrolls: 80);
+        await tester.ensureVisible(target);
         await tester.pumpAndSettle();
         await tester.tap(target);
         await tester.pumpAndSettle();
@@ -152,22 +156,36 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      await openAndBack(find.text('Play on one phone'), LocalGamesHubScreen);
-      expect(find.text('Play online'), findsOneWidget);
-      for (final (label, page) in const [('Create room', CreateRoomScreen), ('Join room', JoinRoomScreen), ('Quick play', QuickPlayScreen)]) {
-        await openAndBack(find.text(label), page);
-      }
-      await openAndBack(find.text('My records'), RecordsScreen);
       await openAndBack(find.text('Memory'), LocalGameShell);
-      // Featured games scroll sideways.
-      await tester.dragUntilVisible(find.text('Raja Mantri'), find.byType(ListView).last, const Offset(-150, 0));
-      await openAndBack(find.text('Raja Mantri'), RmcsMenuScreen);
-      await openAndBack(find.text('See all'), LocalGamesHubScreen);
+
+      Future<void> openRoom(String label, Type page) async {
+        await tester.tap(find.text('Online'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(label));
+        await tester.pumpAndSettle();
+        expect(find.byType(page), findsOneWidget);
+        Navigator.of(tester.element(find.byType(page))).pop();
+        await tester.pumpAndSettle();
+      }
+
+      await openRoom('Create room', CreateRoomScreen);
+      await openRoom('Join room', JoinRoomScreen);
+      await openRoom('Quick play', QuickPlayScreen);
+      await openAndBack(find.text('My records'), RecordsScreen);
+      await tester.tap(find.byKey(const Key('home-tab-all')));
+      await tester.pumpAndSettle();
+      final grid = tester.widget<GridView>(find.byKey(const Key('all-games-grid')));
+      final cols = (grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount).crossAxisCount;
+      expect(cols, size.width >= 340 ? 3 : 2, reason: 'six cards per two rows on supported phones');
+      expect(grid.childrenDelegate.estimatedChildCount, greaterThan(6));
+      await openAndBack(find.text('Raja Mantri Chor Sipahi'), RmcsMenuScreen);
       await openAndBack(find.text('Privacy'), PrivacyScreen);
-      // No server addresses on screen: just the connection pill.
       expect(find.textContaining('Server: '), findsNothing);
-      await tester.scrollUntilVisible(find.text('Same Wi-Fi'), -120, scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('Offline'));
+      await tester.pumpAndSettle();
       expect(find.text('Same Wi-Fi'), findsOneWidget);
+      Navigator.of(tester.element(find.text('Same Wi-Fi'))).pop();
+      await tester.pumpAndSettle();
     });
   }
 }
