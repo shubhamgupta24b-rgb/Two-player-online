@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:multiplayer_game/core/auth/authentication_manager.dart';
 import 'package:multiplayer_game/core/network/socket_manager.dart';
 import 'package:multiplayer_game/core/room/room_manager.dart';
+import 'package:multiplayer_game/core/settings/app_settings.dart';
 import 'package:multiplayer_game/core/ui/app_ui.dart';
 import 'package:multiplayer_game/features/create_room/create_room_screen.dart';
+import 'package:multiplayer_game/features/home/home_chrome.dart';
 import 'package:multiplayer_game/features/home/home_screen.dart';
 import 'package:multiplayer_game/features/join_room/join_room_screen.dart';
 import 'package:multiplayer_game/features/settings/settings_screen.dart';
@@ -234,4 +236,22 @@ void main() {
       await tester.pumpAndSettle();
     });
   }
+
+  testWidgets('lamp switches dark and light and stays after leaving All Games', (tester) async {
+    await pumpApp(tester, const HomeScreen(), prefs: {'uid': 'u1', 'name': 'Asha'});
+    await tester.pump();
+    Color bg() => tester.widget<Scaffold>(find.byType(Scaffold).first).backgroundColor!;
+    expect(bg(), HomeColors.dark.bg);
+    await tester.tap(find.byKey(const Key('home-lamp')));
+    await tester.pump();
+    expect(bg(), HomeColors.light.bg);
+    await tester.tap(find.byKey(const Key('home-tab-all')));
+    await tester.pump();
+    expect(bg(), HomeColors.light.bg);
+    expect(find.text('Leaderboard'), findsNothing);
+    await tester.tap(find.byKey(const Key('home-lamp')));
+    await tester.pump();
+    expect(bg(), HomeColors.dark.bg);
+    await AppSettings.setHomeLight(false);
+  });
 }

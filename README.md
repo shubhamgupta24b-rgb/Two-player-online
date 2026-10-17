@@ -15,7 +15,9 @@ The server listens on port 3000. An Android emulator reaches the computer at `10
 
 ## Home screen
 
-The home screen follows `two_player_game_home_preview_lavender_final.html`: a lavender background (`#F2EEFF`), white cards, and purple (`#8655F6`) for the selected tab and the Online / Wi-Fi button.
+The lamp at the top of the home screen switches the dark and light palettes from the home preview. Dark is the default. The choice is saved on the phone as `set_home_light` and is also in Settings as Light theme. Trending, All Games, the profile menu, Settings, Profile, the leaderboard page chrome, and the Online / Wi-Fi sheets follow that choice. Reduced motion skips the lamp swing. Game paintings are unchanged.
+
+The headings “PICK YOUR NEXT MATCH” and “Quick to pick up. Hard to put down.” are not on the home screen.
 
 Trending shows the game cards, then Online / Wi-Fi and Offline, then the top-3 leaderboard. All Games shows the search field, the category and player filters, and the full hub list. The mode buttons and the leaderboard are not on All Games.
 

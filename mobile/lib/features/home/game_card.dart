@@ -31,7 +31,7 @@ class _HomeGameCardState extends State<HomeGameCard> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(HomeMetrics.cardRadius),
-          boxShadow: _pressed ? const [] : [HomeMetrics.shadow],
+          boxShadow: _pressed ? const [] : [colors.cardShadow],
         ),
         child: Material(
           color: colors.card,

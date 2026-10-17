@@ -12,6 +12,8 @@ abstract final class AppSettings {
   static final haptics = ValueNotifier<bool>(true);
   static final playerName = ValueNotifier<String>('');
   static final playerColor = ValueNotifier<int>(0);
+  /// Home lamp. False is the dark palette from the home preview.
+  static final homeLight = ValueNotifier<bool>(false);
 
   static Future<void> init() async {
     try {
@@ -20,6 +22,7 @@ abstract final class AppSettings {
       Motion.reduceSetting.value = p.getBool('set_reduce_motion') ?? false;
       playerName.value = p.getString('set_player_name') ?? '';
       playerColor.value = (p.getInt('set_player_color') ?? 0).clamp(0, PlayerPalette.colors.length - 1);
+      homeLight.value = p.getBool('set_home_light') ?? false;
     } catch (_) {}
     _applyHaptics();
   }
@@ -39,6 +42,11 @@ abstract final class AppSettings {
   static Future<void> setPlayerName(String name) async {
     playerName.value = name.trim();
     await _save((p) => p.setString('set_player_name', name.trim()));
+  }
+
+  static Future<void> setHomeLight(bool on) async {
+    homeLight.value = on;
+    await _save((p) => p.setBool('set_home_light', on));
   }
 
   static Future<void> setPlayerColor(int seat) async {

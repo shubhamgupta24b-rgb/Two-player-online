@@ -10,7 +10,19 @@ Unique previews: 74, one scene per id in `gamePreviewManifest`. The lavender pas
 Six-card layout: verified. At 390dp and 411dp, All Games is 3 columns. At 320dp it is 2 columns. `mobile/test/home_redesign_test.dart` expects a batch of 6 at 390dp. The home widget test passed again at 320, 411, and 800 after the lavender pass.
 Gameplay and multiplayer regression: the full `flutter test` on 2026-10-17, before this lavender pass, finished 863 passed, 5 failed. Those 5 failures were already present on `c6a55b8`. This pass re-ran `home_redesign_test.dart` (4 passed) and the home layout test at three sizes (3 passed). The full suite and a new APK were not re-run.
 Current blockers: none in the home navigation.
-Next steps: commit the lavender home when asked. A full `flutter test` and a release APK were not repeated for this pass.
+Next steps: none for the lamp pass. The full suite was not re-run for this branch.
+
+## Lamp theme pass
+
+Branch: `feature/ui-polish-theme-profile-apk`, created from `feature/memory-game`.
+
+The home uses the dark and light palettes in the lamp preview. A hanging lamp and the Settings switch write `set_home_light`. Dark is the default. The promotional lines “PICK YOUR NEXT MATCH” and “Quick to pick up. Hard to put down.” are not in the app. Game preview painters were not edited.
+
+Trending still has cards, Online / Wi-Fi, Offline, and the leaderboard. All Games still hides those controls. Profile, Settings, and Privacy Policy still open from the avatar. Same host and Online are unchanged.
+
+The full leaderboard page background and title follow the lamp. Rank cards keep their gold, silver, and bronze fills. Privacy stays on the existing policy screen. There is no separate presence service: the avatar dot is the socket connection.
+
+Tests on 2026-10-17: `home_redesign_test.dart` 5 passed, `leaderboard_test.dart` 5 passed, the home layout test passed at 320, 411, and 800, and the lamp widget test passed. The full `flutter test` suite was not re-run. The APK is recorded after the build.
 
 ## Lavender home pass
 

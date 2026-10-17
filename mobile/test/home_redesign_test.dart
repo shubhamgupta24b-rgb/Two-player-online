@@ -1,10 +1,12 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:multiplayer_game/core/settings/app_settings.dart';
 import 'package:multiplayer_game/features/home/game_preview.dart';
 import 'package:multiplayer_game/features/home/home_layout.dart';
 import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dart';
 import 'package:multiplayer_game/games/game_catalog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test('all games uses three columns and six cards per batch on a phone', () {
@@ -48,6 +50,17 @@ void main() {
     final missing = ids.where((id) => !hasUniquePreview(id)).toList();
     expect(missing, isEmpty, reason: 'games without a preview');
     expect(ids.length, greaterThanOrEqualTo(67));
+  });
+
+  test('home lamp theme is saved and restored', () async {
+    SharedPreferences.setMockInitialValues({});
+    await AppSettings.init();
+    expect(AppSettings.homeLight.value, isFalse);
+    await AppSettings.setHomeLight(true);
+    AppSettings.homeLight.value = false;
+    await AppSettings.init();
+    expect(AppSettings.homeLight.value, isTrue);
+    await AppSettings.setHomeLight(false);
   });
 
   test('previews paint and a missing id does not throw', () {

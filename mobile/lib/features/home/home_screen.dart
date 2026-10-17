@@ -132,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final choice = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: context.tk.flat ? Colors.white : NeonPalette.sheet,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (_) => const _WifiSearchSheet(),
     );
@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _chooseLink() async {
     final choice = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: HomeColors.lavender.card,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       builder: (ctx) => _MenuSheet(
         title: 'Online / Wi-Fi',
@@ -228,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final picked = await showModalBottomSheet<ListedGame>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: HomeColors.lavender.card,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       builder: (ctx) => _MenuSheet(
         title: 'On this phone',
@@ -244,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _profileMenu() async {
     final choice = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: HomeColors.lavender.card,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       builder: (ctx) => _MenuSheet(
         title: 'Account',
@@ -364,51 +364,57 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final name = context.watch<AuthenticationManager>().displayName;
-    final colors = HomeColors.of(context);
-    final games = _visibleGames();
-    final onlineMode = AppConfig.mode == ServerMode.online;
-    final trending = _tab == _HomeTab.trending;
-    return Scaffold(
-      backgroundColor: colors.bg,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
-            child: Column(children: [
-              _header(name, colors),
-              _tabs(colors),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.only(bottom: 18),
-                  children: [
-                    if (!trending) ...[
-                      _searchField(colors),
-                      _filters(colors),
-                    ],
-                    if (games.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
-                        child: Text(
-                          _filter == _HomeFilter.favourites && _search.text.trim().isEmpty
-                              ? 'No favourites yet. Star a game in the games list.'
-                              : 'No games match.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: colors.muted),
-                        ),
-                      )
-                    else
-                      _grid(games),
-                    if (trending) ...[
-                      _modes(onlineMode, colors),
-                      _leaderboard(colors),
-                    ],
-                  ],
-                ),
+    return ListenableBuilder(
+      listenable: AppSettings.homeLight,
+      builder: (context, _) {
+        final colors = HomeColors.of(context);
+        final games = _visibleGames();
+        final onlineMode = AppConfig.mode == ServerMode.online;
+        final trending = _tab == _HomeTab.trending;
+        return Scaffold(
+          backgroundColor: colors.bg,
+          body: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Column(children: [
+                  const Align(alignment: Alignment.centerRight, child: HomeLampButton()),
+                  _header(name, colors),
+                  _tabs(colors),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      children: [
+                        if (!trending) ...[
+                          _searchField(colors),
+                          _filters(colors),
+                        ],
+                        if (games.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+                            child: Text(
+                              _filter == _HomeFilter.favourites && _search.text.trim().isEmpty
+                                  ? 'No favourites yet. Star a game in the games list.'
+                                  : 'No games match.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: colors.muted),
+                            ),
+                          )
+                        else
+                          _grid(games),
+                        if (trending) ...[
+                          _modes(onlineMode, colors),
+                          _leaderboard(colors),
+                        ],
+                      ],
+                    ),
+                  ),
+                ]),
               ),
-            ]),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -722,29 +728,38 @@ class _MenuSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = HomeColors.lavender;
-    final titleStyle = TextStyle(fontFamily: Fonts.body, fontSize: 18, fontWeight: FontWeight.w800, color: colors.text);
-    final list = height == null
-        ? Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: children)
-        : Expanded(child: ListView(children: children));
-    return CallbackShortcuts(
-      bindings: {SingleActivator(LogicalKeyboardKey.escape): () => Navigator.pop(context)},
-      child: Focus(
-        autofocus: true,
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-            child: SizedBox(
-              height: height,
-              child: Column(mainAxisSize: height == null ? MainAxisSize.min : MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Text(title, textAlign: TextAlign.center, style: titleStyle),
-                const SizedBox(height: 8),
-                list,
-              ]),
+    return ListenableBuilder(
+      listenable: AppSettings.homeLight,
+      builder: (context, _) {
+        final colors = HomeColors.of(context);
+        final titleStyle = TextStyle(fontFamily: Fonts.body, fontSize: 18, fontWeight: FontWeight.w800, color: colors.text);
+        final list = height == null
+            ? Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: children)
+            : Expanded(child: ListView(children: children));
+        return Material(
+          color: colors.card,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+          child: CallbackShortcuts(
+            bindings: {SingleActivator(LogicalKeyboardKey.escape): () => Navigator.pop(context)},
+            child: Focus(
+              autofocus: true,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                  child: SizedBox(
+                    height: height,
+                    child: Column(mainAxisSize: height == null ? MainAxisSize.min : MainAxisSize.max, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                      Text(title, textAlign: TextAlign.center, style: titleStyle),
+                      const SizedBox(height: 8),
+                      list,
+                    ]),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -757,7 +772,7 @@ class _MenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = HomeColors.lavender;
+    final colors = HomeColors.of(context);
     return InkWell(
       onTap: onTap,
       child: ConstrainedBox(
@@ -867,16 +882,24 @@ class _WifiSearchSheetState extends State<_WifiSearchSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tk;
-    final muted = TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, height: 1.4, color: t.textMuted);
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 22 + MediaQuery.viewInsetsOf(context).bottom),
-      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Center(child: Container(width: 44, height: 5, decoration: BoxDecoration(color: t.text.withValues(alpha: 0.25), borderRadius: BorderRadius.circular(3)))),
-        const SizedBox(height: 12),
-        Text('Same Wi-Fi', textAlign: TextAlign.center, style: t.cardStyles.label),
-        const SizedBox(height: 2),
-        Text(choosing ? 'Play on one hotspot' : (searching ? 'Looking for the host…' : 'No host found yet'), textAlign: TextAlign.center, style: t.cardStyles.h2),
+    return ListenableBuilder(
+      listenable: AppSettings.homeLight,
+      builder: (context, _) {
+        final colors = HomeColors.of(context);
+        final t = context.tk;
+        final muted = TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, height: 1.4, color: colors.muted);
+        final title = TextStyle(fontFamily: Fonts.body, fontSize: 20, fontWeight: FontWeight.w800, color: colors.text);
+        return Material(
+          color: colors.card,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 22 + MediaQuery.viewInsetsOf(context).bottom),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Center(child: Container(width: 44, height: 5, decoration: BoxDecoration(color: colors.muted.withValues(alpha: 0.35), borderRadius: BorderRadius.circular(3)))),
+              const SizedBox(height: 12),
+              Text('Same Wi-Fi', textAlign: TextAlign.center, style: title),
+              const SizedBox(height: 2),
+              Text(choosing ? 'Play on one hotspot' : (searching ? 'Looking for the host…' : 'No host found yet'), textAlign: TextAlign.center, style: title.copyWith(fontSize: 16)),
         const SizedBox(height: 14),
         if (choosing) ...[
           Text('One phone hosts, the others join it. No internet needed.', textAlign: TextAlign.center, style: muted),
@@ -933,7 +956,10 @@ class _WifiSearchSheetState extends State<_WifiSearchSheet> {
             KitButton('Use', style: KitButtonStyle.outline, onPressed: _typed),
           ]),
         ],
-      ]),
+            ]),
+          ),
+        );
+      },
     );
   }
 }

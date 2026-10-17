@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 import '../../core/auth/authentication_manager.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/records/records.dart';
+import '../../core/settings/app_settings.dart';
 import '../../core/ui/tokens.dart';
+import '../home/home_chrome.dart';
 
 const leaderboardCream = Color(0xFFF4EFE4);
 const leaderboardInk = Color(0xFF1C1A17);
@@ -96,44 +98,50 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   @override
   Widget build(BuildContext context) {
     final rows = _rows;
-    return Scaffold(
-      backgroundColor: leaderboardCream,
-      body: SafeArea(
-        child: rows == null
-            ? const Center(child: Text('Loading scores', style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: leaderboardInk)))
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
-                children: [
-                  Row(children: [
-                    IconButton(
-                      tooltip: 'Back',
-                      onPressed: () => Navigator.maybePop(context),
-                      icon: const Icon(Icons.arrow_back_rounded, color: leaderboardInk),
-                    ),
-                    const Expanded(child: Text('Leaderboard', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, fontSize: 28, color: leaderboardInk))),
-                    const SizedBox(width: 48),
-                  ]),
-                  const SizedBox(height: 6),
-                  const Text('Ranked by games won', style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF5C564C))),
-                  const SizedBox(height: 14),
-                  _PlayingNow(count: _playingNow),
-                  const SizedBox(height: 16),
-                  if (_fromPhone)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 10),
-                      child: Text('Showing your wins saved on this phone. Other players appear when the server has their results.',
-                          style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF5C564C))),
-                    ),
-                  if (rows.isEmpty)
-                    const _EmptyBoard()
-                  else
-                    for (var i = 0; i < rows.length; i++) ...[
-                      _RankCard(place: i + 1, row: rows[i]),
-                      const SizedBox(height: 10),
+    return ListenableBuilder(
+      listenable: AppSettings.homeLight,
+      builder: (context, _) {
+        final colors = HomeColors.of(context);
+        return Scaffold(
+          backgroundColor: colors.bg,
+          body: SafeArea(
+            child: rows == null
+                ? Center(child: Text('Loading scores', style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: colors.text)))
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+                    children: [
+                      Row(children: [
+                        IconButton(
+                          tooltip: 'Back',
+                          onPressed: () => Navigator.maybePop(context),
+                          icon: Icon(Icons.arrow_back_rounded, color: colors.text),
+                        ),
+                        Expanded(child: Text('Leaderboard', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, fontSize: 28, color: colors.text))),
+                        const SizedBox(width: 48),
+                      ]),
+                      const SizedBox(height: 6),
+                      Text('Ranked by games won', style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: colors.muted)),
+                      const SizedBox(height: 14),
+                      _PlayingNow(count: _playingNow),
+                      const SizedBox(height: 16),
+                      if (_fromPhone)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Text('Showing your wins saved on this phone. Other players appear when the server has their results.',
+                              style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: colors.muted)),
+                        ),
+                      if (rows.isEmpty)
+                        const _EmptyBoard()
+                      else
+                        for (var i = 0; i < rows.length; i++) ...[
+                          _RankCard(place: i + 1, row: rows[i]),
+                          const SizedBox(height: 10),
+                        ],
                     ],
-                ],
-              ),
-      ),
+                  ),
+          ),
+        );
+      },
     );
   }
 }
