@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/memory-game
+      - feature/ui-polish-theme-profile-apk
     paths:
       - "mobile/**"
       - "server/**"
@@ -13,13 +14,13 @@ on:
       server_url:
         description: "Server URL the app connects to"
         required: false
-        default: "https://two-player-online.onrender.com"
+        default: "https://two-player-online-m9jy.onrender.com"
 
 permissions:
   contents: read
 
 concurrency:
-  group: memory-apk-${{ github.ref }}
+  group: mobile-apk-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -63,11 +64,11 @@ jobs:
       - name: Build release APK
         working-directory: mobile
         env:
-          SERVER_URL: ${{ inputs.server_url || 'https://two-player-online.onrender.com' }}
+          SERVER_URL: ${{ inputs.server_url || 'https://two-player-online-m9jy.onrender.com' }}
         run: flutter build apk --release --dart-define=SERVER_URL="$SERVER_URL"
       - uses: actions/upload-artifact@v4
         with:
-          name: rivalrooms-memory-feature-apk
+          name: party-games-ui-polish-apk
           path: mobile/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 14
