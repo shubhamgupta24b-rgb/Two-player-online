@@ -52,15 +52,20 @@ void main() {
     expect(ids.length, greaterThanOrEqualTo(67));
   });
 
-  test('home lamp theme is saved and restored', () async {
+  test('home lamp theme is saved and restored in both directions', () async {
     SharedPreferences.setMockInitialValues({});
     await AppSettings.init();
     expect(AppSettings.homeLight.value, isFalse);
+
     await AppSettings.setHomeLight(true);
     AppSettings.homeLight.value = false;
     await AppSettings.init();
     expect(AppSettings.homeLight.value, isTrue);
+
     await AppSettings.setHomeLight(false);
+    AppSettings.homeLight.value = true;
+    await AppSettings.init();
+    expect(AppSettings.homeLight.value, isFalse);
   });
 
   test('previews paint and a missing id does not throw', () {
