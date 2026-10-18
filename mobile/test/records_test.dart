@@ -21,6 +21,27 @@ void main() {
     expect(r['fruit_merge']!.played, 2);
   });
 
+  test('the same match id is stored once, and a draw has no winner', () async {
+    await Records.add('ludo', score: 3, won: true, matchId: 'm1');
+    await Records.add('ludo', score: 9, won: true, matchId: 'm1');
+    expect((await Records.all())['ludo']!.played, 1);
+    expect((await Records.all())['ludo']!.wins, 1);
+    final first = await Records.noteSeats(matchId: 'local-1', gameId: 'ludo', seats: [
+      (name: 'Ada', win: false, loss: false),
+      (name: 'Bo', win: false, loss: false),
+    ]);
+    final again = await Records.noteSeats(matchId: 'local-1', gameId: 'ludo', seats: [
+      (name: 'Ada', win: true, loss: false),
+      (name: 'Bo', win: false, loss: true),
+    ]);
+    expect(first, isTrue);
+    expect(again, isFalse);
+    final seats = await Records.standings();
+    expect(seats.singleWhere((s) => s.name == 'Ada').wins, 0);
+    expect(seats.singleWhere((s) => s.name == 'Ada').played, 1);
+    expect(seats.singleWhere((s) => s.name == 'Ada').losses, 0);
+  });
+
   test('older solo best scores show up, and clear() wipes everything', () async {
     SharedPreferences.setMockInitialValues({'best_flappy_jump': 17, 'name': 'Asha'});
     expect((await Records.all())['flappy_jump']!.best, 17);

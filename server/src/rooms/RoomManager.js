@@ -2,6 +2,7 @@ const { EventEmitter } = require('events');
 const crypto = require('crypto');
 const { GameError } = require('../errors');
 const registry = require('../games/registry');
+const { noteResult } = require('../stats/board');
 const { MemoryRoomStore } = require('./RoomStore');
 
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -175,7 +176,7 @@ class RoomManager extends EventEmitter {
     return room;
   }
 
-  /** A game just ended: score the party, if any. Returns the result to broadcast. */
+  /** A game just ended: score the party, if any, and record a valid result once. */
   _ended(room, result) {
     const party = room.party;
     if (party && result && Array.isArray(result.ranking)) {
@@ -188,6 +189,10 @@ class RoomManager extends EventEmitter {
       }
       party.done = party.index >= party.games.length - 1;
       result = { ...result, party: this._publicParty(room) };
+    }
+    if (result) {
+      if (room.matchId) result = { ...result, matchId: room.matchId };
+      noteResult(room, result);
     }
     return result;
   }
@@ -216,6 +221,7 @@ class RoomManager extends EventEmitter {
     if (room.players.length > game.maxPlayers) throw new GameError('TOO_MANY_PLAYERS');
     if (!room.players.every(p => p.ready && p.connected)) throw new GameError('PLAYERS_NOT_READY');
     room.status = 'playing';
+    room.matchId = crypto.randomBytes(8).toString('hex');
     room.game = game.create(room);
     room.seqs = {};
     this._changed(room);

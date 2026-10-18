@@ -11,7 +11,7 @@ function privacyHtml() {
   const stored = config.mongoUri
     ? `<p>This server also keeps a small profile per player ID: the player name and how many games were played and won,
        so stats can be shown. It holds nothing else. To have it removed, contact us with the name you played under.</p>`
-    : '<p>The server does not save anything to a database: a room and everything in it is gone from memory when the room ends.</p>';
+    : '<p>The server does not save anything to a database. Wins from a finished match stay in memory for the leaderboard and are gone when the server restarts. The room itself is forgotten when it ends.</p>';
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Party Games: Privacy Policy</title>

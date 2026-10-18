@@ -80,7 +80,9 @@ void main() {
     });
     await tester.pumpAndSettle();
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text('Welcome'), findsOneWidget);
+    expect(find.text('RivalRooms'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('home-profile')));
+    await tester.pumpAndSettle();
     expect(find.text('asha'), findsOneWidget);
     expect(auth.displayName, 'asha');
     expect(socket.connects.single, auth.token, reason: 'connects in the background');
@@ -91,7 +93,9 @@ void main() {
     await bootSplash(tester);
     await tester.pumpAndSettle();
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text('Welcome'), findsOneWidget);
+    expect(find.text('RivalRooms'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('home-profile')));
+    await tester.pumpAndSettle();
     expect(find.text('Ravi'), findsOneWidget);
     expect(socket.connects, ['dev:u1:Ravi']);
   });
@@ -138,10 +142,15 @@ void main() {
       final (auth, _) = await pumpApp(tester, const HomeScreen(), prefs: {'uid': 'u1', 'name': 'A very long player name'}, size: size);
       await tester.runAsync(auth.restore);
       await tester.pump();
-      expect(find.text('Offline'), findsOneWidget);
-      expect(find.text('Welcome'), findsOneWidget);
+      expect(find.text('RivalRooms'), findsOneWidget);
+      expect(find.text('Online'), findsOneWidget);
+      expect(find.text('Same Device'), findsOneWidget);
       expect(find.text('Trending'), findsOneWidget);
+      expect(find.text('Trending Games'), findsOneWidget);
       expect(find.text('All Games'), findsOneWidget);
+      final trending = tester.widget<GridView>(find.byKey(const Key('trending-grid')));
+      expect((trending.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount).crossAxisCount, 2);
+      expect(trending.childrenDelegate.estimatedChildCount, 4);
 
       Future<void> open(Finder target) async {
         final list = find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down).first;
@@ -162,9 +171,7 @@ void main() {
       await openAndBack(find.text('Memory'), LocalGameShell);
 
       Future<void> openRoom(String label, Type page) async {
-        await tester.tap(find.text('Online / Wi-Fi'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Online'));
+        await tester.tap(find.byKey(const Key('home-online')));
         await tester.pumpAndSettle();
         await tester.tap(find.text(label));
         await tester.pumpAndSettle();
@@ -180,7 +187,10 @@ void main() {
       await tester.tap(find.byKey(const Key('home-profile')));
       await tester.pumpAndSettle();
       expect(find.text('Settings'), findsOneWidget);
-      expect(find.text('Privacy Policy'), findsOneWidget);
+      expect(find.text('Leaderboard'), findsOneWidget);
+      expect(find.text('Privacy'), findsOneWidget);
+      expect(find.text('Help & Rules'), findsOneWidget);
+      expect(find.text('About'), findsOneWidget);
       await tester.tap(find.text('Profile'));
       await tester.pumpAndSettle();
       expect(find.byType(ProfileScreen), findsOneWidget);
@@ -191,8 +201,8 @@ void main() {
       await tester.tap(find.byKey(const Key('home-tab-all')));
       await tester.pumpAndSettle();
       expect(find.text('Leaderboard'), findsNothing);
-      expect(find.text('Online / Wi-Fi'), findsNothing);
-      expect(find.text('Offline'), findsNothing);
+      expect(find.text('Online'), findsNothing);
+      expect(find.text('Same Device'), findsNothing);
       final grid = tester.widget<GridView>(find.byKey(const Key('all-games-grid')));
       final cols = (grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount).crossAxisCount;
       expect(cols, size.width >= 340 ? 3 : 2, reason: 'six cards per two rows on supported phones');
@@ -201,7 +211,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('home-profile')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Privacy Policy'));
+      await tester.tap(find.text('Privacy'));
       await tester.pumpAndSettle();
       expect(find.byType(PrivacyScreen), findsOneWidget);
       Navigator.of(tester.element(find.byType(PrivacyScreen))).pop();
@@ -220,14 +230,15 @@ void main() {
       expect(find.textContaining('Server: '), findsNothing);
       await tester.tap(find.byKey(const Key('home-tab-trending')));
       await tester.pumpAndSettle();
-      expect(find.text('Leaderboard'), findsOneWidget);
-      await tester.tap(find.text('Offline'));
+      expect(find.text('Online'), findsOneWidget);
+      expect(find.text('Same Device'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('home-same-device')));
       await tester.pumpAndSettle();
       expect(find.text('On this phone'), findsOneWidget);
       expect(find.text('Memory'), findsWidgets);
       Navigator.of(tester.element(find.text('On this phone'))).pop();
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Online / Wi-Fi'));
+      await tester.tap(find.byKey(const Key('home-online')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Same host'));
       await tester.pumpAndSettle();

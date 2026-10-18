@@ -22,6 +22,21 @@ void main() {
     expect(completeGameBatches(67, 390) * 6, lessThan(67));
   });
 
+  test('trending grid ranks by plays and recent games, then fills four slots', () {
+    const known = {'memory', 'ludo', 'smash_karts', 'air_hockey', 'bingo', 'carrom'};
+    expect(rankTrending(known: known), ['memory', 'smash_karts', 'ludo', 'air_hockey']);
+    final quiet = rankTrending(known: known, plays: {'bingo': 2, 'carrom': 1});
+    expect(quiet.take(2), ['bingo', 'carrom']);
+    expect(quiet, hasLength(4));
+    final busy = rankTrending(known: known, plays: {'bingo': 2, 'carrom': 4}, recent: ['ludo', 'bingo']);
+    expect(busy.first, 'carrom');
+    expect(busy, isNot(equals(quiet)));
+    expect(
+      rankTrending(known: known, live: {'ludo': 3}),
+      ['ludo', 'memory', 'smash_karts', 'air_hockey'],
+    );
+  });
+
   test('trending uses live counts and ignores unknown or empty games', () {
     const known = {'memory', 'ludo', 'smash_karts'};
     expect(

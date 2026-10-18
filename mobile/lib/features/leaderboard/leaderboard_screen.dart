@@ -9,16 +9,29 @@ import '../../core/records/records.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/ui/tokens.dart';
 import '../home/home_chrome.dart';
+import '../local_games/local_games_hub_screen.dart';
 
 const leaderboardCream = Color(0xFFF4EFE4);
 const leaderboardInk = Color(0xFF1C1A17);
 
-/// One ranked player. [wins] decides the order; [played] and [name] only break ties.
+/// Wins and games played for one game.
+class GameTally {
+  final int wins;
+  final int played;
+  final int losses;
+  const GameTally({this.wins = 0, this.played = 0, this.losses = 0});
+}
+
+/// One ranked player. Wins come first, then win rate, then games played, then name.
 class BoardRow {
   final String name;
   final int wins;
   final int played;
-  const BoardRow({required this.name, required this.wins, required this.played});
+  final int losses;
+  final Map<String, GameTally> games;
+  const BoardRow({required this.name, required this.wins, required this.played, this.losses = 0, this.games = const {}});
+
+  double get winRate => played == 0 ? 0 : wins / played;
 }
 
 List<BoardRow> rankByWins(List<BoardRow> rows) {
@@ -26,6 +39,10 @@ List<BoardRow> rankByWins(List<BoardRow> rows) {
   copy.sort((a, b) {
     final byWins = b.wins.compareTo(a.wins);
     if (byWins != 0) return byWins;
+    if (a.played > 0 && b.played > 0) {
+      final byRate = (b.wins * a.played).compareTo(a.wins * b.played);
+      if (byRate != 0) return byRate;
+    }
     final byPlayed = b.played.compareTo(a.played);
     if (byPlayed != 0) return byPlayed;
     return a.name.toLowerCase().compareTo(b.name.toLowerCase());
@@ -44,6 +61,8 @@ class LeaderboardScreen extends StatefulWidget {
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   List<BoardRow>? _rows;
   bool _fromPhone = false;
+  bool _error = false;
+  String? _game;
   int? _playingNow;
 
   @override
@@ -64,7 +83,19 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       setState(() {
         _playingNow = playing;
         _fromPhone = false;
+        _error = false;
         _rows = rankByWins(remote);
+      });
+      return;
+    }
+    final seats = await _seatRows();
+    if (!mounted) return;
+    if (seats.isNotEmpty) {
+      setState(() {
+        _playingNow = playing;
+        _fromPhone = true;
+        _error = false;
+        _rows = rankByWins(seats);
       });
       return;
     }
@@ -73,6 +104,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     setState(() {
       _playingNow = playing;
       _fromPhone = local != null;
+      _error = local == null && board['ok'] != true;
       _rows = local == null ? const [] : [local];
     });
   }
@@ -80,6 +112,23 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   List<BoardRow> _remoteRows(Map<String, dynamic> board) {
     if (board['ok'] != true) return const [];
     return rowsFromLeaderboardJson(board);
+  }
+
+  Future<List<BoardRow>> _seatRows() async {
+    final seats = await Records.standings();
+    return [
+      for (final seat in seats)
+        BoardRow(
+          name: seat.name,
+          wins: seat.wins,
+          played: seat.played,
+          losses: seat.losses,
+          games: {
+            for (final entry in seat.games.entries)
+              entry.key: GameTally(wins: entry.value.wins, played: entry.value.played),
+          },
+        ),
+    ];
   }
 
   Future<BoardRow?> _phoneRow() async {
@@ -92,7 +141,38 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     if (played == 0 && wins == 0) return null;
     if (!mounted) return null;
     final name = context.read<AuthenticationManager>().displayName.trim();
-    return BoardRow(name: name.isEmpty ? 'You' : name, wins: wins, played: played);
+    return BoardRow(
+      name: name.isEmpty ? 'You' : name,
+      wins: wins,
+      played: played,
+      games: {
+        for (final entry in records.entries)
+          if (entry.value.played > 0) entry.key: GameTally(wins: entry.value.wins, played: entry.value.played),
+      },
+    );
+  }
+
+  List<BoardRow> _visible(List<BoardRow> rows) {
+    final id = _game;
+    if (id == null) return rows;
+    return rankByWins([
+      for (final row in rows)
+        if (row.games[id] case final tally?)
+          if (tally.played > 0) BoardRow(name: row.name, wins: tally.wins, played: tally.played, losses: tally.losses),
+    ]);
+  }
+
+  List<String> _gameIds(List<BoardRow> rows) {
+    final ids = <String>{for (final row in rows) ...row.games.keys};
+    final list = ids.toList()..sort();
+    return list;
+  }
+
+  String _gameTitle(String id) {
+    for (final game in listedGames()) {
+      if (game.id == id) return game.title;
+    }
+    return id;
   }
 
   @override
@@ -102,6 +182,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       listenable: AppSettings.homeLight,
       builder: (context, _) {
         final colors = HomeColors.of(context);
+        final shown = rows == null ? const <BoardRow>[] : _visible(rows);
+        final gameIds = rows == null ? const <String>[] : _gameIds(rows);
         return Scaffold(
           backgroundColor: colors.bg,
           body: SafeArea(
@@ -129,12 +211,36 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           padding: const EdgeInsets.only(bottom: 10),
                           child: Text('Showing your wins saved on this phone. Other players appear when the server has their results.',
                               style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: colors.muted)),
+                        )
+                      else if (rows.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Text('Online rankings from finished matches.', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: colors.muted)),
                         ),
-                      if (rows.isEmpty)
+                      if (_error)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(children: [
+                            Expanded(child: Text('Could not reach the server.', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: colors.muted))),
+                            TextButton(onPressed: _load, child: Text('Try again', style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w800, color: colors.blue))),
+                          ]),
+                        ),
+                      if (gameIds.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(children: [
+                              _GameChip(label: 'All', selected: _game == null, onTap: () => setState(() => _game = null)),
+                              for (final id in gameIds) _GameChip(label: _gameTitle(id), selected: _game == id, onTap: () => setState(() => _game = id)),
+                            ]),
+                          ),
+                        ),
+                      if (shown.isEmpty)
                         const _EmptyBoard()
                       else
-                        for (var i = 0; i < rows.length; i++) ...[
-                          _RankCard(place: i + 1, row: rows[i]),
+                        for (var i = 0; i < shown.length; i++) ...[
+                          _RankCard(place: i + 1, row: shown[i]),
                           const SizedBox(height: 10),
                         ],
                     ],
@@ -142,6 +248,35 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _GameChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _GameChip({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = HomeColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 36),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? colors.blue : colors.card,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: selected ? colors.blue : colors.border),
+          ),
+          child: Text(label, style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: selected ? Colors.white : colors.text)),
+        ),
+      ),
     );
   }
 }
@@ -200,6 +335,8 @@ class _RankCard extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(row.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.display, fontSize: 22, height: 1.05, color: leaderboardInk)),
             Text('${row.played} played', style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF5C564C))),
+            if (row.played > 0)
+              Text('${(row.winRate * 100).round()}% win rate', style: const TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF5C564C))),
           ]),
         ),
         Text('${row.wins}', style: const TextStyle(fontFamily: Fonts.display, fontSize: 28, color: leaderboardInk)),
@@ -222,6 +359,19 @@ class _EmptyBoard extends StatelessWidget {
   }
 }
 
+Map<String, GameTally> _gamesFromJson(Object? raw) {
+  if (raw is! Map) return const {};
+  return {
+    for (final entry in raw.entries)
+      if (entry.value is Map)
+        entry.key.toString(): GameTally(
+          wins: ((entry.value as Map)['wins'] as num?)?.toInt() ?? ((entry.value as Map)['w'] as num?)?.toInt() ?? 0,
+          played: ((entry.value as Map)['played'] as num?)?.toInt() ?? ((entry.value as Map)['p'] as num?)?.toInt() ?? 0,
+          losses: ((entry.value as Map)['losses'] as num?)?.toInt() ?? ((entry.value as Map)['l'] as num?)?.toInt() ?? 0,
+        ),
+  };
+}
+
 /// Parses a server leaderboard payload the same way the screen does. Exposed for tests.
 List<BoardRow> rowsFromLeaderboardJson(Object? raw) {
   final board = raw is String ? jsonDecode(raw) : raw;
@@ -232,7 +382,9 @@ List<BoardRow> rowsFromLeaderboardJson(Object? raw) {
         BoardRow(
           name: row['username']?.toString().trim() ?? '',
           wins: (row['wins'] as num?)?.toInt() ?? 0,
-          played: (row['played'] as num?)?.toInt() ?? 0,
+          played: (row['played'] as num?)?.toInt() ?? (row['gamesPlayed'] as num?)?.toInt() ?? 0,
+          losses: (row['losses'] as num?)?.toInt() ?? 0,
+          games: _gamesFromJson(row['games']),
         ),
   ].where((r) => r.name.isNotEmpty).toList());
 }

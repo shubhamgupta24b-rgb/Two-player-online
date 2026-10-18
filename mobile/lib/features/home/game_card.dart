@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/ui/tokens.dart';
+import 'game_icon_assets.dart';
 import 'game_preview.dart';
 import 'home_chrome.dart';
 
@@ -49,7 +51,7 @@ class _HomeGameCardState extends State<HomeGameCard> {
               duration: Motion.of(context, Motion.fast),
               opacity: _pressed ? 0.82 : 1,
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Expanded(child: GamePreview(id: widget.id)),
+                Expanded(child: _GameArt(id: widget.id)),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
                   child: Text(
@@ -64,6 +66,22 @@ class _HomeGameCardState extends State<HomeGameCard> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Supplied SVG when the manifest has this game. Painted preview otherwise.
+class _GameArt extends StatelessWidget {
+  final String id;
+  const _GameArt({required this.id});
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = gameIconAsset(id);
+    if (asset == null) return GamePreview(id: id);
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: SvgPicture.asset(asset, fit: BoxFit.contain),
     );
   }
 }

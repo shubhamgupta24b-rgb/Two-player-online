@@ -33,14 +33,14 @@ Future<void> _pumpBoard(WidgetTester tester, {required SocketManager socket, req
 }
 
 void main() {
-  test('rankByWins puts the most wins first, then games played, then name', () {
+  test('rankByWins puts the most wins first, then win rate, then games played, then name', () {
     final ranked = rankByWins(const [
       BoardRow(name: 'Zed', wins: 1, played: 1),
       BoardRow(name: 'amy', wins: 0, played: 9),
       BoardRow(name: 'Ned', wins: 1, played: 4),
       BoardRow(name: 'Bea', wins: 1, played: 4),
     ]);
-    expect(ranked.map((r) => r.name).toList(), ['Bea', 'Ned', 'Zed', 'amy']);
+    expect(ranked.map((r) => r.name).toList(), ['Zed', 'Bea', 'Ned', 'amy']);
   });
 
   test('rowsFromLeaderboardJson ranks by wins and drops blank names', () {
@@ -51,7 +51,7 @@ void main() {
         {'username': 'Ada', 'wins': 2, 'played': 5},
       ],
     }));
-    expect(rows.map((r) => r.name).toList(), ['Ada', 'Bo']);
+    expect(rows.map((r) => r.name).toList(), ['Bo', 'Ada']);
     expect(rows.map((r) => r.wins).toList(), [2, 2]);
   });
 

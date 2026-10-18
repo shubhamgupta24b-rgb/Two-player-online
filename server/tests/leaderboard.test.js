@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const { RoomManager } = require('../src/rooms/RoomManager');
 const { noteResult, memoryTop, playingNow, resetBoard } = require('../src/stats/board');
 
-test('leaderboard ranks by wins, then games played, then name', () => {
+test('leaderboard ranks by wins, then win rate, then games played, then name', () => {
   resetBoard();
   noteResult(
     { players: [{ userId: 'zed', username: 'Zed' }, { userId: 'amy', username: 'Amy' }] },
@@ -27,7 +27,7 @@ test('leaderboard ranks by wins, then games played, then name', () => {
   assert.strictEqual(memoryTop(10).find(p => p.username === 'Amy').wins, 0);
 });
 
-test('a tied finish gives every winner a win, and more games played breaks a win tie', () => {
+test('a tied finish gives every winner a win, and a higher win rate ranks above more games played', () => {
   resetBoard();
   noteResult(
     { players: [{ userId: 'a', username: 'Ann' }, { userId: 'b', username: 'Bo' }] },
@@ -37,8 +37,40 @@ test('a tied finish gives every winner a win, and more games played breaks a win
     { players: [{ userId: 'a', username: 'Ann' }, { userId: 'c', username: 'Cy' }] },
     { winners: ['c'] },
   );
-  // Ann: 1 win, 2 played. Bo: 1 win, 1 played. Cy: 1 win, 1 played.
-  assert.deepStrictEqual(memoryTop(10).map(p => p.username), ['Ann', 'Bo', 'Cy']);
+  // Ann: 1 win from 2 (50%). Bo and Cy: 1 win from 1 (100%). Same rate and played: name order.
+  assert.deepStrictEqual(memoryTop(10).map(p => p.username), ['Bo', 'Cy', 'Ann']);
+  assert.strictEqual(memoryTop(10).find(p => p.username === 'Ann').losses, 1);
+  assert.strictEqual(memoryTop(10).find(p => p.username === 'Bo').losses, 0);
+});
+
+test('the same match is recorded once, and a match with no winner is ignored', () => {
+  resetBoard();
+  const room = {
+    matchId: 'm1',
+    gameType: 'ludo',
+    players: [{ userId: 'a', username: 'Ada' }, { userId: 'b', username: 'Bo' }],
+  };
+  assert.strictEqual(noteResult(room, { winners: ['a'] }), true);
+  assert.strictEqual(noteResult(room, { winners: ['b'] }), false);
+  assert.strictEqual(noteResult({ players: room.players }, null), false);
+  assert.strictEqual(noteResult({ players: room.players }, { winners: [] }), false);
+  const top = memoryTop(10);
+  assert.strictEqual(top.find(p => p.username === 'Ada').wins, 1);
+  assert.strictEqual(top.find(p => p.username === 'Ada').played, 1);
+  assert.strictEqual(top.find(p => p.username === 'Ada').games.ludo.wins, 1);
+  assert.strictEqual(top.find(p => p.username === 'Bo').wins, 0);
+  assert.strictEqual(top.find(p => p.username === 'Bo').losses, 1);
+});
+
+test('leaving a game before it finishes does not record a win', () => {
+  resetBoard();
+  const rooms = new RoomManager({ graceMs: 1000 });
+  const room = rooms.createRoom({ userId: 'a', username: 'Ada' }, { gameType: 'tic_tac_toe', maxPlayers: 2 });
+  rooms.joinRoom({ userId: 'b', username: 'Bo' }, room.code);
+  rooms.setReady('b', true);
+  rooms.startGame('a');
+  rooms.leave('a');
+  assert.deepStrictEqual(memoryTop(10), []);
 });
 
 test('playing now counts only connected players in live games', () => {

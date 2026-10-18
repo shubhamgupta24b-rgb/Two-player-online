@@ -109,7 +109,8 @@ class _RecordOnceState extends State<_RecordOnce> {
     final ranking = (widget.result['ranking'] as List).cast<Map>();
     // A win is a game you won outright, or together with your team (not an everyone-tied draw).
     final won = winners.contains(widget.myId) && winners.length < ranking.length;
-    Records.add(widget.gameType, score: (mine['score'] as num?)?.toInt() ?? 0, won: won).ignore();
+    final matchId = widget.result['matchId']?.toString();
+    Records.add(widget.gameType, score: (mine['score'] as num?)?.toInt() ?? 0, won: won, matchId: matchId == null ? null : '$matchId:${widget.myId}').ignore();
   }
 
   @override

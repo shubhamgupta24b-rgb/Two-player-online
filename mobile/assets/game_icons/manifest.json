@@ -1,0 +1,485 @@
+[
+  {
+    "id": "guess_the_person",
+    "title": "Guess the Person",
+    "file": "assets/game_icons/guess_the_person.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "raja_mantri_chor_sipahi",
+    "title": "Raja Mantri Chor Sipahi",
+    "file": "assets/game_icons/raja_mantri_chor_sipahi.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "colour_clash",
+    "title": "Colour Clash",
+    "file": "assets/game_icons/colour_clash.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "ludo",
+    "title": "Ludo",
+    "file": "assets/game_icons/ludo.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "ludo_2_vs_2",
+    "title": "Ludo 2 vs 2",
+    "file": "assets/game_icons/ludo_2_vs_2.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "snakes_and_ladders",
+    "title": "Snakes & Ladders",
+    "file": "assets/game_icons/snakes_and_ladders.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "bingo",
+    "title": "Bingo",
+    "file": "assets/game_icons/bingo.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "battleship",
+    "title": "Battleship",
+    "file": "assets/game_icons/battleship.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "checkers",
+    "title": "Checkers",
+    "file": "assets/game_icons/checkers.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "dots_and_boxes",
+    "title": "Dots & Boxes",
+    "file": "assets/game_icons/dots_and_boxes.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "connect_four",
+    "title": "Connect Four",
+    "file": "assets/game_icons/connect_four.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "tic_tac_toe",
+    "title": "Tic-Tac-Toe",
+    "file": "assets/game_icons/tic_tac_toe.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "memory",
+    "title": "Memory",
+    "file": "assets/game_icons/memory.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "guess_who",
+    "title": "Guess Who",
+    "file": "assets/game_icons/guess_who.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "air_hockey",
+    "title": "Air Hockey",
+    "file": "assets/game_icons/air_hockey.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "ping_pong",
+    "title": "Ping Pong",
+    "file": "assets/game_icons/ping_pong.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "basketball_hoops",
+    "title": "Basketball Hoops",
+    "file": "assets/game_icons/basketball_hoops.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "paint_fight",
+    "title": "Paint Fight",
+    "file": "assets/game_icons/paint_fight.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "reaction_tap",
+    "title": "Reaction Tap",
+    "file": "assets/game_icons/reaction_tap.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "math_duel",
+    "title": "Math Duel",
+    "file": "assets/game_icons/math_duel.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "hand_cricket",
+    "title": "Hand Cricket",
+    "file": "assets/game_icons/hand_cricket.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "quiz_battle",
+    "title": "Quiz Battle",
+    "file": "assets/game_icons/quiz_battle.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "fruit_merge_battle",
+    "title": "Fruit Merge Battle",
+    "file": "assets/game_icons/fruit_merge_battle.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "smash_karts",
+    "title": "Smash Karts",
+    "file": "assets/game_icons/smash_karts.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "mini_golf",
+    "title": "Mini Golf",
+    "file": "assets/game_icons/mini_golf.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "slingshot",
+    "title": "Slingshot",
+    "file": "assets/game_icons/slingshot.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "archery",
+    "title": "Archery",
+    "file": "assets/game_icons/archery.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "shooting_gallery",
+    "title": "Shooting Gallery",
+    "file": "assets/game_icons/shooting_gallery.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "bottle_smash",
+    "title": "Bottle Smash",
+    "file": "assets/game_icons/bottle_smash.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "find_the_spy",
+    "title": "Find the Spy",
+    "file": "assets/game_icons/find_the_spy.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "mafia",
+    "title": "Mafia",
+    "file": "assets/game_icons/mafia.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "undercover",
+    "title": "Undercover",
+    "file": "assets/game_icons/undercover.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "dumb_charades",
+    "title": "Dumb Charades",
+    "file": "assets/game_icons/dumb_charades.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "heads_up",
+    "title": "Heads Up",
+    "file": "assets/game_icons/heads_up.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "draw_and_guess",
+    "title": "Draw & Guess",
+    "file": "assets/game_icons/draw_and_guess.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "most_likely_to",
+    "title": "Most Likely To",
+    "file": "assets/game_icons/most_likely_to.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "would_you_rather",
+    "title": "Would You Rather",
+    "file": "assets/game_icons/would_you_rather.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "truth_or_dare",
+    "title": "Truth or Dare",
+    "file": "assets/game_icons/truth_or_dare.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "rock_paper_scissors",
+    "title": "Rock Paper Scissors",
+    "file": "assets/game_icons/rock_paper_scissors.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "fruit_merge",
+    "title": "Fruit Merge",
+    "file": "assets/game_icons/fruit_merge.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "fruit_cut",
+    "title": "Fruit Cut",
+    "file": "assets/game_icons/fruit_cut.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "chicken_jump",
+    "title": "Chicken Jump",
+    "file": "assets/game_icons/chicken_jump.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "knife_hit",
+    "title": "Knife Hit",
+    "file": "assets/game_icons/knife_hit.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "sweet_swap",
+    "title": "Sweet Swap",
+    "file": "assets/game_icons/sweet_swap.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "bike_racing",
+    "title": "Bike Racing",
+    "file": "assets/game_icons/bike_racing.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "hungry_hippos",
+    "title": "Hungry Hippos",
+    "file": "assets/game_icons/hungry_hippos.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "tug_of_war",
+    "title": "Tug of War",
+    "file": "assets/game_icons/tug_of_war.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "carrom",
+    "title": "Carrom",
+    "file": "assets/game_icons/carrom.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "eight_ball",
+    "title": "Eight Ball",
+    "file": "assets/game_icons/eight_ball.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "minesweeper_race",
+    "title": "Minesweeper Race",
+    "file": "assets/game_icons/minesweeper_race.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "2048",
+    "title": "2048",
+    "file": "assets/game_icons/2048.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "flappy_jump",
+    "title": "Flappy Jump",
+    "file": "assets/game_icons/flappy_jump.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "minesweeper",
+    "title": "Minesweeper",
+    "file": "assets/game_icons/minesweeper.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "brick_breaker",
+    "title": "Brick Breaker",
+    "file": "assets/game_icons/brick_breaker.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "whack_a_mole",
+    "title": "Whack-a-Mole",
+    "file": "assets/game_icons/whack_a_mole.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "piano_tiles",
+    "title": "Piano Tiles",
+    "file": "assets/game_icons/piano_tiles.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "word_scramble",
+    "title": "Word Scramble",
+    "file": "assets/game_icons/word_scramble.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "stack_tower",
+    "title": "Stack Tower",
+    "file": "assets/game_icons/stack_tower.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "simon_says",
+    "title": "Simon Says",
+    "file": "assets/game_icons/simon_says.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "ball_sort",
+    "title": "Ball Sort",
+    "file": "assets/game_icons/ball_sort.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "sliding_puzzle",
+    "title": "Sliding Puzzle",
+    "file": "assets/game_icons/sliding_puzzle.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "sudoku",
+    "title": "Sudoku",
+    "file": "assets/game_icons/sudoku.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "hangman",
+    "title": "Hangman",
+    "file": "assets/game_icons/hangman.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "dino_run",
+    "title": "Dino Run",
+    "file": "assets/game_icons/dino_run.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "block_drop",
+    "title": "Block Drop",
+    "file": "assets/game_icons/block_drop.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "bubble_shooter",
+    "title": "Bubble Shooter",
+    "file": "assets/game_icons/bubble_shooter.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "sky_jumper",
+    "title": "Sky Jumper",
+    "file": "assets/game_icons/sky_jumper.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "space_shooter",
+    "title": "Space Shooter",
+    "file": "assets/game_icons/space_shooter.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  },
+  {
+    "id": "color_switch",
+    "title": "Color Switch",
+    "file": "assets/game_icons/color_switch.svg",
+    "format": "SVG",
+    "source": "Extracted from the supplied HTML game-art SVG without redrawing the artwork"
+  }
+]

@@ -17,7 +17,7 @@ class PrivacyScreen extends StatelessWidget {
     (GameIcons.people, 'No account', 'You only type a player name. No email, phone number or Google account.'),
     (GameIcons.eye, 'Who sees what', 'Players in your room see your name and your moves. Nobody else.'),
     (GameIcons.lock, 'Kept on this phone', 'Your name, a random player ID and your records (best scores, wins).'),
-    (GameIcons.globe, 'The game server', 'Passes moves between players and forgets a room when it ends.'),
+    (GameIcons.globe, 'The game server', 'Passes moves between players. A finished match can add wins to the leaderboard. Without a database those wins reset when the server restarts.'),
     (GameIcons.shield, 'Never collected', 'Location, contacts, photos, camera, microphone, ads or tracking.'),
   ];
 

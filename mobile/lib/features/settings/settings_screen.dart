@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/settings/app_settings.dart';
+import '../../core/ui/app_flavor.dart';
 import '../../core/ui/components.dart';
 import '../home/home_chrome.dart';
 import '../privacy/privacy_screen.dart';
@@ -50,6 +51,70 @@ class SettingsScreen extends StatelessWidget {
               Text('Version $appVersionLabel', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: colors.muted)),
             ],
           ),
+        );
+      },
+    );
+  }
+}
+
+class HelpRulesScreen extends StatelessWidget {
+  const HelpRulesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AppSettings.homeLight,
+      builder: (context, _) {
+        final colors = HomeColors.of(context);
+        final body = TextStyle(fontFamily: Fonts.body, fontSize: 15, height: 1.4, fontWeight: FontWeight.w700, color: colors.text);
+        return Scaffold(
+          backgroundColor: colors.bg,
+          appBar: AppBar(
+            backgroundColor: colors.bg,
+            foregroundColor: colors.text,
+            elevation: 0,
+            title: Text('Help & Rules', style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w800, color: colors.text)),
+          ),
+          body: ListView(padding: const EdgeInsets.fromLTRB(20, 8, 20, 24), children: [
+            Text('During a game, tap ? or How to play. That opens the rules for the game you are in.', style: body),
+            const SizedBox(height: 12),
+            Text('Opening the rules does not reset the timer, score, turn, or connection.', style: body),
+            const SizedBox(height: 12),
+            Text('Online starts a room, joins a code, or finds an open room. Same Device plays on this phone.', style: body),
+          ]),
+        );
+      },
+    );
+  }
+}
+
+class AboutScreen extends StatelessWidget {
+  const AboutScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AppSettings.homeLight,
+      builder: (context, _) {
+        final colors = HomeColors.of(context);
+        final body = TextStyle(fontFamily: Fonts.body, fontSize: 15, height: 1.4, fontWeight: FontWeight.w700, color: colors.text);
+        return Scaffold(
+          backgroundColor: colors.bg,
+          appBar: AppBar(
+            backgroundColor: colors.bg,
+            foregroundColor: colors.text,
+            elevation: 0,
+            title: Text('About', style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w800, color: colors.text)),
+          ),
+          body: ListView(padding: const EdgeInsets.fromLTRB(20, 8, 20, 24), children: [
+            Text(appName, style: TextStyle(fontFamily: Fonts.display, fontSize: 28, color: colors.text)),
+            const SizedBox(height: 8),
+            Text('Version $appVersionLabel', style: body),
+            const SizedBox(height: 12),
+            Text('A name on this phone is a guest profile. It is not an online account.', style: body),
+            const SizedBox(height: 12),
+            Text('Wins on the online leaderboard come from finished matches on the server. Rankings saved on this phone are labeled as this phone.', style: body),
+          ]),
         );
       },
     );

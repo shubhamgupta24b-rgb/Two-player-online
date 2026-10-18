@@ -77,6 +77,7 @@ class _LocalGameShellState extends State<LocalGameShell> {
   late var wins = List.filled(players.length, 0);
   var phase = _ShellPhase.intro;
   var matchNo = 0;
+  var _savedMatch = -1;
   int botCount = 0; // computer players (the last seats); 0 = everyone is a person
   bool get vsComputer => botCount > 0;
   List<BotSeat> _bots = const [];
@@ -179,7 +180,8 @@ class _LocalGameShellState extends State<LocalGameShell> {
   }
 
   void _finished(List<int> scores) {
-    if (!mounted) return;
+    if (!mounted || _savedMatch == matchNo) return;
+    _savedMatch = matchNo;
     haptic(HapticWeight.medium);
     GameAudio.stopMusic();
     GameAudio.sfx('win');
@@ -228,6 +230,18 @@ class _LocalGameShellState extends State<LocalGameShell> {
     } else {
       Records.add(_game.id, score: top).ignore();
     }
+    if (widget.game.solo) return;
+    final leaders = [for (var i = 0; i < scores.length; i++) if (scores[i] == top) i];
+    final decisive = leaders.length == 1 || (_teamsOn && leaders.length == 2);
+    Records.noteSeats(
+      matchId: '${_game.id}#$matchNo',
+      gameId: _game.id,
+      seats: [
+        for (var i = 0; i < players.length; i++)
+          if (!vsComputer || i < people)
+            (name: players[i].name, win: decisive && leaders.contains(i), loss: decisive && !leaders.contains(i)),
+      ],
+    ).ignore();
   }
 
   /// The pause sheet: the game clock stops while it's open.
