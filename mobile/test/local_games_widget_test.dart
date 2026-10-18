@@ -78,7 +78,7 @@ void main() {
     expect(find.text('2–6 players').evaluate(), isNotEmpty, reason: 'player counts on the tiles');
     await tester.tap(find.text('Solo').first);
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Fishing Frenzy'), findsOneWidget);
+    expect(find.text('Guess the Person'), findsNothing, reason: 'solo filter hides multiplayer tiles');
   });
 
   testWidgets('player count picker only offers what a game supports', (tester) async {
