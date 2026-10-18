@@ -334,9 +334,22 @@ class _MemoryBoardState extends State<_MemoryBoard> {
   /// The felt card table (the flat app: the dark-blue board).
   Widget _table(Widget grid) => flatStyle
       ? Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: FlatColors.board, borderRadius: BorderRadius.circular(24)), child: grid)
-      : DecoratedBox(
-          decoration: BoxDecoration(borderRadius: Radii.rBoard, boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 28, offset: Offset(0, 12))]),
-          child: CustomPaint(painter: const FeltPainter(), child: Padding(padding: const EdgeInsets.all(12), child: grid)),
+      : Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFA65D42),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFF713A2D), width: 3),
+            boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 18, offset: Offset(0, 9))],
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xFFB46A4B),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF8A4B36), width: 2),
+            ),
+            child: Padding(padding: const EdgeInsets.all(5), child: grid),
+          ),
         );
 }
 
@@ -422,7 +435,7 @@ class _FlipCard extends StatelessWidget {
                     Positioned.fill(
                       child: DecoratedBox(decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Brand.gold.withValues(alpha: 0.8), blurRadius: 16, spreadRadius: 2)])),
                     ),
-                  flatStyle ? (showFace ? _flatFace() : _flatBack()) : (showFace ? _face() : const CardBack(radius: 10)),
+                  flatStyle ? (showFace ? _flatFace() : _flatBack()) : (showFace ? _face() : _referenceBack()),
                   if (showFace && (wrong || glow))
                     Positioned.fill(
                       child: IgnorePointer(
@@ -440,10 +453,37 @@ class _FlipCard extends StatelessWidget {
     );
   }
 
-  Widget _face() => PaperCard(
-        tint: ownerColor ?? const Color(0xFF2E8BFF),
+  /// Reference look extracted from the supplied APK's Memory banner:
+  /// cyan face, thick white rim, and a warm brown offset shadow.
+  Widget _face() => Container(
+        decoration: BoxDecoration(
+          color: ownerColor ?? const Color(0xFF08B4D0),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFFFDF6), width: 4),
+          boxShadow: const [BoxShadow(color: Color(0x663F2118), offset: Offset(4, 5), blurRadius: 0)],
+        ),
         child: LayoutBuilder(
-          builder: (_, c) => Center(child: GameIcon(_iconOf(symbol), size: min(c.maxWidth, c.maxHeight) * 0.62)),
+          builder: (_, c) => Center(
+            child: GameIcon(_iconOf(symbol), size: min(c.maxWidth, c.maxHeight) * 0.60),
+          ),
+        ),
+      );
+
+  /// The original Memory banner uses a golden face-down tile with a white rim.
+  Widget _referenceBack() => Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFDF6),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFFFDF6), width: 3),
+          boxShadow: const [BoxShadow(color: Color(0x663F2118), offset: Offset(4, 5), blurRadius: 0)],
+        ),
+        padding: const EdgeInsets.all(5),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFC233),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFF7AA26), width: 2),
+          ),
         ),
       );
 
