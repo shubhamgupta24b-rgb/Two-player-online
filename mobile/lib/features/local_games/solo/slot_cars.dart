@@ -30,7 +30,7 @@ class SlotCarsLogic extends SoloLogic {
 
   void steer(int delta) {
     if (over) return;
-    lane = (lane + delta).clamp(0, 2);
+    lane = (lane + delta).clamp(0, 2).toInt();
     notifyListeners();
   }
 
