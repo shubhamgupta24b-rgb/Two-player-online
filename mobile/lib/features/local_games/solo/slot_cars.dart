@@ -21,6 +21,7 @@ class SlotCarsLogic extends SoloLogic {
   int hits = 0;
   int _nextObstacle = 800;
   int _lastScoredSecond = -1;
+  int _lastElapsed = 0;
 
   SlotCarsLogic({Random? random}) : _rng = random ?? Random();
 
@@ -44,7 +45,8 @@ class SlotCarsLogic extends SoloLogic {
       score += 1;
       _lastScoredSecond = second;
     }
-    final dt = ((elapsed - now) / 1000).clamp(0.0, 0.05);
+    final dt = ((elapsed - _lastElapsed) / 1000).clamp(0.0, 0.05);
+    _lastElapsed = elapsed;
     for (final o in obstacles) {
       o.y += speed * dt;
     }
