@@ -36,14 +36,14 @@ class SlotCarsLogic extends SoloLogic {
 
   @override
   void step(int elapsed) {
-    if (elapsed >= durationMs) {
-      gameOver();
-      return;
-    }
     final second = elapsed ~/ 1000;
     if (second > _lastScoredSecond) {
       score += 1;
       _lastScoredSecond = second;
+    }
+    if (elapsed >= durationMs) {
+      gameOver();
+      return;
     }
     final dt = ((elapsed - _lastElapsed) / 1000).clamp(0.0, 0.05);
     _lastElapsed = elapsed;
