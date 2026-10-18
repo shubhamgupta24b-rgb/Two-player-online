@@ -86,6 +86,9 @@ Also run two-device tests for online-enabled games: room join/leave, 2–4 playe
 ## Current status
 - [x] Confirmed the repository and main branch.
 - [x] Created isolated working branch `feature/jindoblu-collection`.
-- [ ] Complete APK/scene/game inventory.
-- [ ] Implement first batch.
-- [ ] Run tests and produce the first test APK.
+- [x] Created `REFERENCE_INVENTORY.md` mapping 32 metadata-supported game candidates against existing app modules to avoid duplicates.
+- [x] Created `IL2CPP_METHOD_INVENTORY.md` by parsing metadata version 31 type/method records; controller method names are recovered, but native method bodies are not decompiled.
+- [ ] Obtain the pinned JADX engine JAR and compatible REA package; direct sandbox DNS access to GitHub/npm currently fails.
+- [ ] Complete scene/assets and controlled-play inventory; confirm exact rules, scores, timings and physics.
+- [ ] Implement the first verified gap after confirming its rules.
+- [ ] Run tests and produce the first test APK (Flutter SDK is not present on this sandbox PATH).
