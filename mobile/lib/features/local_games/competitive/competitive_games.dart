@@ -271,8 +271,12 @@ class _CompetitiveBoard extends StatelessWidget {
     final active=mode==CompetitiveMode.hotPotato?g.potatoHolder:g.turn;
     return Column(children:[
       Padding(padding:const EdgeInsets.all(10),child:Row(children:[
-        Expanded(child:Text(_titles[mode]!.toUpperCase(),style:const TextStyle(fontWeight:FontWeight.w900,letterSpacing:1.1))),
+        Expanded(child:Text(_titles[mode]!.toUpperCase(),maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w900,letterSpacing:1.1))),
         Text('ROUND ${g.round}',style:const TextStyle(fontWeight:FontWeight.w800)),
+        const SizedBox(width:6),
+        const HelpButton(),
+        const SizedBox(width:4),
+        const PauseButton(),
       ])),
       Wrap(spacing:6,runSpacing:6,alignment:WrapAlignment.center,children:[
         for(var i=0;i<players.length;i++) Chip(
