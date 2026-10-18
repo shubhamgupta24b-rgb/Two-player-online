@@ -26,8 +26,11 @@ if ($RunReaAndroidInspection) {
   Require-Command "npm"
   $nodeVersionText = (& node -p "process.versions.node").Trim()
   $nodeVersion = [version]$nodeVersionText
-  if ($nodeVersion -lt [version]"22.19.0" -and $nodeVersion.Major -eq 22) {
-    throw "REA requires Node 22.19+ (or Node 24.11+ / 26+). Found $nodeVersionText. Upgrade Node, reopen PowerShell, then rerun."
+  $supportedNode = (($nodeVersion.Major -eq 22 -and $nodeVersion -ge [version]"22.19.0") -or
+                    ($nodeVersion.Major -eq 24 -and $nodeVersion -ge [version]"24.11.0") -or
+                    ($nodeVersion.Major -ge 26))
+  if (-not $supportedNode) {
+    throw "REA requires Node 22.19+ (22.x), 24.11+ (24.x), or 26+. Found $nodeVersionText. Upgrade Node, reopen PowerShell, then rerun."
   }
   $jarDir = Join-Path $HOME ".local\share\rea\android"
   $jar = Join-Path $jarDir "jadx-headless-mcp-0.7.1-all.jar"
