@@ -287,9 +287,9 @@ class _CompetitiveBoard extends StatelessWidget {
         child: mode==CompetitiveMode.carrom||mode==CompetitiveMode.eightBallPool
           ? _TableBoard(mode:mode,g:g,onShot:(a,p)=>g.shoot(online?me:g.turn,a,p))
           : mode==CompetitiveMode.darts
-            ? _DartBoard(onThrow:(x,y)=>g.throwDart(online?me:g.turn,x,y),score:g.score[me])
+            ? _DartBoard(onThrow:(x,y)=>g.throwDart(online?me:g.turn,x,y))
             : mode==CompetitiveMode.hotPotato
-              ? _PotatoBoard(g:g,me:me,players:players)
+              ? _PotatoBoard(g:g,me:me)
               : _HippoBoard(g:g,me:me,players:players,online:online),
       )))),
       Padding(padding:const EdgeInsets.all(12),child:Text(g.notice,style:const TextStyle(fontWeight:FontWeight.w900,letterSpacing:1.1))),
@@ -336,8 +336,8 @@ class _TablePainter extends CustomPainter {
   @override bool shouldRepaint(covariant _TablePainter old)=>true;
 }
 class _DartBoard extends StatelessWidget {
-  final void Function(double,double) onThrow; final int score;
-  const _DartBoard({required this.onThrow,required this.score});
+  final void Function(double,double) onThrow;
+  const _DartBoard({required this.onThrow});
   @override Widget build(BuildContext context)=>GestureDetector(
     onTapDown:(d){final box=context.findRenderObject() as RenderBox;final p=box.globalToLocal(d.globalPosition);onThrow(p.dx/box.size.width,p.dy/box.size.height);},
     child:CustomPaint(painter:_DartPainter(),child:const SizedBox.expand()));
@@ -347,8 +347,8 @@ class _DartPainter extends CustomPainter {
   @override bool shouldRepaint(covariant _DartPainter old)=>false;
 }
 class _PotatoBoard extends StatelessWidget {
-  final CompetitiveLogic g; final int me; final List<GpPlayer> players;
-  const _PotatoBoard({required this.g,required this.me,required this.players});
+  final CompetitiveLogic g; final int me;
+  const _PotatoBoard({required this.g,required this.me});
   @override Widget build(BuildContext context){final holder=g.potatoHolder==me;return Column(mainAxisAlignment:MainAxisAlignment.center,children:[
     Text(holder?'🥔':'⏳',style:const TextStyle(fontSize:100)),
     Text(holder?'IT\'S IN YOUR HAND':'WAIT FOR THE POTATO',style:const TextStyle(fontWeight:FontWeight.w900,fontSize:18)),
