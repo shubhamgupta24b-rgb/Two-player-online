@@ -64,6 +64,7 @@ import 'solo/piano_tiles.dart';
 import 'solo/simon_says.dart';
 import 'solo/stack_tower.dart';
 import 'solo/whack_mole.dart';
+import 'solo/slot_cars.dart';
 import 'solo/word_scramble.dart';
 import 'shell/local_game_info.dart';
 import 'shell/game_art.dart';
@@ -77,7 +78,7 @@ final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafia
   // Solo games (shown in their own section).
   fruitMergeInfo, game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo,
   ballSortInfo, slidingInfo, sudokuInfo, hangmanInfo, dinoInfo,
-  blockDropInfo, bubbleInfo, skyInfo, spaceInfo, colorSwitchInfo];
+  blockDropInfo, bubbleInfo, skyInfo, spaceInfo, colorSwitchInfo, slotCarsInfo];
 
 /// The hub's games plus their team versions (e.g. Ludo 2 vs 2), for online rooms.
 List<LocalGameInfo> get allLocalGames => [...localGames, for (final g in localGames) if (g.teamVariant != null) g.teamVariant!];
