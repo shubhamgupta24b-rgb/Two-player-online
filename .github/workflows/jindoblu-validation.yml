@@ -1,0 +1,82 @@
+name: JindoBlu Branch Validation
+
+on:
+  push:
+    branches:
+      - feature/jindoblu-collection
+    paths:
+      - "mobile/**"
+      - "server/**"
+      - ".github/workflows/jindoblu-validation.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "mobile/**"
+      - "server/**"
+      - ".github/workflows/jindoblu-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jindoblu-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server-tests:
+    name: Server tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run server tests
+        run: npm test
+
+  flutter-checks:
+    name: Flutter analyze, tests, and APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Resolve Flutter dependencies
+        working-directory: mobile
+        run: flutter pub get
+      - name: Analyze Dart
+        working-directory: mobile
+        run: flutter analyze
+      - name: Run Flutter tests
+        working-directory: mobile
+        run: flutter test
+      - name: Build release APK for local/LAN smoke testing
+        working-directory: mobile
+        run: flutter build apk --release --dart-define=SERVER_URL=http://10.0.2.2:3000
+      - name: Upload test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: jindoblu-collection-test-apk
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 7
