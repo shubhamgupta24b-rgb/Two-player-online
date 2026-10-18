@@ -39,6 +39,8 @@ const RELAY_GAMES = [
   { id: 'archery', min: 2, max: 4 },
   { id: 'shooting_gallery', min: 2, max: 4 },
   { id: 'bottle_smash', min: 2, max: 4 },
+  { id: 'carrom', min: 2, max: 2 },
+  { id: 'eight_ball_pool', min: 2, max: 2 },
   // RivalRoom-only games: playable when a host picks them, never chosen at random (Quick Play,
   // party mode), so players on an app without them never land in one.
   { id: 'chess', min: 2, max: 2, optIn: true },
