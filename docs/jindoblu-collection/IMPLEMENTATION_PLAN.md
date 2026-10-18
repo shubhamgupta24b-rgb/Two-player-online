@@ -88,7 +88,9 @@ Also run two-device tests for online-enabled games: room join/leave, 2–4 playe
 - [x] Created isolated working branch `feature/jindoblu-collection`.
 - [x] Created `REFERENCE_INVENTORY.md` mapping 32 metadata-supported game candidates against existing app modules to avoid duplicates.
 - [x] Created `IL2CPP_METHOD_INVENTORY.md` by parsing metadata version 31 type/method records; controller method names are recovered, but native method bodies are not decompiled.
-- [ ] Obtain the pinned JADX engine JAR and compatible REA package; direct sandbox DNS access to GitHub/npm currently fails.
+- [x] Added a Python standard-library offline APK-split inventory script and Windows PowerShell runner under `tools/jindoblu-collection/`; the runner optionally downloads and verifies the official pinned JADX JAR before REA's Android package inspection.
+- [ ] Run the runner on a host with working network access and Node.js 22.19+ / 24.11+ / 26+; this sandbox currently cannot resolve GitHub and has Node 22.16.0.
+- [ ] Obtain native IL2CPP method analysis through Ghidra/IDA/Hopper and a metadata-to-native mapping; JADX alone does not decompile Unity IL2CPP gameplay code.
 - [ ] Complete scene/assets and controlled-play inventory; confirm exact rules, scores, timings and physics.
 - [ ] Implement the first verified gap after confirming its rules.
 - [ ] Run tests and produce the first test APK (Flutter SDK is not present on this sandbox PATH).
