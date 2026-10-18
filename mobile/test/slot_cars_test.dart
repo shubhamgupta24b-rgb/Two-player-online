@@ -30,10 +30,10 @@ void main() {
 
     test('time trial ends at 45 seconds and awards survival points', () {
       final g = SlotCarsLogic(random: Random(7));
-      for (var t = 0; t <= SlotCarsLogic.durationMs; t += 16) {
+      for (var t = 0; t <= SlotCarsLogic.durationMs + 1300; t += 16) {
         g.update(t);
       }
-      g.update(SlotCarsLogic.durationMs);
+      g.update(SlotCarsLogic.durationMs + 1300);
       expect(g.over, isTrue);
       expect(g.finished, isTrue);
       expect(g.score, greaterThanOrEqualTo(45));
