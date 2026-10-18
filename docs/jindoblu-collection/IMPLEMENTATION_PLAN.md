@@ -89,6 +89,7 @@ Also run two-device tests for online-enabled games: room join/leave, 2–4 playe
 - [x] Created `REFERENCE_INVENTORY.md` mapping 32 metadata-supported game candidates against existing app modules to avoid duplicates.
 - [x] Created `IL2CPP_METHOD_INVENTORY.md` by parsing metadata version 31 type/method records; controller method names are recovered, but native method bodies are not decompiled.
 - [x] Added `IL2CPP_NATIVE_ANALYSIS.md` with a Ghidra workflow, metadata-to-native mapping cautions, candidate controller priorities, and evidence/confidence requirements.
+- [x] Added `.github/workflows/jindoblu-validation.yml` to run server tests, Flutter analysis/tests, and publish a short-lived test APK artifact on branch updates; its first run must still be checked.
 - [x] Added a Python standard-library offline APK-split inventory script and Windows PowerShell runner under `tools/jindoblu-collection/`; the runner optionally downloads and verifies the official pinned JADX JAR before REA's Android package inspection.
 - [ ] Run the runner on a host with working network access and Node.js 22.19+ / 24.11+ / 26+; this sandbox currently cannot resolve GitHub and has Node 22.16.0.
 - [ ] Obtain native IL2CPP method analysis through Ghidra/IDA/Hopper and a metadata-to-native mapping; JADX alone does not decompile Unity IL2CPP gameplay code.
