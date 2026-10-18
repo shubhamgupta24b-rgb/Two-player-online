@@ -348,23 +348,52 @@ class _DartPainter extends CustomPainter {
 class _PotatoBoard extends StatelessWidget {
   final CompetitiveLogic g; final int me;
   const _PotatoBoard({required this.g,required this.me});
-  @override Widget build(BuildContext context){final holder=g.potatoHolder==me;return Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-    Text(holder?'🥔':'⏳',style:const TextStyle(fontSize:100)),
-    Text(holder?'IT\'S IN YOUR HAND':'WAIT FOR THE POTATO',style:const TextStyle(fontWeight:FontWeight.w900,fontSize:18)),
-    const SizedBox(height:20),
-    FilledButton(onPressed:holder?()=>g.pass(g.potatoHolder):null,child:const Text('PASS POTATO')),
-    Text('${max(0,(g.potatoUntil-g.now)~/1000)} seconds left'),
-  ]);}
+  @override Widget build(BuildContext context) {
+    final holder = g.potatoHolder == me;
+    return LayoutBuilder(builder: (context, constraints) {
+      final compact = constraints.maxHeight < 280 || constraints.maxWidth < 280;
+      final iconSize = (constraints.maxHeight * .27).clamp(42.0, compact ? 64.0 : 88.0);
+      return Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children:[
+        Text(holder ? '🥔' : '⏳', style: TextStyle(fontSize: iconSize)),
+        const SizedBox(height: 4),
+        Text(holder ? "IT'S IN YOUR HAND" : 'WAIT FOR THE POTATO',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: compact ? 12 : 16)),
+        SizedBox(height: compact ? 6 : 12),
+        FilledButton(
+          onPressed: holder ? () => g.pass(g.potatoHolder) : null,
+          child: const Text('PASS POTATO'),
+        ),
+        const SizedBox(height: 4),
+        Text('${max(0,(g.potatoUntil-g.now)~/1000)} seconds left',
+          textAlign: TextAlign.center, style: TextStyle(fontSize: compact ? 11 : 13)),
+      ]);
+    });
+  }
 }
 class _HippoBoard extends StatelessWidget {
   final CompetitiveLogic g; final int me; final List<GpPlayer> players; final bool online;
   const _HippoBoard({required this.g,required this.me,required this.players,required this.online});
-  @override Widget build(BuildContext context)=>Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-    Text('🦛',style:TextStyle(fontSize:60+g.score[me].clamp(0,10).toDouble()*2)),
-    Text('${g.marbles} marbles in the pond',style:const TextStyle(fontWeight:FontWeight.w700)),
-    const SizedBox(height:12),
-    if(!g.finished) Wrap(spacing:6,children:[for(var i=0;i<players.length;i++) if(!online || i==me) FilledButton(onPressed:g.marbles>0?()=>g.chomp(i):null,child:Text('CHOMP ${players[i].name}'))]),
-    const SizedBox(height:8),
-    Text('Mash CHOMP to collect marbles before time runs out.'),
-  ]);
+  @override Widget build(BuildContext context) => LayoutBuilder(builder: (context, constraints) {
+    final compact = constraints.maxHeight < 280 || constraints.maxWidth < 280;
+    final iconSize = (constraints.maxHeight * .25).clamp(38.0, compact ? 62.0 : 84.0);
+    return Column(mainAxisAlignment:MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children:[
+      Text('🦛',style:TextStyle(fontSize:iconSize)),
+      Text('${g.marbles} marbles in the pond',textAlign:TextAlign.center,style:const TextStyle(fontWeight:FontWeight.w700)),
+      SizedBox(height: compact ? 4 : 8),
+      if(!g.finished) Wrap(alignment: WrapAlignment.center, spacing:4, runSpacing:4, children:[
+        for(var i=0;i<players.length;i++) if(!online || i==me)
+          FilledButton(
+            style: FilledButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: compact ? 6 : 10),
+              minimumSize: const Size(0, 32),
+            ),
+            onPressed:g.marbles>0?()=>g.chomp(i):null,
+            child:Text('CHOMP ${players[i].name}', style: TextStyle(fontSize: compact ? 10 : 12)),
+          )
+      ]),
+      SizedBox(height: compact ? 4 : 8),
+      const Text('Mash CHOMP to collect marbles before time runs out.',textAlign:TextAlign.center,style:TextStyle(fontSize:12)),
+    ]);
+  });
 }
