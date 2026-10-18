@@ -71,19 +71,13 @@ Future<void> playThrough(WidgetTester tester, LocalGameInfo game, Size size, int
 void main() {
   const sizes = {'small phone': Size(320, 568), 'phone': Size(411, 914), 'tablet': Size(800, 1280)};
 
-  testWidgets('hub lists games and separates solo from multiplayer', (tester) async {
+  testWidgets('hub lists games and filters the solo collection', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: LocalGamesHubScreen()));
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Guess the Person'), findsOneWidget);
     expect(find.text('2–6 players').evaluate(), isNotEmpty, reason: 'player counts on the tiles');
-    // Verify a representative multiplayer and solo tile; the full catalog is covered by
-    // the catalog-count and unique-id logic tests without relying on lazy sliver internals.
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -900));
+    await tester.tap(find.text('Solo').first);
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Carrom Clash'), findsOneWidget);
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -5000));
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Solo games'), findsOneWidget);
     expect(find.text('Fishing Frenzy'), findsOneWidget);
   });
 
