@@ -4,7 +4,6 @@ import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/ticking_play.dart';
-import '../solo/solo_common.dart' show SoloFrame;
 
 enum CompetitiveMode { carrom, eightBallPool, darts, hotPotato, hungryHippos }
 
@@ -326,7 +325,7 @@ class _TablePainter extends CustomPainter {
       final p=Offset(b.x*size.width,b.y*size.height);
       final color=b.kind==0?const Color(0xFF24282B):b.kind==2?const Color(0xFFD8A92D):const Color(0xFFF7F1E6);
       canvas.drawCircle(p,size.width*(mode==CompetitiveMode.carrom ? .018 : .022),Paint()..color=color);
-      canvas.drawCircle(p,size.width*(mode==CompetitiveMode.carrom?.018:.022),Paint()..color=const Color(0xFF222222)..style=PaintingStyle.stroke..strokeWidth=1);
+      canvas.drawCircle(p,size.width*(mode==CompetitiveMode.carrom ? .018 : .022),Paint()..color=const Color(0xFF222222)..style=PaintingStyle.stroke..strokeWidth=1);
     }
     if(balls.isNotEmpty&&!balls.first.pocketed&&balls.first.vx==0&&balls.first.vy==0){
       final cue=Offset(balls.first.x*size.width,balls.first.y*size.height);
