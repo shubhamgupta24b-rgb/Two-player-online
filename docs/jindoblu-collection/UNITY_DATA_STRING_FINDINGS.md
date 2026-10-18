@@ -4,6 +4,9 @@
 
 ## What was directly observed
 
+- Parsed the UnityFS header from the supplied APK: format version `8`, player version field `5.x.x`, engine version `2022.3.62f3`; the declared bundle size exactly matches the extracted member size (33,457,502 bytes). The bundle SHA-256 is `5cbb070566ad1bbcdf216604903777184361ce35f1cb0b5104c70152456e7e7e`.
+- Added and locally executed `tools/jindoblu-collection/inspect_unityfs.py` using only Python's standard library. It verified the size/header consistency and emitted a JSON report of candidate printable strings. This is header/string inspection only; UnityFS block decompression and serialized-object parsing remain undone.
+
 - `data.unity3d` is present at approximately 33.46 MB.
 - `ScriptingAssemblies.json` lists `Assembly-CSharp.dll` and Unity packages including TextMeshPro, URP, Unity Services, and several third-party SDKs.
 - Printable strings include `assets/Scenes/Loader.u`, menu/list labels such as `ALLGAMES`, `GAME INFO`, and `Game Title`, and many game/scene-like identifiers.
