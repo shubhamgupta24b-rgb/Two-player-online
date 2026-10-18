@@ -478,7 +478,7 @@ class _FlipCard extends StatelessWidget {
           boxShadow: const [BoxShadow(color: Color(0x663F2118), offset: Offset(4, 5), blurRadius: 0)],
         ),
         padding: const EdgeInsets.all(5),
-        child: DecoratedBox(
+        child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFFFFC233),
             borderRadius: BorderRadius.circular(8),
