@@ -214,8 +214,9 @@ class CompetitiveLogic extends LocalGameLogic {
   }
 
   void applyAction(int from,String name,List<Object?> args) {
-    if(name=='shoot' && (args[0] as num).toInt()==from) shoot(from,(args[1] as num).toDouble(),(args[2] as num).toDouble());
-    if(name=='dart' && (args[0] as num).toInt()==from) throwDart(from,(args[1] as num).toDouble(),(args[2] as num).toDouble());
+    if (args.isEmpty) return;
+    if(name=='shoot' && args.length >= 3 && (args[0] as num).toInt()==from) shoot(from,(args[1] as num).toDouble(),(args[2] as num).toDouble());
+    if(name=='dart' && args.length >= 3 && (args[0] as num).toInt()==from) throwDart(from,(args[1] as num).toDouble(),(args[2] as num).toDouble());
     if(name=='pass' && (args[0] as num).toInt()==from) pass(from);
     if(name=='chomp' && (args[0] as num).toInt()==from) chomp(from);
   }
@@ -381,24 +382,26 @@ class _HippoBoard extends StatelessWidget {
   const _HippoBoard({required this.g,required this.me,required this.players,required this.online});
   @override Widget build(BuildContext context) => LayoutBuilder(builder: (context, constraints) {
     final compact = constraints.maxHeight < 280 || constraints.maxWidth < 280;
-    final iconSize = (constraints.maxHeight * .25).clamp(38.0, compact ? 62.0 : 84.0);
+    final iconSize = (constraints.maxHeight * .23).clamp(34.0, compact ? 52.0 : 78.0);
+    final buttonWidth = (constraints.maxWidth - 8) / 2;
     return Column(mainAxisAlignment:MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children:[
       Text('🦛',style:TextStyle(fontSize:iconSize)),
       Text('${g.marbles} marbles in the pond',textAlign:TextAlign.center,style:const TextStyle(fontWeight:FontWeight.w700)),
-      SizedBox(height: compact ? 4 : 8),
-      if(!g.finished) Wrap(alignment: WrapAlignment.center, spacing:4, runSpacing:4, children:[
+      SizedBox(height: compact ? 3 : 8),
+      if(!g.finished) Wrap(alignment: WrapAlignment.center, spacing:4, runSpacing:3, children:[
         for(var i=0;i<players.length;i++) if(!online || i==me)
-          FilledButton(
+          SizedBox(width: online ? constraints.maxWidth : buttonWidth, child: FilledButton(
             style: FilledButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: compact ? 6 : 10),
-              minimumSize: const Size(0, 32),
+              padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 10, vertical: compact ? 2 : 6),
+              minimumSize: Size(0, compact ? 28 : 34),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             onPressed:g.marbles>0?()=>g.chomp(i):null,
-            child:Text('CHOMP ${players[i].name}', style: TextStyle(fontSize: compact ? 10 : 12)),
-          )
+            child:Text('P${i+1} CHOMP', maxLines:1, overflow:TextOverflow.ellipsis, style: TextStyle(fontSize: compact ? 10 : 12)),
+          ))
       ]),
-      SizedBox(height: compact ? 4 : 8),
-      const Text('Mash CHOMP to collect marbles before time runs out.',textAlign:TextAlign.center,style:TextStyle(fontSize:12)),
+      if (!compact) const SizedBox(height:6),
+      if (!compact) const Text('Tap your player button to collect a marble.',textAlign:TextAlign.center,style:TextStyle(fontSize:12)),
     ]);
   });
 }
