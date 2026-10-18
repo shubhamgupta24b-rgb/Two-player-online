@@ -25,7 +25,7 @@ def cstring(data: bytes, offset: int) -> tuple[str, int]:
     return data[offset:end].decode("utf-8", errors="replace"), end + 1
 
 
-def parse_bundle(bundle: bytes) -> tuple[dict, list[dict], int, int]:
+def parse_bundle(bundle: bytes) -> tuple[dict, list[dict], int, int, list[dict]]:
     if not bundle.startswith(b"UnityFS\0"):
         raise ValueError("Bundle does not start with UnityFS signature")
     offset = 8
@@ -78,9 +78,12 @@ def parse_bundle(bundle: bytes) -> tuple[dict, list[dict], int, int]:
     if cursor != len(info):
         raise ValueError(f"Unexpected {len(info) - cursor} trailing bytes in block-info")
     data_offset = info_offset + compressed_info_size
+    # Some UnityFS variants align the first data block to 16 bytes (flag 0x40).
+    if flags & 0x40 and not flags & 0x80:
+        data_offset = (data_offset + 15) & ~15
     if flags & 0x80:
-        # With info at end, data starts after the bundle header.
-        data_offset = offset
+        # With info at end, data starts at the aligned end of the header.
+        data_offset = (offset + 15) & ~15
     summary = {
         "format_version": version,
         "player_version": player_version,
