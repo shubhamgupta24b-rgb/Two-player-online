@@ -66,6 +66,7 @@ import 'solo/stack_tower.dart';
 import 'solo/whack_mole.dart';
 import 'solo/slot_cars.dart';
 import 'solo/jindoblu_arcade.dart';
+import 'competitive/competitive_games.dart';
 import 'solo/word_scramble.dart';
 import 'shell/local_game_info.dart';
 import 'shell/game_art.dart';
@@ -81,7 +82,8 @@ final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafia
   ballSortInfo, slidingInfo, sudokuInfo, hangmanInfo, dinoInfo,
   blockDropInfo, bubbleInfo, skyInfo, spaceInfo, colorSwitchInfo, slotCarsInfo,
   fishingArcadeInfo, fireworksArcadeInfo, knifeHitArcadeInfo, flappyDunkArcadeInfo,
-  hungryHipposArcadeInfo, hotPotatoArcadeInfo, findItArcadeInfo, soccerStarsArcadeInfo, ringTossArcadeInfo];
+  hungryHipposArcadeInfo, hotPotatoArcadeInfo, findItArcadeInfo, soccerStarsArcadeInfo, ringTossArcadeInfo,
+  carromInfo, eightBallPoolInfo, dartsOnlineInfo, hotPotatoInfo, hungryHipposInfo];
 
 /// The hub's games plus their team versions (e.g. Ludo 2 vs 2), for online rooms.
 List<LocalGameInfo> get allLocalGames => [...localGames, for (final g in localGames) if (g.teamVariant != null) g.teamVariant!];
