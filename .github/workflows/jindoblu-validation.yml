@@ -52,9 +52,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      # Set repository Actions variable SERVER_URL to a Render origin for a hosted-backend APK.
-      # Otherwise the artifact targets the Android emulator/local smoke-test server.
-      SERVER_URL: ${{ vars.SERVER_URL || 'http://10.0.2.2:3000' }}
+      # Set repository Actions variable SERVER_URL to override the deployed backend.
+      # Default: dedicated Render service for this branch.
+      SERVER_URL: ${{ vars.SERVER_URL || 'https://two-player-jindoblu.onrender.com' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
       - name: Run Flutter tests
         working-directory: mobile
         run: flutter test
-      - name: Build release APK for local/LAN smoke testing
+      - name: Build release APK targeting the Render backend
         working-directory: mobile
         run: flutter build apk --release --dart-define=SERVER_URL="$SERVER_URL"
       - name: Upload test APK
