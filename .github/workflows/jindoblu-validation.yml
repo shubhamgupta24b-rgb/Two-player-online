@@ -76,15 +76,19 @@ jobs:
         working-directory: mobile
         run: flutter pub get
       - name: Analyze Dart
+        id: analyze
         working-directory: mobile
         run: flutter analyze
       - name: Run Flutter tests
         working-directory: mobile
         run: flutter test
       - name: Build release APK targeting the Render backend
+        id: build_apk
+        if: always() && steps.analyze.outcome == 'success'
         working-directory: mobile
         run: flutter build apk --release --dart-define=SERVER_URL="$SERVER_URL"
       - name: Upload test APK
+        if: always() && steps.build_apk.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: jindoblu-collection-test-apk
