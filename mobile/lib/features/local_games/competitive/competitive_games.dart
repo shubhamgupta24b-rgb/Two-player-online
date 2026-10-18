@@ -55,7 +55,7 @@ class CompetitiveLogic extends LocalGameLogic {
   late List<int> eliminated;
   int turn = 0, round = 1, now = 0, _last = 0;
   int potatoHolder = 0, potatoUntil = 8500, nextMarble = 0, marbles = 0;
-  bool done = false;
+  bool done = false, _shotStarted = false;
   String notice = 'YOUR TURN';
 
   CompetitiveLogic(this.mode, {int players = 2, Random? random})
@@ -130,7 +130,7 @@ class CompetitiveLogic extends LocalGameLogic {
       b.vx *= pow(friction,dt*60).toDouble(); b.vy *= pow(friction,dt*60).toDouble();
       if(b.x<.035){b.x=.035;b.vx=b.vx.abs()*.8;} if(b.x>.965){b.x=.965;b.vx=-b.vx.abs()*.8;}
       if(b.y<.055){b.y=.055;b.vy=b.vy.abs()*.8;} if(b.y>.945){b.y=.945;b.vy=-b.vy.abs()*.8;}
-      if(hypot(b.vx,b.vy)<.012){b.vx=0;b.vy=0;} else moving=true;
+      if(sqrt(b.vx*b.vx+b.vy*b.vy)<.012){b.vx=0;b.vy=0;} else moving=true;
       if(pocketCenters.any((p)=>(Offset(b.x,b.y)-p).distance<.035)) {
         b.pocketed=true;
         if(b.kind==2 && mode==CompetitiveMode.eightBallPool) {
@@ -153,6 +153,7 @@ class CompetitiveLogic extends LocalGameLogic {
         moving=true;
       }
     }
+    if(!moving && _shotStarted) { _shotStarted=false; if(!done) turn=(turn+1)%players; }
     if(!moving && balls.every((b)=>b.vx==0&&b.vy==0) && balls.any((b)=>b.pocketed)) {
       if(balls.where((b)=>!b.pocketed&&b.kind!=0).length==0) { done=true; }
     }
@@ -162,6 +163,7 @@ class CompetitiveLogic extends LocalGameLogic {
     if(forward('shoot',[player,angle,power])) return;
     if(finished||player!=turn||balls.any((b)=>!b.pocketed&&(b.vx!=0||b.vy!=0))) return;
     final cue=balls.firstWhere((b)=>b.kind==0);
+    _shotStarted=true;
     cue.vx=cos(angle)*power.clamp(.1,1.0)*1.8;
     cue.vy=sin(angle)*power.clamp(.1,1.0)*1.8;
     round++;
@@ -171,7 +173,7 @@ class CompetitiveLogic extends LocalGameLogic {
   void throwDart(int player, double x, double y) {
     if(forward('dart',[player,x,y])) return;
     if(finished||player!=turn||mode!=CompetitiveMode.darts) return;
-    final d=hypot(x-.5,y-.5);
+    final d=sqrt((x-.5)*(x-.5)+(y-.5)*(y-.5));
     final points=d<.07?10:d<.16?7:d<.27?5:d<.39?3:1;
     score[player]+=points; darts[player]++;
     if(score[player]>=50){done=true;notice='BULLSEYE — WIN';}
@@ -288,7 +290,7 @@ class _CompetitiveBoard extends StatelessWidget {
             ? _DartBoard(onThrow:(x,y)=>g.throwDart(online?me:g.turn,x,y),score:g.score[me])
             : mode==CompetitiveMode.hotPotato
               ? _PotatoBoard(g:g,me:me,players:players)
-              : _HippoBoard(g:g,me:me,players:players),
+              : _HippoBoard(g:g,me:me,players:players,online:online),
       )))),
       Padding(padding:const EdgeInsets.all(12),child:Text(g.notice,style:const TextStyle(fontWeight:FontWeight.w900,letterSpacing:1.1))),
     ]);
@@ -356,13 +358,13 @@ class _PotatoBoard extends StatelessWidget {
   ]);}
 }
 class _HippoBoard extends StatelessWidget {
-  final CompetitiveLogic g; final int me; final List<GpPlayer> players;
-  const _HippoBoard({required this.g,required this.me,required this.players});
+  final CompetitiveLogic g; final int me; final List<GpPlayer> players; final bool online;
+  const _HippoBoard({required this.g,required this.me,required this.players,required this.online});
   @override Widget build(BuildContext context)=>Column(mainAxisAlignment:MainAxisAlignment.center,children:[
     Text('🦛',style:TextStyle(fontSize:60+g.score[me].clamp(0,10)*2)),
     Text('${g.marbles} marbles in the pond',style:const TextStyle(fontWeight:FontWeight.w700)),
     const SizedBox(height:12),
-    if(players.length>1 && !g.finished) Wrap(spacing:6,children:[for(var i=0;i<players.length;i++) FilledButton(onPressed:g.marbles>0?()=>g.chomp(i):null,child:Text('CHOMP ${players[i].name}'))]),
+    if(!g.finished) Wrap(spacing:6,children:[for(var i=0;i<players.length;i++) if(!online || i==me) FilledButton(onPressed:g.marbles>0?()=>g.chomp(i):null,child:Text('CHOMP ${players[i].name}'))]),
     const SizedBox(height:8),
     Text('Mash CHOMP to collect marbles before time runs out.'),
   ]);
