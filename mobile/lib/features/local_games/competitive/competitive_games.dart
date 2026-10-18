@@ -101,7 +101,7 @@ class CompetitiveLogic extends LocalGameLogic {
 
   @override
   void update(int elapsed) {
-    final dt = ((elapsed-_last)/1000).clamp(0.0,.04);
+    final dt = ((elapsed-_last)/1000).clamp(0.0,.04).toDouble();
     _last = now = elapsed;
     if (finished) { notifyListeners(); return; }
     if (mode == CompetitiveMode.carrom || mode == CompetitiveMode.eightBallPool) _stepBalls(dt);
@@ -143,7 +143,7 @@ class CompetitiveLogic extends LocalGameLogic {
     // Small deterministic ball collisions.
     for(var i=0;i<balls.length;i++) for(var j=i+1;j<balls.length;j++) {
       final a=balls[i],b=balls[j]; if(a.pocketed||b.pocketed) continue;
-      final dx=b.x-a.x,dy=b.y-a.y,d=hypot(dx,dy);
+      final dx=b.x-a.x,dy=b.y-a.y,d=sqrt(dx*dx+dy*dy);
       if(d>0&&d<.034) {
         final nx=dx/d,ny=dy/d;
         final av=a.vx*nx+a.vy*ny,bv=b.vx*nx+b.vy*ny;
@@ -164,8 +164,8 @@ class CompetitiveLogic extends LocalGameLogic {
     if(finished||player!=turn||balls.any((b)=>!b.pocketed&&(b.vx!=0||b.vy!=0))) return;
     final cue=balls.firstWhere((b)=>b.kind==0);
     _shotStarted=true;
-    cue.vx=cos(angle)*power.clamp(.1,1.0)*1.8;
-    cue.vy=sin(angle)*power.clamp(.1,1.0)*1.8;
+    cue.vx=cos(angle)*power.clamp(.1,1.0).toDouble()*1.8;
+    cue.vy=sin(angle)*power.clamp(.1,1.0).toDouble()*1.8;
     round++;
     notifyListeners();
   }
@@ -305,7 +305,7 @@ class _TableBoard extends StatelessWidget {
     onPanEnd:(d){
       final v=d.velocity.pixelsPerSecond;
       if(v.distance<80)return;
-      onShot(atan2(-v.dy,-v.dx), (v.distance/1600).clamp(.12,1.0));
+      onShot(atan2(-v.dy,-v.dx), (v.distance/1600).clamp(.12,1.0).toDouble());
     },
     child:CustomPaint(painter:_TablePainter(mode,g.balls),child:const SizedBox.expand()),
   );
@@ -325,7 +325,7 @@ class _TablePainter extends CustomPainter {
       if(b.pocketed)continue;
       final p=Offset(b.x*size.width,b.y*size.height);
       final color=b.kind==0?const Color(0xFF24282B):b.kind==2?const Color(0xFFD8A92D):const Color(0xFFF7F1E6);
-      canvas.drawCircle(p,size.width*(mode==CompetitiveMode.carrom?.018:.022),Paint()..color=color);
+      canvas.drawCircle(p,size.width*(mode==CompetitiveMode.carrom ? .018 : .022),Paint()..color=color);
       canvas.drawCircle(p,size.width*(mode==CompetitiveMode.carrom?.018:.022),Paint()..color=const Color(0xFF222222)..style=PaintingStyle.stroke..strokeWidth=1);
     }
     if(balls.isNotEmpty&&!balls.first.pocketed&&balls.first.vx==0&&balls.first.vy==0){
@@ -361,7 +361,7 @@ class _HippoBoard extends StatelessWidget {
   final CompetitiveLogic g; final int me; final List<GpPlayer> players; final bool online;
   const _HippoBoard({required this.g,required this.me,required this.players,required this.online});
   @override Widget build(BuildContext context)=>Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-    Text('🦛',style:TextStyle(fontSize:60+g.score[me].clamp(0,10)*2)),
+    Text('🦛',style:TextStyle(fontSize:60+g.score[me].clamp(0,10).toDouble()*2)),
     Text('${g.marbles} marbles in the pond',style:const TextStyle(fontWeight:FontWeight.w700)),
     const SizedBox(height:12),
     if(!g.finished) Wrap(spacing:6,children:[for(var i=0;i<players.length;i++) if(!online || i==me) FilledButton(onPressed:g.marbles>0?()=>g.chomp(i):null,child:Text('CHOMP ${players[i].name}'))]),
