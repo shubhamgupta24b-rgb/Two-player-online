@@ -4,7 +4,7 @@ import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/ticking_play.dart';
-import '../shell/solo_common.dart' show SoloFrame;
+import '../solo/solo_common.dart' show SoloFrame;
 
 enum CompetitiveMode { carrom, eightBallPool, darts, hotPotato, hungryHippos }
 
@@ -283,9 +283,9 @@ class _CompetitiveBoard extends StatelessWidget {
       Expanded(child:Center(child:AspectRatio(aspectRatio:1,child:Padding(
         padding:const EdgeInsets.all(12),
         child: mode==CompetitiveMode.carrom||mode==CompetitiveMode.eightBallPool
-          ? _TableBoard(mode:mode,g:g,onShot:(a,p)=>g.shoot(me,a,p))
+          ? _TableBoard(mode:mode,g:g,onShot:(a,p)=>g.shoot(online?me:g.turn,a,p))
           : mode==CompetitiveMode.darts
-            ? _DartBoard(onThrow:(x,y)=>g.throwDart(me,x,y),score:g.score[me])
+            ? _DartBoard(onThrow:(x,y)=>g.throwDart(online?me:g.turn,x,y),score:g.score[me])
             : mode==CompetitiveMode.hotPotato
               ? _PotatoBoard(g:g,me:me,players:players)
               : _HippoBoard(g:g,me:me,players:players),
@@ -351,7 +351,7 @@ class _PotatoBoard extends StatelessWidget {
     Text(holder?'🥔':'⏳',style:const TextStyle(fontSize:100)),
     Text(holder?'IT\'S IN YOUR HAND':'WAIT FOR THE POTATO',style:const TextStyle(fontWeight:FontWeight.w900,fontSize:18)),
     const SizedBox(height:20),
-    FilledButton(onPressed:holder?()=>g.pass(me):null,child:const Text('PASS POTATO')),
+    FilledButton(onPressed:holder?()=>g.pass(g.potatoHolder):null,child:const Text('PASS POTATO')),
     Text('${max(0,(g.potatoUntil-g.now)~/1000)} seconds left'),
   ]);}
 }
@@ -362,7 +362,7 @@ class _HippoBoard extends StatelessWidget {
     Text('🦛',style:TextStyle(fontSize:60+g.score[me].clamp(0,10)*2)),
     Text('${g.marbles} marbles in the pond',style:const TextStyle(fontWeight:FontWeight.w700)),
     const SizedBox(height:12),
-    FilledButton.icon(onPressed:g.marbles>0?()=>g.chomp(me):null,icon:const Text('🦛'),label:const Text('CHOMP')),
+    if(players.length>1 && !g.finished) Wrap(spacing:6,children:[for(var i=0;i<players.length;i++) FilledButton(onPressed:g.marbles>0?()=>g.chomp(i):null,child:Text('CHOMP ${players[i].name}'))]),
     const SizedBox(height:8),
     Text('Mash CHOMP to collect marbles before time runs out.'),
   ]);
