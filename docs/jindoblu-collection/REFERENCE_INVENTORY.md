@@ -6,6 +6,16 @@
 
 The supplied `base.apk` and `split_config.arm64_v8a.apk` are two splits of one Unity IL2CPP Android app (`com.JindoBlu.FourPlayers`). The base contains `assets/bin/Data/Managed/Metadata/global-metadata.dat` (~12.1 MB); the ARM64 split contains `lib/arm64-v8a/libil2cpp.so` (~68.3 MB). Type names and strings are useful leads, not proof of complete gameplay rules. REA/JADX could not be installed in the sandbox because direct GitHub and npm registry DNS requests failed. Do not label any candidate as fully reverse engineered.
 
+## UnityFS asset-file cross-check (new evidence)
+
+The compressed UnityFS index was decoded successfully: 2,053 blocks expand to a 268,960,812-byte virtual stream, and the bundle contains 12 indexed virtual files. Matching identifiers occur in both `globalgamemanagers` and asset files such as `sharedassets1.assets` / `resources.assets`. The repeated title-like identifiers include:
+
+- `3_POOL`, `16_MINIGOLF`, `21_WHACKAMOLE`, `25_PITTURA`, `26_FISHING`, `32_FIREWORKS`, `33_ARCHERY`
+- `46_HUNGRYHIPPOS`, `49_MEMORY`, `50_KNIFEHIT`, `54_HOTPOTATO`, `57_DOTSBOXES`, `72_FLAPPYDUNK`, `82_SOCCERSTARS`
+- `112_ARCHERY2`, `120_SLOTCARS`, `127_SHOOTINGGALLERY`, `130_SNAKESLADDERS`, `133_BASKETBALLHOOPS`, `144_FIND`, `145_GUESS_THE_PERSON`, `146_IMPOSTOR`
+
+This cross-file repetition is stronger evidence than raw bundle strings alone, but it still does not prove all candidates are selectable in this build. Some entries have explicit tutorial/settings variants. Serialized-object tables and scene references remain to be decoded, and the supplied APK has not yet been run for controlled gameplay observation.
+
 ## Candidate inventory and existing-app mapping
 
 | APK candidate | Evidence seen in metadata | Existing app mapping | Recommendation |
