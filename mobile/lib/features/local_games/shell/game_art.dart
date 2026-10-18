@@ -5,7 +5,7 @@ import '../../../core/ui/materials/materials.dart';
 /// Each game's drawn icon (no emoji in game UI). Used by the intro header, How to play,
 /// results, the hub tiles, rooms and records.
 const gameIcons = <String, GameIcons>{
-  'j_fishing': GameIcons.fish,
+  'j_fishing': GameIcons.duck,
   'j_fireworks': GameIcons.star,
   'j_knifeHit': GameIcons.target,
   'j_flappyDunk': GameIcons.ball,
@@ -13,7 +13,7 @@ const gameIcons = <String, GameIcons>{
   'j_hotPotato': GameIcons.bottle,
   'j_findIt': GameIcons.magnifier,
   'j_soccerStars': GameIcons.football,
-  'j_ringToss': GameIcons.ring,
+  'j_ringToss': GameIcons.target,
   'air_hockey': GameIcons.puck,
   'archery': GameIcons.target,
   'ball_sort': GameIcons.bottle,
