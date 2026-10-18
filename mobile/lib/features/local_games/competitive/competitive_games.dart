@@ -321,17 +321,77 @@ class _TablePainter extends CustomPainter {
   @override
   void paint(Canvas canvas,Size size){
     final r=Offset.zero&size;
-    canvas.drawRRect(RRect.fromRectAndRadius(r.deflate(2),const Radius.circular(18)),Paint()..color=mode==CompetitiveMode.carrom?const Color(0xFFB9824B):const Color(0xFF176447));
-    canvas.drawRRect(RRect.fromRectAndRadius(r.deflate(size.width*.07),const Radius.circular(14)),Paint()..color=mode==CompetitiveMode.carrom?const Color(0xFFF0D7A8):const Color(0xFF1E805A));
-    final pocket=Paint()..color=const Color(0xFF15191B);
-    final pockets=mode==CompetitiveMode.carrom?[Offset(.07,.07),Offset(.93,.07),Offset(.07,.93),Offset(.93,.93)]:[Offset(.05,.05),Offset(.5,.05),Offset(.95,.05),Offset(.05,.95),Offset(.5,.95),Offset(.95,.95)];
-    for(final p in pockets)canvas.drawCircle(Offset(p.dx*size.width,p.dy*size.height),size.width*.035,pocket);
-    for(final b in balls){
-      if(b.pocketed)continue;
-      final p=Offset(b.x*size.width,b.y*size.height);
-      final color=b.kind==0?const Color(0xFF24282B):b.kind==2?const Color(0xFFD8A92D):const Color(0xFFF7F1E6);
-      canvas.drawCircle(p,size.width*(mode==CompetitiveMode.carrom ? .018 : .022),Paint()..color=color);
-      canvas.drawCircle(p,size.width*(mode==CompetitiveMode.carrom ? .018 : .022),Paint()..color=const Color(0xFF222222)..style=PaintingStyle.stroke..strokeWidth=1);
+    // The supplied Pool banner uses a flat green cloth, dark pocket mouths,
+    // and warm timber rails. Keep the same restrained, outlined treatment here.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(r.deflate(1), const Radius.circular(18)),
+      Paint()..color = const Color(0xFF9F543D),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(r.deflate(size.width * .035), const Radius.circular(15)),
+      Paint()..color = const Color(0xFF171615),
+    );
+    final cloth = mode == CompetitiveMode.carrom
+        ? const Color(0xFFF2D8A6)
+        : const Color(0xFF2DB744);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(r.deflate(size.width * .065), const Radius.circular(11)),
+      Paint()..color = cloth,
+    );
+
+    final pocket = Paint()..color = const Color(0xFF101010);
+    final pockets = mode == CompetitiveMode.carrom
+        ? [const Offset(.065,.065),const Offset(.935,.065),const Offset(.065,.935),const Offset(.935,.935)]
+        : [const Offset(.055,.055),const Offset(.5,.055),const Offset(.945,.055),const Offset(.055,.945),const Offset(.5,.945),const Offset(.945,.945)];
+    for (final p in pockets) {
+      canvas.drawCircle(Offset(p.dx * size.width, p.dy * size.height), size.width * .035, pocket);
+      canvas.drawCircle(
+        Offset(p.dx * size.width, p.dy * size.height),
+        size.width * .039,
+        Paint()..color = const Color(0xFF171615)..style = PaintingStyle.stroke..strokeWidth = 2,
+      );
+    }
+
+    if (mode == CompetitiveMode.carrom) {
+      final center = Offset(size.width * .5, size.height * .48);
+      canvas.drawCircle(center, size.width * .15, Paint()..color = const Color(0xFFC76A48)..style = PaintingStyle.stroke..strokeWidth = 2);
+      canvas.drawCircle(center, size.width * .105, Paint()..color = const Color(0xFFB75A42)..style = PaintingStyle.stroke..strokeWidth = 1.5);
+      final linePaint = Paint()..color = const Color(0xFFB75A42)..style = PaintingStyle.stroke..strokeWidth = 2;
+      canvas.drawLine(Offset(size.width*.18,size.height*.78),Offset(size.width*.82,size.height*.78),linePaint);
+      canvas.drawLine(Offset(size.width*.18,size.height*.82),Offset(size.width*.82,size.height*.82),linePaint);
+    }
+
+    const poolColors = [
+      Color(0xFFE9C33C), Color(0xFFDF4A43), Color(0xFF3C88D8),
+      Color(0xFF8E58B4), Color(0xFFEC8B34), Color(0xFF2B9B73),
+      Color(0xFFB74B86), Color(0xFF303030),
+    ];
+    for (var i = 0; i < balls.length; i++) {
+      final b = balls[i];
+      if (b.pocketed) continue;
+      final p = Offset(b.x * size.width, b.y * size.height);
+      final radius = size.width * (mode == CompetitiveMode.carrom ? .019 : .022);
+      final Color color;
+      if (mode == CompetitiveMode.carrom) {
+        color = b.kind == 0
+            ? const Color(0xFFF9F2DF)
+            : b.kind == 2
+                ? const Color(0xFFCE3E3B)
+                : (i.isEven ? const Color(0xFF242424) : const Color(0xFFF9F2DF));
+      } else {
+        color = b.kind == 0
+            ? const Color(0xFFF9F7EE)
+            : b.kind == 2
+                ? const Color(0xFF171717)
+                : poolColors[i % poolColors.length];
+      }
+      canvas.drawCircle(p, radius, Paint()..color = color);
+      canvas.drawCircle(p, radius, Paint()..color = const Color(0xFF171615)..style = PaintingStyle.stroke..strokeWidth = 1.2);
+      canvas.drawCircle(
+        p.translate(-radius * .28, -radius * .3),
+        radius * .22,
+        Paint()..color = const Color(0x99FFFFFF),
+      );
     }
     if(balls.isNotEmpty&&!balls.first.pocketed&&balls.first.vx==0&&balls.first.vy==0){
       final cue=Offset(balls.first.x*size.width,balls.first.y*size.height);
