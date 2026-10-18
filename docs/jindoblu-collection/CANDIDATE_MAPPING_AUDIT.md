@@ -54,3 +54,10 @@ Only after these are observed should a candidate be assigned an implementation t
 ## Current limitations
 
 The UnityFS container and its 12 virtual files have been indexed and decompressed. Serialized-object tables, rendered scenes, and native IL2CPP gameplay behavior have **not** yet been decoded. Therefore the table above is a triage map, not a claim of full reverse engineering.
+
+
+## Follow-up: server-side game IDs already present
+
+A direct inspection of `server/src/games/relay/index.js` shows these relevant relay IDs already exist as opt-in server games: `darts`, `hot_potato`, `knife_hit`, `cup_pong`, and `hungry_hippos`. This means a server relay registration should **not** be duplicated for these IDs. It does not prove the corresponding local Flutter screens are exposed, that the gameplay matches the reference, or that the games are selectable from the current catalogue. Audit the local game shell, catalogue, and host routing before adding UI.
+
+The same server relay registry already includes `mini_golf`, `dots_boxes`, `snakes_ladders`, `basketball_hoops`, `archery`, and `shooting_gallery`, reinforcing that the first implementation task should be an integration/rules audit, not a fresh server module.
