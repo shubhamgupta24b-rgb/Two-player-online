@@ -97,3 +97,27 @@ Also run two-device tests for online-enabled games: room join/leave, 2–4 playe
 - [ ] Complete scene/assets and controlled-play inventory; confirm exact rules, scores, timings and physics.
 - [ ] Implement the first verified gap after confirming its rules.
 - [ ] Run tests and produce the first test APK (Flutter SDK is not present on this sandbox PATH).
+
+
+## Progress update — 2026-10-18
+
+### Completed
+- Indexed and decompressed the UnityFS bundle from the supplied APK; documented the 12 virtual files and candidate title-like identifiers.
+- Added the reference inventory, IL2CPP inventory, UnityFS tools, and candidate mapping audit.
+- Cross-checked the candidate titles against the existing Flutter catalogue and Socket.IO relay registry to avoid duplicate game IDs/server registrations.
+- Added a Render deployment runbook for the separate Node.js/Socket.IO service.
+- Updated the server container image to Node 22 to match the CI runtime.
+- Updated the validation workflow so `SERVER_URL` can be set as a GitHub Actions repository variable; without it, the APK targets the Android emulator's local server address.
+
+### Validation state
+- Previously observed on CI: server tests, Dart analysis, and Flutter tests passed.
+- The release APK build was not confirmed on the earlier run. A newer workflow run is validating the latest deployment/CI changes; do not mark the APK as delivered until an artifact is visible and downloadable.
+- Render service creation, public health check, and two-device online room test are not yet verified. The Render account connection/deploy action and actual Render service URL are still needed to finish those steps.
+
+### Next execution order
+1. Finish the current CI run and resolve any APK-build failure before distributing an APK.
+2. Create the Render Blueprint from `render.yaml`, set `PRIVACY_CONTACT`, and verify `/health` and `/privacy`.
+3. Set GitHub Actions repository variable `SERVER_URL` to the exact HTTPS Render service origin and build a hosted-backend APK.
+4. Run a two-device smoke test: create room, join, start game, exchange actions, disconnect/reconnect.
+5. Observe and document actual JindoBlu game mechanics before implementing a new game. Candidate strings alone are not sufficient evidence to claim exact rules.
+6. Before public/Play Store release, replace the temporary public dev-auth configuration with Firebase auth and revisit room-state persistence and service-sleep behavior.
