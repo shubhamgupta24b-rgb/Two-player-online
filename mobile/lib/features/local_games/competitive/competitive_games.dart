@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../guess_person/models/gp_player.dart';
 import '../shell/local_game_info.dart';
+import '../shell/local_game_shell.dart';
 import '../shell/local_game_logic.dart';
 import '../shell/ticking_play.dart';
 
