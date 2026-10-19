@@ -109,22 +109,22 @@ abstract final class NeonPalette {
 
 /// Raw colours of the flat app (spec 1.1, Flat column, and section 7).
 abstract final class FlatPalette {
-  static const skyLight = Color(0xFF6BB8E0); // bgTop
-  static const sky = Color(0xFF4FA3D1); // bgMid
-  static const skyDeep = Color(0xFF4494C4); // bgBottom (spec #3E8FBF, lightened a touch so ink text passes 4.5:1)
+  static const skyLight = Color(0xFFF8F4FA); // clay background top
+  static const sky = Color(0xFFF0ECF5); // clay background mid
+  static const skyDeep = Color(0xFFE9EAF6); // clay background bottom
   static const surface = Colors.white;
-  static const surfaceStrong = Color(0xFFF2F5F9);
-  static const stroke = Color(0xFFD9DEE6);
+  static const surfaceStrong = Color(0xFFF7F4FA);
+  static const stroke = Color(0xFFE1DDEA);
   static const overlay = Color(0xB822212B); // rgba(34,33,43,0.72)
-  static const ink = Color(0xFF22212B); // text
-  static const inkMuted = Color(0xFF4A5568); // textMuted
-  static const label = Color(0xFF5A6478);
-  static const board = Color(0xFF2B6488);
-  static const strip = Color(0xFF3A3846);
+  static const ink = Color(0xFF173477); // navy text
+  static const inkMuted = Color(0xFF68738F); // muted navy text
+  static const label = Color(0xFF68738F);
+  static const board = Color(0xFFF4F0F7);
+  static const strip = Color(0xFF173477);
   static const tile = Colors.white;
   static const tileShade = stroke;
   static const option = Color(0xFFE8EAEE);
-  static const mark = Color(0x1FFFFFFF);
+  static const mark = Color(0x12A6B5F5);
   static const close = Color(0xFFC9302C);
 }
 
