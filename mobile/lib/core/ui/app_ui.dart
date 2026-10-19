@@ -28,27 +28,27 @@ class AppColors {
 final appTokens = flatStyle ? GameTokens.flatSet : GameTokens.neon;
 
 ThemeData buildAppTheme() {
-  final scheme = ColorScheme.fromSeed(seedColor: AppColors.purple, brightness: Brightness.dark).copyWith(
-    primary: AppColors.gold,
-    onPrimary: AppColors.night,
-    secondary: AppColors.blue,
-    surface: AppColors.night,
+  final scheme = ColorScheme.fromSeed(seedColor: AppColors.blue, brightness: flatStyle ? Brightness.light : Brightness.dark).copyWith(
+    primary: flatStyle ? AppColors.blue : AppColors.gold,
+    onPrimary: flatStyle ? Colors.white : AppColors.night,
+    secondary: AppColors.red,
+    surface: flatStyle ? FlatPalette.surface : AppColors.night,
   );
   return ThemeData(
     useMaterial3: true,
     fontFamily: Fonts.body,
     colorScheme: scheme,
     extensions: [appTokens],
-    scaffoldBackgroundColor: AppColors.deep,
-    appBarTheme: const AppBarTheme(backgroundColor: AppColors.night, foregroundColor: Colors.white, centerTitle: true),
+    scaffoldBackgroundColor: flatStyle ? FlatPalette.sky : AppColors.deep,
+    appBarTheme: AppBarTheme(backgroundColor: flatStyle ? FlatPalette.skyLight : AppColors.night, foregroundColor: flatStyle ? FlatPalette.ink : Colors.white, centerTitle: true),
     snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating, backgroundColor: AppColors.navy, contentTextStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-    dialogTheme: const DialogThemeData(backgroundColor: AppColors.night),
+    dialogTheme: DialogThemeData(backgroundColor: flatStyle ? FlatPalette.surface : AppColors.night),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppColors.glass,
+      fillColor: flatStyle ? FlatPalette.surface : AppColors.glass,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none),
       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: AppColors.gold, width: 2)),
-      hintStyle: const TextStyle(color: Colors.white38),
+      hintStyle: TextStyle(color: flatStyle ? FlatPalette.label : Colors.white38),
     ),
   );
 }
