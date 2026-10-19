@@ -78,8 +78,8 @@ class _ChessBoardState extends State<ChessBoard> {
       for(final d in [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]])add(r+d[0],c+d[1]);
     } else {
       final dirs=<List<int>>[];
-      if(['R','Q'].contains(p.type))dirs.addAll([[1,0],[-1,0],[0,1],[0,-1]]);
-      if(['B','Q'].contains(p.type))dirs.addAll([[1,1],[1,-1],[-1,1],[-1,-1]]);
+      if(['R','Q','K'].contains(p.type))dirs.addAll([[1,0],[-1,0],[0,1],[0,-1]]);
+      if(['B','Q','K'].contains(p.type))dirs.addAll([[1,1],[1,-1],[-1,1],[-1,-1]]);
       if(p.type=='K') {
         for(final d in dirs) add(r+d[0],c+d[1]);
       } else {
