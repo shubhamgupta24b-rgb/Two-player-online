@@ -115,7 +115,7 @@ class _UnoBoardState extends State<UnoBoard> {
   }
   void _pass() {
     if (!_drew || _ended) return;
-    setState(() { _turn=1-_turn; _drew=false; _uno=false; _status='${widget.players[_turn].name}\'s turn.'; });
+    setState(() { _turn=1-_turn; _drew=false; _drawnCardId=null; _uno=false; _status='${widget.players[_turn].name}\'s turn.'; });
   }
 
   @override
