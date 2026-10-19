@@ -11,8 +11,8 @@ final LocalGameInfo backgammonInfo = LocalGameInfo(
   tagline: 'Roll dice, move checkers, race home.',
   rules: const [
     'Roll two dice and move your checkers forward by the rolled values.',
-    'Each side has 15 checkers. This starter board supports dice rolls, selecting a checker stack and moving it by a die value.',
-    'The full tournament rules for hitting blots, entering from the bar, doubles, blocked points and bearing off are not implemented in this version.',
+    'Each side has 15 checkers. Use the dice to move toward your home board; a checker may be borne off once all your checkers are home.',
+    'This is still a simplified local version: bar entry, doubles as four moves, and all tournament edge cases are not yet implemented.',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -33,6 +33,43 @@ class _BackgammonBoardState extends State<BackgammonBoard> {
   int _turn=0,_die1=0,_die2=0,_selected=-1,_borne0=0,_borne1=0;
   bool _rolled=false,_finished=false;
   String _status='White rolls first.';
+  int get _borneForTurn => _turn == 0 ? _borne0 : _borne1;
+  bool get _allHome {
+    for (var i = 0; i < 24; i++) {
+      if (!_own(_points[i])) continue;
+      if (_turn == 0 && i < 18) return false;
+      if (_turn == 1 && i > 5) return false;
+    }
+    return true;
+  }
+  void _bearOff() {
+    if (!_rolled || _finished || _selected < 0) return;
+    if (!_own(_points[_selected]) || !_allHome) {
+      setState(() => _status = 'Move all your checkers into your home board first.');
+      return;
+    }
+    final distance = _turn == 0 ? 24 - _selected : _selected + 1;
+    final die = [_die1, _die2].where((d) => d > 0 && d >= distance).cast<int?>().firstWhere((d) => d != null, orElse: () => null);
+    if (die == null) {
+      setState(() => _status = 'Use a die equal to or higher than the distance to bear off.');
+      return;
+    }
+    setState(() {
+      _points[_selected] -= _turn == 0 ? 1 : -1;
+      if (_turn == 0) { _borne0++; } else { _borne1++; }
+      if (die == _die1) { _die1 = 0; } else { _die2 = 0; }
+      _selected = -1;
+      if (_borneForTurn >= 15) {
+        _finished = true;
+        _status = '${_turn == 0 ? 'White' : 'Black'} wins!';
+      } else if (_die1 == 0 && _die2 == 0) {
+        _rolled = false; _turn = 1 - _turn; _status = '${_turn == 0 ? 'White' : 'Black'} to roll.';
+      } else {
+        _status = 'Checker borne off. Make your next move.';
+      }
+    });
+    if (_finished) widget.onFinished(_turn == 0 ? [1, 0] : [0, 1]);
+  }
   @override void initState(){super.initState();_points[0]=2;_points[11]=5;_points[16]=3;_points[18]=5;_points[23]=-2;_points[12]=-5;_points[7]=-3;_points[5]=-5;}
   void _roll(){if(_rolled||_finished)return;setState((){_die1=_rng.nextInt(6)+1;_die2=_rng.nextInt(6)+1;_rolled=true;_selected=-1;_status='Dice: $_die1 and $_die2. Select a stack, then a destination.';});}
   bool _own(int v)=>_turn==0?v>0:v<0;
@@ -55,15 +92,17 @@ class _BackgammonBoardState extends State<BackgammonBoard> {
       if(_die1==dist)_die1=0;else if(_die2==dist)_die2=0;
       if(_die1==0&&_die2==0){_rolled=false;_turn=1-_turn;_status='${_turn==0?'White':'Black'} to roll.';}
       else {_status='Make your next move, or end turn.';}
-      if(_borne0>=15||_borne1>=15){_finished=true;widget.onFinished(_borne0>=15?[1,0]:[0,1]);}
+      if(_borne0>=15||_borne1>=15){_finished=true;_status='${_borne0>=15?'White':'Black'} wins!';}
     });
   }
   @override Widget build(BuildContext context)=>Container(color:const Color(0xFFF2EFE7),child:SafeArea(child:Column(children:[
     Padding(padding:const EdgeInsets.all(12),child:Row(children:[Expanded(child:Text(_status,style:const TextStyle(fontWeight:FontWeight.w800,color:Color(0xFF243047)))),Text('${widget.players[_turn].name}',style:const TextStyle(fontWeight:FontWeight.w900))])),
+    Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text('Borne off — White: $_borne0  •  Black: $_borne1', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF6A5C4A)))),
     Row(mainAxisAlignment:MainAxisAlignment.center,children:[
       _die(_die1),const SizedBox(width:12),_die(_die2),const SizedBox(width:12),
       FilledButton(onPressed:_rolled?null:_roll,child:const Text('Roll dice')),
       const SizedBox(width:6),OutlinedButton(onPressed:_rolled?()=>setState((){_rolled=false;_turn=1-_turn;_selected=-1;_status='${_turn==0?'White':'Black'} to roll.';}):null,child:const Text('End turn')),
+      const SizedBox(width:6),OutlinedButton(onPressed:_rolled&&_selected>=0?_bearOff:null,child:const Text('Bear off')),
     ]),
     const SizedBox(height:10),
     Expanded(child:Padding(padding:const EdgeInsets.all(10),child:GridView.builder(itemCount:24,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:6,childAspectRatio:.72,crossAxisSpacing:5,mainAxisSpacing:5),itemBuilder:(ctx,i){
