@@ -87,7 +87,7 @@ class _UnoBoardState extends State<UnoBoard> {
     else { _active = c.color; }
     if (hand.isEmpty) {
       setState(() { _ended=true; _status='${widget.players[_turn].name} wins!'; });
-      widget.onFinished([_hands[0].length,_hands[1].length]); return;
+      widget.onFinished(_turn == 0 ? [1, 0] : [0, 1]); return;
     }
     if (hand.length == 1 && !_uno) { _drawCards(2); _status='UNO not called — 2-card penalty.'; }
     if (c.kind == UKind.drawTwo || c.kind == UKind.wildFour) {
@@ -125,7 +125,7 @@ class _UnoBoardState extends State<UnoBoard> {
       Wrap(spacing:6,children:[
         OutlinedButton(onPressed:_drew?null:_drawOne,child:const Text('Draw')),
         OutlinedButton(onPressed:_drew?_pass:null,child:const Text('Pass')),
-        FilledButton(onPressed:hand.length==1?()=>setState(()=>_uno=true):null,child:const Text('UNO!')),
+        FilledButton(onPressed:hand.length==2?()=>setState(()=>_uno=true):null,child:const Text('UNO!')),
       ]),
       const Padding(padding:EdgeInsets.all(8),child:Align(alignment:Alignment.centerLeft,child:Text('YOUR HAND',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:1.2,color:Color(0xFF687386))))),
       Expanded(child:SingleChildScrollView(child:Wrap(alignment:WrapAlignment.center,spacing:6,runSpacing:7,children:[
