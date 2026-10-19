@@ -12,7 +12,7 @@ const String appName = flatStyle ? 'Two Player Games' : 'Party Games';
 /// Games that use the flat look in the flat app: the ones that are mostly words and cards.
 const flatGames = {'memory', 'charades', 'heads_up', 'find_spy', 'undercover', 'mafia', 'most_likely', 'would_rather', 'truth_dare'};
 
-bool isFlatGame(String id) => flatStyle && flatGames.contains(id);
+bool isFlatGame(String id) => flatStyle; // Clay build: keep every game screen in the same light visual language.
 
 /// Thin aliases to the flat token palette (tokens.dart); new code reads `context.tk`.
 class FlatColors {
