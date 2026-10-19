@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'colour_clash/colour_clash_game.dart' show colourClashInfo;
-import 'shell/local_game_info.dart';
+import '../colour_clash/colour_clash_game.dart' show colourClashInfo;
+import '../shell/local_game_info.dart';
 
 /// UNO entry point. Reuses the existing card-duel engine and relay adapter so the
 /// local and online variants share a single authoritative rules/state implementation.
