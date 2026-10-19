@@ -268,7 +268,7 @@ void main() {
       expect(g.turn, 0);
       for (var i = 0; i < 6; i++) {
         expect(g.drop(0), isNotNull);
-        if (i < 5) expect(g.drop(0), isNotNull);
+        if (i < 5) expect(g.drop(1), isNotNull);
       }
       final turnBefore = g.turn;
       expect(g.drop(0), isNull);
