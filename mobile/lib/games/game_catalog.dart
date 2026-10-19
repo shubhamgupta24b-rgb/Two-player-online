@@ -43,6 +43,7 @@ GameInfo _local(String id, GameCategory category, {int? max}) {
 }
 
 final List<GameInfo> gameCatalog = [
+  _local('uno', GameCategory.cards),
   _local('colour_clash', GameCategory.cards),
   const GameInfo('raja_mantri', 'Raja Mantri Chor Sipahi',
       playable: true, minPlayers: 4, maxPlayers: 4, emoji: '👑', color: Color(0xFF8A1C3A), tagline: 'Can the Mantri catch the Chor?', category: GameCategory.cards),
