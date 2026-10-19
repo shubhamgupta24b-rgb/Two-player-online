@@ -10,7 +10,7 @@ This checklist defines the requested 22-game collection and prevents placeholder
 |---:|---|---|---|
 | 1 | Tic Tac Toe | 3×3 board, win/draw detection, rematch | Existing module; verify |
 | 2 | Connect Four | 7×6 board, legal drops, win/draw detection | Existing module; verify |
-| 3 | Chess | Legal moves, check/checkmate/stalemate, promotion, undo/rematch | Not verified; implement/verify |
+| 3 | Chess | Legal moves, check/checkmate/stalemate, promotion, undo/rematch | Board, basic piece movement, captures and queen promotion added; full check/checkmate/castling/en-passant rules still missing |
 | 4 | Carrom | Striker/coins, fouls, queen cover, scoring | Existing module; verify |
 | 5 | 8 Ball Pool | Turn/foul rules, solids/stripes, 8-ball win/loss | Existing module; verify |
 | 6 | Table Tennis | Paddle/ball, serve, rally and match scoring | Existing Ping Pong module; verify |
@@ -23,7 +23,7 @@ This checklist defines the requested 22-game collection and prevents placeholder
 | 13 | Fruit Cut | Swipe slicing, misses, hazards and score | Separate swipe-to-cut module added; build/play test pending |
 | 14 | Maths Duel | Timed questions, correct-answer score and winner | Existing module; verify |
 | 15 | Guess Who / Guess the Person | Secret character, questions/elimination and win condition | Existing Guess Person flow; verify exact requested rules |
-| 16 | Backgammon | Board, dice, legal moves, hits, bearing off | Not verified; implement/verify |
+| 16 | Backgammon | Board, dice, legal moves, hits, bearing off | Simplified dice-and-checker prototype added; full official movement/bar/hitting/bearing-off rules still missing |
 | 17 | Checkers | Legal diagonal moves, captures, kings and win condition | Existing module; verify |
 | 18 | Battleship | Hidden ship placement, shots, hits/misses and win condition | Existing module; verify |
 | 19 | Raja Mantri | Four-player role/scoring round | Existing Raja Mantri flow; verify |
@@ -35,6 +35,8 @@ This checklist defines the requested 22-game collection and prevents placeholder
 
 - [ ] Clay-style collection screen and navigation verified on web and mobile layouts.
 - [ ] Fruit Cut and independent UNO modules pass build and gameplay smoke tests.
+- [ ] Chess and Backgammon modules pass build and gameplay smoke tests.
+- [ ] Full rules are still outstanding for Chess and Backgammon; do not label these prototypes as tournament-rule-complete.
 - [ ] Every game opens the intended game, not a misleading alias or placeholder.
 - [ ] Rules shown before play match the implemented rules.
 - [ ] Turn ownership, scores, end conditions, restart/rematch work.
