@@ -247,8 +247,6 @@ void main() {
       expect(g.scores, [1, 1]);
     });
   });
-}
-
 
   group('Connect Four', () {
     test('discs fall to the lowest open row and turns alternate', () {
@@ -301,3 +299,5 @@ void main() {
       expect(diagonal.winner, 0);
     });
   });
+
+}
