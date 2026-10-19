@@ -34,7 +34,7 @@ class _BackgammonBoardState extends State<BackgammonBoard> {
   bool _rolled=false,_finished=false;
   String _status='White rolls first.';
   @override void initState(){super.initState();_points[0]=2;_points[11]=5;_points[16]=3;_points[18]=5;_points[23]=-2;_points[12]=-5;_points[7]=-3;_points[5]=-5;}
-  void _roll(){if(_rolled||_finished)return;setState(()=>{_die1=_rng.nextInt(6)+1,_die2=_rng.nextInt(6)+1,_rolled=true,_selected=-1,_status:'Dice: $_die1 and $_die2. Select a stack, then a destination.'});}
+  void _roll(){if(_rolled||_finished)return;setState((){_die1=_rng.nextInt(6)+1;_die2=_rng.nextInt(6)+1;_rolled=true;_selected=-1;_status='Dice: $_die1 and $_die2. Select a stack, then a destination.';});}
   bool _own(int v)=>_turn==0?v>0:v<0;
   void _tapPoint(int i){
     if(!_rolled||_finished)return;
@@ -63,7 +63,7 @@ class _BackgammonBoardState extends State<BackgammonBoard> {
     Row(mainAxisAlignment:MainAxisAlignment.center,children:[
       _die(_die1),const SizedBox(width:12),_die(_die2),const SizedBox(width:12),
       FilledButton(onPressed:_rolled?null:_roll,child:const Text('Roll dice')),
-      const SizedBox(width:6),OutlinedButton(onPressed:_rolled?()=>setState(()=>{_rolled=false,_turn=1-_turn,_selected=-1,_status='${_turn==0?'White':'Black'} to roll.'}):null,child:const Text('End turn')),
+      const SizedBox(width:6),OutlinedButton(onPressed:_rolled?()=>setState((){_rolled=false;_turn=1-_turn;_selected=-1;_status='${_turn==0?'White':'Black'} to roll.';}):null,child:const Text('End turn')),
     ]),
     const SizedBox(height:10),
     Expanded(child:Padding(padding:const EdgeInsets.all(10),child:GridView.builder(itemCount:24,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:6,childAspectRatio:.72,crossAxisSpacing:5,mainAxisSpacing:5),itemBuilder:(ctx,i){
