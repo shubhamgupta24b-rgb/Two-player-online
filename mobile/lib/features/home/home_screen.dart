@@ -24,7 +24,8 @@ import '../raja_mantri/rmcs_screen.dart';
 import '../records/records_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool openSameHostOnStart;
+  const HomeScreen({super.key, this.openSameHostOnStart = false});
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -38,7 +39,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     // The server connects in the background, so check both now and once it comes up.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _rejoinRoom());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _rejoinRoom();
+      if (widget.openSameHostOnStart && mounted) _sameWifi();
+    });
     _socket.connected.addListener(_onConnection);
     _loadRecent();
   }
