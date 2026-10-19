@@ -10,7 +10,7 @@ This checklist defines the requested 22-game collection and prevents placeholder
 |---:|---|---|---|
 | 1 | Tic Tac Toe | 3×3 board, win/draw detection, rematch | Existing module; verify |
 | 2 | Connect Four | 7×6 board, legal drops, win/draw detection | Existing module; verify |
-| 3 | Chess | Legal moves, check/checkmate/stalemate, promotion, undo/rematch | Board, basic piece movement, captures and queen promotion added; full check/checkmate/castling/en-passant rules still missing |
+| 3 | Chess | Legal moves, check/checkmate/stalemate, promotion, undo/rematch | Standard movement, king safety, check/checkmate/stalemate and queen promotion added in latest commit; castling and en passant still missing; build/test pending |
 | 4 | Carrom | Striker/coins, fouls, queen cover, scoring | Existing module; verify |
 | 5 | 8 Ball Pool | Turn/foul rules, solids/stripes, 8-ball win/loss | Existing module; verify |
 | 6 | Table Tennis | Paddle/ball, serve, rally and match scoring | Existing Ping Pong module; verify |
@@ -35,7 +35,8 @@ This checklist defines the requested 22-game collection and prevents placeholder
 
 - [ ] Clay-style collection screen and navigation verified on web and mobile layouts.
 - [ ] Fruit Cut and independent UNO modules pass build and gameplay smoke tests.
-- [ ] Chess and Backgammon modules pass build and gameplay smoke tests.
+- [ ] Chess module passes build and gameplay smoke tests; castling/en passant remain outstanding.
+- [ ] Backgammon still needs full legal move, bar-entry, hit/blot and doubles rules.
 - [ ] Full rules are still outstanding for Chess and Backgammon; do not label these prototypes as tournament-rule-complete.
 - [ ] Every game opens the intended game, not a misleading alias or placeholder.
 - [ ] Rules shown before play match the implemented rules.
@@ -47,4 +48,4 @@ This checklist defines the requested 22-game collection and prevents placeholder
 
 ## Important status note
 
-Existing source files are not proof that a game is complete. Do not mark any row complete until the code and the relevant play path have been inspected and tested. The Render service is currently live on the latest observed commit, and the Chess board declaration fix is deployed. This confirms a web build/deploy only; it does not verify every game's rules or produce an Android APK. The Android APK workflow has been added, but no successful artifact has yet been verified.
+Existing source files are not proof that a game is complete. Do not mark any row complete until the code and the relevant play path have been inspected and tested. The Render service is currently live on the latest observed commit, and the Chess board declaration fix is deployed. This confirms a web build/deploy only; it does not verify every game's rules or produce an Android APK. The Android APK workflow has been added; check the latest workflow run for a successful artifact. Latest code changes still require build and gameplay verification.
