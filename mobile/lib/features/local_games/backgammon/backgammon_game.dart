@@ -49,7 +49,12 @@ class _BackgammonBoardState extends State<BackgammonBoard> {
       return;
     }
     final distance = _turn == 0 ? 24 - _selected : _selected + 1;
-    final die = [_die1, _die2].where((d) => d > 0 && d >= distance).cast<int?>().firstWhere((d) => d != null, orElse: () => null);
+    int? die;
+    if (_die1 > 0 && _die1 >= distance) {
+      die = _die1;
+    } else if (_die2 > 0 && _die2 >= distance) {
+      die = _die2;
+    }
     if (die == null) {
       setState(() => _status = 'Use a die equal to or higher than the distance to bear off.');
       return;
@@ -81,15 +86,19 @@ class _BackgammonBoardState extends State<BackgammonBoard> {
     }
     final dir=_turn==0?1:-1;
     final dist=(i-_selected)*dir;
-    if(dist!=_die1&&dist!=_die2){setState(()=>_status='Move by one of your dice values.');return;}
+    if (dist <= 0 || (dist != _die1 && dist != _die2)) {
+      setState(() => _status = 'Move forward by one unused die value.');
+      return;
+    }
     final source=_points[_selected],target=_points[i];
     if(!_own(source)||(_own(target)==false&&target.abs()>1)){setState(()=>_status='That point is blocked.');return;}
+    final usedDie = _die1 == dist ? 1 : 2;
     setState((){
       _points[_selected]-=dir;
       if(target!=0&&!_own(target))_points[i]=0; // simplified blot handling
       _points[i]+=dir;
       _selected=-1;
-      if(_die1==dist)_die1=0;else if(_die2==dist)_die2=0;
+      if (usedDie == 1) { _die1 = 0; } else { _die2 = 0; }
       if(_die1==0&&_die2==0){_rolled=false;_turn=1-_turn;_status='${_turn==0?'White':'Black'} to roll.';}
       else {_status='Make your next move, or end turn.';}
       if(_borne0>=15||_borne1>=15){_finished=true;_status='${_borne0>=15?'White':'Black'} wins!';}
