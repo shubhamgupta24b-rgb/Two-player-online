@@ -39,7 +39,7 @@ class ChessBoard extends StatefulWidget {
   @override State<ChessBoard> createState() => _ChessBoardState();
 }
 class _ChessBoardState extends State<ChessBoard> {
-  late List<List<ChessPiece?>> board;
+  late List<ChessPiece?> board;
   ChessSide turn = ChessSide.white;
   int? selected;
   Set<int> moves = {};
