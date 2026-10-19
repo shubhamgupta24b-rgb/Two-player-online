@@ -38,6 +38,7 @@ jobs:
         run: |
           cat android/gradle/wrapper/gradle-wrapper.properties
           cd android
+          chmod +x gradlew
           ./gradlew --version
       - name: Run Flutter tests
         working-directory: mobile
