@@ -15,6 +15,8 @@ import 'slingshot/slingshot_game.dart';
 import 'crush_it/crush_it_game.dart';
 import 'fruit_duel/fruit_duel_game.dart';
 import 'fruit_cut/fruit_cut_game.dart';
+import 'chess/chess_game.dart';
+import 'backgammon/backgammon_game.dart';
 import 'memory/memory_game.dart';
 import 'paint_fight/paint_fight_game.dart';
 import 'air_hockey/air_hockey_game.dart';
@@ -74,7 +76,7 @@ import 'shell/local_game_info.dart';
 import 'shell/game_art.dart';
 import 'shell/local_game_shell.dart';
 
-final localGames = <LocalGameInfo>[unoInfo, colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
+final localGames = <LocalGameInfo>[chessInfo, backgammonInfo, unoInfo, colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
   drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo, fruitCutInfo,
   ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo, dotsBoxesInfo,
   mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo, bingoInfo, battleshipInfo, checkersInfo, smashKartsInfo,
