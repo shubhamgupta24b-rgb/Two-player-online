@@ -55,7 +55,7 @@ class CompetitiveLogic extends LocalGameLogic {
   late List<int> eliminated;
   int turn = 0, round = 1, now = 0, _last = 0;
   int potatoHolder = 0, potatoUntil = 8500, nextMarble = 0, marbles = 0;
-  bool done = false, _shotStarted = false;
+  bool done = false, _shotStarted = false, _shotPocketedObject = false;
   String notice = 'YOUR TURN';
 
   CompetitiveLogic(this.mode, {int players = 2, Random? random})
@@ -137,7 +137,7 @@ class CompetitiveLogic extends LocalGameLogic {
           done=true; score[turn] += balls.where((q)=>q.pocketed && q.kind==1).length>=7?3:-3;
           notice=score[turn]>0?'8 BALL — WIN':'8 BALL — FOUL';
         } else if(b.kind==0) { b.pocketed=false; b.x=.25; b.y=.5; b.vx=0;b.vy=0; score[turn]=max(0,score[turn]-1); notice='CUE FOUL'; }
-        else { score[turn]++; notice='POCKETED +1'; }
+        else { score[turn]++; _shotPocketedObject=true; notice='POCKETED +1'; }
       }
     }
     // Small deterministic ball collisions.
@@ -153,7 +153,7 @@ class CompetitiveLogic extends LocalGameLogic {
         moving=true;
       }
     }
-    if(!moving && _shotStarted) { _shotStarted=false; if(!done) turn=(turn+1)%players; }
+    if(!moving && _shotStarted) { _shotStarted=false; if(!done && !_shotPocketedObject) turn=(turn+1)%players; _shotPocketedObject=false; }
     if(!moving && balls.every((b)=>b.vx==0&&b.vy==0) && balls.any((b)=>b.pocketed)) {
       if(balls.where((b)=>!b.pocketed&&b.kind!=0).length==0) { done=true; }
     }
@@ -200,6 +200,7 @@ class CompetitiveLogic extends LocalGameLogic {
   Map<String,dynamic> save() => {
     'score':score,'balls':[for(final b in balls)b.toJson()],'darts':darts,'eliminated':eliminated,
     'turn':turn,'round':round,'now':now,'potatoHolder':potatoHolder,'potatoUntil':potatoUntil,
+    'shotPocketedObject':_shotPocketedObject,'shotStarted':_shotStarted,
     'nextMarble':nextMarble,'marbles':marbles,'done':done,'notice':notice,
   };
   void loadState(Map<String,dynamic> s) {
@@ -210,7 +211,7 @@ class CompetitiveLogic extends LocalGameLogic {
     turn=(s['turn'] as num).toInt(); round=(s['round'] as num).toInt(); now=(s['now'] as num).toInt();
     potatoHolder=(s['potatoHolder'] as num).toInt(); potatoUntil=(s['potatoUntil'] as num).toInt();
     nextMarble=(s['nextMarble'] as num).toInt(); marbles=(s['marbles'] as num).toInt();
-    done=s['done']==true; notice=s['notice'] as String? ?? '';
+    done=s['done']==true; _shotPocketedObject=s['shotPocketedObject']==true; _shotStarted=s['shotStarted']==true; notice=s['notice'] as String? ?? '';
   }
 
   void applyAction(int from,String name,List<Object?> args) {
