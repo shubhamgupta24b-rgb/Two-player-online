@@ -66,6 +66,7 @@ final List<GameInfo> gameCatalog = [
   _local('basketball_hoops', GameCategory.action, max: 4),
   _local('crush_it', GameCategory.action, max: 4),
   _local('fruit_duel', GameCategory.action, max: 4),
+  _local('fruit_cut', GameCategory.action),
   _local('paint_fight', GameCategory.action, max: 4),
   _local('reaction_tap', GameCategory.action),
   _local('math_duel', GameCategory.action),
