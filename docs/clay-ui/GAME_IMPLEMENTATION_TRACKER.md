@@ -47,4 +47,4 @@ This checklist defines the requested 22-game collection and prevents placeholder
 
 ## Important status note
 
-Existing source files are not proof that a game is complete. Do not mark any row complete until the code and the relevant play path have been inspected and tested. The current Render deployment attempt previously failed during Flutter web compilation, so deployment must not be called live until a later deploy succeeds.
+Existing source files are not proof that a game is complete. Do not mark any row complete until the code and the relevant play path have been inspected and tested. The Render service is currently live on the latest observed commit, and the Chess board declaration fix is deployed. This confirms a web build/deploy only; it does not verify every game's rules or produce an Android APK. The Android APK workflow has been added, but no successful artifact has yet been verified.
