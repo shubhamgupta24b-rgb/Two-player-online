@@ -266,9 +266,10 @@ void main() {
       expect(g.drop(-1), isNull);
       expect(g.drop(7), isNull);
       expect(g.turn, 0);
+      // Alternate both players in one column so the six discs have mixed
+      // colours; this fills the column without creating a four-in-a-row.
       for (var i = 0; i < 6; i++) {
         expect(g.drop(0), isNotNull);
-        if (i < 5) expect(g.drop(1), isNotNull);
       }
       final turnBefore = g.turn;
       expect(g.drop(0), isNull);
