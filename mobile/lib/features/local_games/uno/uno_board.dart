@@ -36,6 +36,7 @@ class _UnoBoardState extends State<UnoBoard> {
   final _draw = <UCard>[];
   final _discard = <UCard>[];
   int _id = 0, _turn = 0;
+  int? _drawnCardId;
   UColor _active = UColor.red;
   bool _drew = false, _uno = false, _ended = false;
   String _status = 'Match the colour, number or symbol.';
@@ -77,12 +78,17 @@ class _UnoBoardState extends State<UnoBoard> {
     ])));
 
   Future<void> _play(UCard c) async {
-    if (_ended || !_legal(c)) return;
+    if (_ended) return;
+    if (_drew && c.id != _drawnCardId) {
+      setState(() => _status = 'After drawing, you may only play the card you just drew.');
+      return;
+    }
+    if (!_legal(c)) return;
     final hand = _hands[_turn];
     if (c.kind == UKind.wildFour && hand.any((x) => x.color == _active)) {
       setState(() => _status = 'Wild +4 is only legal when you have no active-colour card.'); return;
     }
-    setState(() { hand.removeWhere((x)=>x.id==c.id); _discard.add(c); _drew=false; });
+    setState(() { hand.removeWhere((x)=>x.id==c.id); _discard.add(c); _drew=false; _drawnCardId=null; });
     if (c.color == UColor.wild) { final selected = await _pickColor(); if (!mounted || selected == null) return; _active = selected; }
     else { _active = c.color; }
     if (hand.isEmpty) {
@@ -99,7 +105,13 @@ class _UnoBoardState extends State<UnoBoard> {
 
   void _drawOne() {
     if (_ended || _drew) return;
-    setState(() { _drawCards(1); _drew=true; _status='Play the drawn card if legal, or pass.'; });
+    setState(() {
+      final before = _hands[_turn].map((card) => card.id).toSet();
+      _drawCards(1);
+      _drawnCardId = _hands[_turn].firstWhere((card) => !before.contains(card.id), orElse: () => _hands[_turn].last).id;
+      _drew=true;
+      _status='Play the drawn card if legal, or pass.';
+    });
   }
   void _pass() {
     if (!_drew || _ended) return;
