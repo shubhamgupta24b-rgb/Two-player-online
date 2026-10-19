@@ -20,7 +20,7 @@ This checklist defines the requested 22-game collection and prevents placeholder
 | 10 | Air Hockey | Puck/paddles, goals, score and match end | Existing module; verify |
 | 11 | Racing | Track, controls, collisions and finish condition | Existing Smash Karts module; verify match to brief |
 | 12 | Basketball | Shot control, timer and score | Existing module; verify |
-| 13 | Fruit Cut | Swipe slicing, misses, hazards and score | Not satisfied by Fruit Duel; implement separately |
+| 13 | Fruit Cut | Swipe slicing, misses, hazards and score | Separate swipe-to-cut module added; build/play test pending |
 | 14 | Maths Duel | Timed questions, correct-answer score and winner | Existing module; verify |
 | 15 | Guess Who / Guess the Person | Secret character, questions/elimination and win condition | Existing Guess Person flow; verify exact requested rules |
 | 16 | Backgammon | Board, dice, legal moves, hits, bearing off | Not verified; implement/verify |
@@ -28,12 +28,13 @@ This checklist defines the requested 22-game collection and prevents placeholder
 | 18 | Battleship | Hidden ship placement, shots, hits/misses and win condition | Existing module; verify |
 | 19 | Raja Mantri | Four-player role/scoring round | Existing Raja Mantri flow; verify |
 | 20 | Chor Sipahi | Role assignment and scoring as part of Raja Mantri | Covered by Raja Mantri rules, not a separate game unless requested |
-| 21 | UNO | Standard deck, draw/play, action cards, UNO call, round scoring | Current entry aliases Colour Clash; not yet an independent UNO implementation |
+| 21 | UNO | Standard deck, draw/play, action cards, UNO call, round scoring | Independent two-player local card UI/turn logic added; online relay and build/play tests pending |
 | 22 | Ludo | Dice, tokens, safe cells, home path and finish | Existing module; verify |
 
 ## Implementation and verification gates
 
 - [ ] Clay-style collection screen and navigation verified on web and mobile layouts.
+- [ ] Fruit Cut and independent UNO modules pass build and gameplay smoke tests.
 - [ ] Every game opens the intended game, not a misleading alias or placeholder.
 - [ ] Rules shown before play match the implemented rules.
 - [ ] Turn ownership, scores, end conditions, restart/rematch work.
