@@ -39,7 +39,7 @@ class PlayModeScreen extends StatelessWidget {
                       title: 'Play Online',
                       subtitle: 'Play with friends anywhere',
                       gradient: const [Color(0xFF4C8DFF), Color(0xFF2864E8)],
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OnlineModeScreen())),
                     ),
                     const SizedBox(height: 16),
                     _ModeCard(
@@ -51,6 +51,60 @@ class PlayModeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Connection choice shown after tapping Play Online.
+class OnlineModeScreen extends StatelessWidget {
+  const OnlineModeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final flat = flatStyle;
+    final ink = flat ? FlatPalette.ink : Colors.white;
+    final muted = flat ? FlatPalette.inkMuted : Colors.white70;
+    return Scaffold(
+      body: AppBackground(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Align(alignment: Alignment.centerLeft, child: IconButton(
+                    tooltip: 'Back', onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.arrow_back_rounded, color: ink))),
+                  const AppLogo(size: 92),
+                  const SizedBox(height: 12),
+                  Text('Play Online', style: TextStyle(fontFamily: 'Lilita One', fontSize: 30, color: ink)),
+                  const SizedBox(height: 8),
+                  Text('Choose how to connect with other players', textAlign: TextAlign.center,
+                    style: TextStyle(fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w700, color: muted)),
+                  const SizedBox(height: 28),
+                  _ModeCard(
+                    icon: Icons.public_rounded,
+                    title: 'Online',
+                    subtitle: 'Play through the internet',
+                    gradient: const [Color(0xFF4C8DFF), Color(0xFF2864E8)],
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
+                  ),
+                  const SizedBox(height: 16),
+                  _ModeCard(
+                    icon: Icons.wifi_rounded,
+                    title: 'Same Host',
+                    subtitle: 'Use one phone hotspot or the same Wi-Fi',
+                    gradient: const [Color(0xFFFFB86B), Color(0xFFF18B45)],
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeScreen(openSameHostOnStart: true))),
+                  ),
+                ]),
               ),
             ),
           ),
