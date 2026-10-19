@@ -5,7 +5,7 @@ import '../../config.dart';
 import '../../core/auth/authentication_manager.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/ui/app_ui.dart';
-import '../home/home_screen.dart';
+import 'play_mode_screen.dart';
 import '../login/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     }
     // Don't block on the server: 1-device games work offline, online rooms connect when they can.
     unawaited(socket.connect(AppConfig.serverUrl, auth.token).catchError((_) {}));
-    nav.pushReplacement(_fade(const HomeScreen()));
+    nav.pushReplacement(_fade(const PlayModeScreen()));
   }
 
   static Route<void> _fade(Widget page) => PageRouteBuilder(
