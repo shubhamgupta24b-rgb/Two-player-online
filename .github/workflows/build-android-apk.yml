@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - feature/clay-games-ui-uno
       - feature/clay-admob-integration
     paths:
       - "mobile/**"
@@ -14,8 +13,9 @@ permissions:
   contents: read
 
 jobs:
-  build-apk:
-    runs-on: ubuntu-latest
+  quality:
+    name: Flutter tests and analysis
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - name: Checkout repository
@@ -34,37 +34,60 @@ jobs:
       - name: Resolve dependencies
         working-directory: mobile
         run: flutter pub get
-      - name: Verify Android Gradle wrapper
-        working-directory: mobile
-        run: |
-          cat android/gradle/wrapper/gradle-wrapper.properties
-          cd android
-          chmod +x gradlew
-          ./gradlew --version
-      # Keep test failures visible but don't prevent generating the requested APK.
       - name: Run Flutter tests
         working-directory: mobile
-        run: |
-          set +e
-          flutter test --no-pub
-          test_exit=$?
-          if [ "$test_exit" -ne 0 ]; then
-            echo "::warning::Flutter tests reported failures (exit $test_exit); continuing to build APK."
-          fi
-          exit 0
+        run: flutter test --no-pub
       - name: Analyze Dart sources
+        if: always()
         working-directory: mobile
+        run: flutter analyze --no-pub
+
+  build-apk:
+    name: Build release APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.38.6"
+          cache: true
+      - name: Resolve dependencies
+        working-directory: mobile
+        run: flutter pub get
+      - name: Verify committed Gradle wrapper
+        working-directory: mobile/android
+        shell: bash
         run: |
-          set +e
-          flutter analyze --no-pub
-          analyze_exit=$?
-          if [ "$analyze_exit" -ne 0 ]; then
-            echo "::warning::Flutter analyze reported issues (exit $analyze_exit); continuing to build APK."
-          fi
-          exit 0
-      - name: Build release APK with configured AdMob IDs
+          grep -F 'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.14.3-bin.zip' gradle/wrapper/gradle-wrapper.properties
+          grep -F 'distributionSha256Sum=bd71102213493060956ec229d946beee57158dbd89d0e62b91bca0fa2c5f3531' gradle/wrapper/gradle-wrapper.properties
+          chmod +x gradlew
+          ./gradlew --version | tee /tmp/gradle-version.txt
+          grep -F 'Gradle 8.14.3' /tmp/gradle-version.txt
+      - name: Build flat release APK with live AdMob units
         working-directory: mobile
         run: flutter build apk --release --dart-define=APP_STYLE=flat --dart-define=ADMOB_LIVE_ADS=true
+      - name: Verify APK and package metadata
+        working-directory: mobile
+        shell: bash
+        run: |
+          apk='build/app/outputs/flutter-apk/app-release.apk'
+          test -s "$apk"
+          aapt_bin="$(find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          test -n "$aapt_bin"
+          "$aapt_bin" dump badging "$apk" | tee /tmp/apk-badging.txt
+          grep -F "name='com.shubhamgupta.partygames.flat'" /tmp/apk-badging.txt
+          grep -F "versionCode='1'" /tmp/apk-badging.txt
+          grep -F "versionName='0.1.0'" /tmp/apk-badging.txt
+          grep -F "application-label:'Party Games Flat'" /tmp/apk-badging.txt
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
