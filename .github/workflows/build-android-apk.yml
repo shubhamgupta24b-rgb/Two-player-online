@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - feature/clay-games-ui-uno
+      - feature/clay-admob-integration
     paths:
       - "mobile/**"
       - ".github/workflows/build-android-apk.yml"
