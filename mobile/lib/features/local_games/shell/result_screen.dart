@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ads/admob_service.dart';
 import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import 'game_art.dart';
@@ -58,9 +59,11 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TokenScope(
-      flat: false,
-      child: Builder(builder: (context) => game.solo ? _solo(context) : _match(context)),
+    return AdResultGate(
+      child: TokenScope(
+        flat: false,
+        child: Builder(builder: (context) => game.solo ? _solo(context) : _match(context)),
+      ),
     );
   }
 
@@ -306,4 +309,28 @@ class _CountUp extends StatelessWidget {
           builder: (_, v, __) => Text('${v.round()}', textAlign: TextAlign.center, style: style),
         ),
       );
+}
+
+
+/// Loads no UI of its own; it requests a preloaded interstitial once when a
+/// results screen appears. The service silently skips the ad when unavailable.
+class AdResultGate extends StatefulWidget {
+  final Widget child;
+  const AdResultGate({super.key, required this.child});
+
+  @override
+  State<AdResultGate> createState() => _AdResultGateState();
+}
+
+class _AdResultGateState extends State<AdResultGate> {
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(const Duration(milliseconds: 900), () {
+      if (mounted) AdMobService.instance.showInterstitialIfReady();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
