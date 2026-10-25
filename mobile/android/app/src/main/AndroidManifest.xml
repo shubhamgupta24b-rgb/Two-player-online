@@ -8,7 +8,7 @@
         android:theme="@style/LaunchTheme">
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-2273708482671832~3323244780" />
+            android:value="${googleMobileAdsAppId}" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

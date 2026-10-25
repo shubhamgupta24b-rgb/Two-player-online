@@ -12,10 +12,8 @@ class AdMobService {
   AdMobService._();
   static final AdMobService instance = AdMobService._();
 
-  static const bool _liveAds = bool.fromEnvironment(
-    'ADMOB_LIVE_ADS',
-    defaultValue: false,
-  );
+  static const bool _liveAds =
+      kReleaseMode && bool.fromEnvironment('ADMOB_LIVE_ADS', defaultValue: false);
 
   static const String _productionInterstitial =
       'ca-app-pub-2273708482671832/3168825409';

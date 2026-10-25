@@ -67,7 +67,7 @@ jobs:
         working-directory: mobile/android
         shell: bash
         run: |
-          grep -F 'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.14.3-bin.zip' gradle/wrapper/gradle-wrapper.properties
+          grep -F 'gradle-8.14.3-bin.zip' gradle/wrapper/gradle-wrapper.properties
           grep -F 'distributionSha256Sum=bd71102213493060956ec229d946beee57158dbd89d0e62b91bca0fa2c5f3531' gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
           ./gradlew --version | tee /tmp/gradle-version.txt
