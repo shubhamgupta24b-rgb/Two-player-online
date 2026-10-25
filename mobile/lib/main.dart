@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'core/ads/admob_service.dart';
 import 'package:provider/provider.dart';
 import 'config.dart';
 import 'core/audio/game_audio.dart';
@@ -14,6 +17,7 @@ import 'features/splash/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  unawaited(AdMobService.instance.initialize());
   await AppConfig.load();
   await GameAudio.init();
   await AppSettings.init();
