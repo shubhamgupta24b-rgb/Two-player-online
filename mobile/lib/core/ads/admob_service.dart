@@ -157,7 +157,7 @@ class AdMobService {
     _rewardedInterstitial = null;
     ad.show(
       onUserEarnedReward: (ad, reward) {
-        onRewardEarned(reward.amount, reward.type);
+        onRewardEarned(reward.amount.toInt(), reward.type);
       },
     );
     return true;
