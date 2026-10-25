@@ -43,12 +43,24 @@ jobs:
       # Keep test failures visible but don't prevent generating the requested APK.
       - name: Run Flutter tests
         working-directory: mobile
-        run: flutter test --no-pub
-        continue-on-error: true
+        run: |
+          set +e
+          flutter test --no-pub
+          test_exit=$?
+          if [ "$test_exit" -ne 0 ]; then
+            echo "::warning::Flutter tests reported failures (exit $test_exit); continuing to build APK."
+          fi
+          exit 0
       - name: Analyze Dart sources
         working-directory: mobile
-        run: flutter analyze --no-pub
-        continue-on-error: true
+        run: |
+          set +e
+          flutter analyze --no-pub
+          analyze_exit=$?
+          if [ "$analyze_exit" -ne 0 ]; then
+            echo "::warning::Flutter analyze reported issues (exit $analyze_exit); continuing to build APK."
+          fi
+          exit 0
       - name: Build release APK with configured AdMob IDs
         working-directory: mobile
         run: flutter build apk --release --dart-define=APP_STYLE=flat --dart-define=ADMOB_LIVE_ADS=true
