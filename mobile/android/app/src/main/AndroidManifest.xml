@@ -6,6 +6,9 @@
         android:icon="@mipmap/ic_launcher"
         android:name="${applicationName}"
         android:theme="@style/LaunchTheme">
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-2273708482671832~3323244780" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
