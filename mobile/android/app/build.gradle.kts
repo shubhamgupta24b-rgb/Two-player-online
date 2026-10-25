@@ -39,7 +39,8 @@ android {
     defaultConfig {
         applicationId = if (flatApp) "com.shubhamgupta.partygames.flat" else "com.shubhamgupta.partygames"
         manifestPlaceholders["appLabel"] = if (flatApp) "Party Games Flat" else "Party Games"
-        minSdk = flutter.minSdkVersion
+        // google_mobile_ads 6.x requires Android API 23+.
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
