@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'core/ads/admob_service.dart';
 import 'package:provider/provider.dart';
+import 'core/ads/admob_service.dart';
 import 'config.dart';
 import 'core/audio/game_audio.dart';
 import 'core/settings/app_settings.dart';
@@ -17,7 +17,6 @@ import 'features/splash/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  unawaited(AdMobService.instance.initialize());
   await AppConfig.load();
   await GameAudio.init();
   await AppSettings.init();
@@ -30,6 +29,8 @@ Future<void> main() async {
     }
   }
   runApp(const App());
+  // Consent and the ads SDK start in the background; nothing waits for them.
+  unawaited(AdMobService.instance.initialize());
 }
 
 class App extends StatefulWidget {
