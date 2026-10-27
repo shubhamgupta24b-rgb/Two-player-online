@@ -1,5 +1,8 @@
 name: Build Android APK
 
+# Two independent jobs: a failing test or lint never stops the APK build, and the APK
+# job never hides test results. Each job fails on its own with its own logs.
+
 on:
   workflow_dispatch:
   push:
@@ -12,6 +15,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Toolchain pinned as one tested set. Flutter 3.38.6's Android template uses
+  # AGP 8.11.1 + Kotlin 2.2.20 + Gradle 8.14.3, which is what mobile/android pins.
+  # AGP 8.x does not run on Gradle 9.6+, so only the committed wrapper may run Gradle.
+  FLUTTER_VERSION: "3.38.6"
+  JAVA_VERSION: "17"
+  GRADLE_VERSION: "8.14.3"
+
 jobs:
   quality:
     name: Flutter tests and analysis
@@ -19,28 +34,61 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: ${{ env.JAVA_VERSION }}
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: "3.38.6"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - name: Resolve dependencies
         working-directory: mobile
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
       - name: Run Flutter tests
+        id: tests
         working-directory: mobile
-        run: flutter test --no-pub
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter test --no-pub --reporter expanded 2>&1 | tee /tmp/flutter-test.log
       - name: Analyze Dart sources
-        if: always()
+        id: analyze
+        if: ${{ !cancelled() && steps.tests.conclusion != 'skipped' }}
         working-directory: mobile
-        run: flutter analyze --no-pub
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter analyze --no-pub 2>&1 | tee /tmp/flutter-analyze.log
+      - name: Summarize tests and analysis
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          {
+            echo "## Flutter tests: ${{ steps.tests.outcome }}"
+            echo '```'
+            tail -n 1 /tmp/flutter-test.log 2>/dev/null || echo "no test log"
+            grep -E '\[E\]$' /tmp/flutter-test.log 2>/dev/null | sed -E 's/^[0-9:]+ \+[0-9]+( ~[0-9]+)? -[0-9]+: //' | sort -u || true
+            echo '```'
+            echo "## flutter analyze: ${{ steps.analyze.outcome }}"
+            echo '```'
+            tail -n 20 /tmp/flutter-analyze.log 2>/dev/null || echo "no analyze log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload test and analysis logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: flutter-test-logs
+          path: |
+            /tmp/flutter-test.log
+            /tmp/flutter-analyze.log
+          if-no-files-found: warn
+          retention-days: 14
 
   build-apk:
     name: Build release APK
@@ -48,48 +96,123 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+      - name: Validate committed Gradle wrapper jar
+        uses: gradle/actions/wrapper-validation@v5
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: ${{ env.JAVA_VERSION }}
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: "3.38.6"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+      - name: Check toolchain versions
+        shell: bash
+        run: |
+          flutter --version | tee /tmp/flutter-version.txt
+          grep -F "Flutter ${FLUTTER_VERSION} " /tmp/flutter-version.txt
+          java -version 2>&1 | tee /tmp/java-version.txt
+          grep -E "version \"${JAVA_VERSION}[.\"]" /tmp/java-version.txt
       - name: Resolve dependencies
         working-directory: mobile
-        run: flutter pub get
-      - name: Verify committed Gradle wrapper
+        run: flutter pub get --enforce-lockfile
+      - name: Check the Gradle wrapper pins Gradle ${{ env.GRADLE_VERSION }}
         working-directory: mobile/android
         shell: bash
         run: |
-          grep -F 'gradle-8.14.3-bin.zip' gradle/wrapper/gradle-wrapper.properties
+          grep -F "gradle-${GRADLE_VERSION}-bin.zip" gradle/wrapper/gradle-wrapper.properties
           grep -F 'distributionSha256Sum=bd71102213493060956ec229d946beee57158dbd89d0e62b91bca0fa2c5f3531' gradle/wrapper/gradle-wrapper.properties
+          # The real wrapper script, not a stub that runs whatever Gradle is on PATH
+          # (that is how CI once ran the runner's Gradle 9.8.1 and failed).
+          grep -F -- '-jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar"' gradlew
           chmod +x gradlew
           ./gradlew --version | tee /tmp/gradle-version.txt
-          grep -F 'Gradle 8.14.3' /tmp/gradle-version.txt
-      - name: Build flat release APK with live AdMob units
+          grep -F "Gradle ${GRADLE_VERSION}" /tmp/gradle-version.txt
+      - name: Set up release signing (only if signing secrets exist)
+        working-directory: mobile/android
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret: the APK is signed with the debug key. It installs for testing but Google Play will reject it."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
+          {
+            echo "storeFile=$RUNNER_TEMP/upload-keystore.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > key.properties
+      - name: Build Clay (flat) release APK with live AdMob units
         working-directory: mobile
-        run: flutter build apk --release --dart-define=APP_STYLE=flat --dart-define=ADMOB_LIVE_ADS=true
-      - name: Verify APK and package metadata
+        shell: bash
+        env:
+          SERVER_URL: ${{ vars.SERVER_URL }}
+        run: |
+          defines=(--dart-define=APP_STYLE=flat --dart-define=ADMOB_LIVE_ADS=true)
+          if [ -n "$SERVER_URL" ]; then
+            defines+=("--dart-define=SERVER_URL=$SERVER_URL")
+          else
+            echo "::warning::Repository variable SERVER_URL is not set: online play defaults to http://10.0.2.2:3000 until a server is set in the app."
+          fi
+          flutter build apk --release "${defines[@]}"
+      - name: Check the build did not rewrite Android build files
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          # Flutter migrators can edit Gradle files during a build; fail loudly instead
+          # of letting CI build something different from what is committed.
+          git diff --stat --exit-code -- mobile/android mobile/pubspec.yaml mobile/pubspec.lock
+      - name: Verify APK, package metadata and AdMob configuration
         working-directory: mobile
         shell: bash
         run: |
           apk='build/app/outputs/flutter-apk/app-release.apk'
           test -s "$apk"
-          aapt_bin="$(find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools" -type f -name aapt | sort -V | tail -n 1)"
-          test -n "$aapt_bin"
-          "$aapt_bin" dump badging "$apk" | tee /tmp/apk-badging.txt
-          grep -F "name='com.shubhamgupta.partygames.flat'" /tmp/apk-badging.txt
+          ls -l "$apk"
+          build_tools="$(ls -d "${ANDROID_SDK_ROOT:-$ANDROID_HOME}"/build-tools/* | sort -V | tail -n 1)"
+          "$build_tools/aapt" dump badging "$apk" | tee /tmp/apk-badging.txt
+          grep -F "package: name='com.shubhamgupta.partygames.flat'" /tmp/apk-badging.txt
           grep -F "versionCode='1'" /tmp/apk-badging.txt
           grep -F "versionName='0.1.0'" /tmp/apk-badging.txt
           grep -F "application-label:'Party Games Flat'" /tmp/apk-badging.txt
+          "$build_tools/aapt" dump xmltree "$apk" AndroidManifest.xml > /tmp/apk-manifest.txt
+          grep -F 'com.google.android.gms.ads.APPLICATION_ID' /tmp/apk-manifest.txt
+          grep -F 'ca-app-pub-2273708482671832~3323244780' /tmp/apk-manifest.txt
+          grep -F 'com.google.android.gms.permission.AD_ID' /tmp/apk-manifest.txt
+          unzip -p "$apk" lib/arm64-v8a/libapp.so > /tmp/libapp.so
+          # The production interstitial unit is compiled in. (The rewarded unit only appears
+          # once a screen offers a rewarded ad; until then the compiler drops it.)
+          grep -c -a -F 'ca-app-pub-2273708482671832/3168825409' /tmp/libapp.so
+          if grep -q -a -F 'ca-app-pub-3940256099942544/' /tmp/libapp.so; then
+            echo "::error::Release APK contains Google test ad units"; exit 1
+          fi
+          "$build_tools/apksigner" verify --print-certs "$apk" | tee /tmp/apk-signature.txt
+          {
+            echo "## Release APK"
+            echo "- Size: $(stat -c %s "$apk") bytes"
+            echo "- SHA-256: \`$(sha256sum "$apk" | cut -d' ' -f1)\`"
+            echo '```'
+            grep -E "^package:|^application-label:|^sdkVersion|^targetSdkVersion" /tmp/apk-badging.txt
+            # apksigner prints "Signer #1" or "V2 Signer" depending on build-tools version.
+            grep -E "certificate (DN|SHA-256 digest)" /tmp/apk-signature.txt || cat /tmp/apk-signature.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove signing material
+        if: ${{ always() }}
+        shell: bash
+        run: rm -f mobile/android/key.properties "$RUNNER_TEMP/upload-keystore.jks"
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: two-player-online-release-apk
           path: mobile/build/app/outputs/flutter-apk/app-release.apk

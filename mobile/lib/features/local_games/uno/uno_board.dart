@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../guess_person/models/gp_player.dart';
+import '../party/party_widgets.dart' show GameTopBar;
 
 enum UColor { red, yellow, green, blue, wild }
 enum UKind { number, skip, reverse, drawTwo, wild, wildFour }
@@ -122,10 +123,10 @@ class _UnoBoardState extends State<UnoBoard> {
   Widget build(BuildContext context) {
     final hand = _hands[_turn];
     return Container(color: const Color(0xFFF2EFE7), child: SafeArea(child: Column(children: [
-      Padding(padding: const EdgeInsets.all(12), child: Row(children: [
-        Expanded(child: Text('${widget.players[_turn].name} • YOUR TURN',style:const TextStyle(fontWeight:FontWeight.w900,fontSize:16,color:Color(0xFF243047)))),
+      Padding(padding: const EdgeInsets.fromLTRB(12, 12, 12, 4), child: GameTopBar(title: 'UNO', subtitle: '${widget.players[_turn].name} • YOUR TURN')),
+      Padding(padding: const EdgeInsets.only(bottom: 8), child: Wrap(alignment: WrapAlignment.center, spacing: 12, children: [
         Text('${hand.length} cards',style:const TextStyle(fontWeight:FontWeight.w800,color:Color(0xFF243047))),
-        const SizedBox(width:12), Text('Opponent ${_hands[1-_turn].length}',style:const TextStyle(fontWeight:FontWeight.w700,color:Color(0xFF687386))),
+        Text('Opponent ${_hands[1-_turn].length}',style:const TextStyle(fontWeight:FontWeight.w700,color:Color(0xFF687386))),
       ])),
       Row(mainAxisAlignment:MainAxisAlignment.center,children:[
         Container(width:64,height:94,alignment:Alignment.center,decoration:BoxDecoration(color:const Color(0xFF252A36),borderRadius:BorderRadius.circular(14)),child:const Text('UNO',style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:20))),

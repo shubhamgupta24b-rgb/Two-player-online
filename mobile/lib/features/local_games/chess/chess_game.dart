@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../guess_person/models/gp_player.dart';
+import '../party/party_widgets.dart' show GameTopBar;
 import '../shell/local_game_info.dart';
 
 enum ChessSide { white, black }
@@ -269,7 +270,7 @@ class _ChessBoardState extends State<ChessBoard> {
     } else if(board[i]?.side==turn) setState((){selected=i;moves=_legal(i);});
   }
   @override Widget build(BuildContext context) => Container(color:const Color(0xFFF2EFE7),child:SafeArea(child:Column(children:[
-    Padding(padding:const EdgeInsets.all(12),child:Row(children:[Expanded(child:Text(status,style:const TextStyle(fontWeight:FontWeight.w900,fontSize:18,color:Color(0xFF243047)))),Text('White  •  Black',style:const TextStyle(fontWeight:FontWeight.w700))])),
+    Padding(padding:const EdgeInsets.all(12),child:GameTopBar(title:'Chess',subtitle:status)),
     Expanded(child:Center(child:AspectRatio(aspectRatio:1,child:GridView.builder(physics:const NeverScrollableScrollPhysics(),gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:8),itemCount:64,itemBuilder:(ctx,i){
       final p=board[i]; final light=((i~/8)+(i%8)).isEven;
       return GestureDetector(onTap:()=>_tap(i),child:Container(color:selected==i?const Color(0xFFB6D7A8):moves.contains(i)?const Color(0xFF91B9D7):light?const Color(0xFFEADFC9):const Color(0xFF72856A),child:Center(child:Text(p?.glyph??(moves.contains(i)?'•':''),style:TextStyle(fontSize:32,color:p?.side==ChessSide.white?Colors.white:const Color(0xFF1D2430),shadows:p?.side==ChessSide.white?[const Shadow(color:Colors.black54,blurRadius:2)]:null)))));

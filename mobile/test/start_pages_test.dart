@@ -14,6 +14,7 @@ import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dar
 import 'package:multiplayer_game/features/local_games/shell/local_game_shell.dart';
 import 'package:multiplayer_game/features/login/login_screen.dart';
 import 'package:multiplayer_game/features/raja_mantri/rmcs_screen.dart';
+import 'package:multiplayer_game/features/splash/play_mode_screen.dart';
 import 'package:multiplayer_game/features/splash/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -83,9 +84,16 @@ void main() {
     expect(socket.connects.single, auth.token, reason: 'connects in the background');
   });
 
-  testWidgets('returning player goes straight to home', (tester) async {
+  testWidgets('returning player skips login: play mode, then online home', (tester) async {
     final (_, socket) = await pumpApp(tester, const SplashScreen(minShow: Duration.zero), prefs: {'uid': 'u1', 'name': 'Ravi'});
     await bootSplash(tester);
+    await tester.pumpAndSettle();
+    // Since the Clay redesign a returning player picks online or offline play first.
+    expect(find.byType(LoginScreen), findsNothing);
+    expect(find.byType(PlayModeScreen), findsOneWidget);
+    await tester.tap(find.text('Play Online'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Online'));
     await tester.pumpAndSettle();
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.text('Hi, Ravi'), findsOneWidget);

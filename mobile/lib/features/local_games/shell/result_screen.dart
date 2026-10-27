@@ -59,16 +59,18 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AdResultGate(
-      child: TokenScope(
-        flat: false,
-        child: Builder(builder: (context) => game.solo ? _solo(context) : _match(context)),
-      ),
+    return TokenScope(
+      flat: false,
+      child: Builder(builder: (context) => game.solo ? _solo(context) : _match(context)),
     );
   }
 
+  /// Leaving the results is the break between matches, so an interstitial may show
+  /// first (rate-limited, skipped when none is ready). The next match starts after it.
+  static VoidCallback _afterAd(VoidCallback action) => () => AdMobService.instance.showInterstitialThen(action);
+
   Widget _topBar(BuildContext context, String label) => Row(children: [
-        RoundButton(icon: GameIcons.close, label: 'Close', onPressed: onExit),
+        RoundButton(icon: GameIcons.close, label: 'Close', onPressed: _afterAd(onExit)),
         Expanded(
           child: Text('${game.title} · $label'.toUpperCase(),
               textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: context.tk.styles.label),
@@ -157,14 +159,14 @@ class ResultScreen extends StatelessWidget {
         ],
       ],
       buttons: [
-        GoldButton('Rematch', icon: GameIcons.restart, onPressed: onRematch),
+        GoldButton('Rematch', icon: GameIcons.restart, onPressed: _afterAd(onRematch)),
         const SizedBox(height: 10),
         Row(children: [
           if (onChangePlayers != null) ...[
-            Expanded(child: KitButton('Change players', style: KitButtonStyle.outline, onPressed: onChangePlayers)),
+            Expanded(child: KitButton('Change players', style: KitButtonStyle.outline, onPressed: _afterAd(onChangePlayers!))),
             const SizedBox(width: 10),
           ],
-          Expanded(child: KitButton('All games', style: KitButtonStyle.ghost, onPressed: onExit)),
+          Expanded(child: KitButton('All games', style: KitButtonStyle.ghost, onPressed: _afterAd(onExit))),
         ]),
       ],
     );
@@ -212,9 +214,9 @@ class ResultScreen extends StatelessWidget {
         ),
       ],
       buttons: [
-        GoldButton('Play again', icon: GameIcons.restart, onPressed: onRematch),
+        GoldButton('Play again', icon: GameIcons.restart, onPressed: _afterAd(onRematch)),
         const SizedBox(height: 10),
-        KitButton('All games', style: KitButtonStyle.ghost, onPressed: onExit),
+        KitButton('All games', style: KitButtonStyle.ghost, onPressed: _afterAd(onExit)),
       ],
     );
   }
@@ -309,28 +311,4 @@ class _CountUp extends StatelessWidget {
           builder: (_, v, __) => Text('${v.round()}', textAlign: TextAlign.center, style: style),
         ),
       );
-}
-
-
-/// Loads no UI of its own; it requests a preloaded interstitial once when a
-/// results screen appears. The service silently skips the ad when unavailable.
-class AdResultGate extends StatefulWidget {
-  final Widget child;
-  const AdResultGate({super.key, required this.child});
-
-  @override
-  State<AdResultGate> createState() => _AdResultGateState();
-}
-
-class _AdResultGateState extends State<AdResultGate> {
-  @override
-  void initState() {
-    super.initState();
-    Future<void>.delayed(const Duration(milliseconds: 900), () {
-      if (mounted) AdMobService.instance.showInterstitialIfReady();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
 }
