@@ -128,7 +128,7 @@ jobs:
           grep -F 'distributionSha256Sum=bd71102213493060956ec229d946beee57158dbd89d0e62b91bca0fa2c5f3531' gradle/wrapper/gradle-wrapper.properties
           # The real wrapper script, not a stub that runs whatever Gradle is on PATH
           # (that is how CI once ran the runner's Gradle 9.8.1 and failed).
-          grep -F 'org.gradle.wrapper.GradleWrapperMain' gradlew
+          grep -F -- '-jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar"' gradlew
           chmod +x gradlew
           ./gradlew --version | tee /tmp/gradle-version.txt
           grep -F "Gradle ${GRADLE_VERSION}" /tmp/gradle-version.txt
