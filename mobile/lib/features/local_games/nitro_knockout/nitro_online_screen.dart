@@ -38,6 +38,7 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
   Map<String, dynamic>? _lastState;
 
   bool _firstSnapshot = false; // guest: the host's first frame arrived
+  int _sentVersion = 0; // guest: last snapshot version forwarded to the WebView
   int _matchNo = 0; // bumped on every (re)start: rekeys the WebView for a fresh match
 
   // Host: which guest inputs have been applied.
@@ -107,7 +108,9 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
       }
     } else {
       final raw = st['state'];
-      if (version > 0 && raw != null) {
+      // Room changes also notify the session; only forward frames the host actually published.
+      if (version > 0 && raw != null && version != _sentVersion) {
+        _sentVersion = version;
         _vc.sendSnapshot(jsonEncode(raw));
         _firstSnapshot = true;
       }
@@ -117,6 +120,7 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
 
   void _resetMatchState() {
     _acked = 0;
+    _sentVersion = 0;
     _pendingInput = null;
     _inputFlush?.cancel();
     _inputFlush = null;
