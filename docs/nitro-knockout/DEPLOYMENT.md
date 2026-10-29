@@ -60,6 +60,22 @@ cd app && npm run verify              # Playwright self-check: render/enter/dire
 Then copy `dist/*` into `mobile/assets/nitro/` (keep the `assets/` subfolder layout) and
 rebuild the app. No other Flutter changes are needed.
 
+**Bridge fix that must also be in the source.** The shipped bundle is patched by hand in
+the boot function (`MK` in the minified file; the boot-options parser in `net.ts`). The
+channel is now created for every mode, offline included, and it calls `postMessage`:
+
+```js
+// before: offline had no channel (its `result` never reached Flutter), and
+// webview_flutter channels only have postMessage, so `.post` dropped every message
+channel: mode === 'offline' ? undefined : { post: m => window.NitroBridge?.post(m) }
+// after
+channel: { post: m => window.NitroBridge?.postMessage(m) }
+```
+
+Make the same change in the game source before rebuilding, or online play and offline
+results break again. Snapshots stay host-only and inputs guest-only (the engine checks
+`net`), so offline only ever posts `result`.
+
 ## Building the APK
 
 ```bash

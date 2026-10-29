@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dart';
 import 'package:multiplayer_game/features/local_games/nitro_knockout/nitro_knockout_game.dart';
@@ -43,5 +45,14 @@ void main() {
   test('the offline play builder hands out a WebView view', () {
     final view = nitroKartsInfo.play(const [], (_) {});
     expect(view, isA<NitroOfflineView>());
+  });
+
+  test('the bundled game talks to Flutter through the channel webview_flutter provides', () {
+    // webview_flutter's JavaScriptChannel only has postMessage; `.post` silently drops
+    // every message. Offline needs the channel too, or its result never arrives.
+    final js = Directory('assets/nitro/assets').listSync().whereType<File>().firstWhere((f) => f.path.endsWith('.js')).readAsStringSync();
+    expect(js, contains('{post:a=>window.NitroBridge?.postMessage(a)}'));
+    expect(js, isNot(contains('NitroBridge?.post(')));
+    expect(js, isNot(contains('t==="offline"?void 0:')));
   });
 }
