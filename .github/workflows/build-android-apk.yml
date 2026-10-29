@@ -21,8 +21,9 @@ on:
 permissions:
   contents: read
 
+# Live-ads (store) and test-ads builds never cancel each other.
 concurrency:
-  group: build-android-apk-${{ github.ref }}
+  group: build-android-apk-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.live_ads && 'live' || 'test' }}
   cancel-in-progress: true
 
 env:
@@ -210,10 +211,11 @@ jobs:
               echo "::error::Live-ads APK contains Google test ad units"; exit 1
             fi
           else
-            # Test build: Google's test app ID, and the live app ID must not be in the manifest.
+            # Test build: Google's test app ID and test units; no live ID or unit anywhere.
             grep -F 'ca-app-pub-3940256099942544~3347511713' /tmp/apk-manifest.txt
-            if grep -q -F 'ca-app-pub-2273708482671832~' /tmp/apk-manifest.txt; then
-              echo "::error::Test-ads APK uses the live AdMob app ID"; exit 1
+            grep -c -a -F 'ca-app-pub-3940256099942544/1033173712' /tmp/libapp.so
+            if grep -q -F 'ca-app-pub-2273708482671832~' /tmp/apk-manifest.txt || grep -q -a -F 'ca-app-pub-2273708482671832/' /tmp/libapp.so; then
+              echo "::error::Test-ads APK contains live AdMob IDs"; exit 1
             fi
           fi
           echo "- Live ads: $LIVE_ADS" >> "$GITHUB_STEP_SUMMARY"
@@ -235,7 +237,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v5
         with:
-          name: two-player-online-release-apk
+          name: two-player-online-release-apk-${{ github.event_name == 'workflow_dispatch' && inputs.live_ads && 'live-ads' || 'test-ads' }}
           path: mobile/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 14
