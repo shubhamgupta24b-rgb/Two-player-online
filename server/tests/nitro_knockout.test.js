@@ -255,3 +255,21 @@ test('Nitro: room capacity 7-10 is allowed at the room level', async () => {
     srv.httpServer.close();
   }
 });
+
+test('Nitro: when the host leaves mid-match, everyone gets game_state naming the new host', () => {
+  const { RoomManager } = require('../src/rooms/RoomManager');
+  const rm = new RoomManager();
+  const u = id => ({ userId: id, username: id, avatar: null });
+  const room = rm.createRoom(u('a'), { gameType: 'nitro_knockout', maxPlayers: 3 });
+  rm.joinRoom(u('b'), room.code);
+  rm.joinRoom(u('c'), room.code);
+  rm.setReady('b', true);
+  rm.setReady('c', true);
+  rm.startGame('a');
+  const updates = [];
+  rm.on('game_updated', code => updates.push(code));
+  rm.leave('a');
+  assert.strictEqual(room.status, 'playing');
+  assert.strictEqual(room.game.host, 'b');
+  assert.deepStrictEqual(updates, [room.code], 'the new host must be told through game_state');
+});

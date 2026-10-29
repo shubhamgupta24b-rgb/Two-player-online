@@ -94,18 +94,26 @@ class RoomManager extends EventEmitter {
     room.players = room.players.filter(p => p.userId !== userId);
     delete room.seqs[userId];
     if (room.players.length === 0) { this.store.delete(room.code); this.emit('room_closed', room.code); return; }
+    let gameHostMoved = false;
     if (room.hostId === userId) {
       room.hostId = (room.players.find(p => p.connected) || room.players[0]).userId;
       room.players.find(p => p.userId === room.hostId).ready = true;
       // Relay-style games track the host inside the game state; keep it in sync so the
       // new host can keep publishing snapshots if the match continues.
-      if (room.status === 'playing' && room.game && 'host' in room.game) room.game.host = room.hostId;
+      if (room.status === 'playing' && room.game && 'host' in room.game) {
+        room.game.host = room.hostId;
+        gameHostMoved = true;
+      }
     }
     if (room.status !== 'lobby' && room.players.length < 2) {
       this._toLobby(room);
       this.emit('game_aborted', room.code);
+      gameHostMoved = false;
     }
     this._changed(room);
+    // Clients learn the game's host from game_state, not room_state: without this the new
+    // host never takes over (Nitro guests' inputs are silent, so nothing else broadcasts).
+    if (gameHostMoved) this.emit('game_updated', room.code);
   }
 
   _toLobby(room) {

@@ -87,6 +87,9 @@ function validInputArgs(args) {
 
 const game = {
   id: 'nitro_knockout', minPlayers: MIN_SEATS, maxPlayers: MAX_SEATS, implemented: true, relay: true,
+  // Only when a host picks it, never at random (Quick Play, party mode): app versions
+  // from before Nitro can't open it.
+  optIn: true,
 
   create(room) {
     if (room.players.length < MIN_SEATS || room.players.length > MAX_SEATS) throw new GameError('NOT_ENOUGH_PLAYERS');
