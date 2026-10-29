@@ -15,6 +15,8 @@ const MAX_STATE_BYTES = 32 * 1024;          // hard cap for one snapshot (~1-3 K
 const MAX_QUEUE = 200;                      // input queue cap, same as the generic relay
 const MIN_SEATS = 2, MAX_SEATS = 10;
 const ARENA_MM = 90000;                     // largest arena is 68 units; 90 units of head-room
+const FLOOR_MM = -60000;                    // karts fall to -5 units before a KO, then wait to respawn
+const MAX_NAME = 64;                        // kill-feed names are player names (long with Google sign-in)
 const MAX_SHOTS = 64;                       // GAME_CONFIG.MAX_PROJECTILES
 const MAX_MINES = 12;                       // GAME_CONFIG.MAX_MINES
 const MAX_CRATES = 32;                      // pickup spots per arena
@@ -28,7 +30,7 @@ const int = v => Number.isInteger(v);
 function validKartRow(row) {
   if (!Array.isArray(row) || row.length !== 12 || !row.every(num)) return false;
   const [x, y, z, , hp, score, alive, weapon, ammo, shield, boost, invuln] = row;
-  if (Math.abs(x) > ARENA_MM || Math.abs(z) > ARENA_MM || y < -2000 || y > ARENA_MM) return false;
+  if (Math.abs(x) > ARENA_MM || Math.abs(z) > ARENA_MM || y < FLOOR_MM || y > ARENA_MM) return false;
   if (hp < 0 || hp > 100) return false;
   if (!int(score) || score < 0 || score > 100000) return false;
   if (alive !== 0 && alive !== 1) return false;
@@ -53,7 +55,7 @@ function validateSnapshot(p, seats) {
   for (const shot of s.shots) {
     if (!Array.isArray(shot) || shot.length !== 6 || !shot.every(num)) throw new GameError('INVALID_PAYLOAD', 'bad shot');
     const [x, y, z, vx, vz, kind] = shot;
-    if (Math.abs(x) > ARENA_MM || Math.abs(z) > ARENA_MM || y < -2000 || y > ARENA_MM) throw new GameError('INVALID_PAYLOAD', 'shot out of bounds');
+    if (Math.abs(x) > ARENA_MM || Math.abs(z) > ARENA_MM || y < FLOOR_MM || y > ARENA_MM) throw new GameError('INVALID_PAYLOAD', 'shot out of bounds');
     if (Math.abs(vx) > 100000 || Math.abs(vz) > 100000) throw new GameError('INVALID_PAYLOAD', 'shot speed out of bounds');
     if (kind !== 0 && kind !== 1) throw new GameError('INVALID_PAYLOAD', 'bad shot kind');
   }
@@ -67,7 +69,7 @@ function validateSnapshot(p, seats) {
     throw new GameError('INVALID_PAYLOAD', 'bad crates');
   }
   if (s.feed !== null && s.feed !== undefined) {
-    if (!Array.isArray(s.feed) || s.feed.length !== 2 || !s.feed.every(n => typeof n === 'string' && n.length <= 24)) {
+    if (!Array.isArray(s.feed) || s.feed.length !== 2 || !s.feed.every(n => typeof n === 'string' && n.length <= MAX_NAME)) {
       throw new GameError('INVALID_PAYLOAD', 'bad feed');
     }
   }
@@ -90,6 +92,8 @@ const game = {
   // Only when a host picks it, never at random (Quick Play, party mode): app versions
   // from before Nitro can't open it.
   optIn: true,
+  // The new host's WebView re-boots as the simulation when the room host leaves.
+  hostMigration: true,
 
   create(room) {
     if (room.players.length < MIN_SEATS || room.players.length > MAX_SEATS) throw new GameError('NOT_ENOUGH_PLAYERS');
@@ -115,7 +119,7 @@ const game = {
       s.state = validateSnapshot(p, s.seats);
       s.version++;
       if (Number.isInteger(p.ack)) s.inputs = s.inputs.filter(i => i.seq > p.ack);
-      return { version: s.version };
+      return { version: s.version, gameOnly: true };
     }
     if (type === 'nitro:input') {
       if (!validInputArgs(p.args)) throw new GameError('INVALID_PAYLOAD');

@@ -139,7 +139,8 @@ class _NitroGameViewState extends State<NitroGameView> {
   @override
   void dispose() {
     _bootRetry?.cancel();
-    widget.controller._state = null;
+    // A rekeyed view's new State attaches before this old one is disposed: don't detach it.
+    if (widget.controller._state == this) widget.controller._state = null;
     super.dispose();
   }
 

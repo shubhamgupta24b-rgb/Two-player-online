@@ -37,8 +37,10 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
   bool _haveRoster = false;
   Map<String, dynamic>? _lastState;
 
-  bool _firstSnapshot = false; // guest: the host's first frame arrived
+  bool _firstSnapshot = false; // guest: the current host's first frame arrived
   int _sentVersion = 0; // guest: last snapshot version forwarded to the WebView
+  bool _published = false; // host: this WebView has published a frame (the match is running)
+  bool _finishSent = false; // host: nitro:finish was accepted (or is being retried)
   int _matchNo = 0; // bumped on every (re)start: rekeys the WebView for a fresh match
 
   // Host: which guest inputs have been applied.
@@ -73,7 +75,8 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
     final version = (st['version'] as num?)?.toInt() ?? 0;
     if (!_haveRoster || (ids.length != _ids.length)) {
       _ids = ids;
-      _names = [for (final p in players) '${p['username']}'];
+      // Kart labels and the kill feed: keep names short (the server caps feed names at 64).
+      _names = [for (final p in players) _short('${p['username']}')];
       _haveRoster = _ids.isNotEmpty;
     }
     final host = hostId == _myId;
@@ -81,9 +84,9 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
       // Host migration: the server re-pointed the room host. Re-boot as the new role.
       _hostId = hostId;
       _host = host;
-      _firstSnapshot = false;
       _matchNo++;
-      _resetMatchState();
+      // The server still holds the old host's last frame: only frames after it are new.
+      _resetMatchState(staleVersion: version);
     } else if (_hostId.isEmpty) {
       _hostId = hostId;
       _host = host;
@@ -91,7 +94,6 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
     if (_lastState != null && version == 0 && ((_lastState!['version'] as num?)?.toInt() ?? 0) > 0) {
       // Fresh game object after a rematch (version reset): restart the WebView.
       _matchNo++;
-      _firstSnapshot = false;
       _resetMatchState();
     }
     _lastState = st;
@@ -109,7 +111,7 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
     } else {
       final raw = st['state'];
       // Room changes also notify the session; only forward frames the host actually published.
-      if (version > 0 && raw != null && version != _sentVersion) {
+      if (raw != null && version > _sentVersion) {
         _sentVersion = version;
         _vc.sendSnapshot(jsonEncode(raw));
         _firstSnapshot = true;
@@ -118,17 +120,35 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
     if (mounted) setState(() {});
   }
 
-  void _resetMatchState() {
+  static String _short(String name) => name.length <= 20 ? name : '${name.substring(0, 19)}…';
+
+  void _resetMatchState({int staleVersion = 0}) {
     _acked = 0;
-    _sentVersion = 0;
+    _sentVersion = staleVersion;
+    _firstSnapshot = false;
+    _published = false;
+    _finishSent = false;
     _pendingInput = null;
     _inputFlush?.cancel();
     _inputFlush = null;
   }
 
   void _action(String type, Map<String, dynamic> payload) {
-    // Fire-and-forget: the game server acks every action; failures surface as banners.
+    // Fire-and-forget: a rejected frame or input is replaced by the next one ~80 ms later.
     _session.action(type, payload).ignore();
+  }
+
+  /// The finish is sent once, so it can't be fire-and-forget: without it the room never
+  /// leaves 'playing'. Retries through a dropped connection, a timeout or the rate limit.
+  Future<void> _sendFinish(List<Object?> scores) async {
+    if (_finishSent) return;
+    _finishSent = true;
+    final match = _matchNo;
+    for (var attempt = 0; attempt < 8 && mounted && match == _matchNo; attempt++) {
+      final ack = await _session.action('nitro:finish', {'scores': scores});
+      if (ack['ok'] == true || !const {'OFFLINE', 'TIMEOUT', 'RATE_LIMITED'}.contains(ack['error'])) return;
+      await Future<void>.delayed(Duration(seconds: 1 << attempt.clamp(0, 3)));
+    }
   }
 
   void _onMessage(Map<String, dynamic> message) {
@@ -140,7 +160,10 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
         if (data is! String) return;
         try {
           final parsed = jsonDecode(data);
-          if (parsed is Map<String, dynamic>) _action('nitro:state', {'state': parsed, 'ack': _acked});
+          if (parsed is Map<String, dynamic>) {
+            _published = true;
+            _action('nitro:state', {'state': parsed, 'ack': _acked});
+          }
         } catch (_) {}
       case 'input':
         // Guest: stream our steering/throttle to the host (latest wins).
@@ -159,7 +182,7 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
         if (!_host) return;
         final scores = message['scores'];
         if (scores is! List) return;
-        _action('nitro:finish', {'scores': scores});
+        _sendFinish(List<Object?>.from(scores));
       default:
         break;
     }
@@ -182,9 +205,9 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final st = context.watch<GameSessionManager>().state;
-    final notStarted = (st?['version'] as num? ?? 0) == 0;
-    final waiting = !_host && !_firstSnapshot && notStarted;
+    context.watch<GameSessionManager>(); // rebuild on every game_state
+    // Fresh matches and host handovers both wait for the (new) host's first frame.
+    final waiting = !_host && !_firstSnapshot;
 
     return Stack(
       fit: StackFit.expand,
@@ -210,7 +233,7 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
             ),
           ),
         // Until the host's first frame: the PLAY button is in the game, under this hint.
-        if (_host && notStarted)
+        if (_host && !_published)
           IgnorePointer(
             child: Align(
               alignment: Alignment.bottomCenter,

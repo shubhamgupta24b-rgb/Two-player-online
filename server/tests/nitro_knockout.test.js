@@ -49,7 +49,7 @@ test('Nitro: only the host publishes snapshots; seats must match the room', () =
   assert.throws(() => act(s, 'b', 'nitro:state', { state: snapshot() }), e => e.code === 'NOT_HOST');
   assert.throws(() => act(s, 'zz', 'nitro:state', { state: snapshot() }), e => e.code === 'NOT_IN_GAME');
   assert.throws(() => act(s, 'a', 'nitro:state', { state: snapshot({ seats: 4 }) }), e => e.code === 'INVALID_PAYLOAD');
-  assert.deepStrictEqual(act(s, 'a', 'nitro:state', { state: snapshot() }), { version: 1 });
+  assert.deepStrictEqual(act(s, 'a', 'nitro:state', { state: snapshot() }), { version: 1, gameOnly: true });
   assert.strictEqual(s.version, 1);
   // Ack drops queued inputs.
   act(s, 'b', 'nitro:input', { args: [100, 0, 0, 0] });
@@ -273,4 +273,46 @@ test('Nitro: when the host leaves mid-match, everyone gets game_state naming the
   assert.strictEqual(room.status, 'playing');
   assert.strictEqual(room.game.host, 'b');
   assert.deepStrictEqual(updates, [room.code], 'the new host must be told through game_state');
+});
+
+test('Relay games that run on the host end the match when the host leaves (no frozen game)', () => {
+  const { RoomManager } = require('../src/rooms/RoomManager');
+  const rm = new RoomManager();
+  const u = id => ({ userId: id, username: id, avatar: null });
+  const room = rm.createRoom(u('a'), { gameType: 'mini_golf', maxPlayers: 3 });
+  rm.joinRoom(u('b'), room.code);
+  rm.joinRoom(u('c'), room.code);
+  rm.setReady('b', true);
+  rm.setReady('c', true);
+  rm.startGame('a');
+  const aborted = [];
+  rm.on('game_aborted', code => aborted.push(code));
+  rm.leave('a');
+  assert.strictEqual(room.status, 'lobby');
+  assert.strictEqual(room.hostId, 'b');
+  assert.deepStrictEqual(aborted, [room.code]);
+});
+
+test('Nitro: real in-game states pass: a kart falling off the edge, a long name in the kill feed', () => {
+  const s = nitro.create(room(3));
+  // The game only knocks a kart out below y = -5 units (-5000 mm) and parks it there to respawn.
+  const falling = snapshot().karts[0].map((v, i) => (i === 1 ? -5400 : v));
+  act(s, 'a', 'nitro:state', { state: snapshot({ karts: [falling, snapshot().karts[1], snapshot().karts[2]] }) });
+  act(s, 'a', 'nitro:state', { state: snapshot({ feed: ['Christopher Alexander Montgomery', 'ARENA'] }) });
+  assert.strictEqual(s.version, 2);
+});
+
+test('Host frames broadcast game_state only, not room_state', () => {
+  const { RoomManager } = require('../src/rooms/RoomManager');
+  const rm = new RoomManager();
+  const u = id => ({ userId: id, username: id, avatar: null });
+  const r = rm.createRoom(u('a'), { gameType: 'nitro_knockout', maxPlayers: 2 });
+  rm.joinRoom(u('b'), r.code);
+  rm.setReady('b', true);
+  rm.startGame('a');
+  const events = [];
+  rm.on('room_changed', () => events.push('room'));
+  rm.on('game_updated', () => events.push('game'));
+  rm.gameAction('a', { type: 'nitro:state', payload: { state: snapshot({ seats: 2, karts: snapshot().karts.slice(0, 2) }) }, seq: 1 });
+  assert.deepStrictEqual(events, ['game']);
 });
