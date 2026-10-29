@@ -135,9 +135,24 @@ class AdMobService {
   Future<void> showPrivacyOptions() async {
     if (!_supported) return;
     try {
+      final closed = Completer<void>();
       await ConsentForm.showPrivacyOptionsForm((formError) {
         if (formError != null) debugPrint('AdMob: privacy options error ${formError.errorCode}: ${formError.message}');
+        if (!closed.isCompleted) closed.complete();
       });
+      await closed.future;
+      // Apply the new choice now, not at the next app start.
+      final allowed = await ConsentInformation.instance.canRequestAds();
+      if (!allowed && _ready) {
+        _ready = false;
+        _interstitial?.dispose();
+        _interstitial = null;
+        _rewarded?.dispose();
+        _rewarded = null;
+      } else if (allowed && !_ready && !_disposed) {
+        _starting = null;
+        await initialize();
+      }
     } catch (error) {
       debugPrint('AdMob: privacy options failed: $error');
     }
