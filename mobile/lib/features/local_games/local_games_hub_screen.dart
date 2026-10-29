@@ -35,7 +35,7 @@ import 'checkers/checkers_game.dart';
 import 'dots_boxes/dots_boxes_game.dart';
 import 'fruit_merge/fruit_merge_game.dart';
 import 'ludo/ludo_game.dart';
-import 'smash_karts/smash_karts_game.dart';
+import 'nitro_knockout/nitro_knockout_game.dart';
 import 'snakes_ladders/snakes_ladders_game.dart';
 import 'truth_dare/truth_dare_game.dart';
 import 'charades/charades_game.dart';
@@ -79,7 +79,7 @@ import 'shell/local_game_shell.dart';
 final localGames = <LocalGameInfo>[chessInfo, backgammonInfo, unoInfo, colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
   drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo, fruitCutInfo,
   ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo, dotsBoxesInfo,
-  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo, bingoInfo, battleshipInfo, checkersInfo, smashKartsInfo,
+  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo, bingoInfo, battleshipInfo, checkersInfo, nitroKartsInfo,
   golfInfo, slingInfo, archeryInfo, galleryInfo, bottleInfo,
   // Solo games (shown in their own section).
   fruitMergeInfo, game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo,

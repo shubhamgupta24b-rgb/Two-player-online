@@ -5,6 +5,7 @@ import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dar
 import 'package:multiplayer_game/features/local_games/shell/local_game_info.dart';
 import 'package:multiplayer_game/features/local_games/shell/local_game_shell.dart';
 import 'shell_helpers.dart';
+import 'webview_fake.dart';
 
 Future<void> tapText(WidgetTester tester, String text) async {
   // The intro numbers its how-to-play steps 1, 2, 3…; the player picker comes after them.
@@ -69,6 +70,9 @@ Future<void> playThrough(WidgetTester tester, LocalGameInfo game, Size size, int
 }
 
 void main() {
+  // Nitro Knockout hosts the WASM game in a WebView; tests use a no-op platform
+  // so the Flutter shell around it is exercised without a real engine.
+  FakeWebViewPlatform.install();
   const sizes = {'small phone': Size(320, 568), 'phone': Size(411, 914), 'tablet': Size(800, 1280)};
 
   testWidgets('hub lists games and filters the solo collection', (tester) async {

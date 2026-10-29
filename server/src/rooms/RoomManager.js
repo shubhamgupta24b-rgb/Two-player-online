@@ -39,7 +39,8 @@ class RoomManager extends EventEmitter {
     const game = registry.get(gameType);
     if (!game) throw new GameError('INVALID_PAYLOAD', 'unknown gameType');
     // The room size is independent of the game: the host can switch games in the lobby.
-    if (![2, 3, 4, 5, 6].includes(maxPlayers)) throw new GameError('INVALID_PAYLOAD', 'maxPlayers must be 2 to 6');
+    // Up to 10 seats so Nitro Knockout rooms can fill a full 10-kart grid.
+    if (![2, 3, 4, 5, 6, 7, 8, 9, 10].includes(maxPlayers)) throw new GameError('INVALID_PAYLOAD', 'maxPlayers must be 2 to 10');
     const code = this._code();
     const room = { code, gameType, maxPlayers, hostId: user.userId, status: 'lobby', players: [], game: null, seqs: {}, party: null, createdAt: Date.now() };
     room.players.push({ ...user, ready: true, connected: true });
@@ -96,6 +97,9 @@ class RoomManager extends EventEmitter {
     if (room.hostId === userId) {
       room.hostId = (room.players.find(p => p.connected) || room.players[0]).userId;
       room.players.find(p => p.userId === room.hostId).ready = true;
+      // Relay-style games track the host inside the game state; keep it in sync so the
+      // new host can keep publishing snapshots if the match continues.
+      if (room.status === 'playing' && room.game && 'host' in room.game) room.game.host = room.hostId;
     }
     if (room.status !== 'lobby' && room.players.length < 2) {
       this._toLobby(room);
@@ -233,8 +237,12 @@ class RoomManager extends EventEmitter {
       room.status = 'finished';
       result = this._ended(room, game.getResult(room.game));
     }
-    this._changed(room);
-    this.emit('game_updated', room.code, result);
+    // High-frequency actions (Nitro guest inputs) opt out of broadcasting: the host
+    // pulls them with its own snapshot publishes instead of every input echoing state.
+    if (!response || !response.silent) {
+      this._changed(room);
+      this.emit('game_updated', room.code, result);
+    }
     return { room, result, response };
   }
 

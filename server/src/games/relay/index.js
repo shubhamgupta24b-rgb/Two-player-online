@@ -33,7 +33,7 @@ const RELAY_GAMES = [
   { id: 'bingo', min: 2, max: 6 },
   { id: 'battleship', min: 2, max: 2 },
   { id: 'checkers', min: 2, max: 2 },
-  { id: 'smash_karts', min: 2, max: 4 },
+  // smash_karts was replaced by nitro_knockout, a dedicated module (games/nitro_knockout.js).
   { id: 'mini_golf', min: 2, max: 4 },
   { id: 'slingshot', min: 2, max: 4 },
   { id: 'archery', min: 2, max: 4 },

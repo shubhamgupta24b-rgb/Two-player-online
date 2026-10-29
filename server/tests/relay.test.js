@@ -9,8 +9,8 @@ const room = (n, hostId = 'a') => ({ hostId, players: ['a', 'b', 'c', 'd', 'e', 
 const act = (g, s, u, type, payload) => g.onAction(s, u, { type, payload });
 
 test('Relay: every relay game is registered with its player limits', () => {
-  assert.strictEqual(RELAY_GAMES.length, 46);
-  assert.strictEqual(new Set(RELAY_GAMES.map(g => g.id)).size, 46, 'no duplicates');
+  assert.strictEqual(RELAY_GAMES.length, 45);
+  assert.strictEqual(new Set(RELAY_GAMES.map(g => g.id)).size, 45, 'no duplicates');
   for (const { id, min, max } of RELAY_GAMES) {
     const g = registry.get(id);
     assert.ok(g && g.relay, id);
@@ -76,16 +76,17 @@ test('Relay: the host finishes the game with scores in player order', () => {
   assert.throws(() => act(g, s, 'b', 'relay:input', { name: 'late', args: [] }), e => e.code === 'BAD_PHASE');
 });
 
-test('Rooms: up to 6 players; a game only starts if it supports everyone in the room', () => {
+test('Rooms: up to 10 players; a game only starts if it supports everyone in the room', () => {
   const srv = createServer();
   const rm = srv.rooms;
-  rm.createRoom({ userId: 'h', username: 'H' }, { gameType: 'ludo', maxPlayers: 6 });
-  assert.throws(() => rm.createRoom({ userId: 'j', username: 'J' }, { gameType: 'colour_clash', maxPlayers: 7 }), e => e.code === 'INVALID_PAYLOAD');
+  rm.createRoom({ userId: 'h', username: 'H' }, { gameType: 'nitro_knockout', maxPlayers: 10 });
+  assert.throws(() => rm.createRoom({ userId: 'j', username: 'J' }, { gameType: 'colour_clash', maxPlayers: 11 }), e => e.code === 'INVALID_PAYLOAD');
   const code = rm.roomOf('h').code;
-  for (const u of ['a', 'b', 'c', 'd']) { rm.joinRoom({ userId: u, username: u }, code); rm.setReady(u, true); }
-  assert.throws(() => rm.startGame('h'), e => e.code === 'TOO_MANY_PLAYERS', 'Ludo is 2-4');
-  rm.selectGame('h', 'colour_clash');
-  assert.strictEqual(rm.startGame('h').status, 'playing');
+  for (const u of ['a', 'b', 'c', 'd', 'e']) { rm.joinRoom({ userId: u, username: u }, code); rm.setReady(u, true); }
+  rm.selectGame('h', 'ludo');
+  assert.throws(() => rm.startGame('h'), e => e.code === 'TOO_MANY_PLAYERS', 'Ludo is 2-4, six players cannot start it');
+  rm.selectGame('h', 'nitro_knockout');
+  assert.strictEqual(rm.startGame('h').status, 'playing', 'Nitro seats up to 10');
   srv.io.close(); srv.httpServer.close();
 });
 

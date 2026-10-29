@@ -341,7 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _featured() {
     final picks = [
-      for (final id in ['smash_karts', 'memory', 'ludo', 'colour_clash', 'raja_mantri', 'archery', 'guess_person', 'air_hockey'])
+      for (final id in ['nitro_knockout', 'memory', 'ludo', 'colour_clash', 'raja_mantri', 'archery', 'guess_person', 'air_hockey'])
         if (_game(id) case final g?) (id, g),
     ];
     final info = {for (final g in localGames) g.id: g};

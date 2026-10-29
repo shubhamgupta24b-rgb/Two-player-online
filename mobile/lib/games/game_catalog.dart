@@ -75,7 +75,10 @@ final List<GameInfo> gameCatalog = [
   _local('hand_cricket', GameCategory.action),
   _local('quiz_battle', GameCategory.action),
   _local('fruit_merge_battle', GameCategory.action),
-  _local('smash_karts', GameCategory.action),
+  // Nitro Knockout replaced Smash Karts: the original WASM game (2-10 human seats).
+  const GameInfo('nitro_knockout', 'Nitro Knockout',
+      playable: true, minPlayers: 2, maxPlayers: 10, emoji: '🏎️', color: Color(0xFFFF5722),
+      tagline: '3D kart combat · weapons, arenas, bots', category: GameCategory.action),
   _local('mini_golf', GameCategory.action),
   _local('slingshot', GameCategory.action),
   _local('archery', GameCategory.action),
