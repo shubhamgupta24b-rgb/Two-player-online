@@ -85,7 +85,7 @@ function createRelayGame({ id, min, max, optIn = false }) {
         s.state = p.state;
         s.version++;
         if (Number.isInteger(p.ack)) s.inputs = s.inputs.filter(i => i.seq > p.ack);
-        return { version: s.version };
+        return { version: s.version, gameOnly: true };
       }
       if (type === 'relay:input') {
         if (typeof p.name !== 'string' || !NAME_RE.test(p.name) || !Array.isArray(p.args) || p.args.length > 8) throw new GameError('INVALID_PAYLOAD');

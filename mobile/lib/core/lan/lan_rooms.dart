@@ -213,12 +213,15 @@ class LanRooms {
       onRoomClosed?.call(room.code);
       return;
     }
+    var hostLeftGame = false;
     if (room.hostId == userId) {
       final next = room.players.firstWhere((p) => p.connected, orElse: () => room.players.first);
       room.hostId = next.userId;
       next.ready = true;
+      // Every phone-hosted game runs on the host's phone (relay), so it can't go on without them.
+      hostLeftGame = room.status != 'lobby';
     }
-    if (room.status != 'lobby' && room.players.length < 2) {
+    if (room.status != 'lobby' && (room.players.length < 2 || hostLeftGame)) {
       _toLobby(room);
       onGameAborted?.call(room.code);
     }

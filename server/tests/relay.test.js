@@ -31,7 +31,7 @@ test('Relay: only the host publishes state; guests send inputs only the host see
   const s = g.create(room(3));
   assert.throws(() => act(g, s, 'b', 'relay:state', { state: { hack: 1 } }), e => e.code === 'NOT_HOST');
   assert.throws(() => act(g, s, 'zz', 'relay:input', { name: 'tap', args: [] }), e => e.code === 'NOT_IN_GAME');
-  assert.deepStrictEqual(act(g, s, 'a', 'relay:state', { state: { turn: 0 } }), { version: 1 });
+  assert.deepStrictEqual(act(g, s, 'a', 'relay:state', { state: { turn: 0 } }), { version: 1, gameOnly: true });
 
   act(g, s, 'b', 'relay:input', { name: 'play', args: [3] });
   act(g, s, 'c', 'relay:input', { name: 'move', args: [0.5, 1.2, true, null, 'x'] });
