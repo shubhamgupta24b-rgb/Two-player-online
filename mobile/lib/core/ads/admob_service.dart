@@ -93,27 +93,31 @@ class AdMobService {
   /// AdMob (Privacy & messaging) when the user needs one. Returns whether ads may be
   /// requested. Offline or slow networks fall back to the consent stored last time.
   Future<bool> _gatherConsent() async {
-    final updated = Completer<void>();
+    final updated = Completer<bool>();
     ConsentInformation.instance.requestConsentInfoUpdate(
       ConsentRequestParameters(),
       () {
-        // The form, if any, waits for the user: no timeout on this part.
-        ConsentForm.loadAndShowConsentFormIfRequired((formError) {
-          if (formError != null) debugPrint('AdMob: consent form error ${formError.errorCode}: ${formError.message}');
-          if (!updated.isCompleted) updated.complete();
-        }).catchError((Object error) {
-          debugPrint('AdMob: consent form failed: $error');
-          if (!updated.isCompleted) updated.complete();
-        });
+        if (!updated.isCompleted) updated.complete(true);
       },
       (error) {
         debugPrint('AdMob: consent info update failed ${error.errorCode}: ${error.message}');
-        if (!updated.isCompleted) updated.complete();
+        if (!updated.isCompleted) updated.complete(false);
       },
     );
-    // Only the network request is bounded: once a form is showing, the listener above
-    // completes when the user closes it.
-    await updated.future.timeout(_consentUpdateTimeout, onTimeout: () {});
+    // Only the network request is bounded. A late answer just skips the form this session.
+    if (await updated.future.timeout(_consentUpdateTimeout, onTimeout: () => false)) {
+      // The form, if any, waits for the user: no timeout here, or a slow reader would
+      // leave ads off for the whole session.
+      final formClosed = Completer<void>();
+      ConsentForm.loadAndShowConsentFormIfRequired((formError) {
+        if (formError != null) debugPrint('AdMob: consent form error ${formError.errorCode}: ${formError.message}');
+        if (!formClosed.isCompleted) formClosed.complete();
+      }).catchError((Object error) {
+        debugPrint('AdMob: consent form failed: $error');
+        if (!formClosed.isCompleted) formClosed.complete();
+      });
+      await formClosed.future;
+    }
     return ConsentInformation.instance.canRequestAds();
   }
 
