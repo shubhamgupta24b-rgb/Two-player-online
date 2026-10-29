@@ -823,8 +823,9 @@ class GameFeedback extends State<FeedbackLayer> with TickerProviderStateMixin {
         animation: _shake,
         builder: (_, child) {
           final v = _shake.value;
-          if (v == 0 || v == 1) return child!;
-          final k = (1 - v) * _shakeSize;
+          // Always the same widget type here, offset zero at rest: switching between bare
+          // child and Transform would remount the game and restart it on every shake.
+          final k = v == 0 || v == 1 ? 0.0 : (1 - v) * _shakeSize;
           return Transform.translate(offset: Offset(math.sin(v * math.pi * 8) * k, math.cos(v * math.pi * 6) * k * 0.4), child: child);
         },
         child: widget.child,
