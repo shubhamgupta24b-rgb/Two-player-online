@@ -150,8 +150,12 @@ class AdMobService {
         _rewarded?.dispose();
         _rewarded = null;
       } else if (allowed && !_ready && !_disposed) {
-        _starting = null;
-        await initialize();
+        // Let a first start still in progress finish before starting again.
+        await _starting;
+        if (!_ready && !_disposed) {
+          _starting = null;
+          await initialize();
+        }
       }
     } catch (error) {
       debugPrint('AdMob: privacy options failed: $error');
@@ -169,7 +173,7 @@ class AdMobService {
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialLoading = false;
-          if (_disposed) {
+          if (_disposed || !_ready) { // released, or consent withdrawn while loading
             ad.dispose();
             return;
           }
@@ -250,7 +254,7 @@ class AdMobService {
       rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _rewardedLoading = false;
-          if (_disposed) {
+          if (_disposed || !_ready) { // released, or consent withdrawn while loading
             ad.dispose();
             return;
           }
