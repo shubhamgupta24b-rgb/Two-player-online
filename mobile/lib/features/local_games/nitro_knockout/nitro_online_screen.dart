@@ -91,8 +91,9 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
       _hostId = hostId;
       _host = host;
     }
-    if (_lastState != null && version == 0 && ((_lastState!['version'] as num?)?.toInt() ?? 0) > 0) {
-      // Fresh game object after a rematch (version reset): restart the WebView.
+    if (_lastState != null && version < ((_lastState!['version'] as num?)?.toInt() ?? 0)) {
+      // Versions only rise within a match, so a drop is a rematch (a fresh game object),
+      // even if a reconnect skipped its version 0: restart the WebView.
       _matchNo++;
       _resetMatchState();
     }
@@ -120,7 +121,12 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
     if (mounted) setState(() {});
   }
 
-  static String _short(String name) => name.length <= 20 ? name : '${name.substring(0, 19)}…';
+  /// The game renders names as HTML (kill feed), so strip markup characters; keep it short.
+  static String _short(String raw) {
+    final name = raw.replaceAll(RegExp('[<>&"\'`]'), '').trim();
+    if (name.isEmpty) return 'Player';
+    return name.length <= 20 ? name : '${name.substring(0, 19)}…';
+  }
 
   void _resetMatchState({int staleVersion = 0}) {
     _acked = 0;
@@ -139,15 +145,16 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
   }
 
   /// The finish is sent once, so it can't be fire-and-forget: without it the room never
-  /// leaves 'playing'. Retries through a dropped connection, a timeout or the rate limit.
+  /// leaves 'playing'. Retries through a dropped connection, a timeout or the rate limit
+  /// for as long as this match is on screen (a handover or rematch starts a new one).
   Future<void> _sendFinish(List<Object?> scores) async {
     if (_finishSent) return;
     _finishSent = true;
     final match = _matchNo;
-    for (var attempt = 0; attempt < 8 && mounted && match == _matchNo; attempt++) {
+    for (var attempt = 0; mounted && match == _matchNo; attempt++) {
       final ack = await _session.action('nitro:finish', {'scores': scores});
       if (ack['ok'] == true || !const {'OFFLINE', 'TIMEOUT', 'RATE_LIMITED'}.contains(ack['error'])) return;
-      await Future<void>.delayed(Duration(seconds: 1 << attempt.clamp(0, 3)));
+      await Future<void>.delayed(Duration(seconds: 1 << attempt.clamp(0, 3))); // 1, 2, 4, then every 8 s
     }
   }
 

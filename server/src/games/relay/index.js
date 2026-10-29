@@ -92,7 +92,7 @@ function createRelayGame({ id, min, max, optIn = false }) {
         if (!p.args.every(a => a === null || ['number', 'string', 'boolean'].includes(typeof a))) throw new GameError('INVALID_PAYLOAD');
         s.inputs.push({ seq: ++s.inputSeq, from: uid, name: p.name, args: p.args });
         if (s.inputs.length > MAX_QUEUE) s.inputs.splice(0, s.inputs.length - MAX_QUEUE);
-        return { seq: s.inputSeq };
+        return { seq: s.inputSeq, gameOnly: true };
       }
       if (type === 'relay:finish') {
         if (uid !== s.host) throw new GameError('NOT_HOST');

@@ -80,10 +80,13 @@ test('Nitro: snapshot structure is validated (karts/shots/mines/crates/feed)', (
     ['mine owner out of range', snapshot({ mines: [[0, 0, 7]] })],
     ['crate not 0/1', snapshot({ crates: [1, 2, 0] })],
     ['bad feed', snapshot({ feed: ['a'] })],
-    ['feed too long', snapshot({ feed: ['x'.repeat(30), 'y'] })],
+    ['feed too long', snapshot({ feed: ['x'.repeat(65), 'y'] })],
+    ['feed with markup', snapshot({ feed: ['<img src=x onerror=alert(1)>', 'y'] })],
   ];
   for (const [name, payload] of bad) {
-    assert.throws(() => act(s, 'a', 'nitro:state', payload), e => e.code === 'INVALID_PAYLOAD', name);
+    // Bare snapshots go inside { state }, so each case reaches the rule it is about.
+    const p = payload && payload.seats !== undefined ? { state: payload } : payload;
+    assert.throws(() => act(s, 'a', 'nitro:state', p), e => e.code === 'INVALID_PAYLOAD', name);
   }
   // Valid edge values pass.
   act(s, 'a', 'nitro:state', { state: snapshot({ feed: ['NOVA', 'BOLT'], crates: [], shots: [], mines: [] }) });

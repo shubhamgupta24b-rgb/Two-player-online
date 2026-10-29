@@ -17,6 +17,7 @@ const MIN_SEATS = 2, MAX_SEATS = 10;
 const ARENA_MM = 90000;                     // largest arena is 68 units; 90 units of head-room
 const FLOOR_MM = -60000;                    // karts fall to -5 units before a KO, then wait to respawn
 const MAX_NAME = 64;                        // kill-feed names are player names (long with Google sign-in)
+// The game shows feed names with innerHTML on every guest: markup characters are refused.
 const MAX_SHOTS = 64;                       // GAME_CONFIG.MAX_PROJECTILES
 const MAX_MINES = 12;                       // GAME_CONFIG.MAX_MINES
 const MAX_CRATES = 32;                      // pickup spots per arena
@@ -69,7 +70,7 @@ function validateSnapshot(p, seats) {
     throw new GameError('INVALID_PAYLOAD', 'bad crates');
   }
   if (s.feed !== null && s.feed !== undefined) {
-    if (!Array.isArray(s.feed) || s.feed.length !== 2 || !s.feed.every(n => typeof n === 'string' && n.length <= MAX_NAME)) {
+    if (!Array.isArray(s.feed) || s.feed.length !== 2 || !s.feed.every(n => typeof n === 'string' && n.length <= MAX_NAME && !/[<>&"'`]/.test(n))) {
       throw new GameError('INVALID_PAYLOAD', 'bad feed');
     }
   }
