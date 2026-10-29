@@ -5,6 +5,11 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      live_ads:
+        description: "Use the live AdMob units (store/release builds only; test APKs must not show real ads)"
+        type: boolean
+        default: false
   push:
     branches:
       - feature/clay-admob-integration
@@ -153,13 +158,17 @@ jobs:
             echo "keyAlias=$KEY_ALIAS"
             echo "keyPassword=$KEY_PASSWORD"
           } > key.properties
-      - name: Build Clay (flat) release APK with live AdMob units
+      # Pushes build with Google's test ads: testers tapping live ads on CI builds counts as
+      # invalid traffic on the AdMob account. Live units only from a manual run with live_ads.
+      - name: Build Clay (flat) release APK
         working-directory: mobile
         shell: bash
         env:
           SERVER_URL: ${{ vars.SERVER_URL }}
+          LIVE_ADS: ${{ github.event_name == 'workflow_dispatch' && inputs.live_ads && 'true' || 'false' }}
         run: |
-          defines=(--dart-define=APP_STYLE=flat --dart-define=ADMOB_LIVE_ADS=true)
+          defines=(--dart-define=APP_STYLE=flat)
+          if [ "$LIVE_ADS" = true ]; then defines+=(--dart-define=ADMOB_LIVE_ADS=true); fi
           if [ -n "$SERVER_URL" ]; then
             defines+=("--dart-define=SERVER_URL=$SERVER_URL")
           else
@@ -176,6 +185,8 @@ jobs:
       - name: Verify APK, package metadata and AdMob configuration
         working-directory: mobile
         shell: bash
+        env:
+          LIVE_ADS: ${{ github.event_name == 'workflow_dispatch' && inputs.live_ads && 'true' || 'false' }}
         run: |
           apk='build/app/outputs/flutter-apk/app-release.apk'
           test -s "$apk"
@@ -188,15 +199,24 @@ jobs:
           grep -F "application-label:'Party Games Flat'" /tmp/apk-badging.txt
           "$build_tools/aapt" dump xmltree "$apk" AndroidManifest.xml > /tmp/apk-manifest.txt
           grep -F 'com.google.android.gms.ads.APPLICATION_ID' /tmp/apk-manifest.txt
-          grep -F 'ca-app-pub-2273708482671832~3323244780' /tmp/apk-manifest.txt
           grep -F 'com.google.android.gms.permission.AD_ID' /tmp/apk-manifest.txt
           unzip -p "$apk" lib/arm64-v8a/libapp.so > /tmp/libapp.so
-          # The production interstitial unit is compiled in. (The rewarded unit only appears
-          # once a screen offers a rewarded ad; until then the compiler drops it.)
-          grep -c -a -F 'ca-app-pub-2273708482671832/3168825409' /tmp/libapp.so
-          if grep -q -a -F 'ca-app-pub-3940256099942544/' /tmp/libapp.so; then
-            echo "::error::Release APK contains Google test ad units"; exit 1
+          if [ "$LIVE_ADS" = true ]; then
+            grep -F 'ca-app-pub-2273708482671832~3323244780' /tmp/apk-manifest.txt
+            # The production interstitial unit is compiled in. (The rewarded unit only appears
+            # once a screen offers a rewarded ad; until then the compiler drops it.)
+            grep -c -a -F 'ca-app-pub-2273708482671832/3168825409' /tmp/libapp.so
+            if grep -q -a -F 'ca-app-pub-3940256099942544/' /tmp/libapp.so; then
+              echo "::error::Live-ads APK contains Google test ad units"; exit 1
+            fi
+          else
+            # Test build: Google's test app ID, and the live app ID must not be in the manifest.
+            grep -F 'ca-app-pub-3940256099942544~3347511713' /tmp/apk-manifest.txt
+            if grep -q -F 'ca-app-pub-2273708482671832~' /tmp/apk-manifest.txt; then
+              echo "::error::Test-ads APK uses the live AdMob app ID"; exit 1
+            fi
           fi
+          echo "- Live ads: $LIVE_ADS" >> "$GITHUB_STEP_SUMMARY"
           "$build_tools/apksigner" verify --print-certs "$apk" | tee /tmp/apk-signature.txt
           {
             echo "## Release APK"
