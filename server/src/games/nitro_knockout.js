@@ -107,7 +107,8 @@ const game = {
 
   onAction(s, uid, { type, payload }) {
     if (!s.players.includes(uid)) throw new GameError('NOT_IN_GAME');
-    if (s.finished && type !== 'nitro:state') throw new GameError('BAD_PHASE');
+    // The room stops relaying once the match ends; the host's last frame is sent before finish.
+    if (s.finished) throw new GameError('BAD_PHASE');
     const p = payload || {};
     if (type === 'nitro:state') {
       if (uid !== s.host) throw new GameError('NOT_HOST');

@@ -123,8 +123,9 @@ test('Nitro: only the host finishes; scores must cover every seat', () => {
   act(s, 'a', 'nitro:finish', { scores: [7, 3, 3] });
   assert.strictEqual(s.finished, true);
   assert.deepStrictEqual(s.scores, { a: 7, b: 3, c: 3 });
-  // After the finish, states are still relayed (results screen keeps rendering) but inputs are dead.
+  // After the finish nothing is accepted (RoomManager rejects it too once the room is finished).
   assert.throws(() => act(s, 'b', 'nitro:input', { args: [0, 0, 0, 0] }), e => e.code === 'BAD_PHASE');
+  assert.throws(() => act(s, 'a', 'nitro:state', { state: snapshot() }), e => e.code === 'BAD_PHASE');
   const result = nitro.getResult(s);
   assert.deepStrictEqual(result.winners, ['a']);
   assert.deepStrictEqual(result.ranking.map(r => [r.userId, r.rank]), [['a', 1], ['b', 2], ['c', 2]]);

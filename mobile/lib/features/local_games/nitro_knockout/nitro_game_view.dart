@@ -46,9 +46,6 @@ class NitroViewController {
   /// Feeds a host snapshot to a guest WebView: __nitroNet.snapshot(json).
   void sendSnapshot(String snapshotJson) =>
       run('window.__nitroNet && window.__nitroNet.snapshot(${jsonEncode(snapshotJson)})');
-
-  /// Starts the online match from the Dart side (host or guest).
-  void startMatch() => run('window.__nitroNet && window.__nitroNet.start()');
 }
 
 /// The game page. Recreate (or rekey) this widget to start a fresh match:
