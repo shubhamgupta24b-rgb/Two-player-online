@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ads/admob_service.dart';
 import '../../../core/ui/components.dart';
 import '../../guess_person/models/gp_player.dart';
 import 'game_art.dart';
@@ -64,8 +65,12 @@ class ResultScreen extends StatelessWidget {
     );
   }
 
+  /// Leaving the results is the break between matches, so an interstitial may show
+  /// first (rate-limited, skipped when none is ready). The next match starts after it.
+  static VoidCallback _afterAd(VoidCallback action) => () => AdMobService.instance.showInterstitialThen(action);
+
   Widget _topBar(BuildContext context, String label) => Row(children: [
-        RoundButton(icon: GameIcons.close, label: 'Close', onPressed: onExit),
+        RoundButton(icon: GameIcons.close, label: 'Close', onPressed: _afterAd(onExit)),
         Expanded(
           child: Text('${game.title} · $label'.toUpperCase(),
               textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: context.tk.styles.label),
@@ -154,14 +159,14 @@ class ResultScreen extends StatelessWidget {
         ],
       ],
       buttons: [
-        GoldButton('Rematch', icon: GameIcons.restart, onPressed: onRematch),
+        GoldButton('Rematch', icon: GameIcons.restart, onPressed: _afterAd(onRematch)),
         const SizedBox(height: 10),
         Row(children: [
           if (onChangePlayers != null) ...[
-            Expanded(child: KitButton('Change players', style: KitButtonStyle.outline, onPressed: onChangePlayers)),
+            Expanded(child: KitButton('Change players', style: KitButtonStyle.outline, onPressed: _afterAd(onChangePlayers!))),
             const SizedBox(width: 10),
           ],
-          Expanded(child: KitButton('All games', style: KitButtonStyle.ghost, onPressed: onExit)),
+          Expanded(child: KitButton('All games', style: KitButtonStyle.ghost, onPressed: _afterAd(onExit))),
         ]),
       ],
     );
@@ -209,9 +214,9 @@ class ResultScreen extends StatelessWidget {
         ),
       ],
       buttons: [
-        GoldButton('Play again', icon: GameIcons.restart, onPressed: onRematch),
+        GoldButton('Play again', icon: GameIcons.restart, onPressed: _afterAd(onRematch)),
         const SizedBox(height: 10),
-        KitButton('All games', style: KitButtonStyle.ghost, onPressed: onExit),
+        KitButton('All games', style: KitButtonStyle.ghost, onPressed: _afterAd(onExit)),
       ],
     );
   }

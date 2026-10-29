@@ -42,10 +42,9 @@ GameInfo _local(String id, GameCategory category, {int? max}) {
       playable: true, emoji: g.emoji, color: g.color, tagline: g.tagline, minPlayers: g.minPlayers, maxPlayers: max ?? g.maxPlayers, category: category);
 }
 
+// UNO, Chess, Backgammon and Fruit Cut are one-device games only: they have no online relay
+// (LocalGameInfo.online), so gameScreenFor has no screen to open for their rooms.
 final List<GameInfo> gameCatalog = [
-  _local('uno', GameCategory.cards),
-  _local('chess', GameCategory.board),
-  _local('backgammon', GameCategory.board),
   _local('colour_clash', GameCategory.cards),
   const GameInfo('raja_mantri', 'Raja Mantri Chor Sipahi',
       playable: true, minPlayers: 4, maxPlayers: 4, emoji: '👑', color: Color(0xFF8A1C3A), tagline: 'Can the Mantri catch the Chor?', category: GameCategory.cards),
@@ -68,7 +67,6 @@ final List<GameInfo> gameCatalog = [
   _local('basketball_hoops', GameCategory.action, max: 4),
   _local('crush_it', GameCategory.action, max: 4),
   _local('fruit_duel', GameCategory.action, max: 4),
-  _local('fruit_cut', GameCategory.action),
   _local('paint_fight', GameCategory.action, max: 4),
   _local('reaction_tap', GameCategory.action),
   _local('math_duel', GameCategory.action),

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../guess_person/models/gp_player.dart';
+import '../party/party_widgets.dart' show GameTopBar;
 import '../shell/local_game_info.dart';
 
 final LocalGameInfo backgammonInfo = LocalGameInfo(
@@ -105,24 +106,24 @@ class _BackgammonBoardState extends State<BackgammonBoard> {
     });
   }
   @override Widget build(BuildContext context)=>Container(color:const Color(0xFFF2EFE7),child:SafeArea(child:Column(children:[
-    Padding(padding:const EdgeInsets.all(12),child:Row(children:[Expanded(child:Text(_status,style:const TextStyle(fontWeight:FontWeight.w800,color:Color(0xFF243047)))),Text('${widget.players[_turn].name}',style:const TextStyle(fontWeight:FontWeight.w900))])),
+    Padding(padding:const EdgeInsets.all(12),child:GameTopBar(title:'Backgammon',subtitle:'${widget.players[_turn].name}: $_status')),
     Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text('Borne off — White: $_borne0  •  Black: $_borne1', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF6A5C4A)))),
-    Row(mainAxisAlignment:MainAxisAlignment.center,children:[
-      _die(_die1),const SizedBox(width:12),_die(_die2),const SizedBox(width:12),
+    Wrap(alignment:WrapAlignment.center,crossAxisAlignment:WrapCrossAlignment.center,spacing:6,runSpacing:6,children:[
+      _die(_die1),_die(_die2),
       FilledButton(onPressed:_rolled?null:_roll,child:const Text('Roll dice')),
-      const SizedBox(width:6),OutlinedButton(onPressed:_rolled?()=>setState((){_rolled=false;_turn=1-_turn;_selected=-1;_status='${_turn==0?'White':'Black'} to roll.';}):null,child:const Text('End turn')),
-      const SizedBox(width:6),OutlinedButton(onPressed:_rolled&&_selected>=0?_bearOff:null,child:const Text('Bear off')),
+      OutlinedButton(onPressed:_rolled?()=>setState((){_rolled=false;_turn=1-_turn;_selected=-1;_status='${_turn==0?'White':'Black'} to roll.';}):null,child:const Text('End turn')),
+      OutlinedButton(onPressed:_rolled&&_selected>=0?_bearOff:null,child:const Text('Bear off')),
     ]),
     const SizedBox(height:10),
     Expanded(child:Padding(padding:const EdgeInsets.all(10),child:GridView.builder(itemCount:24,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:6,childAspectRatio:.72,crossAxisSpacing:5,mainAxisSpacing:5),itemBuilder:(ctx,i){
       final n=_points[i]; final own=n>0; final count=n.abs();
-      return GestureDetector(onTap:()=>_tapPoint(i),child:Container(decoration:BoxDecoration(color:_selected==i?const Color(0xFFB8D6A3):i.isEven?const Color(0xFFE7D8BE):const Color(0xFFCFB18D),borderRadius:BorderRadius.circular(12),border:Border.all(color:const Color(0xFF9E8B70),width:2)),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+      return GestureDetector(onTap:()=>_tapPoint(i),child:Container(decoration:BoxDecoration(color:_selected==i?const Color(0xFFB8D6A3):i.isEven?const Color(0xFFE7D8BE):const Color(0xFFCFB18D),borderRadius:BorderRadius.circular(12),border:Border.all(color:const Color(0xFF9E8B70),width:2)),child:FittedBox(fit:BoxFit.scaleDown,child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
         Text('${i+1}',style:const TextStyle(fontSize:10,fontWeight:FontWeight.w800,color:Color(0xFF6A5C4A))),
         const SizedBox(height:3),
         if(count==0)const Text('—',style:TextStyle(color:Color(0xFF9E8B70))),
         for(var j=0;j<min(count,5);j++)Container(width:23,height:23,margin:const EdgeInsets.symmetric(vertical:1),decoration:BoxDecoration(color:own?const Color(0xFFF8F4E9):const Color(0xFF283143),shape:BoxShape.circle,border:Border.all(color:own?const Color(0xFFB8A98F):const Color(0xFF111827),width:2))),
         if(count>5)Text('+${count-5}',style:const TextStyle(fontWeight:FontWeight.w900)),
-      ])));
+      ]))));
     }))),
     const Padding(padding:EdgeInsets.all(10),child:Text('Simplified playable prototype — not full official Backgammon rules.',style:TextStyle(fontSize:11,color:Color(0xFF687386)))),
   ])));

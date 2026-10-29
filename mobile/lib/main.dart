@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'core/ads/admob_service.dart';
 import 'config.dart';
 import 'core/audio/game_audio.dart';
 import 'core/settings/app_settings.dart';
@@ -26,6 +29,8 @@ Future<void> main() async {
     }
   }
   runApp(const App());
+  // Consent and the ads SDK start in the background; nothing waits for them.
+  unawaited(AdMobService.instance.initialize());
 }
 
 class App extends StatefulWidget {
