@@ -160,7 +160,7 @@ class LanRooms {
   LanRoom createRoom(String userId, String username, {required String gameType, required Object? maxPlayers}) {
     if (_userRoom.containsKey(userId)) throw const LanError('ALREADY_IN_ROOM');
     _game(gameType);
-    if (maxPlayers is! int || maxPlayers < 2 || maxPlayers > 6) throw const LanError('INVALID_PAYLOAD', 'maxPlayers must be 2 to 6');
+    if (maxPlayers is! int || maxPlayers < 2 || maxPlayers > 10) throw const LanError('INVALID_PAYLOAD', 'maxPlayers must be 2 to 10');
     final room = LanRoom(_code(), gameType, maxPlayers, userId);
     room.players.add(LanPlayer(userId, username, ready: true));
     rooms[room.code] = room;

@@ -9,9 +9,9 @@ class LanHost {
   LanHost._();
   static LanServer? _server;
 
-  /// Games a phone can host: everything in rooms except the two whose rules live on the
-  /// internet server (Guess Who, Raja Mantri).
-  static const internetOnly = {'guess_who', 'raja_mantri'};
+  /// Games a phone can host: everything in rooms except those whose rules live on the
+  /// internet server (Guess Who, Raja Mantri, and Nitro Knockout's host-snapshot relay).
+  static const internetOnly = {'guess_who', 'raja_mantri', 'nitro_knockout'};
   static List<LanGame> get games => [
         for (final g in gameCatalog)
           if (!internetOnly.contains(g.id)) LanGame(g.id, g.minPlayers, g.maxPlayers),
