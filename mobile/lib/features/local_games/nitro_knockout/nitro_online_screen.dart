@@ -183,7 +183,8 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
     }
 
     final st = context.watch<GameSessionManager>().state;
-    final waiting = !_host && !_firstSnapshot && (st?['version'] as num? ?? 0) == 0;
+    final notStarted = (st?['version'] as num? ?? 0) == 0;
+    final waiting = !_host && !_firstSnapshot && notStarted;
 
     return Stack(
       fit: StackFit.expand,
@@ -208,7 +209,8 @@ class _NitroOnlineScreenState extends State<NitroOnlineScreen> {
               ),
             ),
           ),
-        if (_host && !_vc.ready)
+        // Until the host's first frame: the PLAY button is in the game, under this hint.
+        if (_host && notStarted)
           IgnorePointer(
             child: Align(
               alignment: Alignment.bottomCenter,

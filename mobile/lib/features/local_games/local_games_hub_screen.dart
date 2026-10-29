@@ -117,7 +117,9 @@ class _Entry {
 }
 
 List<_Entry> _entries() {
-  GameCategory categoryOf(String id) => gameCatalog.where((g) => g.id == id).firstOrNull?.category ?? GameCategory.party;
+  // One-device-only games aren't in the online catalog, so they need their category here.
+  const offlineOnly = {'uno': GameCategory.cards, 'chess': GameCategory.board, 'backgammon': GameCategory.board, 'fruit_cut': GameCategory.action};
+  GameCategory categoryOf(String id) => gameCatalog.where((g) => g.id == id).firstOrNull?.category ?? offlineOnly[id] ?? GameCategory.party;
   return [
     _Entry(
       id: 'guess_person',
