@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/ads/admob_service.dart';
 import '../../core/auth/authentication_manager.dart';
 import '../../core/network/socket_manager.dart';
 import '../../core/records/records.dart';
@@ -18,7 +19,8 @@ class PrivacyScreen extends StatelessWidget {
     (GameIcons.eye, 'Who sees what', 'Players in your room see your name and your moves. Nobody else.'),
     (GameIcons.lock, 'Kept on this phone', 'Your name, a random player ID and your records (best scores, wins).'),
     (GameIcons.globe, 'The game server', 'Passes moves between players and forgets a room when it ends.'),
-    (GameIcons.shield, 'Never collected', 'Location, contacts, photos, camera, microphone, ads or tracking.'),
+    (GameIcons.star, 'Ads by Google', 'Google AdMob shows ads between matches and uses your advertising ID, ip address and device info for them. Where required we ask for consent first.'),
+    (GameIcons.shield, 'Never collected', 'Your precise location, contacts, photos, camera or microphone.'),
   ];
 
   Future<void> _delete(BuildContext context) async {
@@ -41,7 +43,7 @@ class PrivacyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tk;
-    final ink = t.flat ? FlatPalette.ink : Colors.white;
+    final ink = t.onBg;
     return Scaffold(
       body: AppBackground(
         child: SafeArea(
@@ -56,9 +58,9 @@ class PrivacyScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: t.flat ? Colors.white : t.surface,
+                      color: t.card,
                       borderRadius: Radii.rLg,
-                      border: Border.all(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.10)),
+                      border: Border.all(color: t.stroke),
                     ),
                     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Container(
@@ -71,9 +73,9 @@ class PrivacyScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(title, style: TextStyle(fontFamily: Fonts.body, fontSize: 15.5, fontWeight: FontWeight.w900, color: ink)),
+                          Text(title, style: TextStyle(fontFamily: Fonts.body, fontSize: 15.5, fontWeight: FontWeight.w700, color: ink)),
                           const SizedBox(height: 2),
-                          Text(text, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, height: 1.4, color: t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted)),
+                          Text(text, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, height: 1.4, color: t.onBgMuted)),
                         ]),
                       ),
                     ]),
@@ -82,6 +84,16 @@ class PrivacyScreen extends StatelessWidget {
                 Text("The full policy is on the game server's /privacy page and in the app's store listing.",
                     textAlign: TextAlign.center, style: t.styles.bodySmall.copyWith(color: t.flat ? t.onBg : NeonPalette.label)),
                 const SizedBox(height: 18),
+                // Required by Google's consent message where it applies (EEA, UK, Switzerland).
+                FutureBuilder<bool>(
+                  future: AdMobService.instance.privacyOptionsRequired(),
+                  builder: (context, snap) => snap.data == true
+                      ? Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: KitButton('Ad privacy choices', style: KitButtonStyle.outline, height: 52, onPressed: AdMobService.instance.showPrivacyOptions),
+                        )
+                      : const SizedBox.shrink(),
+                ),
                 KitButton('Delete my data on this phone', style: KitButtonStyle.danger, height: 52, onPressed: () => _delete(context)),
               ]),
             ),

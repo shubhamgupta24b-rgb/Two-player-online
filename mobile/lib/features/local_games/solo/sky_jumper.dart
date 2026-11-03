@@ -105,13 +105,13 @@ class SkyLogic extends SoloLogic {
 
 final skyInfo = LocalGameInfo(
   id: 'sky_jumper',
-  title: 'Sky Jumper',
+  title: 'Cloud Hop',
   emoji: '🐸',
   color: const Color(0xFF66BB6A),
-  tagline: 'Bounce higher and higher into the sky!',
+  tagline: "Jump between platforms to climb higher",
   rules: const [
     'You bounce by yourself. Slide your finger left and right to steer.',
-    'Land on platforms to keep climbing. 🟦 moving, 🟫 cracked ones break, 🟨 springs launch you high.',
+    'Land on platforms to keep climbing. moving, cracked ones break, springs launch you high.',
     'Fall off the bottom and it\'s over. Score = how high you got.',
   ],
   scoreUnit: 'metres',
@@ -122,7 +122,7 @@ final skyInfo = LocalGameInfo(
     create: () => SkyLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🐸 SKY JUMPER',
+      title: 'Cloud Hop',
       score: g.score,
       child: LayoutBuilder(builder: (context, c) {
         final w = min(c.maxWidth, c.maxHeight / SkyLogic.viewH);

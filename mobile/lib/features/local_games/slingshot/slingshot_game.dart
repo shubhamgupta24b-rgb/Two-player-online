@@ -214,10 +214,10 @@ class SlingLogic extends LocalGameLogic {
     birds--;
     if (pigsLeft == 0) {
       score[turn] += 50 * birds;
-      message = birds > 0 ? '🎉 FORT CLEARED! +${50 * birds} bonus' : '🎉 FORT CLEARED!';
+      message = birds > 0 ? 'Fort cleared +${50 * birds} bonus' : 'Fort cleared';
       GameAudio.sfx('win');
     } else if (birds == 0) {
-      message = 'Out of birds!';
+      message = 'Out of birds';
     } else {
       message = null;
       return;
@@ -263,13 +263,13 @@ class SlingLogic extends LocalGameLogic {
 
 final slingInfo = LocalGameInfo(
   id: 'slingshot',
-  title: 'Slingshot',
+  title: 'Fling Fort',
   emoji: '🐦',
   color: const Color(0xFFE53935),
-  tagline: 'Fling birds, flatten the pigs\' fort!',
+  tagline: "Launch birds to knock down the fort",
   rules: const [
     'Pull back anywhere and let go to fling a bird. The dots show where it\'s heading.',
-    'Wood breaks, stone takes two hits, and falling blocks squash pigs. 🐷 100, block 10.',
+    'Wood breaks, stone takes two hits, and falling blocks squash pigs. 100, block 10.',
     '3 birds a fort; a bird left over is a 50 bonus. 3 forts, taking turns. 1 to 4 players.',
   ],
   scoreUnit: 'points',
@@ -366,7 +366,7 @@ class _SlingViewState extends State<_SlingView> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
       child: Column(children: [
-        GameHud(players: widget.players, scores: g.score, turn: g.finished ? null : g.turn, trailing: HudLabel('FORT ${g.round}/${SlingLogic.rounds}')),
+        GameHud(players: widget.players, scores: g.score, turn: g.finished ? null : g.turn, trailing: HudLabel('Fort ${g.round}/${SlingLogic.rounds}')),
         const SizedBox(height: 8),
         Expanded(
           child: LayoutBuilder(builder: (context, c) {
@@ -396,7 +396,7 @@ class _SlingViewState extends State<_SlingView> {
         const SizedBox(height: 8),
         GameStatus(
           player: current,
-          turnText: g.finished ? 'All forts done!' : (_mine ? '${current.whose} TURN · ${'🐦' * g.birds}' : '${current.name} is aiming… · 🐷 ${g.pigsLeft} left'),
+          turnText: g.finished ? 'All forts done' : (_mine ? '${current.whose} turn · ${'🐦' * g.birds}' : '${current.name} is aiming… · ${g.pigsLeft} left'),
           message: showMsg ? g.message : null,
         ),
       ]),

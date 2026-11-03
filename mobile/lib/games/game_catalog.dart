@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../features/local_games/local_games_hub_screen.dart';
 
 enum GameCategory {
-  cards('CARDS'),
-  board('BOARD'),
-  action('ACTION'),
-  party('PARTY');
+  cards('Cards'),
+  board('Board'),
+  action('Action'),
+  party('Party');
 
   final String label;
   const GameCategory(this.label);
@@ -42,9 +42,11 @@ GameInfo _local(String id, GameCategory category, {int? max}) {
       playable: true, emoji: g.emoji, color: g.color, tagline: g.tagline, minPlayers: g.minPlayers, maxPlayers: max ?? g.maxPlayers, category: category);
 }
 
+// UNO, Chess, Backgammon and Fruit Cut are one-device games only: they have no online relay
+// (LocalGameInfo.online), so gameScreenFor has no screen to open for their rooms.
 final List<GameInfo> gameCatalog = [
   _local('colour_clash', GameCategory.cards),
-  const GameInfo('raja_mantri', 'Raja Mantri Chor Sipahi',
+  const GameInfo('raja_mantri', 'Chit Court',
       playable: true, minPlayers: 4, maxPlayers: 4, emoji: '👑', color: Color(0xFF8A1C3A), tagline: 'Can the Mantri catch the Chor?', category: GameCategory.cards),
   _local('ludo', GameCategory.board),
   _local('ludo_teams', GameCategory.board),
@@ -56,7 +58,7 @@ final List<GameInfo> gameCatalog = [
   _local('connect_four', GameCategory.board),
   _local('tic_tac_toe', GameCategory.board),
   _local('memory', GameCategory.board, max: 4),
-  const GameInfo('guess_who', 'Guess Who',
+  const GameInfo('guess_who', 'Face Hunt Duel',
       playable: true, maxPlayers: 2, emoji: '🕵️', color: Color(0xFFE0A800), tagline: 'Ask yes/no questions, find their person', category: GameCategory.board),
   _local('air_hockey', GameCategory.action),
   _local('ping_pong', GameCategory.action),
@@ -71,12 +73,20 @@ final List<GameInfo> gameCatalog = [
   _local('hand_cricket', GameCategory.action),
   _local('quiz_battle', GameCategory.action),
   _local('fruit_merge_battle', GameCategory.action),
-  _local('smash_karts', GameCategory.action),
+  // Nitro Knockout replaced Smash Karts: the original WASM game (2-10 human seats).
+  const GameInfo('nitro_knockout', 'Nitro Knockout',
+      playable: true, minPlayers: 2, maxPlayers: 10, emoji: '🏎️', color: Color(0xFFFF5722),
+      tagline: '3D kart combat · weapons, arenas, bots', category: GameCategory.action),
   _local('mini_golf', GameCategory.action),
   _local('slingshot', GameCategory.action),
   _local('archery', GameCategory.action),
   _local('shooting_gallery', GameCategory.action),
   _local('bottle_smash', GameCategory.action),
+  _local('carrom', GameCategory.action),
+  _local('eight_ball_pool', GameCategory.action),
+  _local('darts', GameCategory.action),
+  _local('hot_potato', GameCategory.party),
+  _local('hungry_hippos', GameCategory.action),
   _local('find_spy', GameCategory.party),
   _local('mafia', GameCategory.party),
   _local('undercover', GameCategory.party),

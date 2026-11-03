@@ -75,10 +75,10 @@ class SlidingLogic extends SoloLogic {
 
 final slidingInfo = LocalGameInfo(
   id: 'sliding_puzzle',
-  title: 'Sliding Puzzle',
+  title: 'Slide Home',
   emoji: '🔢',
   color: const Color(0xFF5C6BC0),
-  tagline: 'Slide the tiles back in order!',
+  tagline: "Slide the numbered tiles into order",
   rules: const [
     'Tap a tile next to the gap to slide it.',
     'Put the numbers in order, gap at the end. First 3×3, then 4×4.',
@@ -92,7 +92,7 @@ final slidingInfo = LocalGameInfo(
     create: () => SlidingLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: g.solvedAt != null ? '🎉 SOLVED!' : '🔢 ${g.size}×${g.size} PUZZLE',
+      title: g.solvedAt != null ? 'Solved' : '${g.size}×${g.size} puzzle',
       score: g.score,
       extra: '${g.moves} moves',
       child: Center(
@@ -128,7 +128,7 @@ final slidingInfo = LocalGameInfo(
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: const [BoxShadow(color: Colors.black38, offset: Offset(0, 4))],
                           ),
-                          child: Text('${g.tiles[i]}', style: TextStyle(color: GpColors.ink, fontWeight: FontWeight.w900, fontSize: cell * 0.38)),
+                          child: Text('${g.tiles[i]}', style: TextStyle(color: GpColors.ink, fontWeight: FontWeight.w700, fontSize: cell * 0.38)),
                         ),
                       ),
                     ),

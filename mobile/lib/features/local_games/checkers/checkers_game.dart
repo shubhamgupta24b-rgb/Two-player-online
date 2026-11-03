@@ -171,10 +171,10 @@ CheckersMove checkersBotPick(CheckersLogic g, Random rng) {
 
 final checkersInfo = LocalGameInfo(
   id: 'checkers',
-  title: 'Checkers',
+  title: 'Hop & Crown',
   emoji: '⚫',
   color: const Color(0xFFB71C1C),
-  tagline: 'Jump, capture, crown your king!',
+  tagline: "Capture pieces and reach the far side to crown a king",
   rules: const [
     'Move a piece one square diagonally forward. Tap a piece, then where it goes.',
     'Jump over a rival piece to capture it. Captures are compulsory and keep going if they can.',
@@ -246,7 +246,7 @@ class _CheckersTable extends StatelessWidget {
           name: players[p].name,
           score: '${g.pieces(p)}',
           active: !g.finished && g.turn == p,
-          tag: !g.finished && g.turn == p ? (mustCapture ? 'MUST CAPTURE' : 'YOUR TURN') : null,
+          tag: !g.finished && g.turn == p ? (mustCapture ? 'Must capture' : 'Your turn') : null,
           detail: _Captured(count: 12 - g.pieces(1 - p), color: players[1 - p].color),
         );
     // Player 2 sits at the far end: their card faces them (not when online: each phone is its own).
@@ -256,11 +256,11 @@ class _CheckersTable extends StatelessWidget {
       onChange: (fx, before, now) {
         if (now.$1 == before.$1) return;
         if (now.$2 > before.$2) {
-          keyMoment(fx, 'KING!', sub: '${players[1 - g.turn].name} is crowned', sound: 'coin', confetti: true);
+          keyMoment(fx, 'King', sub: '${players[1 - g.turn].name} is crowned', sound: 'coin', confetti: true);
         } else if (g.lastCaptured.length > 1) {
-          keyMoment(fx, '${g.lastCaptured.length == 2 ? 'DOUBLE' : 'MULTI'} JUMP!', sub: '${g.lastCaptured.length} pieces taken', sound: 'boom', buzz: HapticWeight.heavy, shake: true);
+          keyMoment(fx, '${g.lastCaptured.length == 2 ? 'Double' : 'Multi'} jump', sub: '${g.lastCaptured.length} pieces taken', sound: 'boom', buzz: HapticWeight.heavy, shake: true);
         } else if (g.lastCaptured.isNotEmpty) {
-          fx?.pop('CAPTURE!');
+          fx?.pop('Capture');
           GameAudio.sfx('hit');
           haptic(HapticWeight.medium);
         }
@@ -269,7 +269,7 @@ class _CheckersTable extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
         child: Column(children: [
           GameTopBar(
-            title: 'Checkers',
+            title: 'Hop & Crown',
             subtitle: g.draw ? 'Draw' : (g.finished ? '${players[g.winner!].name} wins' : (mustCapture ? '${current.name}: must capture' : '${possessive(current.name)} turn')),
           ),
           const SizedBox(height: Space.s),
@@ -303,7 +303,7 @@ class _Captured extends StatelessWidget {
   Widget build(BuildContext context) => SizedBox(
         height: 14,
         child: count == 0
-            ? Align(alignment: Alignment.centerLeft, child: Text('No captures yet', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w800, color: context.tk.flat ? FlatPalette.inkMuted : NeonPalette.label)))
+            ? Align(alignment: Alignment.centerLeft, child: Text('No captures yet', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w600, color: context.tk.flat ? FlatPalette.inkMuted : NeonPalette.label)))
             : Stack(children: [
                 for (var i = 0; i < count; i++)
                   Positioned(

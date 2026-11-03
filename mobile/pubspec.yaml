@@ -10,25 +10,24 @@ dependencies:
   provider: ^6.1.2
   socket_io_client: ^2.0.3+1
   shared_preferences: ^2.2.3
+  google_mobile_ads: ^6.0.0
+  webview_flutter: ^4.10.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
 flutter:
   uses-material-design: true
-  # Bundled OFL fonts (licences in assets/fonts/OFL-*.txt). Nunito static weights come from
-  # Fontsource's build of the Google Fonts family (Latin subset).
+  assets:
+    # Nitro Knockout: the original React/Three.js/Rapier WASM build, served to a
+    # WebView from app assets (offline-friendly; Rapier ships base64-inlined).
+    - assets/nitro/
+    - assets/nitro/assets/
+  # Bundled OFL families; licences live beside the font files.
   fonts:
-    - family: Lilita One
+    - family: Bricolage Grotesque
       fonts:
-        - asset: assets/fonts/LilitaOne-Regular.ttf
-    - family: Nunito
+        - asset: assets/fonts/BricolageGrotesque-Variable.ttf
+    - family: DM Sans
       fonts:
-        - asset: assets/fonts/Nunito-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Nunito-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Nunito-ExtraBold.ttf
-          weight: 800
-        - asset: assets/fonts/Nunito-Black.ttf
-          weight: 900
+        - asset: assets/fonts/DMSans-Variable.ttf

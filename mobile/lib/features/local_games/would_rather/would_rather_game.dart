@@ -18,14 +18,14 @@ const wouldRatherPrompts = [
 
 final wouldRatherInfo = LocalGameInfo(
   id: 'would_rather',
-  title: 'Would You Rather',
+  title: 'Pick a Side',
   emoji: '🤔',
   color: const Color(0xFF00B894),
-  tagline: 'A or B? Side with the crowd!',
+  tagline: "Pick one of two choices and compare your votes",
   rules: const [
     'Two choices appear. Everyone secretly picks A or B.',
     'Then the votes are revealed. Everyone on the bigger side scores a point.',
-    'Argue about it as much as you like! 8 questions. 2 to 6 players.',
+    'Argue about it as much as you like. 8 questions. 2 to 6 players.',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -40,4 +40,4 @@ final wouldRatherInfo = LocalGameInfo(
 
 PromptVoteLogic _create(int n) => PromptVoteLogic(mode: VoteMode.wouldRather, players: n, prompts: wouldRatherPrompts);
 Widget _view(BuildContext context, PromptVoteLogic g, List<GpPlayer> players, int? me) =>
-    PromptVoteView(players: players, g: g, me: me, title: '🤔 WOULD YOU RATHER', color: const Color(0xFF00B894));
+    PromptVoteView(players: players, g: g, me: me, title: 'Pick a Side', color: const Color(0xFF00B894));

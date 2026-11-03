@@ -81,14 +81,14 @@ class PianoLogic extends SoloLogic {
 
 final pianoInfo = LocalGameInfo(
   id: 'piano_tiles',
-  title: 'Piano Tiles',
+  title: 'Key Sprint',
   emoji: '🎹',
   color: const Color(0xFF263238),
-  tagline: "Don't tap the white tiles!",
+  tagline: "Tap the dark tiles and avoid the white ones",
   rules: const [
     'Tap the black tiles as they fall, from the bottom up.',
     'Tap a white square or let a black tile slip off the screen and it\'s over.',
-    'Tap the first tile to start. It keeps getting faster!',
+    'Tap the first tile to start. It keeps getting faster',
   ],
   scoreUnit: 'tiles',
   splitScreen: false,
@@ -98,7 +98,7 @@ final pianoInfo = LocalGameInfo(
     create: () => PianoLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🎹 PIANO TILES',
+      title: 'Key Sprint',
       score: g.score,
       child: LayoutBuilder(
         builder: (context, c) => GestureDetector(
@@ -127,7 +127,7 @@ class _PianoPainter extends CustomPainter {
     }
     final n = g.next;
     if (!g.started && n != null) {
-      final tp = TextPainter(text: const TextSpan(text: 'START', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)), textDirection: TextDirection.ltr)..layout();
+      final tp = TextPainter(text: const TextSpan(text: 'Start', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)), textDirection: TextDirection.ltr)..layout();
       tp.paint(canvas, Offset(n.lane * w + (w - tp.width) / 2, (n.y + PianoLogic.tileH / 2) * h - tp.height / 2));
     }
     if (g.wrongLane != null) {

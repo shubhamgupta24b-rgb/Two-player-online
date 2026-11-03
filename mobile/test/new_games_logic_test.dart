@@ -18,11 +18,11 @@ import 'package:multiplayer_game/features/local_games/shell/split_screen.dart';
 import 'package:multiplayer_game/features/local_games/snake_duel/snake_duel_game.dart';
 
 void main() {
-  test('55 shell games in the hub (+ Guess the Person + Raja Mantri = 57), unique ids, 1-6 players', () {
-    expect(localGames, hasLength(60));
-    expect(localGames.map((g) => g.id).toSet(), hasLength(60));
-    expect(localGames.where((g) => g.solo), hasLength(21));
-    expect(totalGameCount, 62);
+  test('79 shell games in the hub (+ Guess the Person + Raja Mantri = 81), unique ids, 1-6 players', () {
+    expect(localGames, hasLength(79));
+    expect(localGames.map((g) => g.id).toSet(), hasLength(79));
+    expect(localGames.where((g) => g.solo), hasLength(32), reason: 'Nitro Knockout is solo: 1 human vs 7 AI karts');
+    expect(totalGameCount, 81);
     for (final g in localGames) {
       expect(g.maxPlayers, inInclusiveRange(1, 6), reason: g.id);
     }
@@ -34,7 +34,7 @@ void main() {
     expect([for (var n = 3; n <= 6; n++) PlayerZones.leftCount(n)], [2, 2, 3, 3]);
   });
 
-  group('Reaction Tap', () {
+  group('Blink', () {
     test('green-light tap scores; early tap costs a point (not below 0); works for 3 players', () {
       final g = ReactionTapLogic(players: 3, random: Random(1));
       g.update(100);
@@ -72,7 +72,7 @@ void main() {
     });
   });
 
-  group('Math Duel', () {
+  group('Sum Sprint', () {
     test('questions always offer 4 different answers including the right one', () {
       final r = Random(3);
       for (var level = 0; level < 6; level++) {
@@ -103,7 +103,7 @@ void main() {
     });
   });
 
-  group('Connect Four', () {
+  group('Drop Four', () {
     test('discs stack, full columns refuse, players alternate', () {
       final g = ConnectFourLogic();
       expect(g.drop(3), 5);
@@ -149,7 +149,7 @@ void main() {
     });
   });
 
-  group('Penalty Shootout', () {
+  group('Spot Kick', () {
     test('different side = goal, same side = save, roles alternate, picks are one-shot', () {
       final g = PenaltyLogic(showMs: 100);
       expect(g.kicker, 0);
@@ -206,7 +206,7 @@ void main() {
     });
   });
 
-  group('Snake Duel', () {
+  group('Coil Clash', () {
     test('both hitting the wall on the same step is a tie', () {
       final g = SnakeDuelLogic(cols: 10, rows: 10, stepMs: 100, pauseMs: 300);
       var t = 0;
@@ -248,7 +248,7 @@ void main() {
     });
   });
 
-  group('Air Hockey', () {
+  group('Puck Rush', () {
     test('puck into the top goal scores for player 1 and pauses', () {
       final g = AirHockeyLogic();
       g.puck = const V(0.5, 0.06);
@@ -302,7 +302,7 @@ void main() {
     });
   });
 
-  group('Ping Pong', () {
+  group('Rally', () {
     test('serves after a pause, paddles return the ball faster, misses score for the other side', () {
       final g = PingPongLogic(random: Random(5));
       g.update(500);

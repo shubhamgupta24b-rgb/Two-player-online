@@ -48,7 +48,7 @@ class _GuessPersonScreenState extends State<GuessPersonScreen> {
       } else {
         final resp = Map<String, dynamic>.from(r['response'] as Map);
         if (resp['correct'] == true) {
-          feedback = 'Correct! +${resp['points']} points';
+          feedback = 'Correct +${resp['points']} points';
           feedbackColor = Colors.greenAccent;
         } else {
           feedback = 'Not quite. ${resp['attemptsLeft']} attempt(s) left.';
@@ -60,7 +60,7 @@ class _GuessPersonScreenState extends State<GuessPersonScreen> {
 
   static const _errors = {
     'NO_ATTEMPTS': 'No attempts left this round.',
-    'ALREADY_SOLVED': 'You already got it!',
+    'ALREADY_SOLVED': 'You already got it',
     'BAD_PHASE': 'Round is over.',
   };
 
@@ -98,7 +98,7 @@ class _GuessPersonScreenState extends State<GuessPersonScreen> {
             ),
         ]),
         const SizedBox(height: 12),
-        Text('WHO AM I?', style: theme.textTheme.labelLarge),
+        Text('Who am I?', style: theme.textTheme.labelLarge),
         Expanded(
           child: ListView(children: [
             for (var i = 0; i < clues.length; i++)
@@ -117,7 +117,7 @@ class _GuessPersonScreenState extends State<GuessPersonScreen> {
           Text((reveal['gained'] as Map).containsKey(myId) ? 'You earned ${(reveal['gained'] as Map)[myId]} points' : 'You did not get it this time',
               textAlign: TextAlign.center),
         ] else if (you['solved'] == true)
-          const Text('You got it! Waiting for the others...', textAlign: TextAlign.center)
+          const Text('You got it. Waiting for the others...', textAlign: TextAlign.center)
         else ...[
           if (feedback != null) Text(feedback!, textAlign: TextAlign.center, style: TextStyle(color: feedbackColor)),
           Text('Attempts left: ${you['attemptsLeft']}', textAlign: TextAlign.center),
@@ -133,7 +133,7 @@ class _GuessPersonScreenState extends State<GuessPersonScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            FilledButton(onPressed: (you['attemptsLeft'] as int) > 0 ? _send : null, child: const Text('GUESS')),
+            FilledButton(onPressed: (you['attemptsLeft'] as int) > 0 ? _send : null, child: const Text('Guess')),
           ]),
         ],
       ]),

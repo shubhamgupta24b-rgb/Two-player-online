@@ -80,29 +80,28 @@ class _GuessPersonMenuScreenState extends State<GuessPersonMenuScreen> with Sing
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text('GUESS\nTHE PERSON',
+                    const Text('Face\nHunt',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 44,
                           height: 1.0,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.w700,
                           shadows: [Shadow(color: GpCoral.board, offset: Offset(0, 4), blurRadius: 0)],
                         )),
                     const SizedBox(height: 10),
                     Text('${settings.playerCount} players · one device · pass & play',
                         textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 36),
-                    GpButton('PLAY', icon: Icons.play_arrow_rounded, onPressed: () {
+                    GpButton('Play', icon: Icons.play_arrow_rounded, onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => GuessPersonGameScreen(settings: settings)));
                     }),
                     const SizedBox(height: 14),
-                    GpButton('HOW TO PLAY', icon: Icons.help_outline_rounded, color: const Color(0xFF4D96FF), textColor: Colors.white, onPressed: () {
+                    GpButton('How to play', icon: Icons.help_outline_rounded, color: const Color(0xFF4D96FF), textColor: Colors.white, onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const HowToPlayScreen()));
                     }),
                     const SizedBox(height: 14),
-                    GpButton('SETTINGS', icon: Icons.tune_rounded, outlined: true, onPressed: _openSettings),
+                    GpButton('Settings', icon: Icons.tune_rounded, outlined: true, onPressed: _openSettings),
                     const SizedBox(height: 18),
                     Text(
                       '${settings.peopleCount} people · ${settings.rounds} rounds ·${settings.hasTimer ? '${settings.timerSeconds}s timer' : 'no timer'} ·${settings.autoEliminate ? 'auto' : 'manual'} elimination · sound ${settings.sound ? 'on' : 'off'}',

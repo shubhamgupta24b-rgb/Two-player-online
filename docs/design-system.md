@@ -1,5 +1,9 @@
 # Party Games design system
 
+> **Redesign note:** the look is now "the floor after dinner": warm neutral surfaces in light and dark, one marigold accent,
+> Bricolage Grotesque for titles and DM Sans for body text. `t.flat` now means the light theme, and games always play on dark.
+> Values in `core/ui/tokens.dart` win over any older figures below.
+
 How the app's screens are built, for anyone adding or changing a screen. Everything here
 lives in `mobile/lib/core/ui/` (tokens and components) and
 `mobile/lib/features/local_games/shell/` (the game shell).

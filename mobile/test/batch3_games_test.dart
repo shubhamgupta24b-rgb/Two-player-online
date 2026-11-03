@@ -13,7 +13,7 @@ import 'package:multiplayer_game/features/local_games/slingshot/slingshot_game.d
 Map<String, dynamic> roundTrip(Map<String, dynamic> s) => jsonDecode(jsonEncode(s)) as Map<String, dynamic>;
 
 void main() {
-  group('Mini Golf', () {
+  group('Six Holes', () {
     test('a straight putt on hole 1 drops in; a weak one stops short', () {
       final h = golfHoles[0];
       final up = atan2(h.cup.dy - h.tee.dy, h.cup.dx - h.tee.dx);
@@ -76,7 +76,7 @@ void main() {
     });
   });
 
-  group('Slingshot', () {
+  group('Fling Fort', () {
     test('every fort is the same for everyone and has pigs', () {
       for (var r = 1; r <= SlingLogic.rounds; r++) {
         expect(SlingLogic.buildFort(r), SlingLogic.buildFort(r));
@@ -129,7 +129,7 @@ void main() {
     });
   });
 
-  group('Shooting Gallery', () {
+  group('Duck Alley', () {
     test('targets slide by; shooting one scores and removes it; a bomb costs points', () {
       final g = GalleryLogic(players: 1);
       g.update(0);
@@ -159,7 +159,7 @@ void main() {
     });
   });
 
-  group('Bottle Smash', () {
+  group('Bottle Knock', () {
     test('knocking a bottom bottle brings down the ones resting on it', () {
       final g = BottleLogic(players: 1, random: Random(1));
       final corner = g.bottles.firstWhere((b) => b.row == 0 && b.col == 0);
@@ -185,7 +185,7 @@ void main() {
     });
   });
 
-  group('Archery', () {
+  group('Gold Ring', () {
     test('a bullseye scores 10, the outer ring less, a miss nothing', () {
       expect(ArcheryLogic.ringScore(0), 10);
       expect(ArcheryLogic.ringScore(ArcheryLogic.ringR * 0.95), lessThan(10));

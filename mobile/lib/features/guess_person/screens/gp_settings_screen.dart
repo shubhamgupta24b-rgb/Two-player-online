@@ -24,52 +24,52 @@ class _GpSettingsScreenState extends State<GpSettingsScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const Text('SETTINGS', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
+                  const Text('Settings', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 24),
                   _Choice<int>(
-                    title: 'PLAYERS',
+                    title: 'Players',
                     options: GpSettings.playerOptions,
                     label: (v) => '$v',
                     value: s.playerCount,
                     onChanged: (v) => setState(() => s = s.copyWith(playerCount: v)),
                   ),
                   _Choice<int>(
-                    title: 'ROUNDS',
+                    title: 'Rounds',
                     options: GpSettings.roundOptions,
                     label: (v) => '$v',
                     value: s.rounds,
                     onChanged: (v) => setState(() => s = s.copyWith(rounds: v)),
                   ),
                   _Choice<int>(
-                    title: 'PEOPLE ON THE BOARD',
+                    title: 'People on the board',
                     options: GpSettings.peopleOptions,
                     label: (v) => '$v',
                     value: s.peopleCount,
                     onChanged: (v) => setState(() => s = s.copyWith(peopleCount: v)),
                   ),
                   _Choice<int>(
-                    title: 'TIMER',
+                    title: 'Timer',
                     options: GpSettings.timerOptions,
-                    label: (v) => v == 0 ? 'OFF' : '${v}s',
+                    label: (v) => v == 0 ? 'Off' : '${v}s',
                     value: s.timerSeconds,
                     onChanged: (v) => setState(() => s = s.copyWith(timerSeconds: v)),
                   ),
                   _Choice<bool>(
-                    title: 'ELIMINATION',
+                    title: 'Elimination',
                     options: const [false, true],
-                    label: (v) => v ? 'AUTO' : 'MANUAL',
+                    label: (v) => v ? 'Auto' : 'Manual',
                     value: s.autoEliminate,
                     onChanged: (v) => setState(() => s = s.copyWith(autoEliminate: v)),
                   ),
                   _Choice<bool>(
-                    title: 'SOUND & VIBRATION',
+                    title: 'Sound & vibration',
                     options: const [true, false],
-                    label: (v) => v ? 'ON' : 'OFF',
+                    label: (v) => v ? 'On' : 'Off',
                     value: s.sound,
                     onChanged: (v) => setState(() => s = s.copyWith(sound: v)),
                   ),
                   const SizedBox(height: 12),
-                  GpButton('DONE', icon: Icons.check_rounded, onPressed: () => Navigator.pop(context, s)),
+                  GpButton('Done', icon: Icons.check_rounded, onPressed: () => Navigator.pop(context, s)),
                 ]),
               ),
             ),
@@ -93,7 +93,7 @@ class _Choice<T> extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+        Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Row(children: [
           for (final o in options)
@@ -113,8 +113,8 @@ class _Choice<T> extends StatelessWidget {
                         constraints: const BoxConstraints(minHeight: 48),
                         alignment: Alignment.center,
                         child: Text(
-                          o == value ? '✓ ${label(o)}' : label(o),
-                          style: TextStyle(color: o == value ? GpColors.ink : Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+                          o == value ? '${label(o)}' : label(o),
+                          style: TextStyle(color: o == value ? GpColors.ink : Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
                         ),
                       ),
                     ),

@@ -14,7 +14,7 @@ import 'widgets/rmcs_widgets.dart';
 /// How this game appears on the shared result screen (not a shell game: it has its own flow).
 final _resultInfo = LocalGameInfo(
   id: 'raja_mantri',
-  title: 'Raja Mantri',
+  title: 'Chit Court',
   emoji: '',
   color: const Color(0xFF8A1C3A),
   tagline: 'Can the Mantri catch the Chor?',
@@ -65,12 +65,12 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
               Expanded(
                 child: ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 16), children: [
                   PageHeader(
-                    label: 'Raja Mantri Chor Sipahi',
+                    label: 'Chit Court',
                     title: 'One phone',
                     trailing: RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
                   ),
                   const SizedBox(height: 6),
-                  Text('4 PLAYERS · $_rounds ROUNDS · ONE PHONE', textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.label, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.6)),
+                  Text('4 players · $_rounds rounds · One phone', textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.label, fontWeight: FontWeight.w700, fontSize: 11)),
                   const SizedBox(height: 14),
                   SizedBox(
                     height: 150,
@@ -81,7 +81,7 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
                   const SizedBox(height: 14),
                   _rules(),
                   const SizedBox(height: 14),
-                  const Text('PLAYERS', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.82, color: Colors.white)),
+                  const Text('Players', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
                   const SizedBox(height: 8),
                   for (var i = 0; i < 4; i++)
                     Padding(
@@ -111,14 +111,14 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(color: RmcsColors.panel, borderRadius: Radii.rButton, border: Border.all(color: Colors.white.withValues(alpha: 0.10))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('ROUNDS', style: TextStyle(fontFamily: Fonts.body, color: NeonPalette.label, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.6)),
+          const Text('Rounds', style: TextStyle(fontFamily: Fonts.body, color: NeonPalette.label, fontWeight: FontWeight.w700, fontSize: 11)),
           const SizedBox(height: 6),
           Wrap(spacing: 6, runSpacing: 6, children: [
             for (final n in roundChoices) KitChip('$n', selected: n == _rounds, onTap: () => setState(() => _rounds = n)),
           ]),
           const SizedBox(height: 6),
           Text(_rounds <= 5 ? 'Quick game · about 5 minutes' : _rounds >= 30 ? 'Marathon · about 30 minutes' : 'About $_rounds minutes',
-              style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.textMuted, fontWeight: FontWeight.w800, fontSize: 12)),
+              style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.textMuted, fontWeight: FontWeight.w600, fontSize: 12)),
         ]),
       );
 
@@ -127,7 +127,7 @@ class _RmcsMenuScreenState extends State<RmcsMenuScreen> {
       'Each round the 4 cards are shuffled and dealt. Pass the phone so everyone secretly sees their own card.',
       'The Raja is revealed (+1000 every round), then the Mantri steps forward.',
       'The Mantri has 10 seconds to point at the Chor. Right: Mantri +500. Wrong or too slow: Chor +500.',
-      'The Sipahi always gets +300. Highest total after $_rounds rounds wins!',
+      'The Sipahi always gets +300. Highest total after $_rounds rounds wins',
     ];
     return Container(
       padding: const EdgeInsets.all(12),
@@ -179,15 +179,15 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
           if (mounted) setState(() => _mantriShown = true);
         });
         haptic(HapticWeight.medium);
-        _fx.currentState?.announce('RAJA!', sub: '${_n(g.raja)} +1000');
+        _fx.currentState?.announce('Raja', sub: '${_n(g.raja)} +1000');
       }
       if (g.phase == RmcsPhase.reveal) {
         haptic(HapticWeight.heavy);
         GameAudio.sfx(g.caught ? 'coin' : 'lose');
         if (g.caught) {
-          _fx.currentState?.announce('CAUGHT!', sub: 'The Mantri found the Chor');
+          _fx.currentState?.announce('Caught', sub: 'The Mantri found the Chor');
         } else {
-          _fx.currentState?.announce('ESCAPED!', sub: 'The Chor gets away', color: const Color(0xFFB57BFF));
+          _fx.currentState?.announce('Escaped', sub: 'The Chor gets away', color: const Color(0xFFB57BFF));
           _fx.currentState?.shake();
         }
       }
@@ -238,7 +238,7 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
             child: Semantics(
               header: true,
               child: Column(children: [
-                const Text('RAJA MANTRI', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.76, color: NeonPalette.label)),
+                const Text('Chit Court', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w600, color: NeonPalette.label)),
                 Text('Round ${g.round} / ${g.totalRounds}', style: const TextStyle(fontFamily: Fonts.display, fontSize: 20, color: Colors.white)),
               ]),
             ),
@@ -266,19 +266,19 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
       case RmcsPhase.peek:
         final who = _n(g.peekIndex);
         return RmcsHeadline(
-          title: g.peekShown ? 'Remember your card, $who!' : 'Pass the phone to $who',
-          subtitle: g.peekShown ? 'Then hide it and pass the phone on.' : 'Everyone else, look away! Tap your card to see it.',
+          title: g.peekShown ? 'Remember your card, $who' : 'Pass the phone to $who',
+          subtitle: g.peekShown ? 'Then hide it and pass the phone on.' : 'Everyone else, look away. Tap your card to see it.',
           icon: g.peekShown ? GameIcons.eye : GameIcons.people,
         );
       case RmcsPhase.rajaReveal:
         return RmcsHeadline(
-          title: '${_n(g.raja)} is the RAJA!',
-          subtitle: _mantriShown ? '${_n(g.mantri)} is the Mantri. Find the Chor: ${_n(g.suspects[0])} or ${_n(g.suspects[1])}?' : 'Bow to the king… +1000 points!',
+          title: '${_n(g.raja)} is the Raja',
+          subtitle: _mantriShown ? '${_n(g.mantri)} is the Mantri. Find the Chor: ${_n(g.suspects[0])} or ${_n(g.suspects[1])}?' : 'Bow to the king… +1000 points',
           icon: GameIcons.crown,
         );
       case RmcsPhase.guessing:
         return RmcsHeadline(
-          title: '${_n(g.mantri)}, who is the CHOR?',
+          title: '${_n(g.mantri)}, who is the Chor?',
           subtitle: 'Tap ${_n(g.suspects[0])} or ${_n(g.suspects[1])}.',
           icon: GameIcons.scroll,
           trailing: CountdownRing(msLeft: g.guessMsLeft, totalMs: g.guessMs, size: 52),
@@ -310,7 +310,7 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
         highlight = mine;
         dim = !mine;
         if (mine && !g.peekShown) {
-          badge = 'TAP TO REVEAL';
+          badge = 'Tap to reveal';
           onTap = g.showPeek;
         }
       case RmcsPhase.rajaReveal:
@@ -320,7 +320,7 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
         faceUp = role == RmcsRole.raja || role == RmcsRole.mantri;
         if (!faceUp) {
           highlight = true;
-          badge = 'TAP TO ACCUSE';
+          badge = 'Tap to accuse';
           badgeColor = StatusColors.danger;
           onTap = () {
             haptic(HapticWeight.selection);
@@ -334,15 +334,15 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
         // The accused card turns first, the other suspect a beat later.
         if (role == RmcsRole.sipahi || role == RmcsRole.chor) flip = Duration(milliseconds: i == g.accused ? 600 : 1100);
         if (i == g.accused) {
-          badge = 'ACCUSED';
+          badge = 'Accused';
           badgeColor = Colors.white;
         } else if (role == RmcsRole.chor) {
-          badge = 'ESCAPED!';
+          badge = 'Escaped';
           badgeColor = StatusColors.danger;
         }
         if (role == RmcsRole.chor) highlight = true;
         if (i == g.accused && g.caught) {
-          badge = 'CAUGHT!';
+          badge = 'Caught';
           badgeColor = StatusColors.success;
         }
       case RmcsPhase.finished:
@@ -375,7 +375,7 @@ class _RmcsGameScreenState extends State<RmcsGameScreen> {
         final last = g.peekIndex == RmcsGame.playerCount - 1;
         return GoldButton(last ? 'Hide card · reveal the Raja' : 'Hide card · pass to ${_n(g.peekIndex + 1)}', icon: GameIcons.eye, height: 58, fontSize: 19, onPressed: g.passPeek);
       case RmcsPhase.rajaReveal:
-        return GoldButton(_mantriShown ? 'Mantri: find the Chor (10s)' : '…', icon: GameIcons.clock, height: 58, fontSize: 19, onPressed: _mantriShown ? g.startGuessing : null);
+        return GoldButton(_mantriShown ? 'Mantri, find the Chor in 10 seconds' : '…', icon: GameIcons.clock, height: 58, fontSize: 19, onPressed: _mantriShown ? g.startGuessing : null);
       case RmcsPhase.reveal:
         return GoldButton(g.isLastRound ? 'See final results' : 'Next round (${g.round + 1}/${g.totalRounds})', icon: GameIcons.forward, height: 58, fontSize: 19, onPressed: g.nextRound);
       case RmcsPhase.finished:

@@ -226,8 +226,8 @@ class _RelayPlayState extends State<RelayPlay> with SingleTickerProviderStateMix
                     const SizedBox(width: 6),
                   ],
                   Flexible(
-                    child: Text('YOU: ${me.name.toUpperCase()}${_host ? ' · HOST' : ''}',
-                        maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12.5, letterSpacing: 1)),
+                    child: Text('You: ${me.name}${_host ? ' · Host' : ''}',
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5)),
                   ),
                 ]),
               ),
@@ -235,7 +235,7 @@ class _RelayPlayState extends State<RelayPlay> with SingleTickerProviderStateMix
             IconButton(
               tooltip: 'Sound and settings',
               constraints: const BoxConstraints(minWidth: kTouchTarget, minHeight: 40),
-              onPressed: () => showAppSheet<void>(context, title: '⚙️ Settings', builder: (_) => SettingsPanel(color: widget.game.color)),
+              onPressed: () => showAppSheet<void>(context, title: 'Settings', builder: (_) => SettingsPanel(color: widget.game.color)),
               icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
             ),
           ]),

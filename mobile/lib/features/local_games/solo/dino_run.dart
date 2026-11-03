@@ -74,13 +74,13 @@ class DinoLogic extends SoloLogic {
 
 final dinoInfo = LocalGameInfo(
   id: 'dino_run',
-  title: 'Dino Run',
+  title: 'Cactus Dash',
   emoji: '🦖',
   color: const Color(0xFF8BC34A),
-  tagline: 'Jump the cacti, dodge the birds!',
+  tagline: "Jump over cacti and duck under birds",
   rules: const [
     'The dino runs by itself. Tap anywhere to jump.',
-    'Jump over cacti 🌵 and low birds. High birds fly over your head.',
+    'Jump over cacti and low birds. High birds fly over your head.',
     'It keeps getting faster. Score = metres run.',
   ],
   scoreUnit: 'metres',
@@ -91,7 +91,7 @@ final dinoInfo = LocalGameInfo(
     create: () => DinoLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🦖 DINO RUN',
+      title: 'Cactus Dash',
       score: g.score,
       extra: '${g.speed.toStringAsFixed(0)} m/s',
       child: GestureDetector(

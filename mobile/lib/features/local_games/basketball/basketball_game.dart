@@ -79,14 +79,14 @@ class BasketballLogic extends TimedDuel {
 
 final LocalGameInfo basketballInfo = LocalGameInfo(
   id: 'basketball_hoops',
-  title: 'Basketball Hoops',
+  title: 'Swish',
   emoji: '🏀',
   color: const Color(0xFFFF9F43),
-  tagline: 'Swipe up and sink the basket!',
+  tagline: "Swipe to shoot the ball into the basket",
   rules: const [
     'Swipe up on your side to throw the ball. The direction of your swipe is where it goes.',
     'Clean through the middle = 3 pts (swish), anywhere in the rim = 2 pts.',
-    'After 5 seconds the hoop starts sliding, so aim where it will be. Most points wins: take turns on the whole court (1-5 minutes each) or split the screen (30s). 2 to 4 players.',
+    'After 5 seconds the hoop starts sliding, so aim where it will be. Most points wins. Take turns on the whole court (1-5 minutes each) or split the screen (30s). 2 to 4 players.',
   ],
   scoreUnit: 'points',
   splitScreen: true,
@@ -135,11 +135,11 @@ final LocalGameInfo basketballInfo = LocalGameInfo(
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(color: players[i].color, borderRadius: BorderRadius.circular(10)),
-                  child: Text('${players[i].name} ${g.score[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                  child: Text('${players[i].name} ${g.score[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
                 ),
             ]),
           ),
-          Text('${g.secondsLeft}s', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+          Text('${g.secondsLeft}s', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
         ]),
       ),
       Expanded(child: _HoopZone(player: players[me], index: me, g: g)),
@@ -245,7 +245,7 @@ class _HoopZoneState extends State<_HoopZone> {
                     borderRadius: const BorderRadius.horizontal(left: Radius.circular(40)),
                     border: Border.all(color: Colors.black, width: 3),
                   ),
-                  child: Text('${g.secondsLeft}', style: TextStyle(color: const Color(0xFFFF5B57), fontWeight: FontWeight.w900, fontSize: max(16.0, geo.h * 0.06))),
+                  child: Text('${g.secondsLeft}', style: TextStyle(color: const Color(0xFFFF5B57), fontWeight: FontWeight.w700, fontSize: max(16.0, geo.h * 0.06))),
                 ),
               ),
             if (showText)
@@ -255,15 +255,15 @@ class _HoopZoneState extends State<_HoopZone> {
                 top: geo.rimY + geo.netH + 2,
                 child: Text(
                   shot.points == 3
-                      ? '+3 SWISH!'
+                      ? '+3 swish'
                       : shot.points == 2
-                          ? '+2 NICE!'
-                          : 'MISS',
+                          ? '+2 nice'
+                          : 'Miss',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: shot.points == 0 ? Colors.white : (shot.points == 3 ? const Color(0xFFFFD43B) : Colors.white),
                     fontSize: max(16.0, geo.h * 0.07),
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     shadows: const [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2))],
                   ),
                 ),
@@ -273,8 +273,8 @@ class _HoopZoneState extends State<_HoopZone> {
                 left: 0,
                 right: 0,
                 top: geo.courtTop + (geo.h - geo.courtTop) * 0.06,
-                child: Text('SWIPE UP TO SHOOT',
-                    textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: max(11.0, geo.h * 0.032))),
+                child: Text('Swipe up to shoot',
+                    textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: max(11.0, geo.h * 0.032))),
               ),
           ]),
         ),
@@ -424,7 +424,7 @@ class _CourtPainter extends CustomPainter {
     canvas.drawRRect(sb, Paint()..color = const Color(0xFF2A2A2E));
     canvas.drawRRect(sb, black);
     final tp = TextPainter(
-      text: TextSpan(text: '$score', style: TextStyle(color: const Color(0xFFFF5B57), fontWeight: FontWeight.w900, fontSize: geo.bbH * 0.17)),
+      text: TextSpan(text: '$score', style: TextStyle(color: const Color(0xFFFF5B57), fontWeight: FontWeight.w700, fontSize: geo.bbH * 0.17)),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, sb.center - Offset(tp.width / 2, tp.height / 2));

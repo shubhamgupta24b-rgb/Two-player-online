@@ -134,14 +134,14 @@ class TruthDareLogic extends LocalGameLogic {
 
 final truthDareInfo = LocalGameInfo(
   id: 'truth_dare',
-  title: 'Truth or Dare',
+  title: 'Spill or Stunt',
   emoji: '🍾',
   color: const Color(0xFFFF4FA3),
-  tagline: 'Spin the bottle. No chickening out!',
+  tagline: "Spin the bottle, then choose truth or dare",
   rules: const [
-    'Sit in a circle around the phone and tap SPIN.',
-    'Whoever the bottle points to picks TRUTH or DARE.',
-    'Do it for +1 point, or skip for nothing. Most points after everyone has had 3 spins wins!',
+    'Sit in a circle around the phone and tap Spin.',
+    'Whoever the bottle points to picks truth or dare.',
+    'Do it for +1 point, or skip for nothing. Most points after everyone has had 3 spins wins',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -258,8 +258,8 @@ class _TodTableState extends State<_TodTable> {
                         const SizedBox(width: 5),
                         Flexible(
                           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(players[i].name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
-                            Text('⭐ ${g.points[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11)),
+                            Text(players[i].name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                            Text('${g.points[i]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 11)),
                           ]),
                         ),
                       ]),
@@ -309,18 +309,18 @@ class _TodTableState extends State<_TodTable> {
   Widget _bottom(TruthDareLogic g, List<GpPlayer> players) {
     switch (g.phase) {
       case TodPhase.spin:
-        return GpButton('SPIN THE BOTTLE', icon: Icons.refresh_rounded, color: _pink, textColor: Colors.white, onPressed: g.spin);
+        return GpButton('Spin the bottle', icon: Icons.refresh_rounded, color: _pink, textColor: Colors.white, onPressed: g.spin);
       case TodPhase.spinning:
         return SizedBox(height: 54, child: Center(child: Text('Spinning…', style: context.tk.styles.bodyStrong.copyWith(color: context.tk.onBgMuted))));
       case TodPhase.choose:
         final p = players[g.chosen!];
         return Column(mainAxisSize: MainAxisSize.min, children: [
-          TurnBanner(text: '${p.name.toUpperCase()}, PICK ONE!', color: p.color),
+          TurnBanner(text: '${p.name}, pick one', color: p.color),
           const SizedBox(height: 10),
           Row(children: [
-            Expanded(child: GpButton('TRUTH', color: _truthBlue, textColor: Colors.white, onPressed: () => g.choose(truth: true))),
+            Expanded(child: GpButton('Truth', color: _truthBlue, textColor: Colors.white, onPressed: () => g.choose(truth: true))),
             const SizedBox(width: 12),
-            Expanded(child: GpButton('DARE', color: _dareRed, textColor: Colors.white, onPressed: () => g.choose(truth: false))),
+            Expanded(child: GpButton('Dare', color: _dareRed, textColor: Colors.white, onPressed: () => g.choose(truth: false))),
           ]),
         ]);
       case TodPhase.prompt:
@@ -336,14 +336,14 @@ class _TodTableState extends State<_TodTable> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), border: Border.all(color: color, width: 4)),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text(g.truth ? 'TRUTH' : 'DARE', style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: 3)),
+              Text(g.truth ? 'Truth' : 'Dare', style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 22)),
               const SizedBox(height: 8),
-              Text(g.prompt, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.ink, fontWeight: FontWeight.w800, fontSize: 16)),
+              Text(g.prompt, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.ink, fontWeight: FontWeight.w600, fontSize: 16)),
               const SizedBox(height: 14),
               Row(children: [
-                Expanded(child: AppButton('SKIP', color: FlatPalette.option, onPressed: () => g.complete(done: false))),
+                Expanded(child: AppButton('Skip', color: FlatPalette.option, onPressed: () => g.complete(done: false))),
                 const SizedBox(width: 10),
-                Expanded(child: GpButton('DONE +1', color: GpColors.yes, textColor: Colors.white, onPressed: () => g.complete(done: true))),
+                Expanded(child: GpButton('Done +1', color: GpColors.yes, textColor: Colors.white, onPressed: () => g.complete(done: true))),
               ]),
             ]),
           ),

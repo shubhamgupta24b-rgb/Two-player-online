@@ -6,9 +6,10 @@ import 'package:multiplayer_game/features/local_games/fruit_duel/fruit_duel_game
 import 'package:multiplayer_game/features/local_games/memory/memory_game.dart';
 import 'package:multiplayer_game/features/local_games/paint_fight/paint_fight_game.dart';
 import 'package:multiplayer_game/features/local_games/tic_tac_toe/tic_tac_toe_game.dart';
+import 'package:multiplayer_game/features/local_games/connect_four/connect_four_game.dart';
 
 void main() {
-  group('Crush It', () {
+  group('Thumb War', () {
     test('counts taps per player and stops at the time limit', () {
       final g = CrushItLogic(durationMs: 10000);
       g.update(100);
@@ -24,7 +25,7 @@ void main() {
     });
   });
 
-  group('Basketball Hoops', () {
+  group('Swish', () {
     test('points by how far the ball lands from the rim centre', () {
       expect(BasketballLogic.pointsFor(0), 3);
       expect(BasketballLogic.pointsFor(0.1), 3);
@@ -85,7 +86,7 @@ void main() {
     });
   });
 
-  group('Fruit Duel', () {
+  group('Slice Off', () {
     test('first correct slash +2, second +1, wrong lane 0, one try per fruit', () {
       final g = FruitDuelLogic(random: Random(3));
       g.update(10);
@@ -126,7 +127,7 @@ void main() {
     });
   });
 
-  group('Memory', () {
+  group('Flip Twice', () {
     test('pairs score and keep the turn, misses pass the turn after a delay', () {
       final g = MemoryLogic(random: Random(5), mismatchMs: 900);
       int pairOf(int id) => g.cards.indexWhere((c) => c.id != id && c.symbol == g.cards[id].symbol);
@@ -172,7 +173,7 @@ void main() {
     });
   });
 
-  group('Tic-Tac-Toe', () {
+  group('Three Up', () {
     test('players alternate from the chosen starter', () {
       final g = TicTacToeLogic(starter: 1);
       expect(g.turn, 1);
@@ -230,7 +231,7 @@ void main() {
     });
   });
 
-  group('Paint Fight', () {
+  group('Splat Patch', () {
     test('painting claims and steals cells, scores are cell counts', () {
       final g = PaintFightLogic(cols: 4, rows: 4);
       g.update(10);
@@ -246,4 +247,57 @@ void main() {
       expect(g.scores, [1, 1]);
     });
   });
+
+  group('Connect Four', () {
+    test('discs fall to the lowest open row and turns alternate', () {
+      final g = ConnectFourLogic();
+      expect(g.drop(3), 5);
+      expect(g.at(3, 5), 0);
+      expect(g.turn, 1);
+      expect(g.drop(3), 4);
+      expect(g.at(3, 4), 1);
+      expect(g.turn, 0);
+    });
+
+    test('rejects invalid and full columns without changing the turn', () {
+      final g = ConnectFourLogic();
+      expect(g.drop(-1), isNull);
+      expect(g.drop(7), isNull);
+      expect(g.turn, 0);
+      // Alternate both players in one column so the six discs have mixed
+      // colours; this fills the column without creating a four-in-a-row.
+      for (var i = 0; i < 6; i++) {
+        expect(g.drop(0), isNotNull);
+      }
+      final turnBefore = g.turn;
+      expect(g.drop(0), isNull);
+      expect(g.turn, turnBefore);
+    });
+
+    test('detects horizontal, vertical and diagonal wins and stops play', () {
+      final horizontal = ConnectFourLogic();
+      for (final c in [0, 0, 1, 1, 2, 2, 3]) {
+        horizontal.drop(c);
+      }
+      expect(horizontal.winner, 0);
+      expect(horizontal.finished, isTrue);
+      final afterWinTurn = horizontal.turn;
+      expect(horizontal.drop(4), isNull);
+      expect(horizontal.turn, afterWinTurn);
+
+      final vertical = ConnectFourLogic();
+      for (var i = 0; i < 3; i++) {
+        vertical.drop(0); vertical.drop(1);
+      }
+      vertical.drop(0);
+      expect(vertical.winner, 0);
+
+      final diagonal = ConnectFourLogic();
+      for (final c in [0, 1, 1, 2, 4, 2, 2, 3, 4, 3, 5, 3, 3]) {
+        diagonal.drop(c);
+      }
+      expect(diagonal.winner, 0);
+    });
+  });
+
 }

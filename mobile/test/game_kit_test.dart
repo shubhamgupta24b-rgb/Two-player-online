@@ -26,11 +26,11 @@ void main() {
     await tester.pumpWidget(app(const Padding(
       padding: EdgeInsets.all(20),
       child: Row(children: [
-        Expanded(child: PlayerScoreCard(seat: 0, name: 'Aarav', score: '16', active: true, tag: 'AIMING')),
+        Expanded(child: PlayerScoreCard(seat: 0, name: 'Aarav', score: '16', active: true, tag: 'Aiming')),
         Expanded(child: PlayerScoreCard(seat: 1, name: 'Meera', score: '17', out: true)),
       ]),
     )));
-    expect(find.text('AIMING'), findsOneWidget);
+    expect(find.text('Aiming'), findsOneWidget);
     expect(find.text('16'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('Meera, 17.*out')), findsOneWidget);
   });
@@ -49,7 +49,7 @@ void main() {
     await tester.pump(CountdownOverlay.step);
     expect(find.text('2'), findsOneWidget);
     await tester.pump(CountdownOverlay.step * 2);
-    expect(find.text('GO'), findsOneWidget);
+    expect(find.text('Go'), findsOneWidget);
     await tester.pump(CountdownOverlay.go + const Duration(milliseconds: 50));
     expect(done, isTrue);
   });
@@ -70,7 +70,7 @@ void main() {
     final extras = ResultExtras()..subtitle = '46 – 40 · 5 arrows each';
     await tester.pumpWidget(app(ResultScreen(game: game, players: players, extras: extras, onRematch: () {}, onChangePlayers: () {}, onExit: () {})));
     await tester.pump(const Duration(seconds: 3));
-    expect(find.textContaining('Meera wins!', findRichText: true), findsWidgets);
+    expect(find.textContaining('Meera wins', findRichText: true), findsWidgets);
     expect(find.text('46 – 40 · 5 arrows each'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('^Place 1, Meera')), findsOneWidget);
     for (final b in ['Rematch', 'Change players', 'All games']) {

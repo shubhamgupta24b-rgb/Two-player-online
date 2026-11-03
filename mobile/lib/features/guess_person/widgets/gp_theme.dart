@@ -19,15 +19,16 @@ class GpColors {
   ];
 }
 
-/// Guess the Person's board look: warm coral, or sky blue in the flat app.
+/// Guess the Person's palette follows the supplied APK's purple character grid;
+/// the flat-app variant deliberately keeps its existing accessible sky-blue theme.
 class GpCoral {
-  static const bg = flatStyle ? FlatColors.sky : Color(0xFFF2A283);
-  static const mark = Color(0x22FFFFFF); // faint "?" shapes
-  static const board = flatStyle ? FlatColors.board : Color(0xFFA9634E);
-  static const nameStrip = Color(0xFF3A3846);
+  static const bg = flatStyle ? FlatColors.sky : Color(0xFF805789);
+  static const mark = Color(0x20FFFFFF); // faint "?" shapes
+  static const board = flatStyle ? FlatColors.board : Color(0xFF67456F);
+  static const nameStrip = Color(0xFF3D2A43);
   static const tile = Colors.white;
   static const tileInk = Color(0xFF2B2A35);
-  static const panel = Color(0xEB2F2C40); // dark cards for text-heavy content
+  static const panel = Color(0xEB382640); // dark plum panels keep text readable
   static const closeBlue = Color(0xFF7FA8E8);
 }
 
@@ -57,7 +58,7 @@ class _QuestionMarks extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (final (x, y, s, rot) in _marks) {
       final tp = TextPainter(
-        text: TextSpan(text: '?', style: TextStyle(color: GpCoral.mark, fontSize: size.width * s, fontWeight: FontWeight.w900)),
+        text: TextSpan(text: '?', style: TextStyle(color: GpCoral.mark, fontSize: size.width * s, fontWeight: FontWeight.w700)),
         textDirection: TextDirection.ltr,
       )..layout();
       canvas.save();
@@ -158,8 +159,8 @@ class PlayerTag extends StatelessWidget {
           const Icon(Icons.person, size: 18, color: Colors.white),
           const SizedBox(width: 4),
           Flexible(
-            child: Text(name.toUpperCase(),
-                maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
+            child: Text(name,
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
           ),
           if (role != null) ...[
             const SizedBox(width: 6),

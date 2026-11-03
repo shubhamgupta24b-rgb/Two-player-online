@@ -7,7 +7,7 @@ import 'package:multiplayer_game/features/local_games/solo/sliding_puzzle.dart';
 import 'package:multiplayer_game/features/local_games/solo/sudoku.dart';
 
 void main() {
-  group('Ball Sort', () {
+  group('Tube Sort', () {
     test('a level has every colour exactly 4 times plus two empty tubes, not already solved', () {
       final g = BallSortLogic(random: Random(1));
       expect(g.tubes.length, g.colors + 2);
@@ -58,7 +58,7 @@ void main() {
     });
   });
 
-  group('Sliding Puzzle', () {
+  group('Slide Home', () {
     test('the shuffle is solvable and not already solved; tiles only slide into the gap', () {
       final g = SlidingLogic(random: Random(4));
       expect(g.solved, isFalse);
@@ -84,7 +84,7 @@ void main() {
     });
   });
 
-  group('Sudoku', () {
+  group('Nine Grid', () {
     test('the puzzle has exactly one solution and matches it', () {
       final g = SudokuLogic(random: Random(6), blanks: 40);
       expect(SudokuMaker.count(List.of(g.puzzle)), 1);
@@ -123,7 +123,7 @@ void main() {
     });
   });
 
-  group('Hangman', () {
+  group('Last Letter', () {
     test('right letters show, wrong ones cost lives, a full word scores and a new one comes', () {
       final g = HangmanLogic(random: Random(9));
       final first = g.word;
@@ -157,7 +157,7 @@ void main() {
     });
   });
 
-  group('Dino Run', () {
+  group('Cactus Dash', () {
     test('running scores metres and speeds up; never jumping hits a cactus', () {
       final g = DinoLogic(random: Random(11));
       var t = 0;

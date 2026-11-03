@@ -33,12 +33,14 @@ const RELAY_GAMES = [
   { id: 'bingo', min: 2, max: 6 },
   { id: 'battleship', min: 2, max: 2 },
   { id: 'checkers', min: 2, max: 2 },
-  { id: 'smash_karts', min: 2, max: 4 },
+  // smash_karts was replaced by nitro_knockout, a dedicated module (games/nitro_knockout.js).
   { id: 'mini_golf', min: 2, max: 4 },
   { id: 'slingshot', min: 2, max: 4 },
   { id: 'archery', min: 2, max: 4 },
   { id: 'shooting_gallery', min: 2, max: 4 },
   { id: 'bottle_smash', min: 2, max: 4 },
+  { id: 'carrom', min: 2, max: 2 },
+  { id: 'eight_ball_pool', min: 2, max: 2 },
   // RivalRoom-only games: playable when a host picks them, never chosen at random (Quick Play,
   // party mode), so players on an app without them never land in one.
   { id: 'chess', min: 2, max: 2, optIn: true },
@@ -83,14 +85,14 @@ function createRelayGame({ id, min, max, optIn = false }) {
         s.state = p.state;
         s.version++;
         if (Number.isInteger(p.ack)) s.inputs = s.inputs.filter(i => i.seq > p.ack);
-        return { version: s.version };
+        return { version: s.version, gameOnly: true };
       }
       if (type === 'relay:input') {
         if (typeof p.name !== 'string' || !NAME_RE.test(p.name) || !Array.isArray(p.args) || p.args.length > 8) throw new GameError('INVALID_PAYLOAD');
         if (!p.args.every(a => a === null || ['number', 'string', 'boolean'].includes(typeof a))) throw new GameError('INVALID_PAYLOAD');
         s.inputs.push({ seq: ++s.inputSeq, from: uid, name: p.name, args: p.args });
         if (s.inputs.length > MAX_QUEUE) s.inputs.splice(0, s.inputs.length - MAX_QUEUE);
-        return { seq: s.inputSeq };
+        return { seq: s.inputSeq, gameOnly: true };
       }
       if (type === 'relay:finish') {
         if (uid !== s.host) throw new GameError('NOT_HOST');

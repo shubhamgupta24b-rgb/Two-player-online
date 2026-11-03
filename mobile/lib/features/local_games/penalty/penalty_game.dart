@@ -79,14 +79,14 @@ class PenaltyLogic extends LocalGameLogic {
 
 final penaltyInfo = LocalGameInfo(
   id: 'penalty',
-  title: 'Penalty Shootout',
+  title: 'Spot Kick',
   emoji: '⚽',
   color: const Color(0xFF2FB36D),
-  tagline: 'Shoot, dive, score!',
+  tagline: "Take turns shooting and saving penalties",
   rules: const [
     'You take turns being the kicker and the goalkeeper.',
-    'Both secretly pick LEFT, MIDDLE or RIGHT on your own side.',
-    'Keeper picks the same side as the shot = SAVE. Otherwise GOAL!',
+    'Both secretly pick left, middle or right on your own side.',
+    'Keeper picks the same side as the shot = save. Otherwise goal',
     '5 kicks each, then sudden death.',
   ],
   scoreUnit: 'goals',
@@ -119,7 +119,7 @@ final penaltyInfo = LocalGameInfo(
       if (name == 'pick' && asInt(a[0]) == from) g.pick(from, asInt(a[1]));
     },
     view: (context, g, players, me) => Column(children: [
-      ScoreMiddleBar(players: players, scores: g.scores, label: g.kickNo < 2 * g.kicksEach ? 'KICK ${g.kickNo ~/ 2 + 1} OF ${g.kicksEach}' : 'SUDDEN DEATH'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: g.kickNo < 2 * g.kicksEach ? 'Kick ${g.kickNo ~/ 2 + 1} of ${g.kicksEach}' : 'Sudden death'),
       Expanded(child: _PenaltyHalf(player: players[me], index: me, g: g)),
     ]),
   ),
@@ -127,7 +127,7 @@ final penaltyInfo = LocalGameInfo(
     create: () => PenaltyLogic(),
     onFinished: onFinished,
     builder: (context, g) => SplitScreen(
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: g.kickNo < 2 * g.kicksEach ? 'KICK ${g.kickNo ~/ 2 + 1} OF ${g.kicksEach}' : 'SUDDEN DEATH'),
+      middle: ScoreMiddleBar(players: players, scores: g.scores, label: g.kickNo < 2 * g.kicksEach ? 'Kick ${g.kickNo ~/ 2 + 1} of ${g.kicksEach}' : 'Sudden death'),
       half: (i) => _PenaltyHalf(player: players[i], index: i, g: g),
     ),
   ),
@@ -150,16 +150,16 @@ class _PenaltyHalf extends StatelessWidget {
     String sub;
     if (g.showingResult && kick != null) {
       final mine = kick.kicker == index;
-      title = kick.goal ? (mine ? '⚽ GOAL!' : 'They scored…') : (mine ? 'SAVED!' : '🧤 GREAT SAVE!');
+      title = kick.goal ? (mine ? 'Goal' : 'They scored…') : (mine ? 'Saved' : 'Great save');
       sub = 'Shot ${_side(kick.shot)} · dive ${_side(kick.dive)}';
     } else if (g.picks[index] != null) {
-      title = 'LOCKED IN ✓';
+      title = 'Locked in';
       sub = 'Waiting for your rival…';
     } else {
-      title = kicking ? 'YOU SHOOT' : 'YOU SAVE';
+      title = kicking ? 'You shoot' : 'You save';
       sub = kicking ? 'Pick where to shoot' : 'Pick where to dive';
     }
-    const labels = ['LEFT', 'MIDDLE', 'RIGHT'];
+    const labels = ['Left', 'Middle', 'Right'];
     final canPick = !g.showingResult && g.picks[index] == null && !g.finished;
     // A little pitch: striped grass, the goal with a net, three target zones inside it.
     return Container(
@@ -182,7 +182,7 @@ class _PenaltyHalf extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(10)),
-                  child: Text(kicking ? '⚽ KICKER' : '🧤 KEEPER', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  child: Text(kicking ? 'Kicker' : 'Keeper', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                 ),
               ]),
               Expanded(
@@ -190,7 +190,7 @@ class _PenaltyHalf extends StatelessWidget {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Column(children: [
-                      Text(title, style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 3)])),
+                      Text(title, style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700, shadows: [Shadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 3)])),
                       Text(sub, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                     ]),
                   ),
@@ -226,7 +226,7 @@ class _PenaltyHalf extends StatelessWidget {
                                   fit: BoxFit.scaleDown,
                                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                                     Text(_zoneIcon(toAbsolute(shown), kick, kicking), style: const TextStyle(fontSize: 24)),
-                                    Text(labels[shown], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, shadows: [Shadow(color: Colors.black45, blurRadius: 2)])),
+                                    Text(labels[shown], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13, shadows: [Shadow(color: Colors.black45, blurRadius: 2)])),
                                   ]),
                                 ),
                               ),

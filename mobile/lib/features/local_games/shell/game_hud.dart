@@ -52,7 +52,7 @@ class HudLabel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: 5),
       decoration: BoxDecoration(color: t.glassStrong, borderRadius: Radii.rMd),
-      child: Text(text, style: t.styles.label.copyWith(color: t.onBg, letterSpacing: 0.8)),
+      child: Text(text, style: t.styles.label.copyWith(color: t.onBg)),
     );
   }
 }
@@ -62,7 +62,7 @@ class HudLabel extends StatelessWidget {
 class GameStatus extends StatelessWidget {
   final GpPlayer? player; // whose turn
   final String? turnText; // e.g. "PLAYER 1'S TURN · pull back & let go"
-  final String? message; // e.g. "🎯 BULLSEYE! +10"
+  final String? message; // e.g. "BULLSEYE! +10"
   final double height;
   const GameStatus({super.key, this.player, this.turnText, this.message, this.height = 48});
 

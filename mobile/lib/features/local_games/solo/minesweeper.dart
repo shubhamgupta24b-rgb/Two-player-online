@@ -89,14 +89,14 @@ class MinesweeperLogic extends SoloLogic {
 
 final minesweeperInfo = LocalGameInfo(
   id: 'minesweeper',
-  title: 'Minesweeper',
+  title: 'Safe Steps',
   emoji: '💣',
   color: const Color(0xFF607D8B),
-  tagline: 'Clear the field, dodge the mines!',
+  tagline: "Uncover every safe square",
   rules: const [
     'Tap a square to dig. Your first tap is always safe.',
     'Numbers show how many mines touch that square.',
-    'Long-press (or switch to 🚩 mode) to flag a mine. Clear every safe square to win!',
+    'Long-press (or switch to mode) to flag a mine. Clear every safe square to win',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -125,7 +125,7 @@ class _MinesViewState extends State<_MinesView> {
     final g = widget.g;
     const n = MinesweeperLogic.size;
     return SoloFrame(
-      title: g.won ? '🎉 CLEARED!' : (g.exploded != null ? '💥 BOOM!' : '💣 MINESWEEPER'),
+      title: g.won ? 'Cleared' : (g.exploded != null ? 'Boom' : 'Safe Steps'),
       score: g.score,
       extra: '🚩${g.minesLeft} ⏱${g.seconds}s',
       child: Column(children: [
@@ -156,8 +156,8 @@ class _MinesViewState extends State<_MinesView> {
         const SizedBox(height: 10),
         SegmentedButton<bool>(
           segments: const [
-            ButtonSegment(value: false, label: Text('⛏️ DIG')),
-            ButtonSegment(value: true, label: Text('🚩 FLAG')),
+            ButtonSegment(value: false, label: Text('Dig')),
+            ButtonSegment(value: true, label: Text('Flag')),
           ],
           selected: {_flagMode},
           onSelectionChanged: (s) => setState(() => _flagMode = s.first),
@@ -191,7 +191,7 @@ class _MinesViewState extends State<_MinesView> {
             padding: const EdgeInsets.all(3),
             child: Text(
               showMine ? '💣' : (flagged ? '🚩' : (isOpen && c > 0 ? '$c' : '')),
-              style: TextStyle(color: _numColors[c], fontWeight: FontWeight.w900, fontSize: 20),
+              style: TextStyle(color: _numColors[c], fontWeight: FontWeight.w700, fontSize: 20),
             ),
           ),
         ),

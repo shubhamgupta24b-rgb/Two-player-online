@@ -59,19 +59,19 @@ class _QuickPlayScreenState extends State<QuickPlayScreen> {
                     duration: Motion.of(context, Motion.fast),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: any ? Brand.gold : (t.flat ? Colors.white : t.surface),
+                      color: any ? Brand.gold : (t.card),
                       borderRadius: Radii.rButton,
-                      border: Border.all(color: any ? Brand.gold : (t.flat ? FlatPalette.stroke : t.stroke)),
+                      border: Border.all(color: any ? Brand.gold : (t.stroke)),
                       boxShadow: any ? Shadows.edge(Brand.goldDeep) : null,
                     ),
                     child: Row(children: [
-                      GameIcon(GameIcons.dice5, size: 36, color: any ? Brand.onGold : (t.flat ? FlatPalette.ink : Colors.white)),
+                      GameIcon(GameIcons.dice5, size: 36, color: any ? Brand.onGold : (t.onBg)),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text('Any game', style: TextStyle(fontFamily: Fonts.display, fontSize: 22, color: any ? Brand.onGold : (t.flat ? FlatPalette.ink : Colors.white))),
-                          Text("Fastest match: the room's host picks the games",
-                              style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w800, color: any ? Brand.onGold.withValues(alpha: 0.8) : (t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted))),
+                          Text('Any game', style: TextStyle(fontFamily: Fonts.display, fontSize: 22, color: any ? Brand.onGold : (t.onBg))),
+                          Text("Join any open room. The host picks the games",
+                              style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w600, color: any ? Brand.onGold.withValues(alpha: 0.8) : (t.onBgMuted))),
                         ]),
                       ),
                       if (any) const GameIcon(GameIcons.check, size: 22, color: Brand.onGold),
@@ -85,17 +85,16 @@ class _QuickPlayScreenState extends State<QuickPlayScreen> {
             Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
               decoration: BoxDecoration(
-                color: t.flat ? Colors.white : NeonPalette.sheet,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                border: Border(top: BorderSide(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14))),
-                boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 32, offset: Offset(0, -12))],
-              ),
+                color: t.card,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                border: Border(top: BorderSide(color: t.stroke)),
+                              ),
               child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 if (busy)
                   const _Finding()
                 else
                   Text(game == null ? 'Any game · rooms of up to 6' : '${game.name} · ${game.playersLabel} players',
-                      textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w900, fontSize: 15, color: t.flat ? FlatPalette.ink : Colors.white)),
+                      textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w700, fontSize: 15, color: t.onBg)),
                 const SizedBox(height: 10),
                 GoldButton(busy ? 'Finding players…' : 'Find a room', icon: GameIcons.bolt, onPressed: busy ? null : _go),
               ]),

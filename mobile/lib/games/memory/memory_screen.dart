@@ -26,7 +26,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
     return Padding(padding:const EdgeInsets.all(12),child:Column(children:[
       Wrap(spacing:8,children:[for(final p in players) Chip(label:Text(p['username'].toString()+' : '+scores[p['userId']].toString()))]),
       const SizedBox(height:6),
-      Text(phase=='mismatch'?'Pair shown — next turn in '+left().toString()+'s':canPlay?'Your turn':turnName.toString()+"'s turn",style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),
+      Text(phase=='mismatch'?'Pair shown. Next turn in '+left().toString()+'s':canPlay?'Your turn':turnName.toString()+"'s turn",style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),
       const SizedBox(height:12),
       Expanded(child:GridView.builder(gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:4,crossAxisSpacing:8,mainAxisSpacing:8),
         itemCount:cards.length,itemBuilder:(_,i){final c=cards[i];final value=c['value'];final visible=value!=null;

@@ -25,17 +25,17 @@ final ludoTeamsInfo = _ludo(teams: true);
 
 LocalGameInfo _ludo({required bool teams}) => LocalGameInfo(
   id: teams ? 'ludo_teams' : 'ludo',
-  title: teams ? 'Ludo 2 vs 2' : 'Ludo',
+  title: teams ? 'Ludo 2 vs 2' : 'Token Rush',
   emoji: teams ? '🤝' : '🎲',
   color: const Color(0xFF1E7BE0),
-  tagline: teams ? 'Team up with your partner across the board!' : 'Race all four tokens home!',
+  tagline: teams ? "Move your team's tokens home" : 'Race all four tokens home',
   rules: [
     'Roll a 6 to bring a token out of your base. Move round the board and up your coloured path to the centre.',
-    'Land on a rival token to send it back to base (not on ★ safe squares).',
+    'Land on a rival token to send it back to base (not on safe squares).',
     'A 6, a capture or getting a token home gives you another roll. Three 6s in a row lose your turn.',
     if (!teams) 'First to bring all four tokens home wins. 2 to 4 players. With 4 players you can play in teams.',
     if (teams) 'Teams: Player 1 + 3 against Player 2 + 4. Partners never capture each other.',
-    if (teams) 'All your tokens home? Your turns now move your partner\'s. Both partners home and the team wins!',
+    if (teams) 'All your tokens home? Your turns now move your partner\'s. Both partners home and the team wins',
   ],
   scoreUnit: 'wins',
   splitScreen: false,
@@ -131,27 +131,27 @@ class _LudoTable extends StatelessWidget {
       onChange: (fx, _, now) {
         final m = g.message;
         if (m.contains('Captured')) {
-          keyMoment(fx, 'CAPTURED!', sub: 'Roll again', sound: 'hit', buzz: HapticWeight.heavy, shake: true);
+          keyMoment(fx, 'Captured', sub: 'Roll again', sound: 'hit', buzz: HapticWeight.heavy, shake: true);
         } else if (m.contains('All home')) {
-          keyMoment(fx, 'ALL HOME!', sub: 'Now move your partner\'s tokens', sound: 'coin');
+          keyMoment(fx, 'All home', sub: 'Now move your partner\'s tokens', sound: 'coin');
         } else if (m.contains('Token home')) {
-          keyMoment(fx, 'HOME!', sub: 'Roll again', sound: 'coin', confetti: true);
+          keyMoment(fx, 'Home', sub: 'Roll again', sound: 'coin', confetti: true);
         } else if (m.contains('Three 6s')) {
-          keyMoment(fx, 'TURN LOST', sub: 'Three 6s in a row', sound: 'lose', color: StatusColors.danger);
+          keyMoment(fx, 'Turn lost', sub: 'Three 6s in a row', sound: 'lose', color: StatusColors.danger);
         } else if (m.startsWith('Rolled a 6') || m.startsWith('No moves. Roll again')) {
-          fx?.pop('ROLL AGAIN');
+          fx?.pop('Roll again');
         }
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
         child: Column(children: [
           ScoreHud(
-            title: g.teams ? 'Ludo 2 vs 2' : 'Ludo',
+            title: g.teams ? 'Ludo 2 vs 2' : 'Token Rush',
             state: g.finished ? 'Game over' : (g.phase == LudoPhase.move ? 'Move ${g.lastRoll}' : '${current.name}: roll'),
             players: players,
             turn: g.finished ? null : g.turn,
             score: (i) => '${_home(i)}',
-            tag: (i) => g.teams ? (i.isEven ? 'TEAM A' : 'TEAM B') : (i == g.turn && !g.finished ? (g.phase == LudoPhase.move ? 'MOVE' : 'ROLL') : null),
+            tag: (i) => g.teams ? (i.isEven ? 'Team A' : 'Team B') : (i == g.turn && !g.finished ? (g.phase == LudoPhase.move ? 'Move' : 'Roll') : null),
             detail: (i, compact) => Pips(filled: _home(i), total: LudoLogic.tokensEach, color: players[i].color, size: compact ? 7 : 10),
           ),
           const SizedBox(height: Space.s),

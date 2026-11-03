@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/records/records.dart';
 import '../../core/ui/components.dart';
 import '../../games/game_catalog.dart';
+import '../../games/game_names.dart';
 import '../guess_person/screens/guess_person_menu_screen.dart';
 import '../../core/ui/app_ui.dart' show AppBackground;
 import '../raja_mantri/rmcs_screen.dart';
@@ -14,6 +15,9 @@ import 'shooting_gallery/shooting_gallery_game.dart';
 import 'slingshot/slingshot_game.dart';
 import 'crush_it/crush_it_game.dart';
 import 'fruit_duel/fruit_duel_game.dart';
+import 'fruit_cut/fruit_cut_game.dart';
+import 'chess/chess_game.dart';
+import 'backgammon/backgammon_game.dart';
 import 'memory/memory_game.dart';
 import 'paint_fight/paint_fight_game.dart';
 import 'air_hockey/air_hockey_game.dart';
@@ -25,13 +29,14 @@ import 'reaction_tap/reaction_tap_game.dart';
 import 'snake_duel/snake_duel_game.dart';
 import 'tic_tac_toe/tic_tac_toe_game.dart';
 import 'colour_clash/colour_clash_game.dart';
+import 'uno/uno_game.dart';
 import 'battleship/battleship_game.dart';
 import 'bingo/bingo_game.dart';
 import 'checkers/checkers_game.dart';
 import 'dots_boxes/dots_boxes_game.dart';
 import 'fruit_merge/fruit_merge_game.dart';
 import 'ludo/ludo_game.dart';
-import 'smash_karts/smash_karts_game.dart';
+import 'nitro_knockout/nitro_knockout_game.dart';
 import 'snakes_ladders/snakes_ladders_game.dart';
 import 'truth_dare/truth_dare_game.dart';
 import 'charades/charades_game.dart';
@@ -64,20 +69,26 @@ import 'solo/piano_tiles.dart';
 import 'solo/simon_says.dart';
 import 'solo/stack_tower.dart';
 import 'solo/whack_mole.dart';
+import 'solo/slot_cars.dart';
+import 'solo/jindoblu_arcade.dart';
+import 'competitive/competitive_games.dart';
 import 'solo/word_scramble.dart';
 import 'shell/local_game_info.dart';
 import 'shell/game_art.dart';
 import 'shell/local_game_shell.dart';
 
-final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
-  drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo,
+final localGames = <LocalGameInfo>[chessInfo, backgammonInfo, unoInfo, colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
+  drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo, fruitCutInfo,
   ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo, dotsBoxesInfo,
-  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo, bingoInfo, battleshipInfo, checkersInfo, smashKartsInfo,
+  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo, bingoInfo, battleshipInfo, checkersInfo, nitroKartsInfo,
   golfInfo, slingInfo, archeryInfo, galleryInfo, bottleInfo,
   // Solo games (shown in their own section).
   fruitMergeInfo, game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo,
   ballSortInfo, slidingInfo, sudokuInfo, hangmanInfo, dinoInfo,
-  blockDropInfo, bubbleInfo, skyInfo, spaceInfo, colorSwitchInfo];
+  blockDropInfo, bubbleInfo, skyInfo, spaceInfo, colorSwitchInfo, slotCarsInfo,
+  fishingArcadeInfo, fireworksArcadeInfo, knifeHitArcadeInfo, flappyDunkArcadeInfo,
+  hungryHipposArcadeInfo, hotPotatoArcadeInfo, findItArcadeInfo, soccerStarsArcadeInfo, ringTossArcadeInfo,
+  carromInfo, eightBallPoolInfo, dartsOnlineInfo, hotPotatoInfo, hungryHipposInfo];
 
 /// The hub's games plus their team versions (e.g. Ludo 2 vs 2), for online rooms.
 List<LocalGameInfo> get allLocalGames => [...localGames, for (final g in localGames) if (g.teamVariant != null) g.teamVariant!];
@@ -107,11 +118,13 @@ class _Entry {
 }
 
 List<_Entry> _entries() {
-  GameCategory categoryOf(String id) => gameCatalog.where((g) => g.id == id).firstOrNull?.category ?? GameCategory.party;
+  // One-device-only games aren't in the online catalog, so they need their category here.
+  const offlineOnly = {'uno': GameCategory.cards, 'chess': GameCategory.board, 'backgammon': GameCategory.board, 'fruit_cut': GameCategory.action};
+  GameCategory categoryOf(String id) => gameCatalog.where((g) => g.id == id).firstOrNull?.category ?? offlineOnly[id] ?? GameCategory.party;
   return [
     _Entry(
       id: 'guess_person',
-      title: 'Guess the Person',
+      title: 'Face Hunt',
       tagline: 'Ask questions, find the secret person',
       minPlayers: 2,
       maxPlayers: 6,
@@ -121,7 +134,7 @@ List<_Entry> _entries() {
     ),
     _Entry(
       id: 'raja_mantri',
-      title: 'Raja Mantri Chor Sipahi',
+      title: 'Chit Court',
       tagline: 'Can the Mantri catch the Chor?',
       minPlayers: 4,
       maxPlayers: 4,
@@ -161,7 +174,9 @@ const _counts = <int?>[null, 2, 3, 4, 5];
 /// Every game that runs on one device (spec 4.4, mockup app/Hub.dc.html): search, category
 /// tabs, a player-count filter, recently played and favourites (the star, or long-press).
 class LocalGamesHubScreen extends StatefulWidget {
-  const LocalGamesHubScreen({super.key});
+  /// Inside the home tabs: no back button.
+  final bool embedded;
+  const LocalGamesHubScreen({super.key, this.embedded = false});
   @override
   State<LocalGamesHubScreen> createState() => _LocalGamesHubScreenState();
 }
@@ -212,7 +227,7 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
 
   bool _matches(_Entry e) {
     final q = _search.text.trim().toLowerCase();
-    if (q.isNotEmpty && !e.title.toLowerCase().contains(q) && !e.tagline.toLowerCase().contains(q)) return false;
+    if (q.isNotEmpty && !e.title.toLowerCase().contains(q) && !e.tagline.toLowerCase().contains(q) && !(formerGameNames[e.id]?.toLowerCase().contains(q) ?? false)) return false;
     if (players case final n?) {
       if (e.solo) return false;
       if (n >= 5 ? e.maxPlayers < 5 : (n < e.minPlayers || n > e.maxPlayers)) return false;
@@ -237,12 +252,22 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
     final browsing = filter == _Filter.all && query.isEmpty && players == null;
     final recentEntries = [for (final id in recent) ..._entriesList.where((e) => e.id == id)];
     const gutter = EdgeInsets.symmetric(horizontal: 16);
+    InputDecoration filterDecoration(String label) => InputDecoration(
+      labelText: label,
+      labelStyle: t.styles.label.copyWith(color: t.onBgMuted),
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      constraints: const BoxConstraints(minHeight: 56),
+      enabledBorder: OutlineInputBorder(borderRadius: Radii.rMd, borderSide: BorderSide(color: t.stroke)),
+      border: OutlineInputBorder(borderRadius: Radii.rMd, borderSide: BorderSide(color: t.stroke)),
+    );
+
 
     Widget section(String text) => SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 10), child: SectionHeader(text)));
     Widget grid(List<_Entry> items) => SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
           sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 230, mainAxisSpacing: 10, crossAxisSpacing: 10, mainAxisExtent: 196),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 230, mainAxisSpacing: 20, crossAxisSpacing: 12, mainAxisExtent: 188),
             delegate: SliverChildBuilderDelegate(
               (_, i) {
                 final e = items[i];
@@ -269,12 +294,17 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
           child: CustomScrollView(slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-                child: PageHeader(
-                  label: 'Play on one phone',
-                  title: '$totalGameCount games',
-                  trailing: RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: widget.embedded
+                    ? Row(children: [
+                        Expanded(child: Semantics(header: true, child: Text('Play', style: t.styles.h1.copyWith(color: t.onBg)))),
+                        RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
+                      ])
+                    : PageHeader(
+                        label: 'Play on one phone',
+                        title: '$totalGameCount games',
+                        trailing: RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)),
+                      ),
               ),
             ),
             SliverToBoxAdapter(
@@ -289,29 +319,51 @@ class _LocalGamesHubScreenState extends State<LocalGamesHubScreen> {
               ),
             ),
             SliverToBoxAdapter(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                child: Row(children: [
-                  for (final f in _Filter.values)
-                    Padding(padding: const EdgeInsets.only(right: 6), child: KitChip(_filterLabels[f]!, selected: filter == f, onTap: () => setState(() => filter = f))),
-                ]),
-              ),
-            ),
-            SliverToBoxAdapter(
               child: Padding(
-                padding: gutter,
-                child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
-                  Padding(padding: const EdgeInsets.only(right: 8), child: Text('PLAYERS', style: t.styles.label.copyWith(fontWeight: FontWeight.w900))),
-                  for (final n in _counts)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: KitChip(n == null ? 'Any' : (n >= 5 ? '5–6' : '$n'), outline: true, selected: players == n, onTap: () => setState(() => players = n)),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Row(children: [
+                  Expanded(
+                    child: InputDecorator(
+                      decoration: filterDecoration('Game type'),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<_Filter>(
+                          key: const ValueKey('gameFilter'),
+                          value: filter,
+                          isExpanded: true,
+                          isDense: true,
+                          dropdownColor: t.card,
+                          style: t.styles.bodySmall.copyWith(color: t.onBg),
+                          items: [for (final f in _Filter.values)
+                            DropdownMenuItem(value: f, child: Text(_filterLabels[f]!, overflow: TextOverflow.ellipsis)),
+                          ],
+                          onChanged: (value) { if (value != null) setState(() => filter = value); },
+                        ),
+                      ),
                     ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InputDecorator(
+                      decoration: filterDecoration('Players'),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<int>(
+                          key: const ValueKey('playerFilter'),
+                          value: players ?? 0,
+                          isExpanded: true,
+                          isDense: true,
+                          dropdownColor: t.card,
+                          style: t.styles.bodySmall.copyWith(color: t.onBg),
+                          items: [for (final n in _counts)
+                            DropdownMenuItem(value: n ?? 0, child: Text(n == null ? 'Any' : (n == 5 ? '5–6' : '$n'))),
+                          ],
+                          onChanged: (value) => setState(() => players = value == 0 ? null : value),
+                        ),
+                      ),
+                    ),
+                  ),
                 ]),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
             if (browsing && recentEntries.isNotEmpty) ...[
               section('Recently played'),
               SliverToBoxAdapter(
@@ -376,8 +428,8 @@ class _RecentTile extends StatelessWidget {
       label: 'Play ${entry.title} again',
       excludeSemantics: true,
       child: Material(
-        color: t.flat ? Colors.white : Colors.white.withValues(alpha: 0.06),
-        shape: RoundedRectangleBorder(borderRadius: Radii.rLg, side: BorderSide(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.12))),
+        color: t.card,
+        shape: RoundedRectangleBorder(borderRadius: Radii.rLg, side: BorderSide(color: t.stroke)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -390,12 +442,12 @@ class _RecentTile extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(entry.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 15, color: t.flat ? FlatPalette.ink : Colors.white)),
+                    Text(entry.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 15, color: t.text)),
                     const SizedBox(height: 2),
                     Row(children: [
-                      GameIcon(GameIcons.play, size: 12, color: t.flat ? FlatPalette.ink : Brand.gold),
+                      GameIcon(GameIcons.play, size: 12, color: t.textMuted),
                       const SizedBox(width: 4),
-                      Flexible(child: Text('Play again', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w900, color: t.flat ? FlatPalette.ink : Brand.gold))),
+                      Flexible(child: Text('Play again', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w400, color: t.textMuted))),
                     ]),
                   ]),
                 ),

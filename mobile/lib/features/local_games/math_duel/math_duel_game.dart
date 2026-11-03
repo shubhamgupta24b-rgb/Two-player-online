@@ -106,10 +106,10 @@ class MathDuelLogic extends LocalGameLogic {
 
 final mathDuelInfo = LocalGameInfo(
   id: 'math_duel',
-  title: 'Math Duel',
+  title: 'Sum Sprint',
   emoji: '🧮',
   color: const Color(0xFF6C5CE7),
-  tagline: 'Quick maths, quicker fingers!',
+  tagline: "Solve each sum before your opponent",
   rules: const [
     'Both of you get the same sum.',
     'Tap the right answer first to score. A wrong answer locks you out of that sum.',
@@ -150,7 +150,7 @@ final mathDuelInfo = LocalGameInfo(
       if (name == 'answer' && asInt(a[0]) == from) g.answer(from, asInt(a[1]));
     },
     view: (context, g, players, me) => Column(children: [
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
       Expanded(child: _MathHalf(player: players[me], index: me, g: g)),
     ]),
   ),
@@ -159,8 +159,8 @@ final mathDuelInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => PlayerZones(
       count: players.length,
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
-      center: ZoneCenterChip('FIRST TO ${g.target}'),
+      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
+      center: ZoneCenterChip('First to ${g.target}'),
       zone: (i) => _MathHalf(player: players[i], index: i, g: g),
     ),
   ),
@@ -176,23 +176,23 @@ class _MathHalf extends StatelessWidget {
   Widget build(BuildContext context) {
     final locked = g.lockedOut.contains(index);
     final status = g.solvedBy == null
-        ? (locked ? (g.betweenQuestions ? 'Nobody got it! = ${g.question.answer}' : 'Wrong! Wait for the next one') : '')
-        : (g.solvedBy == index ? 'Correct! +1' : 'Too slow! = ${g.question.answer}');
+        ? (locked ? (g.betweenQuestions ? 'Nobody got it. Answer: ${g.question.answer}' : 'Wrong. Wait for the next one') : '')
+        : (g.solvedBy == index ? 'Correct +1' : 'Too slow. Answer: ${g.question.answer}');
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(children: [
         Row(children: [
           PlayerTagSmall(player: player),
-          Text('  ${g.score[index]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+          Text('  ${g.score[index]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(status, textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+            child: Text(status, textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           ),
         ]),
         Expanded(
           child: Center(
             child: FittedBox(
-              child: Text('${g.question.text} = ?', style: const TextStyle(color: Colors.white, fontSize: 56, fontWeight: FontWeight.w900)),
+              child: Text('${g.question.text} = ?', style: const TextStyle(color: Colors.white, fontSize: 56, fontWeight: FontWeight.w700)),
             ),
           ),
         ),
@@ -238,7 +238,7 @@ class _AnswerButton extends StatelessWidget {
             onTap: onTap,
             child: SizedBox(
               height: 72,
-              child: Center(child: FittedBox(child: Text('$value', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900)))),
+              child: Center(child: FittedBox(child: Text('$value', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w700)))),
             ),
           ),
         ),

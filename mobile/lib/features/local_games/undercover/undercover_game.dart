@@ -18,7 +18,7 @@ class UndercoverLogic extends LocalGameLogic {
     ('Coffee', 'Tea'), ('Cricket', 'Football'), ('Samosa', 'Kachori'), ('Pizza', 'Burger'), ('Cat', 'Dog'), ('Train', 'Bus'), //
     ('Mango', 'Banana'), ('Doctor', 'Nurse'), ('Instagram', 'Snapchat'), ('Netflix', 'YouTube'), ('Beach', 'Swimming Pool'), ('Lion', 'Tiger'), //
     ('Diwali', 'Holi'), ('Biryani', 'Pulao'), ('Guitar', 'Violin'), ('Teacher', 'Principal'), ('Rain', 'Snow'), ('Shirt', 'T-shirt'), //
-    ('Pen', 'Pencil'), ('Moon', 'Sun'), ('Hotel', 'Hostel'), ('Phone', 'Tablet'), ('Chess', 'Ludo'), ('Ice cream', 'Kulfi'), //
+    ('Pen', 'Pencil'), ('Moon', 'Sun'), ('Hotel', 'Hostel'), ('Phone', 'Tablet'), ('Chess', 'Token Rush'), ('Ice cream', 'Kulfi'), //
     ('Bike', 'Scooter'), ('Doctor Strange', 'Iron Man'), ('Shah Rukh Khan', 'Salman Khan'), ('Exam', 'Quiz'), ('Wedding', 'Birthday party'), ('Mountain', 'Hill'), //
     ('Chai', 'Coffee'), ('Laptop', 'Computer'), ('Rose', 'Sunflower'), ('Airport', 'Railway station'), ('Gold', 'Silver'), ('Paneer', 'Tofu'), //
     ('Whatsapp', 'Telegram'), ('Library', 'Bookshop'), ('Elephant', 'Rhino'), ('Pani puri', 'Bhel puri'),
@@ -122,13 +122,13 @@ class UndercoverLogic extends LocalGameLogic {
 
 final undercoverInfo = LocalGameInfo(
   id: 'undercover',
-  title: 'Undercover',
+  title: 'Odd Word Out',
   emoji: '🎭',
   color: const Color(0xFF6C5CE7),
-  tagline: 'Same word for all… except one.',
+  tagline: "Find the player with a different word",
   rules: const [
     'Everyone secretly gets a word. One player (the undercover) gets a slightly different word, and nobody knows who.',
-    'Each round, everyone says ONE word or short clue about their word. Not too obvious!',
+    'Each round, everyone says one word or short clue about their word. Not too obvious',
     'Then vote someone out. Catch the undercover: +1 each. Undercover reaches the final two: +3.',
   ],
   scoreUnit: 'points',
@@ -196,24 +196,24 @@ class _UcViewState extends State<_UcView> {
   Widget build(BuildContext context) {
     final g = widget.g, players = widget.players, me = widget.me;
     final out = {for (var i = 0; i < players.length; i++) if (!g.alive.contains(i)) i};
-    Widget secret(int p) => PromptCard(header: 'YOUR SECRET WORD', text: g.wordFor(p), emoji: '🤫', footer: 'Someone has a slightly different word. It might be you!');
+    Widget secret(int p) => PromptCard(header: 'Your secret word', text: g.wordFor(p), emoji: '🤫', footer: 'Someone has a slightly different word. It might be you');
 
     switch (g.phase) {
       case UcPhase.reveal:
         if (me != null) {
           final ready = g.seen.contains(me);
           return PartyFrame(
-            title: 'YOUR WORD',
-            subtitle: ready ? 'Waiting for the others (${g.seen.length}/${players.length})' : 'Remember it, then tap READY',
+            title: 'Your word',
+            subtitle: ready ? 'Waiting for the others (${g.seen.length}/${players.length})' : 'Remember it, then tap Ready',
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Expanded(child: Center(child: SingleChildScrollView(child: secret(me)))),
-              GpButton(ready ? 'READY ✓' : "I'M READY", onPressed: ready ? null : () => g.seenCard(me)),
+              GpButton(ready ? 'Ready' : "I'm ready", onPressed: ready ? null : () => g.seenCard(me)),
             ]),
           );
         }
         final p = g.revealTurn;
         return PartyFrame(
-          title: 'SECRET WORDS',
+          title: 'Secret words',
           subtitle: '${g.seen.length} of ${players.length} have looked',
           child: PassAndReveal(
             player: players[p],
@@ -228,27 +228,27 @@ class _UcViewState extends State<_UcView> {
         );
       case UcPhase.describe:
         return PartyFrame(
-          title: 'ROUND ${g.round}: GIVE A CLUE',
-          subtitle: 'In order, each player says ONE word about their secret word.',
+          title: 'Round ${g.round}: give a clue',
+          subtitle: 'In order, each player says one word about their secret word.',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
-                  child: PlayerPicker(players: players, disabled: out, notes: {for (final i in out) i: 'OUT'}),
+                  child: PlayerPicker(players: players, disabled: out, notes: {for (final i in out) i: 'Out'}),
                 ),
               ),
             ),
-            if (me != null) Text('Your word: ${g.wordFor(me)}', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800)),
+            if (me != null) Text('Your word: ${g.wordFor(me)}', textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            GpButton('EVERYONE GAVE A CLUE · VOTE', icon: Icons.how_to_vote_rounded, onPressed: g.startVote),
+            GpButton('Everyone gave a clue · Vote', icon: Icons.how_to_vote_rounded, onPressed: g.startVote),
           ]),
         );
       case UcPhase.vote:
         if (me != null) {
           final canVote = g.alive.contains(me);
           return PartyFrame(
-            title: 'WHO IS UNDERCOVER?',
-            subtitle: canVote ? 'Your vote · ${g.votesIn}/${g.alive.length} voted' : "You're out: watch the others vote",
+            title: 'Who is undercover?',
+            subtitle: canVote ? 'Your vote · ${g.votesIn}/${g.alive.length} voted' : "You're out. Watch the others vote",
             child: Center(
               child: SingleChildScrollView(
                 child: PlayerPicker(players: players, disabled: {...out, me}, highlight: g.votes[me], onPick: canVote ? (i) => g.vote(me, i) : null),
@@ -257,45 +257,45 @@ class _UcViewState extends State<_UcView> {
           );
         }
         return PartyFrame(
-          title: 'WHO IS UNDERCOVER?',
+          title: 'Who is undercover?',
           subtitle: 'Agree together, then tap the player to vote out.',
           child: Center(child: SingleChildScrollView(child: PlayerPicker(players: players, disabled: out, onPick: g.accuse))),
         );
       case UcPhase.out:
         return PartyFrame(
-          title: 'VOTED OUT',
+          title: 'Voted out',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
                   child: g.lastOut < 0
-                      ? const PromptCard(header: 'TIE VOTE', text: 'Nobody is out', emoji: '🤝', footer: 'Give another clue and vote again.')
-                      : PromptCard(header: '${players[g.lastOut].name.toUpperCase()} IS OUT', text: 'Not undercover!', emoji: '😇', footer: 'The undercover is still among you…', color: players[g.lastOut].color),
+                      ? const PromptCard(header: 'Tie vote', text: 'Nobody is out', emoji: '🤝', footer: 'Give another clue and vote again.')
+                      : PromptCard(header: '${players[g.lastOut].name} is out', text: 'Not undercover', emoji: '😇', footer: 'The undercover is still among you…', color: players[g.lastOut].color),
                 ),
               ),
             ),
-            GpButton('NEXT ROUND', icon: Icons.arrow_forward_rounded, onPressed: g.nextRound),
+            GpButton('Next round', icon: Icons.arrow_forward_rounded, onPressed: g.nextRound),
           ]),
         );
       case UcPhase.result:
       case UcPhase.done:
         final uc = players[g.undercover];
         return PartyFrame(
-          title: g.undercoverWins ? 'UNDERCOVER WINS' : 'TOWN WINS',
+          title: g.undercoverWins ? 'Undercover wins' : 'Town wins',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
                   child: Column(children: [
-                    Text(g.undercoverWins ? '😈 ${uc.name} survived to the end!' : '✅ ${uc.name} was caught!',
-                        textAlign: TextAlign.center, style: TextStyle(color: g.undercoverWins ? GpColors.no : GpColors.yes, fontWeight: FontWeight.w900, fontSize: 22)),
+                    Text(g.undercoverWins ? '${uc.name} survived to the end' : '${uc.name} was caught',
+                        textAlign: TextAlign.center, style: TextStyle(color: g.undercoverWins ? GpColors.no : GpColors.yes, fontWeight: FontWeight.w700, fontSize: 22)),
                     const SizedBox(height: 14),
-                    PromptCard(header: 'UNDERCOVER: ${uc.name.toUpperCase()}', text: '${g.undercoverWord} vs ${g.townWord}', emoji: '🎭', footer: 'Undercover word vs everyone else', color: uc.color),
+                    PromptCard(header: 'Undercover: ${uc.name}', text: '${g.undercoverWord} vs ${g.townWord}', emoji: '🎭', footer: 'Undercover word vs everyone else', color: uc.color),
                   ]),
                 ),
               ),
             ),
-            GpButton('SEE SCORES', icon: Icons.emoji_events_rounded, onPressed: g.finish),
+            GpButton('See scores', icon: Icons.emoji_events_rounded, onPressed: g.finish),
           ]),
         );
     }

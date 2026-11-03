@@ -93,15 +93,15 @@ int bingoBotPick(BingoLogic g, int me, Random rng) {
 
 final bingoInfo = LocalGameInfo(
   id: 'bingo',
-  title: 'Bingo',
+  title: 'Line Caller',
   emoji: '🔢',
   color: const Color(0xFFFF6B35),
-  tagline: 'Call numbers, complete lines, shout BINGO!',
+  tagline: "Call numbers to complete lines on your card",
   rules: const [
     'Everyone has a 5×5 card with the numbers 1-25 in a different order.',
     'On your turn, tap a number on your card to call it. It gets crossed off on every card.',
     'Every full row, column or diagonal lights a letter of B-I-N-G-O.',
-    'Light all five letters first to win! 2 to 6 players.',
+    'Light all five letters first to win. 2 to 6 players.',
   ],
   scoreUnit: 'wins',
   splitScreen: false,
@@ -166,9 +166,9 @@ class _BingoTable extends StatelessWidget {
     final current = players[g.turn];
     ResultScope.of(context)
       ?..subtitle = g.finished ? '${g.called.length} numbers called' : null
-      ..detail = ((_, i) => Text(_letters(i), style: TextStyle(fontFamily: Fonts.display, fontSize: 18, letterSpacing: 2, color: nameColor(players[i].color))));
+      ..detail = ((_, i) => Text(_letters(i), style: TextStyle(fontFamily: Fonts.display, fontSize: 18, color: nameColor(players[i].color))));
     final banner = g.finished
-        ? TurnBanner(text: 'BINGO!', sub: '${g.winners.map((w) => players[w].name).join(' & ')} ${g.winners.length > 1 ? 'win' : 'wins'}', color: current.color, kind: TurnBannerKind.success, icon: GameIcons.star, compact: true)
+        ? TurnBanner(text: 'Bingo', sub: '${g.winners.map((w) => players[w].name).join(' & ')} ${g.winners.length > 1 ? 'win' : 'wins'}', color: current.color, kind: TurnBannerKind.success, icon: GameIcons.star, compact: true)
         : TurnBanner(
             text: myTurn ? (passing ? '${possessive(current.name)} turn' : 'Your turn') : '${current.name} is calling…',
             sub: myTurn ? 'Tap a number on your card to call it' : 'Watch your card',
@@ -179,9 +179,9 @@ class _BingoTable extends StatelessWidget {
       value: (g.called.length, g.lineCount(holder)),
       onChange: (fx, before, now) {
         if (g.finished) {
-          keyMoment(fx, 'BINGO!', sub: g.winners.map((w) => players[w].name).join(' & '), sound: 'win', confetti: true);
+          keyMoment(fx, 'Bingo', sub: g.winners.map((w) => players[w].name).join(' & '), sound: 'win', confetti: true);
         } else if (now.$2 > before.$2) {
-          keyMoment(fx, 'LINE!', sub: BingoLogic.word.substring(0, min(now.$2, 5)), sound: 'coin');
+          keyMoment(fx, 'Line', sub: BingoLogic.word.substring(0, min(now.$2, 5)), sound: 'coin');
         }
       },
       child: Stack(children: [
@@ -189,12 +189,12 @@ class _BingoTable extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
           child: Column(children: [
             ScoreHud(
-              title: 'Bingo',
-              state: g.finished ? 'Bingo!' : '${g.called.length} of 25 called',
+              title: 'Line Caller',
+              state: g.finished ? 'Bingo' : '${g.called.length} of 25 called',
               players: players,
               turn: g.finished ? null : g.turn,
               score: _letters,
-              tag: (i) => !g.finished && i == g.turn ? 'CALLING' : (g.winners.contains(i) ? 'BINGO' : null),
+              tag: (i) => !g.finished && i == g.turn ? 'Calling' : (g.winners.contains(i) ? 'Bingo' : null),
             ),
             const SizedBox(height: Space.s),
             _Letters(lines: g.lineCount(holder)),
@@ -207,7 +207,7 @@ class _BingoTable extends StatelessWidget {
               child: g.called.isEmpty
                   ? const SizedBox.shrink()
                   : Row(children: [
-                      Text('CALLED', style: t.styles.label),
+                      Text('Called', style: t.styles.label),
                       const SizedBox(width: Space.s),
                       Expanded(
                         child: ListView(scrollDirection: Axis.horizontal, children: [

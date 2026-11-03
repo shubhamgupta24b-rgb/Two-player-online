@@ -1,0 +1,51 @@
+# Clay Games — 22-Game Implementation Tracker
+
+Branch: `feature/clay-games-ui-uno`
+
+This checklist defines the requested 22-game collection and prevents placeholder entries from being counted as complete. A game is **complete** only when its rules, playable UI, scoring/turn handling, local play, and any advertised online mode work; builds and tests must pass.
+
+## Requested collection (22)
+
+| # | Game | Required implementation | Status at start of this pass |
+|---:|---|---|---|
+| 1 | Tic Tac Toe | 3×3 board, win/draw detection, rematch | Existing module; verify |
+| 2 | Connect Four | 7×6 board, legal drops, win/draw detection | Existing module; verify |
+| 3 | Chess | Legal moves, check/checkmate/stalemate, promotion, undo/rematch | Standard movement, king safety, check/checkmate/stalemate and queen promotion added in latest commit; castling and en passant still missing; build/test pending |
+| 4 | Carrom | Striker/coins, fouls, queen cover, scoring | Existing module; verify |
+| 5 | 8 Ball Pool | Turn/foul rules, solids/stripes, 8-ball win/loss | Existing module; verify |
+| 6 | Table Tennis | Paddle/ball, serve, rally and match scoring | Existing Ping Pong module; verify |
+| 7 | Memory Match | Configurable pairs, matching, turn and score rules | Existing module; verify |
+| 8 | Mini Golf | Aim/power, obstacle course, strokes and winner | Existing module; verify |
+| 9 | Darts | Aim/throw and a defined scoring mode | Existing module; verify |
+| 10 | Air Hockey | Puck/paddles, goals, score and match end | Existing module; verify |
+| 11 | Racing | Track, controls, collisions and finish condition | Existing Smash Karts module; verify match to brief |
+| 12 | Basketball | Shot control, timer and score | Existing module; verify |
+| 13 | Fruit Cut | Swipe slicing, misses, hazards and score | Separate swipe-to-cut module added; build/play test pending |
+| 14 | Maths Duel | Timed questions, correct-answer score and winner | Existing module; verify |
+| 15 | Guess Who / Guess the Person | Secret character, questions/elimination and win condition | Existing Guess Person flow; verify exact requested rules |
+| 16 | Backgammon | Board, dice, legal moves, hits, bearing off | Simplified dice-and-checker prototype added; full official movement/bar/hitting/bearing-off rules still missing |
+| 17 | Checkers | Legal diagonal moves, captures, kings and win condition | Existing module; verify |
+| 18 | Battleship | Hidden ship placement, shots, hits/misses and win condition | Existing module; verify |
+| 19 | Raja Mantri | Four-player role/scoring round | Existing Raja Mantri flow; verify |
+| 20 | Chor Sipahi | Role assignment and scoring as part of Raja Mantri | Covered by Raja Mantri rules, not a separate game unless requested |
+| 21 | UNO | Standard deck, draw/play, action cards, UNO call, round scoring | Independent two-player local card UI/turn logic added; online relay and build/play tests pending |
+| 22 | Ludo | Dice, tokens, safe cells, home path and finish | Existing module; verify |
+
+## Implementation and verification gates
+
+- [ ] Clay-style collection screen and navigation verified on web and mobile layouts.
+- [ ] Fruit Cut and independent UNO modules pass build and gameplay smoke tests.
+- [ ] Chess module passes build and gameplay smoke tests; castling/en passant remain outstanding.
+- [ ] Backgammon still needs full legal move, bar-entry, hit/blot and doubles rules.
+- [ ] Full rules are still outstanding for Chess and Backgammon; do not label these prototypes as tournament-rule-complete.
+- [ ] Every game opens the intended game, not a misleading alias or placeholder.
+- [ ] Rules shown before play match the implemented rules.
+- [ ] Turn ownership, scores, end conditions, restart/rematch work.
+- [ ] Online games synchronize state and reject out-of-turn/illegal actions.
+- [ ] Two-device online smoke test and same-device/offline smoke test.
+- [ ] `flutter analyze`, relevant tests, and `flutter build web --release` pass.
+- [ ] Render deployment succeeds and the public URL is opened and smoke-tested.
+
+## Important status note
+
+Existing source files are not proof that a game is complete. Do not mark any row complete until the code and the relevant play path have been inspected and tested. The Render service is currently live on the latest observed commit, and the Chess board declaration fix is deployed. This confirms a web build/deploy only; it does not verify every game's rules or produce an Android APK. The Android APK workflow has been added; check the latest workflow run for a successful artifact. Latest code changes still require build and gameplay verification.

@@ -63,14 +63,14 @@ class StackLogic extends SoloLogic {
 
 final stackInfo = LocalGameInfo(
   id: 'stack_tower',
-  title: 'Stack Tower',
+  title: 'Tall Order',
   emoji: '🏗️',
   color: const Color(0xFF7E57C2),
-  tagline: 'Stack it high, cut it fine!',
+  tagline: "Line up each block to build your tower",
   rules: const [
     'A block slides across. Tap to drop it onto the tower.',
     'Whatever hangs over the edge gets sliced off, so your blocks get thinner.',
-    'Line it up perfectly to keep its width. Miss completely and the tower is done!',
+    'Line it up perfectly to keep its width. Miss completely and the tower is done',
   ],
   scoreUnit: 'blocks',
   splitScreen: false,
@@ -80,7 +80,7 @@ final stackInfo = LocalGameInfo(
     create: () => StackLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: g.lastPerfectAt != null && g.now - g.lastPerfectAt! < 900 ? '✨ PERFECT!' : '🏗️ STACK TOWER',
+      title: g.lastPerfectAt != null && g.now - g.lastPerfectAt! < 900 ? 'Perfect' : 'Tall Order',
       score: g.score,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

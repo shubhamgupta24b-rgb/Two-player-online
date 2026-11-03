@@ -1,0 +1,97 @@
+name: JindoBlu Branch Validation
+
+on:
+  push:
+    branches:
+      - feature/jindoblu-collection
+    paths:
+      - "mobile/**"
+      - "server/**"
+      - "render.yaml"
+      - "docs/jindoblu-collection/**"
+      - ".github/workflows/jindoblu-validation.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "mobile/**"
+      - "server/**"
+      - ".github/workflows/jindoblu-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jindoblu-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server-tests:
+    name: Server tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run server tests
+        run: npm test
+
+  flutter-checks:
+    name: Flutter analyze, tests, and APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # Set repository Actions variable SERVER_URL to override the deployed backend.
+      # Default: dedicated Render service for this branch.
+      SERVER_URL: ${{ vars.SERVER_URL || 'https://two-player-jindoblu.onrender.com' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Set up compatible Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+      - name: Resolve Flutter dependencies
+        working-directory: mobile
+        run: flutter pub get
+      - name: Analyze Dart
+        id: analyze
+        working-directory: mobile
+        run: flutter analyze
+      - name: Run Flutter tests
+        working-directory: mobile
+        run: flutter test
+      - name: Build release APK targeting the Render backend
+        id: build_apk
+        if: always() && steps.analyze.outcome == 'success'
+        working-directory: mobile
+        run: flutter build apk --release --dart-define=SERVER_URL="$SERVER_URL"
+      - name: Upload test APK
+        if: always() && steps.build_apk.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jindoblu-collection-test-apk
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 7

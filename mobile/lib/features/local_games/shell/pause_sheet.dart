@@ -46,11 +46,11 @@ class PauseSheet extends StatelessWidget {
             Expanded(
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text([game.title, if (state != null && state!.isNotEmpty) state!].join(' · ').toUpperCase(),
+                  Text([game.title, if (state != null && state!.isNotEmpty) state!].join(' · '),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.76, color: NeonPalette.textMuted)),
+                      style: const TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w700, color: NeonPalette.textMuted)),
                   const SizedBox(height: 4),
-                  Semantics(header: true, child: const Text('Paused', style: TextStyle(fontFamily: Fonts.display, fontSize: 44, height: 1.05, color: Colors.white))),
+                  Semantics(header: true, child: const Text('Paused', style: TextStyle(fontFamily: Fonts.display, fontSize: 44, height: 1.05, color: NeonPalette.text))),
                 ]),
               ),
             ),
@@ -79,10 +79,9 @@ class _Sheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: NeonPalette.sheet,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.14))),
-        boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 32, offset: Offset(0, -12))],
-      ),
+              ),
       child: SafeArea(
         top: false,
         child: ConstrainedBox(
@@ -140,7 +139,7 @@ class PauseToggles extends StatelessWidget {
                   child: Row(children: [
                     GameIcon(icon, size: 20),
                     const SizedBox(width: 12),
-                    Expanded(child: Text(label, style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white))),
+                    Expanded(child: Text(label, style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: NeonPalette.text))),
                     PillSwitch(value: value, onChanged: onChanged),
                   ]),
                 ),

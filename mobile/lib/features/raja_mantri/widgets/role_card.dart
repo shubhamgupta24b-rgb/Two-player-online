@@ -141,15 +141,15 @@ class RoleCardFace extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                     decoration: BoxDecoration(color: band, borderRadius: BorderRadius.circular(10)),
-                    child: Text(role.title, style: TextStyle(fontFamily: Fonts.display, color: onColor(band), fontSize: 30, letterSpacing: 2, height: 1.15)),
+                    child: Text(role.title, style: TextStyle(fontFamily: Fonts.display, color: onColor(band), fontSize: 30, height: 1.15)),
                   ),
                   const SizedBox(height: 8),
-                  Text(role.subtitle, style: TextStyle(fontFamily: Fonts.body, color: ink, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 2.2)),
+                  Text(role.subtitle, style: TextStyle(fontFamily: Fonts.body, color: ink, fontSize: 12, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 4),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 28),
                     child: Text(role.pointsLine,
-                        textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, color: ink.withValues(alpha: 0.85), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
+                        textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, color: ink.withValues(alpha: 0.85), fontSize: 10, fontWeight: FontWeight.w700)),
                   ),
                 ]),
               ),

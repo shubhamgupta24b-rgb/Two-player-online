@@ -97,14 +97,14 @@ class BrickBreakerLogic extends SoloLogic {
 
 final brickBreakerInfo = LocalGameInfo(
   id: 'brick_breaker',
-  title: 'Brick Breaker',
+  title: 'Wall Bounce',
   emoji: '🧱',
   color: const Color(0xFFFF7043),
-  tagline: 'Smash every brick!',
+  tagline: "Bounce the ball to break every brick",
   rules: const [
     'Drag left and right to move the paddle. Tap to launch the ball.',
     'Bounce the ball into the bricks: 10 points each.',
-    'Don\'t let it fall! 3 lives. Clear the wall for a faster one.',
+    'Don\'t let it fall. 3 lives. Clear the wall for a faster one.',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -114,7 +114,7 @@ final brickBreakerInfo = LocalGameInfo(
     create: () => BrickBreakerLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🧱 LEVEL ${g.level}',
+      title: 'Level ${g.level}',
       score: g.score,
       extra: '❤️' * max(0, g.lives),
       child: Center(
@@ -153,7 +153,7 @@ class _BrickPainter extends CustomPainter {
     canvas.drawRRect(RRect.fromRectAndRadius(p, const Radius.circular(8)), Paint()..color = Colors.white);
     canvas.drawCircle(Offset(g.ball.x * s, g.ball.y * s), BrickBreakerLogic.ballR * s, Paint()..color = const Color(0xFFFFD43B));
     if (!g.launched && !g.over) {
-      final tp = TextPainter(text: const TextSpan(text: 'TAP TO LAUNCH', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, fontSize: 20)), textDirection: TextDirection.ltr)..layout();
+      final tp = TextPainter(text: const TextSpan(text: 'Tap to launch', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 20)), textDirection: TextDirection.ltr)..layout();
       tp.paint(canvas, Offset((size.width - tp.width) / 2, size.height * 0.62));
     }
   }

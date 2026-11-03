@@ -13,8 +13,8 @@ export 'fruit_merge_logic.dart';
 
 const _rules = [
   'Drag to aim, let go to drop the fruit.',
-  'Two of the same fruit touching merge into a bigger one: 🍒 → 🍓 → 🍇 → 🍊 → 🍋 → 🍎 → 🍐 → 🍑 → 🍍 → 🍈 → 🍉',
-  'Bigger fruits score more. Keep the pile below the red line!',
+  'Two of the same fruit touching merge into a bigger one, all the way up to a watermelon.',
+  'Bigger fruits score more. Keep the pile below the red line',
 ];
 
 const _fruitColors = [
@@ -24,10 +24,10 @@ const _fruitColors = [
 
 final fruitMergeInfo = LocalGameInfo(
   id: 'fruit_merge',
-  title: 'Fruit Merge',
+  title: 'Juicebox',
   emoji: '🍉',
   color: const Color(0xFF3FBF5A),
-  tagline: 'Merge small fruits into a watermelon!',
+  tagline: 'Merge matching fruits to make a watermelon',
   rules: [..._rules, 'If fruit stays above the line for a few seconds, the box is full and the game ends.'],
   scoreUnit: 'points',
   splitScreen: false,
@@ -37,7 +37,7 @@ final fruitMergeInfo = LocalGameInfo(
     create: () => FruitMergeSolo(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🍉 FRUIT MERGE',
+      title: 'Juicebox',
       score: g.score,
       extra: 'Biggest: ${fruitEmoji[g.box.biggest]}',
       child: FruitBoxView(box: g.box, onAim: g.aim, onDrop: g.drop, showNext: true),
@@ -47,13 +47,13 @@ final fruitMergeInfo = LocalGameInfo(
 
 final LocalGameInfo fruitBattleInfo = LocalGameInfo(
   id: 'fruit_merge_battle',
-  title: 'Fruit Merge Battle',
+  title: 'Juice Race',
   emoji: '🍓',
   color: const Color(0xFFE84393),
-  tagline: 'Everyone merges at once. Biggest score wins!',
+  tagline: 'Merge fruits at the same time. The highest score wins',
   rules: [
     ..._rules,
-    'Take turns (the whole box for 1-5 minutes each) or split the screen and play at once (2 minutes). Overflow and your score is frozen. Highest score wins! 2 to 4 players.',
+    'Take turns (the whole box for 1-5 minutes each) or split the screen and play at once (2 minutes). Overflow and your score is frozen. Highest score wins. 2 to 4 players.',
   ],
   scoreUnit: 'points',
   splitScreen: true,
@@ -101,8 +101,8 @@ final LocalGameInfo fruitBattleInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => PlayerZones(
       count: players.length,
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: '⏱ ${g.secondsLeft}s'),
-      center: ZoneCenterChip('⏱ ${g.secondsLeft}s'),
+      middle: ScoreMiddleBar(players: players, scores: g.scores, label: '${g.secondsLeft}s'),
+      center: ZoneCenterChip('${g.secondsLeft}s'),
       zone: (i) => _BattleZone(g: g, player: players[i], index: i),
     ),
   ),
@@ -186,8 +186,8 @@ class _BattleZone extends StatelessWidget {
         Row(children: [
           PlayerTagSmall(player: player),
           const Spacer(),
-          if (box.over) const Text('BOX FULL! ', style: TextStyle(color: Color(0xFFFF6B6B), fontWeight: FontWeight.w900)),
-          Text('${box.score}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
+          if (box.over) const Text('Box full ', style: TextStyle(color: Color(0xFFFF6B6B), fontWeight: FontWeight.w700)),
+          Text('${box.score}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20)),
         ]),
         const SizedBox(height: 4),
         Expanded(
@@ -213,7 +213,7 @@ class _BattleOnline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(children: [
-        ScoreMiddleBar(players: players, scores: g.scores, label: '⏱ ${g.secondsLeft}s'),
+        ScoreMiddleBar(players: players, scores: g.scores, label: '${g.secondsLeft}s'),
         Expanded(child: _BattleZone(g: g, player: players[me], index: me)),
       ]);
 }
@@ -304,7 +304,7 @@ class _BoxPainter extends CustomPainter {
       canvas.drawCircle(c, r * 1.7, Paint()..color = const Color(0x22000000));
       _fruit(canvas, c, r, box.after);
       final tp = TextPainter(
-        text: const TextSpan(text: 'NEXT', style: TextStyle(color: Color(0xAA5A4630), fontSize: 10, fontWeight: FontWeight.w900)),
+        text: const TextSpan(text: 'Next', style: TextStyle(color: Color(0xAA5A4630), fontSize: 10, fontWeight: FontWeight.w700)),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, c + Offset(-tp.width / 2, r * 1.8));

@@ -77,14 +77,14 @@ class ReactionTapLogic extends LocalGameLogic {
 
 final reactionTapInfo = LocalGameInfo(
   id: 'reaction_tap',
-  title: 'Reaction Tap',
+  title: 'Blink',
   emoji: '⚡',
   color: const Color(0xFFFFC93C),
-  tagline: 'Fastest finger wins!',
+  tagline: "Tap when the signal appears",
   rules: const [
-    'Your side turns RED: wait…',
-    'When it turns GREEN, tap as fast as you can. First tap wins the point.',
-    'Tap while it is still red and you LOSE a point. First to 5 wins. 2 to 6 players.',
+    'Your side turns red. Wait…',
+    'When it turns green, tap as fast as you can. First tap wins the point.',
+    'Tap while it is still red and you lose a point. First to 5 wins. 2 to 6 players.',
   ],
   scoreUnit: 'points',
   splitScreen: true,
@@ -108,7 +108,7 @@ final reactionTapInfo = LocalGameInfo(
       if (name == 'tap' && asInt(a[0]) == from) g.tap(from);
     },
     view: (context, g, players, me) => Column(children: [
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
       Expanded(child: _ReactionHalf(player: players[me], index: me, g: g)),
     ]),
   ),
@@ -117,8 +117,8 @@ final reactionTapInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => PlayerZones(
       count: players.length,
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
-      center: ZoneCenterChip('FIRST TO ${g.target}'),
+      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
+      center: ZoneCenterChip('First to ${g.target}'),
       zone: (i) => _ReactionHalf(player: players[i], index: i, g: g),
     ),
   ),
@@ -133,15 +133,15 @@ class _ReactionHalf extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (Color bg, String big, String small) = switch (g.phase) {
-      ReactionPhase.wait => (const Color(0xFFE5484D), 'WAIT…', "Don't tap yet!"),
-      ReactionPhase.go => (const Color(0xFF2FB36D), 'TAP!', 'NOW!'),
+      ReactionPhase.wait => (const Color(0xFFE5484D), 'Wait…', "Don't tap yet"),
+      ReactionPhase.go => (const Color(0xFF2FB36D), 'Tap', 'Now'),
       ReactionPhase.result => g.falseStart
           ? (g.lastTapper == index
-              ? (const Color(0xFF3A3846), 'TOO EARLY!', '−1 point · wait for green')
-              : (player.color, 'PHEW!', 'Someone tapped too early'))
+              ? (const Color(0xFF3A3846), 'Too early', '−1 point · wait for green')
+              : (player.color, 'Phew', 'Someone tapped too early'))
           : (g.lastTapper == index
-              ? (player.color, 'YOU WIN!', '+1 · ${g.reactionMs} ms')
-              : (const Color(0xFF3A3846), 'TOO SLOW', 'Someone was faster')),
+              ? (player.color, 'You win', '+1 · ${g.reactionMs} ms')
+              : (const Color(0xFF3A3846), 'Too slow', 'Someone was faster')),
     };
     return Listener(
       behavior: HitTestBehavior.opaque,
@@ -156,8 +156,8 @@ class _ReactionHalf extends StatelessWidget {
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('${player.name.toUpperCase()} · ${g.score[index]}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-              Text(big, style: const TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.w900)),
+              Text('${player.name} · ${g.score[index]}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
+              Text(big, style: const TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.w700)),
               Text(small, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
             ]),
           ),
