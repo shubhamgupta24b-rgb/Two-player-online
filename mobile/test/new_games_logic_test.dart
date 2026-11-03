@@ -18,11 +18,11 @@ import 'package:multiplayer_game/features/local_games/shell/split_screen.dart';
 import 'package:multiplayer_game/features/local_games/snake_duel/snake_duel_game.dart';
 
 void main() {
-  test('55 shell games in the hub (+ Guess the Person + Raja Mantri = 57), unique ids, 1-6 players', () {
-    expect(localGames, hasLength(60));
-    expect(localGames.map((g) => g.id).toSet(), hasLength(60));
-    expect(localGames.where((g) => g.solo), hasLength(21));
-    expect(totalGameCount, 62);
+  test('79 shell games in the hub (+ Guess the Person + Raja Mantri = 81), unique ids, 1-6 players', () {
+    expect(localGames, hasLength(79));
+    expect(localGames.map((g) => g.id).toSet(), hasLength(79));
+    expect(localGames.where((g) => g.solo), hasLength(32), reason: 'Nitro Knockout is solo: 1 human vs 7 AI karts');
+    expect(totalGameCount, 81);
     for (final g in localGames) {
       expect(g.maxPlayers, inInclusiveRange(1, 6), reason: g.id);
     }

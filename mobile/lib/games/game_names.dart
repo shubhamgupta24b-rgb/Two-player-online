@@ -36,7 +36,6 @@ const formerGameNames = <String, String>{
   'reaction_tap': 'Reaction Tap',
   'penalty': 'Penalty Shootout',
   'math_duel': 'Math Duel',
-  'smash_karts': 'Smash Karts',
   'mini_golf': 'Mini Golf',
   'slingshot': 'Slingshot',
   'archery': 'Archery',

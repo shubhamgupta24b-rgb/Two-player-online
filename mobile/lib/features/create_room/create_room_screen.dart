@@ -116,7 +116,7 @@ class _RoomSize extends StatelessWidget {
             child: Text('$players', key: const ValueKey('playerCount'), textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, fontSize: 26, color: t.onBg)),
           ),
         ),
-        step('players+', GameIcons.plus, 'More players', players < 6 ? () => onPlayers(players + 1) : null),
+        step('players+', GameIcons.plus, 'More players', players < 10 ? () => onPlayers(players + 1) : null),
       ]),
     );
   }

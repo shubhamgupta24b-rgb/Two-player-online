@@ -16,3 +16,5 @@ docs/redesign-shots/after/
 docs/redesign-shots/after-light/
 docs/redesign-shots/font-pairing/
 docs/redesign-shots/font-pairing-light/
+.flutter-plugins
+.flutter-plugins-dependencies

@@ -15,6 +15,9 @@ import 'shooting_gallery/shooting_gallery_game.dart';
 import 'slingshot/slingshot_game.dart';
 import 'crush_it/crush_it_game.dart';
 import 'fruit_duel/fruit_duel_game.dart';
+import 'fruit_cut/fruit_cut_game.dart';
+import 'chess/chess_game.dart';
+import 'backgammon/backgammon_game.dart';
 import 'memory/memory_game.dart';
 import 'paint_fight/paint_fight_game.dart';
 import 'air_hockey/air_hockey_game.dart';
@@ -26,13 +29,14 @@ import 'reaction_tap/reaction_tap_game.dart';
 import 'snake_duel/snake_duel_game.dart';
 import 'tic_tac_toe/tic_tac_toe_game.dart';
 import 'colour_clash/colour_clash_game.dart';
+import 'uno/uno_game.dart';
 import 'battleship/battleship_game.dart';
 import 'bingo/bingo_game.dart';
 import 'checkers/checkers_game.dart';
 import 'dots_boxes/dots_boxes_game.dart';
 import 'fruit_merge/fruit_merge_game.dart';
 import 'ludo/ludo_game.dart';
-import 'smash_karts/smash_karts_game.dart';
+import 'nitro_knockout/nitro_knockout_game.dart';
 import 'snakes_ladders/snakes_ladders_game.dart';
 import 'truth_dare/truth_dare_game.dart';
 import 'charades/charades_game.dart';
@@ -65,20 +69,26 @@ import 'solo/piano_tiles.dart';
 import 'solo/simon_says.dart';
 import 'solo/stack_tower.dart';
 import 'solo/whack_mole.dart';
+import 'solo/slot_cars.dart';
+import 'solo/jindoblu_arcade.dart';
+import 'competitive/competitive_games.dart';
 import 'solo/word_scramble.dart';
 import 'shell/local_game_info.dart';
 import 'shell/game_art.dart';
 import 'shell/local_game_shell.dart';
 
-final localGames = <LocalGameInfo>[colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
-  drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo,
+final localGames = <LocalGameInfo>[chessInfo, backgammonInfo, unoInfo, colourClashInfo, findSpyInfo, ludoInfo, mafiaInfo, undercoverInfo, charadesInfo, snakesLaddersInfo,
+  drawGuessInfo, headsUpInfo, quizBattleInfo, handCricketInfo, crushItInfo, basketballInfo, fruitDuelInfo, memoryInfo, paintFightInfo, fruitCutInfo,
   ticTacToeInfo, airHockeyInfo, pingPongInfo, snakeDuelInfo, reactionTapInfo, penaltyInfo, mathDuelInfo, connectFourInfo, dotsBoxesInfo,
-  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo, bingoInfo, battleshipInfo, checkersInfo, smashKartsInfo,
+  mostLikelyInfo, wouldRatherInfo, truthDareInfo, rpsInfo, fruitBattleInfo, bingoInfo, battleshipInfo, checkersInfo, nitroKartsInfo,
   golfInfo, slingInfo, archeryInfo, galleryInfo, bottleInfo,
   // Solo games (shown in their own section).
   fruitMergeInfo, game2048Info, classicSnakeInfo, flappyInfo, minesweeperInfo, brickBreakerInfo, whackInfo, pianoInfo, wordScrambleInfo, stackInfo, simonInfo,
   ballSortInfo, slidingInfo, sudokuInfo, hangmanInfo, dinoInfo,
-  blockDropInfo, bubbleInfo, skyInfo, spaceInfo, colorSwitchInfo];
+  blockDropInfo, bubbleInfo, skyInfo, spaceInfo, colorSwitchInfo, slotCarsInfo,
+  fishingArcadeInfo, fireworksArcadeInfo, knifeHitArcadeInfo, flappyDunkArcadeInfo,
+  hungryHipposArcadeInfo, hotPotatoArcadeInfo, findItArcadeInfo, soccerStarsArcadeInfo, ringTossArcadeInfo,
+  carromInfo, eightBallPoolInfo, dartsOnlineInfo, hotPotatoInfo, hungryHipposInfo];
 
 /// The hub's games plus their team versions (e.g. Ludo 2 vs 2), for online rooms.
 List<LocalGameInfo> get allLocalGames => [...localGames, for (final g in localGames) if (g.teamVariant != null) g.teamVariant!];
@@ -108,7 +118,9 @@ class _Entry {
 }
 
 List<_Entry> _entries() {
-  GameCategory categoryOf(String id) => gameCatalog.where((g) => g.id == id).firstOrNull?.category ?? GameCategory.party;
+  // One-device-only games aren't in the online catalog, so they need their category here.
+  const offlineOnly = {'uno': GameCategory.cards, 'chess': GameCategory.board, 'backgammon': GameCategory.board, 'fruit_cut': GameCategory.action};
+  GameCategory categoryOf(String id) => gameCatalog.where((g) => g.id == id).firstOrNull?.category ?? offlineOnly[id] ?? GameCategory.party;
   return [
     _Entry(
       id: 'guess_person',

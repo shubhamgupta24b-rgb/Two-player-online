@@ -97,6 +97,7 @@ void main() {
         prefs: {'uid': 'u1', 'name': 'Ravi'});
     await bootSplash(tester);
     await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsNothing);
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.bySemanticsLabel('Play'), findsWidgets);
     expect(socket.connects, ['dev:u1:Ravi']);

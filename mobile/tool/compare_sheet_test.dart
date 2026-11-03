@@ -28,7 +28,7 @@ const pairs = [
   ('Ludo becomes Token Rush', '20_ingame_ludo', '20_ingame_ludo'),
   ('Colour Clash becomes Colour Riot', '20_ingame_colour_clash', '20_ingame_colour_clash'),
   ('Quiz Battle becomes Buzzer Brawl', '20_ingame_quiz_battle', '20_ingame_quiz_battle'),
-  ('All 62 game previews', '90_all_game_previews', '90_all_game_previews'),
+  ('All game previews', '90_all_game_previews', '90_all_game_previews'),
   ('Icon set', '91_all_icons', '91_all_icons'),
 ];
 

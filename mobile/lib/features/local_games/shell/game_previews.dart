@@ -597,7 +597,7 @@ final Map<String, void Function(_Scene)> _scenes = {
       s.text(v, x, 70, 10, hit ? _ink : _cream);
     }
   },
-  'smash_karts': (s) {
+  'nitro_knockout': (s) {
     s.bg(0xFF56606B);
     s.stroke('M-10 76C20 60 30 30 60 26s40 6 60 2', 0xFF6C7682, 24);
     s.stroke('M-10 76C20 60 30 30 60 26s40 6 60 2', 0xFFF4EFE3, .8);
@@ -942,5 +942,210 @@ final Map<String, void Function(_Scene)> _scenes = {
     s.icon(GameIcons.star, 44, 34, 12, _cream);
     s.dot(50, 74, 5.4, _marigold);
     s.stroke('M50 82v8', 0x55F6A91B, 2);
+  },
+
+  // ---- Added with the newer games
+  'chess': (s) {
+    s.bg(0xFF3E2A1C);
+    for (var y = 0; y < 7; y++) {
+      for (var x = 0; x < 7; x++) {
+        if ((x + y).isEven) s.rect(1.5 + x * 14.0, 1.5 + y * 14.0, 14, 14, 0xFFE8CFA2);
+      }
+    }
+    void pawn(double x, double y, int c) {
+      s.dot(x, y - 8, 5, c);
+      s.svg('M${x - 4} ${y - 4}h8l3 12h-14z', c);
+      s.rect(x - 9, y + 7, 18, 4, c, 1.5);
+    }
+
+    pawn(36.5, 52, _cream);
+    pawn(64.5, 38, _ink);
+    s.at(64.5, 66, 0, () {
+      s.dot(0, -14, 3, _ink);
+      s.rect(-1, -24, 2, 8, _ink);
+      s.rect(-4, -22, 8, 2, _ink);
+      s.svg('M-7 -12h14l3 18h-20z', _ink);
+      s.rect(-11, 5, 22, 4, _ink, 1.5);
+    });
+  },
+  'backgammon': (s) {
+    s.bg(0xFF6B3F24);
+    s.rect(8, 14, 84, 72, 0xFFE3C796, 3);
+    s.rect(47, 14, 6, 72, 0xFF6B3F24);
+    for (var i = 0; i < 6; i++) {
+      final x = 11.0 + i * 6 + (i > 2 ? 3 : 0);
+      final x2 = 53.0 + i * 6.2;
+      for (final px in [x, x2]) {
+        final col = (i + (px > 50 ? 1 : 0)).isEven ? 0xFF9E2A2B : 0xFF2C4A3E;
+        s.poly([px, 14, px + 6, 14, px + 3, 44], col);
+        s.poly([px, 86, px + 6, 86, px + 3, 56], col == 0xFF9E2A2B ? 0xFF2C4A3E : 0xFF9E2A2B);
+      }
+    }
+    for (final (x, y, c) in const [(17.0, 20.0, _cream), (17.0, 27.0, _cream), (17.0, 34.0, _cream), (71.0, 80.0, _ink), (71.0, 73.0, _ink)]) {
+      s.dot(x, y, 3.4, c);
+    }
+    s.die(38, 52, 13, -.2, 5);
+    s.die(62, 48, 13, .22, 3);
+  },
+  'uno': (s) {
+    s.bg(0xFF9E2A2B);
+    s.card(30, 54, 32, 46, -.3, _blue, () => s.text('5', 0, 0, 16, _cream));
+    s.card(50, 50, 32, 46, 0, _marigold, () => s.text('2', 0, 0, 16, _ink));
+    s.card(72, 54, 32, 46, .3, _green, () {
+      s.at(0, 0, .5, () => s.oval(0, 0, 10, 15, _cream));
+      s.text('+2', 0, 0, 11, _green);
+    });
+  },
+  'fruit_cut': (s) {
+    s.bg(0xFF2F6F5A);
+    s.icon(GameIcons.orange, 12, 22, 30);
+    s.icon(GameIcons.apple, 58, 16, 30);
+    s.icon(GameIcons.pear, 40, 54, 30);
+    s.stroke('M6 72 94 26', _cream, 2);
+    s.dot(30, 40, 1.8, 0xFFF2922C);
+    s.dot(76, 48, 1.8, _red);
+  },
+  'slot_cars': (s) {
+    s.bg(0xFF2B3A46);
+    s.stroke('M22 30h56a14 14 0 0 1 0 40H22a14 14 0 0 1 0-40z', 0xFF505F6C, 16);
+    s.stroke('M22 27h56a17 17 0 0 1 0 46H22a17 17 0 0 1 0-46z', _cream, .9);
+    s.stroke('M22 33h56a11 11 0 0 1 0 34H22a11 11 0 0 1 0-34z', _marigold, .9);
+    s.rect(38, 24, 15, 7, _red, 2.5);
+    s.rect(58, 69, 15, 7, _blue, 2.5);
+  },
+  'carrom': (s) {
+    s.bg(0xFF5C3A21);
+    s.rect(10, 10, 80, 80, 0xFFE9CE9B, 3);
+    for (final (x, y) in const [(14.0, 14.0), (86.0, 14.0), (14.0, 86.0), (86.0, 86.0)]) {
+      s.dot(x, y, 5, 0xFF2A1C05);
+    }
+    s.ring(50, 50, 16, 0xFF8C5D2C, .8);
+    for (final (x, y, c) in const [(50.0, 50.0, _red), (44.0, 44.0, _ink), (56.0, 44.0, _cream), (44.0, 56.0, _cream), (56.0, 56.0, _ink), (50.0, 40.0, _ink)]) {
+      s.dot(x, y, 4, c);
+    }
+    s.dot(36, 80, 6, _blue);
+    s.stroke('M38 76 46 62', 0x888C5D2C, 1.2);
+  },
+  'eight_ball_pool': (s) {
+    s.bg(0xFF1F6F4E);
+    s.dot(64, 42, 9, _ink);
+    s.dot(64, 42, 4, _cream);
+    s.text('8', 64, 42, 6, _ink);
+    s.dot(40, 30, 7, _red);
+    s.dot(82, 66, 7, _marigold);
+    s.dot(30, 68, 7, _cream);
+    s.line(4, 96, 25, 72, 0xFFC98F4F, 2.2);
+    s.stroke('M34 63 58 46', 0x77FBF3E2, 1);
+  },
+  'darts': (s) {
+    s.bg(0xFF2B2A33);
+    for (var i = 0; i < 12; i++) {
+      final a = i * math.pi / 6;
+      s.at(50, 50, a, () => s.poly([0, 0, -9.5, -35, 9.5, -35], i.isEven ? 0xFF2A1C05 : _cream));
+    }
+    s.ring(50, 50, 36, _red, 2.4);
+    s.ring(50, 50, 21, _green, 2.2);
+    s.dot(50, 50, 4.4, _red);
+    s.line(52, 48, 78, 22, 0xFF8E98A3, 1.8);
+    s.poly([78, 22, 86, 20, 80, 28], _marigold);
+  },
+  'hot_potato': (s) {
+    s.bg(0xFFD9542B);
+    s.oval(50, 54, 22, 17, 0xFFB98148);
+    s.oval(46, 50, 3, 2, 0xFF8C5D2C);
+    s.oval(58, 58, 3, 2, 0xFF8C5D2C);
+    s.stroke('M38 30c-4-6 4-8 0-14M50 28c-4-6 4-8 0-14M62 30c-4-6 4-8 0-14', _cream, 2);
+    s.icon(GameIcons.paper, 4, 54, 24);
+    s.icon(GameIcons.paper, 72, 54, 24);
+  },
+  'hungry_hippos': (s) {
+    s.bg(0xFF35A0A8);
+    s.oval(50, 62, 30, 22, 0xFF7A4FB5);
+    s.oval(50, 74, 22, 9, 0xFF55337F);
+    s.dot(36, 44, 6, _cream);
+    s.dot(64, 44, 6, _cream);
+    s.dot(36, 44, 2.4, _ink);
+    s.dot(64, 44, 2.4, _ink);
+    for (final (x, y, c) in const [(20.0, 24.0, _marigold), (50.0, 22.0, _red), (80.0, 26.0, _cream)]) {
+      s.dot(x, y, 4, c);
+    }
+  },
+  'j_fishing': (s) {
+    s.bg(0xFF2E7FB8);
+    s.rect(-10, -10, 120, 34, 0xFF9FD3E8);
+    s.line(70, -5, 50, 62, _cream, .8);
+    s.oval(38, 66, 15, 8, _marigold);
+    s.poly([52, 66, 62, 58, 62, 74], _marigold);
+    s.dot(32, 64, 1.4, _ink);
+    s.stroke('M-5 30c10-4 20 4 30 0s20 4 30 0 20 4 30 0 20 4 30 0', _cream, .9);
+  },
+  'j_fireworks': (s) {
+    s.bg(0xFF171A38);
+    void burst(double x, double y, double r, int c) {
+      for (var i = 0; i < 10; i++) {
+        final a = i * math.pi / 5;
+        s.line(x + math.cos(a) * r * .35, y + math.sin(a) * r * .35, x + math.cos(a) * r, y + math.sin(a) * r, c, 1.6);
+      }
+    }
+
+    burst(34, 38, 22, _pink);
+    burst(70, 32, 18, _marigold);
+    burst(62, 66, 14, _green);
+    s.rect(-10, 84, 120, 20, 0xFF0B0D1E);
+  },
+  'j_knifeHit': (s) {
+    s.bg(0xFF3A2B4F);
+    s.dot(50, 36, 24, 0xFFC98F4F);
+    s.ring(50, 36, 16, 0xFF8C5D2C, 1);
+    s.ring(50, 36, 8, 0xFF8C5D2C, 1);
+    for (final a in const [.6, 2.4, 4.2]) {
+      s.at(50, 36, a, () {
+        s.poly([-2.4, 22, 2.4, 22, 0, 12], 0xFFD9DEE3);
+        s.rect(-2.6, 22, 5.2, 12, 0xFF2A1C05, 1);
+      });
+    }
+    s.poly([46, 80, 54, 80, 50, 62], 0xFFD9DEE3);
+    s.rect(46, 80, 8, 14, _red, 1.5);
+  },
+  'j_flappyDunk': (s) {
+    s.bg(0xFF7CC4D8);
+    s.ring(66, 42, 13, _red, 2.6);
+    s.stroke('M56 46l4 14h12l4-14', _cream, 1);
+    s.icon(GameIcons.ball, 22, 44, 20);
+    s.svg('M22 50c-8-6-14-4-16 2 6 0 10 2 16 4z', _cream);
+    s.svg('M42 50c8-6 14-4 16 2-6 0-10 2-16 4z', _cream);
+  },
+  'j_hungryHippos': (s) => _scenes['hungry_hippos']!(s),
+  'j_hotPotato': (s) => _scenes['hot_potato']!(s),
+  'j_findIt': (s) {
+    s.bg(0xFFE7B24A);
+    for (final (x, y, i) in const [(18.0, 22.0, GameIcons.apple), (66.0, 18.0, GameIcons.star), (20.0, 62.0, GameIcons.bottle), (70.0, 66.0, GameIcons.duck)]) {
+      s.icon(i, x, y, 16, 0xFF8C5D2C);
+    }
+    s.icon(GameIcons.magnifier, 32, 30, 38);
+  },
+  'j_soccerStars': (s) {
+    s.bg(0xFF3A9150);
+    s.ring(50, 50, 18, _cream, 1);
+    s.line(50, -10, 50, 110, _cream, 1);
+    s.dot(30, 38, 8, _blue);
+    s.dot(30, 38, 4.6, _cream);
+    s.dot(72, 64, 8, _red);
+    s.dot(72, 64, 4.6, _cream);
+    s.icon(GameIcons.football, 44, 44, 12);
+  },
+  'j_ringToss': (s) {
+    s.bg(0xFF8E3B6B);
+    s.rect(-10, 76, 120, 30, 0xFFC98F4F);
+    for (final x in const [28.0, 50.0, 72.0]) {
+      s.rect(x - 2, 44, 4, 34, _cream, 2);
+    }
+    c0(s) => s.c.drawOval(const Rect.fromLTWH(38, 54, 24, 8), s._p(_marigold)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.6);
+    c0(s);
+    s.c.drawOval(const Rect.fromLTWH(58, 18, 24, 10), s._p(_green)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.6);
   },
 };

@@ -114,7 +114,7 @@ class AudioSettings {
 
 /// Which games have music, and which tune.
 const gameMusic = {
-  'smash_karts': 'race',
+  'nitro_knockout': 'race',
   'penalty': 'race',
   'air_hockey': 'race',
   'paint_fight': 'race',

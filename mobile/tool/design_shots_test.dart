@@ -271,7 +271,7 @@ void main() {
               ),
           ]),
         ),
-        size: const Size(1040, 1000));
+        size: const Size(1040, 1300));
     await t.pump(const Duration(milliseconds: 300));
     await _snap(t, '90_all_game_previews');
     await _done(t);

@@ -4,6 +4,7 @@ import 'package:multiplayer_game/core/ui/app_ui.dart';
 import 'package:multiplayer_game/features/local_games/local_games_hub_screen.dart';
 import 'package:multiplayer_game/features/local_games/shell/local_game_info.dart';
 import 'package:multiplayer_game/features/local_games/shell/local_game_shell.dart';
+import 'webview_fake.dart';
 
 /// Large text (accessibility setting) on a 360dp phone: nothing may overflow.
 /// Any RenderFlex overflow is reported as a test failure by the framework.
@@ -42,6 +43,8 @@ Future<void> openAndPlay(WidgetTester tester, LocalGameInfo game) async {
 }
 
 void main() {
+  // Nitro Knockout's WebView needs a platform shim in tests (no real engine here).
+  FakeWebViewPlatform.install();
   for (final game in localGames) {
     testWidgets('${game.title}: intro and play at 1.3x text', (tester) => openAndPlay(tester, game));
   }

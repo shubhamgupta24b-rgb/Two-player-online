@@ -9,7 +9,7 @@ const bool flatBuild = String.fromEnvironment('APP_STYLE') == 'flat';
 /// Retired switch: the old sky-blue look. Always off.
 const bool flatStyle = false;
 
-const String appName = flatBuild ? 'Party Games Flat' : 'Party Games';
+const String appName = flatBuild ? 'Two Player Games' : 'Party Games';
 
 /// All games play on the dark surface.
 bool isFlatGame(String id) => false;

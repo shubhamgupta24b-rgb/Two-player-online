@@ -55,14 +55,14 @@ class LanRelay {
         version++;
         final ack = p['ack'];
         if (ack is int) inputs.removeWhere((i) => (i['seq'] as int) <= ack);
-        return {'version': version};
+        return {'version': version, 'gameOnly': true};
       case 'relay:input':
         final name = p['name'], args = p['args'];
         if (name is! String || !nameRe.hasMatch(name) || args is! List || args.length > 8) throw const LanError('INVALID_PAYLOAD');
         if (!args.every((a) => a == null || a is num || a is String || a is bool)) throw const LanError('INVALID_PAYLOAD');
         inputs.add({'seq': ++inputSeq, 'from': uid, 'name': name, 'args': args});
         if (inputs.length > maxQueue) inputs.removeRange(0, inputs.length - maxQueue);
-        return {'seq': inputSeq};
+        return {'seq': inputSeq, 'gameOnly': true};
       case 'relay:finish':
         if (uid != host) throw const LanError('NOT_HOST');
         final sc = p['scores'];
@@ -160,7 +160,7 @@ class LanRooms {
   LanRoom createRoom(String userId, String username, {required String gameType, required Object? maxPlayers}) {
     if (_userRoom.containsKey(userId)) throw const LanError('ALREADY_IN_ROOM');
     _game(gameType);
-    if (maxPlayers is! int || maxPlayers < 2 || maxPlayers > 6) throw const LanError('INVALID_PAYLOAD', 'maxPlayers must be 2 to 6');
+    if (maxPlayers is! int || maxPlayers < 2 || maxPlayers > 10) throw const LanError('INVALID_PAYLOAD', 'maxPlayers must be 2 to 10');
     final room = LanRoom(_code(), gameType, maxPlayers, userId);
     room.players.add(LanPlayer(userId, username, ready: true));
     rooms[room.code] = room;
@@ -213,12 +213,15 @@ class LanRooms {
       onRoomClosed?.call(room.code);
       return;
     }
+    var hostLeftGame = false;
     if (room.hostId == userId) {
       final next = room.players.firstWhere((p) => p.connected, orElse: () => room.players.first);
       room.hostId = next.userId;
       next.ready = true;
+      // Every phone-hosted game runs on the host's phone (relay), so it can't go on without them.
+      hostLeftGame = room.status == 'playing'; // a finished room keeps its results screen
     }
-    if (room.status != 'lobby' && room.players.length < 2) {
+    if (room.status != 'lobby' && (room.players.length < 2 || hostLeftGame)) {
       _toLobby(room);
       onGameAborted?.call(room.code);
     }
@@ -360,7 +363,8 @@ class LanRooms {
       room.status = 'finished';
       result = _ended(room, room.game!.result());
     }
-    _changed(room);
+    // Frames and inputs change the game, not the room: no room_state for them (as on the server).
+    if (result != null || response?['gameOnly'] != true) _changed(room);
     onGameUpdated?.call(room.code, result);
     return response;
   }
