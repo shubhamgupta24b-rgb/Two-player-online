@@ -7,7 +7,7 @@ class HowToPlayScreen extends StatelessWidget {
   static const _steps = [
     (Icons.touch_app_rounded, 'One player secretly chooses a person.'),
     (Icons.swap_horiz_rounded, 'Pass the device to the other player.'),
-    (Icons.quiz_rounded, 'Ask questions and use the YES / NO clues to eliminate people.'),
+    (Icons.quiz_rounded, 'Ask questions and use the yes / no clues to eliminate people.'),
     (Icons.ads_click_rounded, 'Select your final guess (before the timer runs out, if one is set).'),
     (Icons.star_rounded, 'Correct guesses earn 1 point. Roles switch every round.'),
   ];
@@ -23,7 +23,7 @@ class HowToPlayScreen extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const Text('HOW TO PLAY', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
+                  const Text('How to play', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 24),
                   for (var i = 0; i < _steps.length; i++)
                     Container(
@@ -34,12 +34,12 @@ class HowToPlayScreen extends StatelessWidget {
                         CircleAvatar(
                           radius: 22,
                           backgroundColor: GpColors.accent,
-                          child: Text('${i + 1}', style: const TextStyle(color: GpColors.ink, fontWeight: FontWeight.w900, fontSize: 18)),
+                          child: Text('${i + 1}', style: const TextStyle(color: GpColors.ink, fontWeight: FontWeight.w700, fontSize: 18)),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text('STEP ${i + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
+                            Text('Step ${i + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
                             const SizedBox(height: 2),
                             Text(_steps[i].$2, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                           ]),
@@ -48,7 +48,7 @@ class HowToPlayScreen extends StatelessWidget {
                       ]),
                     ),
                   const SizedBox(height: 16),
-                  GpButton('GOT IT', icon: Icons.check_rounded, onPressed: () => Navigator.pop(context)),
+                  GpButton('Got it', icon: Icons.check_rounded, onPressed: () => Navigator.pop(context)),
                 ]),
               ),
             ),

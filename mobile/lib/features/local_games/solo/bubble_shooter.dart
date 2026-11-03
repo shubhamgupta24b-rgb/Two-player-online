@@ -205,10 +205,10 @@ class BubbleLogic extends SoloLogic {
 
 final bubbleInfo = LocalGameInfo(
   id: 'bubble_shooter',
-  title: 'Bubble Shooter',
+  title: 'Pop Shot',
   emoji: '🫧',
   color: const Color(0xFF29B6F6),
-  tagline: 'Aim, bounce, pop three in a row!',
+  tagline: "Match three bubbles of the same colour",
   rules: const [
     'Drag to aim (the dotted line shows the shot), let go to fire. Bubbles bounce off the walls.',
     '3 or more of the same colour pop. Bubbles left hanging fall for bonus points.',
@@ -222,7 +222,7 @@ final bubbleInfo = LocalGameInfo(
     create: () => BubbleLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🫧 BUBBLE SHOOTER',
+      title: 'Pop Shot',
       score: g.score,
       extra: 'New rows in ${BubbleLogic.shotsPerRow - g.shotsSincePop} shots',
       child: LayoutBuilder(builder: (context, c) {

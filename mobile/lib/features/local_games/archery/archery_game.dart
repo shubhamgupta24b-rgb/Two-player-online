@@ -139,10 +139,10 @@ double archeryLanding(ArcheryLogic g, double angle, double power) {
 
 final archeryInfo = LocalGameInfo(
   id: 'archery',
-  title: 'Archery',
+  title: 'Gold Ring',
   emoji: '🏹',
   color: const Color(0xFF8D6E63),
-  tagline: 'Draw, aim for the gold, mind the wind!',
+  tagline: "Aim for the centre and adjust for the wind",
   rules: const [
     'Pull back anywhere on the screen to draw the bow (further = stronger), aim, and let go.',
     'The wind (🌬️ at the top) pushes your arrow. The target moves up and down between shots.',
@@ -277,8 +277,8 @@ class _ArcheryViewState extends State<_ArcheryView> {
         GameStatus(
           player: current,
           height: 52,
-          turnText: g.finished ? 'All arrows shot!' : (_myTurn ? '${current.whose} TURN · pull back and let go' : '${current.name} is aiming…'),
-          message: showLast ? (g.lastScore == 0 ? 'MISS!' : (g.lastScore == 10 ? '🎯 BULLSEYE! +10' : '+${g.lastScore}')) : null,
+          turnText: g.finished ? 'All arrows shot' : (_myTurn ? '${current.whose} turn · pull back and let go' : '${current.name} is aiming…'),
+          message: showLast ? (g.lastScore == 0 ? 'Miss' : (g.lastScore == 10 ? 'Bullseye +10' : '+${g.lastScore}')) : null,
         ),
       ]),
     );
@@ -308,7 +308,7 @@ class _RangePainter extends CustomPainter {
     canvas.drawLine(o(0.5, 0.04), o(0.5 + g.wind * 0.3, 0.04), wPaint);
     canvas.drawCircle(o(0.5 + g.wind * 0.3, 0.04), 4, Paint()..color = const Color(0xFFFF7043));
     final wt = TextPainter(
-      text: TextSpan(text: '🌬️ ${g.wind >= 0 ? '→' : '←'} ${(g.wind.abs() * 20).toStringAsFixed(1)}', style: const TextStyle(color: Color(0xFF263238), fontWeight: FontWeight.w900, fontSize: 13)),
+      text: TextSpan(text: '${g.wind >= 0 ? '→' : '←'} ${(g.wind.abs() * 20).toStringAsFixed(1)}', style: const TextStyle(color: Color(0xFF263238), fontWeight: FontWeight.w700, fontSize: 13)),
       textDirection: TextDirection.ltr,
     )..layout();
     wt.paint(canvas, o(0.5, 0.06) - Offset(wt.width / 2, 0));

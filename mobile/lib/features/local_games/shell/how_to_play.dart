@@ -40,7 +40,7 @@ class RuleStep extends StatelessWidget {
       Expanded(
         child: Text.rich(
           icon == null ? TextSpan(text: text) : ruleSpan(text, const TextStyle()),
-          style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w800, height: 1.3, color: Colors.white),
+          style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w600, height: 1.3, color: NeonPalette.text),
         ),
       ),
     ]);
@@ -102,11 +102,11 @@ class HowToPlay extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                        Text('HOW TO PLAY', style: t.styles.label),
+                        Text('How to play', style: t.styles.label),
                         const SizedBox(height: 2),
                         Semantics(header: true, child: Text(game.title, style: t.styles.h1)),
                         const SizedBox(height: 2),
-                        Text(stripEmoji(game.tagline), style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFFD6DAF7))),
+                        Text(stripEmoji(game.tagline), style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFFD6DAF7))),
                         const SizedBox(height: 14),
                         Container(
                           padding: const EdgeInsets.all(12),

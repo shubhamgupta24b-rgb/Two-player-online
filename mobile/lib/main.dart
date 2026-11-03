@@ -52,7 +52,9 @@ class _AppState extends State<App> {
       child: MaterialApp(
         title: appName,
         debugShowCheckedModeBanner: false,
-        theme: buildAppTheme(),
+        theme: buildAppTheme(Brightness.light),
+        darkTheme: buildAppTheme(Brightness.dark),
+        themeMode: ThemeMode.system,
         home: const SplashScreen(),
       ),
     );

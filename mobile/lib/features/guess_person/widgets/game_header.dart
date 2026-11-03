@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'gp_theme.dart';
 
-/// "ROUND 2 / 5" + current player and role, with an optional trailing widget (timer).
+/// "Round 2 / 5" + current player and role, with an optional trailing widget (timer).
 class GameHeader extends StatelessWidget {
   final int round;
   final int totalRounds;
@@ -33,7 +33,7 @@ class GameHeader extends StatelessWidget {
         ),
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-          Text('ROUND $round / $totalRounds', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.2, fontSize: 13)),
+          Text('Round $round / $totalRounds', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w600, fontSize: 13)),
           const SizedBox(height: 4),
           PlayerTag(name: playerName, color: playerColor, role: role),
         ]),
@@ -70,8 +70,8 @@ class TimerBadge extends StatelessWidget {
             border: Border.all(color: color, width: 2),
           ),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('⏱ TIME', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800)),
-            Text('$seconds', style: TextStyle(color: color, fontSize: 26, fontWeight: FontWeight.w900, height: 1.1)),
+            Text('Time', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+            Text('$seconds', style: TextStyle(color: color, fontSize: 26, fontWeight: FontWeight.w700, height: 1.1)),
           ]),
         ),
       ),

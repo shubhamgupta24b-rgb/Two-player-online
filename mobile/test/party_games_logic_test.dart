@@ -30,7 +30,7 @@ ClashCard k(ClashColor c, ClashKind kind) => ClashCard(_id++, c, kind);
 List<ClashCard> fill(int count, ClashColor c, [int value = 9]) => [for (var i = 0; i < count; i++) n(c, value)];
 
 void main() {
-  group('Colour Clash', () {
+  group('Colour Riot', () {
     test('108-card deck with the classic mix', () {
       final d = ColourClashLogic.fullDeck();
       expect(d.length, 108);
@@ -148,7 +148,7 @@ void main() {
       expect(g.hands[0].length, 2);
       g.play(a.id); // forgot to call ONE!
       expect(g.hands[0].length, 3, reason: '1 left + 2 penalty');
-      expect(g.message, contains('ONE!'));
+      expect(g.message, contains('One'));
 
       final g2 = rigged([
         [a, b, ...fill(5, ClashColor.red)],
@@ -190,7 +190,7 @@ void main() {
     });
   });
 
-  group('Snakes & Ladders', () {
+  group('Ups & Hisses', () {
     test('board numbering snakes left-right from the bottom', () {
       expect(SnakesLaddersLogic.cell(1), (0, 9));
       expect(SnakesLaddersLogic.cell(10), (9, 9));
@@ -222,7 +222,7 @@ void main() {
     });
   });
 
-  group('Ludo', () {
+  group('Token Rush', () {
     test('track and home columns are consistent', () {
       expect(LudoLogic.track.length, 52);
       expect(LudoLogic.track.toSet().length, 52);
@@ -296,7 +296,7 @@ void main() {
     });
   });
 
-  group('Dots & Boxes', () {
+  group('Box Grab', () {
     test('closing a box scores and keeps the turn; full board ends', () {
       final g = DotsBoxesLogic(players: 2, size: 2);
       expect(g.totalLines, 12);
@@ -325,7 +325,7 @@ void main() {
     });
   });
 
-  group('Truth or Dare', () {
+  group('Spill or Stunt', () {
     test('spin, choose, complete; ends after everyone had their spins', () {
       final g = TruthDareLogic(players: 3, spinsEach: 2, random: Random(1));
       expect(g.totalSpins, 6);

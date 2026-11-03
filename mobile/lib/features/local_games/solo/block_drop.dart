@@ -177,10 +177,10 @@ class BlockDropLogic extends SoloLogic {
 
 final blockDropInfo = LocalGameInfo(
   id: 'block_drop',
-  title: 'Block Drop',
+  title: 'Line Drop',
   emoji: '🧱',
   color: const Color(0xFF7E57C2),
-  tagline: 'Fit the falling blocks, clear the lines!',
+  tagline: "Fill rows with falling blocks to clear them",
   rules: const [
     'Pieces fall. Swipe or tap ◀ ▶ to move, tap the board or ⟳ to rotate, swipe down or ⤓ to drop.',
     'Fill a whole row to clear it. Clear several at once for big points.',
@@ -194,7 +194,7 @@ final blockDropInfo = LocalGameInfo(
     create: () => BlockDropLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🧱 LEVEL ${g.level}',
+      title: 'Level ${g.level}',
       score: g.score,
       extra: '${g.lines} lines',
       child: Column(children: [
@@ -203,7 +203,7 @@ final blockDropInfo = LocalGameInfo(
             Expanded(child: _BoardView(g: g)),
             const SizedBox(width: 8),
             Column(children: [
-              const Text('NEXT', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.2)),
+              const Text('Next', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 12)),
               const SizedBox(height: 4),
               Container(
                 width: 64,

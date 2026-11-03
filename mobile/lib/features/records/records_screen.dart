@@ -12,7 +12,9 @@ import '../privacy/privacy_screen.dart';
 /// My Records (spec 4.10): best score, wins and games played per game, kept on this phone
 /// only, last played first.
 class RecordsScreen extends StatefulWidget {
-  const RecordsScreen({super.key});
+  /// Inside the home tabs: no back button.
+  final bool embedded;
+  const RecordsScreen({super.key, this.embedded = false});
   @override
   State<RecordsScreen> createState() => _RecordsScreenState();
 }
@@ -24,6 +26,10 @@ class _RecordsScreenState extends State<RecordsScreen> {
   @override
   void initState() {
     super.initState();
+    _load();
+  }
+
+  void _load() {
     Records.all().then((r) {
       if (mounted) setState(() => records = r);
     });
@@ -34,7 +40,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
 
   /// Name and colour for a game id, from the one-device list or the online catalog.
   (String, Color) _game(String id) {
-    if (id == 'guess_person') return ('Guess the Person', const Color(0xFFFFC93C));
+    if (id == 'guess_person') return ('Face Hunt', const Color(0xFFFFC93C));
     for (final g in allLocalGames) {
       if (g.id == id) return (g.title, g.color);
     }
@@ -60,13 +66,22 @@ class _RecordsScreenState extends State<RecordsScreen> {
           }));
     final played = entries.fold(0, (s, e) => s + e.value.played);
     final wins = entries.fold(0, (s, e) => s + e.value.wins);
-    final ink = t.flat ? FlatPalette.ink : Colors.white;
-    final muted = t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted;
+    final ink = t.onBg;
+    final muted = t.onBgMuted;
     return Scaffold(
       body: AppBackground(
         child: SafeArea(
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            const Padding(padding: EdgeInsets.fromLTRB(16, 14, 16, 10), child: PageHeader(label: 'Saved on this phone', title: 'My records')),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: widget.embedded
+                  ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Semantics(header: true, child: Text('Records', style: t.styles.h1.copyWith(color: t.onBg))),
+                      const SizedBox(height: 4),
+                      Text('Saved on this phone', style: t.styles.body.copyWith(color: t.onBgMuted)),
+                    ])
+                  : const PageHeader(label: 'Saved on this phone', title: 'My records'),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Row(children: [
@@ -85,11 +100,11 @@ class _RecordsScreenState extends State<RecordsScreen> {
                           child: SingleChildScrollView(
                             padding: const EdgeInsets.all(32),
                             child: Column(mainAxisSize: MainAxisSize.min, children: [
-                              const GameIcon(GameIcons.trophy, size: 72, color: Brand.gold),
+                              const GameIcon(GameIcons.trophy, size: 64),
                               const SizedBox(height: 12),
-                              Text('No games yet${name.isEmpty ? '' : ', $name'}!', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, fontSize: 22, color: t.onBg)),
+                              Text('No games yet${name.isEmpty ? '' : ', $name'}', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, fontSize: 22, color: t.onBg)),
                               const SizedBox(height: 4),
-                              Text('Play any game and your best scores show up here.', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
+                              Text('Play a game to save your score here.', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
                             ]),
                           ),
                         )
@@ -106,9 +121,9 @@ class _RecordsScreenState extends State<RecordsScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: t.flat ? Colors.white : t.surface,
+                                  color: t.card,
                                   borderRadius: Radii.rLg,
-                                  border: Border.all(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.10)),
+                                  border: Border.all(color: t.stroke),
                                 ),
                                 child: Row(children: [
                                   GameThumb(id: e.key, color: color, size: 46, radius: 12),
@@ -116,12 +131,12 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                   Expanded(
                                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                       Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 17, color: ink)),
-                                      Text('played ${e.value.played}${e.value.wins > 0 ? ' · wins ${e.value.wins}' : ''}',
-                                          style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w800, color: muted)),
+                                      Text('Played ${e.value.played}${e.value.wins > 0 ? ' · ${e.value.wins} wins' : ''}',
+                                          style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w600, color: muted)),
                                     ]),
                                   ),
                                   Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                                    Text('BEST', style: TextStyle(fontFamily: Fonts.body, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: t.flat ? FlatPalette.label : NeonPalette.label)),
+                                    Text('Best', style: TextStyle(fontFamily: Fonts.body, fontSize: 10, fontWeight: FontWeight.w700, color: t.flat ? FlatPalette.label : NeonPalette.label)),
                                     Text('${e.value.best}', style: TextStyle(fontFamily: Fonts.display, fontSize: 26, height: 1.05, color: ink, fontFeatures: const [FontFeature.tabularFigures()])),
                                   ]),
                                 ]),
@@ -134,7 +149,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
               child: TextButton(
                 style: TextButton.styleFrom(minimumSize: const Size(kTouchTarget, kTouchTarget)),
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyScreen())),
-                child: Text('Privacy & your data', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: t.onBgMuted)),
+                child: Text('Privacy & your data', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w600, color: t.onBgMuted)),
               ),
             ),
             const SizedBox(height: 8),
@@ -157,15 +172,12 @@ class _Stat extends StatelessWidget {
         label: '$value ${label.toLowerCase()}',
         excludeSemantics: true,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(color: t.flat ? Colors.white : t.surface, borderRadius: Radii.rLg, border: Border.all(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.10))),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(color: t.card, borderRadius: Radii.rLg, border: Border.all(color: t.stroke)),
           child: Column(children: [
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              GameIcon(icon, size: 18, color: t.flat ? FlatPalette.ink : Brand.gold),
-              const SizedBox(width: 6),
-              Text(value, style: TextStyle(fontFamily: Fonts.display, fontSize: 22, color: t.flat ? FlatPalette.ink : Colors.white, fontFeatures: const [FontFeature.tabularFigures()])),
-            ]),
-            Text(label.toUpperCase(), style: TextStyle(fontFamily: Fonts.body, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: t.flat ? FlatPalette.label : NeonPalette.label)),
+            Text(value, style: t.styles.score.copyWith(color: t.text)),
+            const SizedBox(height: 2),
+            Text(label, style: t.styles.bodySmall.copyWith(color: t.textMuted)),
           ]),
         ),
       ),

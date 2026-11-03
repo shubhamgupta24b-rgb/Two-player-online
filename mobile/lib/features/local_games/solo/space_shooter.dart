@@ -130,14 +130,14 @@ class SpaceLogic extends SoloLogic {
 
 final spaceInfo = LocalGameInfo(
   id: 'space_shooter',
-  title: 'Space Shooter',
+  title: 'Wave Blaster',
   emoji: '🚀',
   color: const Color(0xFF5E35B1),
-  tagline: 'Blast the alien waves!',
+  tagline: "Shoot the aliens and avoid their attacks",
   rules: const [
     'Drag to fly your ship. It fires by itself.',
-    'Shoot the aliens: 👾 10, 👽 shooters 20, 🛸 tanks (3 hits) 50. Dodge their shots.',
-    'Grab ⚡ for double shots. You have 3 lives.',
+    'Shoot the aliens: 10, shooters 20, tanks (3 hits) 50. Dodge their shots.',
+    'Grab for double shots. You have 3 lives.',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -147,9 +147,9 @@ final spaceInfo = LocalGameInfo(
     create: () => SpaceLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🚀 WAVE ${max(1, g.wave)}',
+      title: 'Wave ${max(1, g.wave)}',
       score: g.score,
-      extra: '${'❤️' * g.lives}${g.now < g.doubleUntil ? '  ⚡ DOUBLE' : ''}',
+      extra: '${'❤️' * g.lives}${g.now < g.doubleUntil ? '  double' : ''}',
       child: LayoutBuilder(builder: (context, c) {
         final w = min(c.maxWidth, c.maxHeight / SpaceLogic.viewH);
         return Center(

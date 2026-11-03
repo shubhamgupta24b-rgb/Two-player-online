@@ -69,13 +69,13 @@ class WhackLogic extends SoloLogic {
 
 final whackInfo = LocalGameInfo(
   id: 'whack_mole',
-  title: 'Whack-a-Mole',
+  title: 'Bonk',
   emoji: '🔨',
   color: const Color(0xFF8D6E63),
-  tagline: 'Bonk the moles, skip the bombs!',
+  tagline: "Tap the moles and avoid the bombs",
   rules: const [
-    'Moles pop out of the holes. Tap them before they hide!',
-    '🐹 +1 · 🌟 golden mole +3 · 💣 bomb −5.',
+    'Moles pop out of the holes. Tap them before they hide',
+    '+1 · golden mole +3 · bomb −5.',
     '30 seconds, and they get faster. How many can you bonk?',
   ],
   scoreUnit: 'points',
@@ -86,7 +86,7 @@ final whackInfo = LocalGameInfo(
     create: () => WhackLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🔨 WHACK-A-MOLE',
+      title: 'Bonk',
       score: g.score,
       extra: '⏱${(g.msLeft / 1000).ceil()}s',
       child: Center(

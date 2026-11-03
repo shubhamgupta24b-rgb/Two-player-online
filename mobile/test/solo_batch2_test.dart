@@ -7,7 +7,7 @@ import 'package:multiplayer_game/features/local_games/solo/sky_jumper.dart';
 import 'package:multiplayer_game/features/local_games/solo/space_shooter.dart';
 
 void main() {
-  group('Block Drop', () {
+  group('Line Drop', () {
     test('every piece is 4 blocks in every rotation', () {
       for (var k = 0; k < 7; k++) {
         for (var r = 0; r < 4; r++) {
@@ -49,7 +49,7 @@ void main() {
     });
   });
 
-  group('Bubble Shooter', () {
+  group('Pop Shot', () {
     test('three of a colour pop, and bubbles left hanging fall', () {
       final g = BubbleLogic(random: Random(3));
       g.grid
@@ -87,7 +87,7 @@ void main() {
     });
   });
 
-  group('Sky Jumper', () {
+  group('Cloud Hop', () {
     test('bouncing on the start pad keeps you alive; steering away makes you fall', () {
       final g = SkyLogic(random: Random(5));
       var t = 0;
@@ -119,7 +119,7 @@ void main() {
     });
   });
 
-  group('Space Shooter', () {
+  group('Wave Blaster', () {
     test('the ship shoots aliens down; getting hit costs lives until the end', () {
       final g = SpaceLogic(random: Random(7));
       var t = 0;
@@ -138,7 +138,7 @@ void main() {
     });
   });
 
-  group('Color Switch', () {
+  group('Hue Gate', () {
     test('not tapping falls off the bottom', () {
       final g = SwitchLogic(random: Random(8));
       g.tap();

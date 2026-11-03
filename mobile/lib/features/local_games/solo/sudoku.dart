@@ -136,14 +136,14 @@ class SudokuLogic extends SoloLogic {
 
 final sudokuInfo = LocalGameInfo(
   id: 'sudoku',
-  title: 'Sudoku',
+  title: 'Nine Grid',
   emoji: '📝',
   color: const Color(0xFF3949AB),
-  tagline: 'The classic number puzzle!',
+  tagline: "Fill each row, column and box with 1 to 9",
   rules: const [
     'Fill the grid so every row, column and 3×3 box has the numbers 1 to 9 once.',
-    'Tap a square, then a number. ✏️ NOTES lets you pencil in ideas.',
-    '3 mistakes and the game is over. Solve it fast for more points!',
+    'Tap a square, then a number. Notes lets you pencil in ideas.',
+    '3 mistakes and the game is over. Solve it fast for more points',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -153,9 +153,9 @@ final sudokuInfo = LocalGameInfo(
     create: () => SudokuLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: g.over && g.solved ? '🎉 SOLVED!' : '📝 SUDOKU',
+      title: g.over && g.solved ? 'Solved' : 'Nine Grid',
       score: g.score,
-      extra: '❌ ${g.mistakes}/${SudokuLogic.maxMistakes} · ⏱ ${g.now ~/ 60000}:${(g.now ~/ 1000 % 60).toString().padLeft(2, '0')}',
+      extra: '${g.mistakes}/${SudokuLogic.maxMistakes} · ${g.now ~/ 60000}:${(g.now ~/ 1000 % 60).toString().padLeft(2, '0')}',
       child: Column(children: [
         Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Grid(g: g)))),
         const SizedBox(height: 10),
@@ -190,7 +190,7 @@ final sudokuInfo = LocalGameInfo(
                                   fit: BoxFit.scaleDown,
                                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                                     const Text('✏️', style: TextStyle(fontSize: 18)),
-                                    Text(g.notes ? 'NOTES ON' : 'NOTES', style: const TextStyle(color: Brand.ink, fontWeight: FontWeight.w900, fontSize: 10.5)),
+                                    Text(g.notes ? 'Notes on' : 'Notes', style: const TextStyle(color: Brand.ink, fontWeight: FontWeight.w700, fontSize: 10.5)),
                                   ]),
                                 ),
                               ),
@@ -218,7 +218,7 @@ final sudokuInfo = LocalGameInfo(
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                                    Text('$v', style: TextStyle(color: g.remaining(v) == 0 ? Colors.white24 : Colors.white, fontWeight: FontWeight.w900, fontSize: 22)),
+                                    Text('$v', style: TextStyle(color: g.remaining(v) == 0 ? Colors.white24 : Colors.white, fontWeight: FontWeight.w700, fontSize: 22)),
                                     Text('${g.remaining(v)}', style: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w700)),
                                   ]),
                                 ),
@@ -281,7 +281,7 @@ class _Grid extends StatelessWidget {
                     alignment: Alignment.center,
                     child: g.cells[i] != 0
                         ? Text('${g.cells[i]}',
-                            style: TextStyle(fontSize: cell * 0.55, fontWeight: g.puzzle[i] != 0 ? FontWeight.w900 : FontWeight.w700, color: g.puzzle[i] != 0 ? GpColors.ink : const Color(0xFF3949AB)))
+                            style: TextStyle(fontSize: cell * 0.55, fontWeight: g.puzzle[i] != 0 ? FontWeight.w700 : FontWeight.w700, color: g.puzzle[i] != 0 ? GpColors.ink : const Color(0xFF3949AB)))
                         : g.marks[i].isEmpty
                             ? null
                             : Padding(

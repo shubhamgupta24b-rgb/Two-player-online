@@ -13,7 +13,7 @@ import 'package:multiplayer_game/features/local_games/solo/whack_mole.dart';
 import 'package:multiplayer_game/features/local_games/solo/word_scramble.dart';
 
 void main() {
-  group('Rock Paper Scissors', () {
+  group('Triple Throw', () {
     test('rock > scissors > paper > rock; a point for each player you beat', () {
       expect(RpsLogic.beats(0, 2), isTrue);
       expect(RpsLogic.beats(2, 1), isTrue);
@@ -47,7 +47,7 @@ void main() {
     });
   });
 
-  group('2048', () {
+  group('Double Up', () {
     test('slides, merges once per move, scores the merged value', () {
       final g = Game2048Logic(random: Random(1), start: [2, 2, 2, 2, 4, 0, 4, 8, 0, 0, 0, 0, 0, 0, 0, 0]);
       expect(g.move(3), isTrue); // left
@@ -79,7 +79,7 @@ void main() {
     });
   });
 
-  group('Classic Snake', () {
+  group('Noodle', () {
     test('moves on its own, can\'t reverse, eats and grows, dies at the wall', () {
       final g = ClassicSnakeLogic(random: Random(1));
       final head = g.body.first;
@@ -97,7 +97,7 @@ void main() {
     });
   });
 
-  group('Flappy Jump', () {
+  group('Flap Gap', () {
     test('waits for the first flap, falls, scores pipes, hits the ground', () {
       final g = FlappyLogic(random: Random(1));
       g.update(1000);
@@ -120,7 +120,7 @@ void main() {
     });
   });
 
-  group('Minesweeper', () {
+  group('Safe Steps', () {
     test('first tap is always safe; flood fill; flags; boom', () {
       for (var seed = 0; seed < 20; seed++) {
         final g = MinesweeperLogic(random: Random(seed));
@@ -145,7 +145,7 @@ void main() {
     });
   });
 
-  group('Brick Breaker', () {
+  group('Wall Bounce', () {
     test('launch, bounce, break bricks, lose lives', () {
       final g = BrickBreakerLogic();
       g.movePaddle(0.3);
@@ -167,7 +167,7 @@ void main() {
     });
   });
 
-  group('Whack-a-Mole', () {
+  group('Bonk', () {
     test('moles pop up; whacks score; bombs cost 5 (not below 0); 30 seconds', () {
       final g = WhackLogic(random: Random(1));
       var whacked = 0;
@@ -190,7 +190,7 @@ void main() {
     });
   });
 
-  group('Piano Tiles', () {
+  group('Key Sprint', () {
     test('tap the lowest black tile; wrong lane ends it; stray taps before start are ignored', () {
       final g = PianoLogic(random: Random(1));
       final first = g.next!;
@@ -214,7 +214,7 @@ void main() {
     });
   });
 
-  group('Word Scramble', () {
+  group('Jumble Rush', () {
     test('letters are a shuffle of the word; solving scores its length; wrong resets', () {
       final g = WordScrambleLogic(random: Random(1));
       expect([...g.letters]..sort(), [...g.word.split('')]..sort());
@@ -238,7 +238,7 @@ void main() {
     });
   });
 
-  group('Stack Tower', () {
+  group('Tall Order', () {
     test('perfect drops keep the width, overhang is cut, a miss ends it', () {
       final g = StackLogic();
       g.movingLeft = g.tower.last.left; // perfectly aligned
@@ -255,7 +255,7 @@ void main() {
     });
   });
 
-  group('Simon Says', () {
+  group('Echo Pads', () {
     test('shows the pattern, then you repeat it; each round adds one; a wrong pad ends it', () {
       final g = SimonLogic(random: Random(1));
       expect(g.phase, SimonPhase.pause);

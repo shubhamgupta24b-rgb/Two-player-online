@@ -119,14 +119,14 @@ class BallSortLogic extends SoloLogic {
 
 final ballSortInfo = LocalGameInfo(
   id: 'ball_sort',
-  title: 'Ball Sort',
+  title: 'Tube Sort',
   emoji: '🧪',
   color: const Color(0xFF26A69A),
-  tagline: 'Pour the balls until every tube is one colour!',
+  tagline: "Sort the balls into tubes of one colour",
   rules: const [
     'Tap a tube, then another tube, to pour the top ball onto the same colour or into an empty tube.',
     'Fill every tube with balls of a single colour to clear the level.',
-    'Each level adds a colour. Stuck? Use UNDO or RESTART. Tap DONE to finish.',
+    'Each level adds a colour. Stuck? Use undo or restart. Tap Done to finish.',
   ],
   scoreUnit: 'levels',
   splitScreen: false,
@@ -136,7 +136,7 @@ final ballSortInfo = LocalGameInfo(
     create: () => BallSortLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: g.clearedAt != null ? '🎉 LEVEL ${g.level} CLEARED!' : '🧪 LEVEL ${g.level}',
+      title: g.clearedAt != null ? 'Level ${g.level} cleared' : 'Level ${g.level}',
       score: g.score,
       extra: '${g.moves} moves · ${g.colors} colours',
       child: Column(children: [
@@ -155,11 +155,11 @@ final ballSortInfo = LocalGameInfo(
           }),
         ),
         Row(children: [
-          Expanded(child: GpButton('↶ UNDO', color: Colors.white, onPressed: g.undo)),
+          Expanded(child: GpButton('Undo', color: Colors.white, onPressed: g.undo)),
           const SizedBox(width: 8),
-          Expanded(child: GpButton('↻ RESET', color: Colors.white, onPressed: g.restart)),
+          Expanded(child: GpButton('Reset', color: Colors.white, onPressed: g.restart)),
           const SizedBox(width: 8),
-          Expanded(child: GpButton('🏁 DONE', onPressed: g.finish)),
+          Expanded(child: GpButton('Done', onPressed: g.finish)),
         ]),
       ]),
     ),

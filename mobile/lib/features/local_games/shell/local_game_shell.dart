@@ -317,7 +317,6 @@ class _LocalGameShellState extends State<LocalGameShell> {
         if (!didPop) _openMenu();
       },
       child: Scaffold(
-        // Each game glows in its own colour (the flat app draws word games on a sky-blue board).
         body: TokenScope(
           flat: flat,
           child: GameTheme(

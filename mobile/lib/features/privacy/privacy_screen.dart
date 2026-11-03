@@ -41,7 +41,7 @@ class PrivacyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tk;
-    final ink = t.flat ? FlatPalette.ink : Colors.white;
+    final ink = t.onBg;
     return Scaffold(
       body: AppBackground(
         child: SafeArea(
@@ -56,9 +56,9 @@ class PrivacyScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: t.flat ? Colors.white : t.surface,
+                      color: t.card,
                       borderRadius: Radii.rLg,
-                      border: Border.all(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.10)),
+                      border: Border.all(color: t.stroke),
                     ),
                     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Container(
@@ -71,9 +71,9 @@ class PrivacyScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(title, style: TextStyle(fontFamily: Fonts.body, fontSize: 15.5, fontWeight: FontWeight.w900, color: ink)),
+                          Text(title, style: TextStyle(fontFamily: Fonts.body, fontSize: 15.5, fontWeight: FontWeight.w700, color: ink)),
                           const SizedBox(height: 2),
-                          Text(text, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, height: 1.4, color: t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted)),
+                          Text(text, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, height: 1.4, color: t.onBgMuted)),
                         ]),
                       ),
                     ]),

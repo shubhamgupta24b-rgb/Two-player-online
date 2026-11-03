@@ -99,13 +99,13 @@ class LudoLogic extends LocalGameLogic {
     rolls++;
     _sixes = r == 6 ? _sixes + 1 : 0;
     if (_sixes == 3) {
-      message = 'Three 6s in a row! Turn lost';
+      message = 'Three 6s in a row. Turn lost';
       _next(extra: false);
       return r;
     }
     phase = LudoPhase.move;
     if (movable.isEmpty) {
-      message = r == 6 ? 'No moves. Roll again!' : 'No moves with a $r';
+      message = r == 6 ? 'No moves. Roll again' : 'No moves with a $r';
       _next(extra: r == 6);
     } else {
       message = 'Tap a glowing token to move $r';
@@ -139,16 +139,16 @@ class LudoLogic extends LocalGameLogic {
     if (allHome(who) && (!teams || allHome(partnerOf(who)))) {
       winner = who;
       phase = LudoPhase.finished;
-      message = teams ? 'Both partners home: the team wins!' : 'All tokens home!';
+      message = teams ? 'Both partners are home. The team wins' : 'All tokens home';
       notifyListeners();
       return true;
     }
     message = captured
-        ? '💥 Captured! Roll again'
+        ? 'Captured. Roll again'
         : teams && reachedHome && who == turn && allHome(turn)
-            ? '🏠 All home! Now you move your partner\'s tokens'
+            ? 'All home. Now you move your partner\'s tokens'
             : reachedHome
-                ? '🏠 Token home! Roll again'
+                ? 'Token home. Roll again'
                 : r == 6
                     ? 'Rolled a 6: roll again'
                     : '';

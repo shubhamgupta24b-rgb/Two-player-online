@@ -74,12 +74,12 @@ class _RoomBar extends StatelessWidget implements PreferredSizeWidget {
       title: Row(children: [
         Text(game.emoji, style: const TextStyle(fontSize: 24)),
         const SizedBox(width: 10),
-        Expanded(child: Text(game.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19))),
+        Expanded(child: Text(game.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 19))),
         if (party != null)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(20)),
-            child: Text('🎉 GAME ${party.index + 1}/${party.games.length}', style: const TextStyle(color: AppColors.night, fontWeight: FontWeight.w900, fontSize: 12)),
+            child: Text('Game ${party.index + 1}/${party.games.length}', style: const TextStyle(color: AppColors.night, fontWeight: FontWeight.w700, fontSize: 12)),
           ),
       ]),
       bottom: PreferredSize(preferredSize: const Size.fromHeight(3), child: Container(height: 3, color: game.color)),
@@ -144,18 +144,18 @@ class _Results extends StatelessWidget {
       ];
     } else if (party != null && !party.done) {
       actions = [
-        GpButton('NEXT GAME (${party.index + 2}/${party.games.length}): ${gameName(party.nextGame!).toUpperCase()}',
+        GpButton('Next game (${party.index + 2}/${party.games.length}): ${gameName(party.nextGame!)}',
             icon: Icons.skip_next_rounded, color: GpColors.accent, onPressed: () => run(rm.nextGame())),
         const SizedBox(height: 8),
-        GpButton('END PARTY', outlined: true, onPressed: () => run(rm.returnToLobby())),
+        GpButton('End party', outlined: true, onPressed: () => run(rm.returnToLobby())),
       ];
     } else {
       actions = [
         if (party == null) ...[
-          GpButton('PLAY AGAIN', icon: Icons.replay_rounded, color: GpColors.accent, onPressed: () => run(rm.nextGame())),
+          GpButton('Play again', icon: Icons.replay_rounded, color: GpColors.accent, onPressed: () => run(rm.nextGame())),
           const SizedBox(height: 8),
         ],
-        GpButton(party == null ? 'CHOOSE ANOTHER GAME' : 'BACK TO THE ROOM', icon: Icons.grid_view_rounded, color: AppColors.purple, textColor: Colors.white, onPressed: () => run(rm.returnToLobby())),
+        GpButton(party == null ? 'Choose another game' : 'Back to the room', icon: Icons.grid_view_rounded, color: AppColors.purple, textColor: Colors.white, onPressed: () => run(rm.returnToLobby())),
       ];
     }
 
@@ -164,11 +164,11 @@ class _Results extends StatelessWidget {
       child: ListView(padding: const EdgeInsets.all(16), children: [
         Text(
             party?.done == true
-                ? '🏆 ${name(partyOrder.first).toUpperCase()} WINS THE PARTY!'
+                ? '${name(partyOrder.first)} wins the party'
                 : winners.length > 1 && winners.length == ranking.length
-                    ? "🤝 IT'S A DRAW!"
-                    : (winners.contains(myId) ? '🎉 YOU WIN!' : 'RESULTS'),
-            textAlign: TextAlign.center, style: const TextStyle(color: AppColors.gold, fontSize: 28, fontWeight: FontWeight.w900)),
+                    ? "It's a draw"
+                    : (winners.contains(myId) ? 'You win' : 'Results'),
+            textAlign: TextAlign.center, style: const TextStyle(color: AppColors.gold, fontSize: 28, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         for (final r in ranking)
           Container(
@@ -182,22 +182,22 @@ class _Results extends StatelessWidget {
             child: Row(children: [
               Text(switch (r['rank']) { 1 => '🥇', 2 => '🥈', 3 => '🥉', _ => '#${r['rank']}' }, style: const TextStyle(fontSize: 22, color: Colors.white)),
               const SizedBox(width: 12),
-              Expanded(child: Text('${r['username']}${r['userId'] == myId ? ' (you)' : ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16))),
-              Text('${r['score']}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+              Expanded(child: Text('${r['username']}${r['userId'] == myId ? ' (you)' : ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16))),
+              Text('${r['score']}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
               if (party?.lastPoints != null) ...[
                 const SizedBox(width: 10),
-                Text('+${party!.lastPoints![r['userId']] ?? 0} pts', style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w900)),
+                Text('+${party!.lastPoints![r['userId']] ?? 0} pts', style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w700)),
               ],
             ]),
           ),
         if (party != null) ...[
-          SectionTitle('PARTY STANDINGS · GAME ${party.index + 1} OF ${party.games.length}'),
+          SectionTitle('Party standings · Game ${party.index + 1} of ${party.games.length}'),
           for (final id in partyOrder)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 3),
               child: Row(children: [
                 Expanded(child: Text('${name(id)}${id == myId ? ' (you)' : ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
-                Text('${party.totals[id]} pts', style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w900)),
+                Text('${party.totals[id]} pts', style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w700)),
               ]),
             ),
           const SizedBox(height: 6),

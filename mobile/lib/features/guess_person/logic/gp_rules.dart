@@ -8,13 +8,13 @@ int pointsFor(RoundOutcome o) => o == RoundOutcome.correct ? 1 : 0;
 
 /// Question groups, in the order their tiles appear on the guessing screen.
 const gpCategories = [
-  GpCategory('gender', 'GENDER', '🚻'),
-  GpCategory('eyes', 'EYE COLOR', '👁️'),
-  GpCategory('hair', 'HAIR', '💇'),
-  GpCategory('hair_color', 'HAIR COLOR', '🎨'),
-  GpCategory('skin', 'SKIN TONE', '✋'),
-  GpCategory('accessories', 'ACCESSORIES', '👓'),
-  GpCategory('facial_hair', 'FACIAL HAIR', '🧔'),
+  GpCategory('gender', 'Gender', '🚻'),
+  GpCategory('eyes', 'Eye color', '👁️'),
+  GpCategory('hair', 'Hair', '💇'),
+  GpCategory('hair_color', 'Hair color', '🎨'),
+  GpCategory('skin', 'Skin tone', '✋'),
+  GpCategory('accessories', 'Accessories', '👓'),
+  GpCategory('facial_hair', 'Facial hair', '🧔'),
 ];
 
 const _eyeOrder = ['brown', 'blue', 'green'];
@@ -32,28 +32,28 @@ List<String> _distinct(Iterable<String> values, List<String> order) {
 /// cannot split the board (everyone yes, or everyone no) are dropped.
 List<GpQuestion> buildQuestions(List<Person> people) {
   final all = <GpQuestion>[
-    GpQuestion('male', 'MALE', 'Is the person male?', (p) => p.gender == Gender.male, category: 'gender'),
-    GpQuestion('female', 'FEMALE', 'Is the person female?', (p) => p.gender == Gender.female, category: 'gender'),
+    GpQuestion('male', 'Male', 'Is the person male?', (p) => p.gender == Gender.male, category: 'gender'),
+    GpQuestion('female', 'Female', 'Is the person female?', (p) => p.gender == Gender.female, category: 'gender'),
     for (final c in _distinct(people.map((p) => p.eyeColor), _eyeOrder))
-      GpQuestion('eyes_$c', c.toUpperCase(), 'Does the person have $c eyes?', (p) => p.eyeColor == c, category: 'eyes'),
-    GpQuestion('long_hair', 'LONG', 'Does the person have long hair?', (p) => p.hasLongHair, category: 'hair'),
-    GpQuestion('short_hair', 'SHORT', 'Does the person have short hair?', (p) => p.hasShortHair, category: 'hair'),
-    GpQuestion('curly', 'CURLY', 'Does the person have curly hair?', (p) => p.hairStyle == 'curly', category: 'hair'),
-    GpQuestion('bun', 'BUN', 'Is the person\'s hair in a bun?', (p) => p.hairStyle == 'bun', category: 'hair'),
-    GpQuestion('spiky', 'SPIKY', 'Does the person have spiky hair?', (p) => p.hairStyle == 'spiky', category: 'hair'),
-    GpQuestion('bald', 'BALD', 'Is the person bald?', (p) => p.isBald, category: 'hair'),
+      GpQuestion('eyes_$c', c[0].toUpperCase() + c.substring(1), 'Does the person have $c eyes?', (p) => p.eyeColor == c, category: 'eyes'),
+    GpQuestion('long_hair', 'Long', 'Does the person have long hair?', (p) => p.hasLongHair, category: 'hair'),
+    GpQuestion('short_hair', 'Short', 'Does the person have short hair?', (p) => p.hasShortHair, category: 'hair'),
+    GpQuestion('curly', 'Curly', 'Does the person have curly hair?', (p) => p.hairStyle == 'curly', category: 'hair'),
+    GpQuestion('bun', 'Bun', 'Is the person\'s hair in a bun?', (p) => p.hairStyle == 'bun', category: 'hair'),
+    GpQuestion('spiky', 'Spiky', 'Does the person have spiky hair?', (p) => p.hairStyle == 'spiky', category: 'hair'),
+    GpQuestion('bald', 'Bald', 'Is the person bald?', (p) => p.isBald, category: 'hair'),
     // Bald people have no hair colour to ask about.
     for (final c in _distinct(people.where((p) => !p.isBald).map((p) => p.hairColor), _hairOrder))
-      GpQuestion('hair_$c', c.toUpperCase(), 'Does the person have $c hair?', (p) => !p.isBald && p.hairColor == c, category: 'hair_color'),
+      GpQuestion('hair_$c', c[0].toUpperCase() + c.substring(1), 'Does the person have $c hair?', (p) => !p.isBald && p.hairColor == c, category: 'hair_color'),
     for (final c in _distinct(people.map((p) => p.skinTone), _skinOrder))
-      GpQuestion('skin_$c', c.toUpperCase(), 'Does the person have $c skin?', (p) => p.skinTone == c, category: 'skin'),
-    GpQuestion('glasses', 'GLASSES', 'Does the person wear glasses?', (p) => p.hasGlasses, category: 'accessories'),
-    GpQuestion('hat', 'HAT', 'Is the person wearing a hat or cap?', (p) => p.hasHat, category: 'accessories'),
-    GpQuestion('acc_earrings', 'EARRINGS', 'Is the person wearing earrings?', (p) => p.accessory == 'earrings', category: 'accessories'),
-    GpQuestion('acc_necklace', 'NECKLACE', 'Is the person wearing a necklace?', (p) => p.accessory == 'necklace', category: 'accessories'),
-    GpQuestion('acc_bowtie', 'BOW TIE', 'Is the person wearing a bow tie?', (p) => p.accessory == 'bowtie', category: 'accessories'),
-    GpQuestion('beard', 'BEARD', 'Does the person have a beard?', (p) => p.hasBeard, category: 'facial_hair'),
-    GpQuestion('mustache', 'MUSTACHE', 'Does the person have a mustache?', (p) => p.hasMustache, category: 'facial_hair'),
+      GpQuestion('skin_$c', c[0].toUpperCase() + c.substring(1), 'Does the person have $c skin?', (p) => p.skinTone == c, category: 'skin'),
+    GpQuestion('glasses', 'Glasses', 'Does the person wear glasses?', (p) => p.hasGlasses, category: 'accessories'),
+    GpQuestion('hat', 'Hat', 'Is the person wearing a hat or cap?', (p) => p.hasHat, category: 'accessories'),
+    GpQuestion('acc_earrings', 'Earrings', 'Is the person wearing earrings?', (p) => p.accessory == 'earrings', category: 'accessories'),
+    GpQuestion('acc_necklace', 'Necklace', 'Is the person wearing a necklace?', (p) => p.accessory == 'necklace', category: 'accessories'),
+    GpQuestion('acc_bowtie', 'Bow tie', 'Is the person wearing a bow tie?', (p) => p.accessory == 'bowtie', category: 'accessories'),
+    GpQuestion('beard', 'Beard', 'Does the person have a beard?', (p) => p.hasBeard, category: 'facial_hair'),
+    GpQuestion('mustache', 'Mustache', 'Does the person have a mustache?', (p) => p.hasMustache, category: 'facial_hair'),
   ];
   return all.where((q) {
     final yes = people.where(q.test).length;

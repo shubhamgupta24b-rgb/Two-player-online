@@ -130,12 +130,12 @@ class GalleryLogic extends LocalGameLogic {
 
 final galleryInfo = LocalGameInfo(
   id: 'shooting_gallery',
-  title: 'Shooting Gallery',
+  title: 'Duck Alley',
   emoji: '🔫',
   color: const Color(0xFFC62828),
-  tagline: 'Pop the ducks, dodge the bombs!',
+  tagline: "Hit the ducks and avoid the bombs",
   rules: const [
-    'Tap a target to shoot it: 🦆 10, 🐰 20, ⭐ 50. Shooting a 💣 costs 30!',
+    'Tap a target to shoot it: 10, 20, 50. Shooting a costs 30',
     '6 shots, then a short reload. Each player gets 20 seconds at the gallery.',
     'Two turns each, one after another. Most points wins. 1 to 4 players.',
   ],
@@ -245,12 +245,12 @@ class _GalleryView extends StatelessWidget {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(20), border: Border.all(color: current.color, width: 3)),
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      Text('ROUND ${g.round}/${GalleryLogic.rounds}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800, letterSpacing: 2)),
+                      Text('Round ${g.round}/${GalleryLogic.rounds}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
-                      Text('${current.whose} TURN', style: TextStyle(color: current.color, fontSize: 24, fontWeight: FontWeight.w900)),
+                      Text('${current.whose} turn', style: TextStyle(color: current.color, fontSize: 24, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 12),
                       if (_mine)
-                        AppButton('🔫 START', color: current.color, onPressed: () => g.begin(g.turn))
+                        AppButton('Start', color: current.color, onPressed: () => g.begin(g.turn))
                       else
                         Text('${current.name} is getting ready…', style: const TextStyle(color: Colors.white70)),
                     ]),
@@ -267,7 +267,7 @@ class _GalleryView extends StatelessWidget {
             excludeSemantics: true,
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               if (g.reloading)
-                Text('RELOADING…', style: context.tk.styles.title.copyWith(color: Brand.gold, fontSize: 16, letterSpacing: 2))
+                Text('Reloading…', style: context.tk.styles.title.copyWith(color: Brand.gold, fontSize: 16))
               else
                 for (var i = 0; i < GalleryLogic.clip; i++)
                   Padding(
@@ -296,7 +296,7 @@ class _GalleryPainter extends CustomPainter {
 
   static final _cache = <String, TextPainter>{};
   static TextPainter _t(String s, double size, [Color color = Colors.white]) => _cache.putIfAbsent('$s$size$color',
-      () => TextPainter(text: TextSpan(text: s, style: TextStyle(fontSize: size, color: color, fontWeight: FontWeight.w900)), textDirection: TextDirection.ltr)..layout());
+      () => TextPainter(text: TextSpan(text: s, style: TextStyle(fontSize: size, color: color, fontWeight: FontWeight.w700)), textDirection: TextDirection.ltr)..layout());
 
   @override
   void paint(Canvas canvas, Size size) {

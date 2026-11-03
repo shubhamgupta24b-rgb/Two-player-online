@@ -26,10 +26,10 @@ class CrushItLogic extends TimedDuel {
 
 final crushItInfo = LocalGameInfo(
   id: 'crush_it',
-  title: 'Crush It',
+  title: 'Thumb War',
   emoji: '👊',
   color: const Color(0xFFFF6B6B),
-  tagline: 'Tap faster than your friend!',
+  tagline: "Score points by tapping faster than your opponent",
   rules: const ['Smash your zone of the screen as fast as you can.', 'Every tap counts for 10 seconds.', 'Most taps wins. 2 to 6 players.'],
   scoreUnit: 'taps',
   splitScreen: true,
@@ -80,7 +80,7 @@ class _CrushHalf extends StatelessWidget {
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(player.name.toUpperCase(), style: TextStyle(color: player.color, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.5)),
+          Text(player.name, style: TextStyle(color: player.color, fontWeight: FontWeight.w700, fontSize: 16)),
           const SizedBox(height: 8),
           // Restarting the tween on every tap makes the fist "punch".
           TweenAnimationBuilder<double>(
@@ -101,8 +101,8 @@ class _CrushHalf extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Text('$taps', style: const TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w900, height: 1)),
-          Text(done ? 'TIME!' : 'TAP! TAP! TAP!', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+          Text('$taps', style: const TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w700, height: 1)),
+          Text(done ? 'Time' : 'Tap tap tap', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w600)),
           ]),
         ),
       ),

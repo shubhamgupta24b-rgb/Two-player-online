@@ -321,7 +321,7 @@ class SoundControls extends StatelessWidget {
       builder: (context, s, _) {
         final muted = context.tk.textMuted;
         return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          SettingSwitch(emoji: '🎵', label: 'Music', value: s.music, color: color, onChanged: (v) => GameAudio.update(s.copyWith(music: v))),
+          SettingSwitch(icon: GameIcons.sound, label: 'Music', value: s.music, color: color, onChanged: (v) => GameAudio.update(s.copyWith(music: v))),
           if (s.music)
             Row(children: [
               SizedBox(width: 34, child: Icon(Icons.volume_down_rounded, color: muted, size: 20)),
@@ -337,7 +337,7 @@ class SoundControls extends StatelessWidget {
               Icon(Icons.volume_up_rounded, color: muted, size: 20),
             ]),
           SettingSwitch(
-            emoji: '🔊',
+            icon: GameIcons.sound,
             label: 'Sound effects',
             value: s.sfx,
             color: color,

@@ -57,10 +57,10 @@ class DotsBoxesLogic extends LocalGameLogic {
 
 final dotsBoxesInfo = LocalGameInfo(
   id: 'dots_boxes',
-  title: 'Dots & Boxes',
+  title: 'Box Grab',
   emoji: '🔲',
   color: const Color(0xFF7B4DFF),
-  tagline: 'Close the box, steal the board!',
+  tagline: "Join dots to complete more boxes than your opponent",
   rules: const [
     'Take turns tapping between two dots to draw a line.',
     'Close the fourth side of a box to claim it, then draw again.',
@@ -148,18 +148,18 @@ class _DotsTable extends StatelessWidget {
       value: claimed,
       onChange: (fx, before, now) {
         if (now <= before || g.finished) return;
-        keyMoment(fx, now - before > 1 ? 'DOUBLE BOX!' : 'BOX!', sub: 'Go again', sound: 'coin');
+        keyMoment(fx, now - before > 1 ? 'Double box' : 'Box', sub: 'Go again', sound: 'coin');
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.l),
         child: Column(children: [
           ScoreHud(
-            title: 'Dots & Boxes',
+            title: 'Box Grab',
             state: g.finished ? 'Board complete' : '${players[g.turn].name} · ${g.totalLines - g.drawn} lines left',
             players: players,
             turn: g.finished ? null : g.turn,
             score: (i) => '${scores[i]}',
-            tag: (i) => !g.finished && i == g.turn ? 'YOUR LINE' : null,
+            tag: (i) => !g.finished && i == g.turn ? 'Your line' : null,
           ),
           const SizedBox(height: Space.m),
           Expanded(

@@ -20,7 +20,7 @@ void main() {
     expect(voteWinner([null, null]), -1);
   });
 
-  group('Find the Spy', () {
+  group('Odd Agent', () {
     FindSpyLogic revealed(int seed, [int n = 4]) {
       final g = FindSpyLogic(players: n, random: Random(seed));
       for (var i = 0; i < n; i++) {
@@ -92,7 +92,7 @@ void main() {
     });
   });
 
-  group('Undercover', () {
+  group('Odd Word Out', () {
     test('one player has the other word; voting out civilians to the last two: undercover wins', () {
       final g = UndercoverLogic(players: 4, random: Random(1));
       final words = [for (var i = 0; i < 4; i++) g.wordFor(i)];
@@ -131,7 +131,7 @@ void main() {
     });
   });
 
-  group('Mafia', () {
+  group('Nightfall', () {
     MafiaLogic start(int n, int seed) {
       final g = MafiaLogic(players: n, random: Random(seed));
       for (var i = 0; i < n; i++) {
@@ -246,7 +246,7 @@ void main() {
     });
   });
 
-  group('Draw & Guess', () {
+  group('Sketch Panic', () {
     test('drawing, typed guesses (wrong ones listed, right one scores both), turns end', () {
       final g = DrawGuessLogic(players: 3, random: Random(1));
       expect(g.turnsEach, 2);
@@ -312,7 +312,7 @@ void main() {
     });
   });
 
-  group('Hand Cricket', () {
+  group('Gully Fingers', () {
     test('runs unless the numbers match; innings swap; the chase', () {
       final g = HandCricketLogic(showMs: 10);
       g.pick(0, 4);
@@ -341,7 +341,7 @@ void main() {
     });
   });
 
-  group('Quiz Battle', () {
+  group('Buzzer Brawl', () {
     test('bank is well formed; first right answer scores; wrong answers lock you out', () {
       for (final (_, q, a, wrong) in quizBank) {
         expect(q, isNotEmpty);

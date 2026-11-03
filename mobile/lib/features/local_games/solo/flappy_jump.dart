@@ -69,14 +69,14 @@ class FlappyLogic extends SoloLogic {
 
 final flappyInfo = LocalGameInfo(
   id: 'flappy_jump',
-  title: 'Flappy Jump',
+  title: 'Flap Gap',
   emoji: '🐦',
   color: const Color(0xFF4FC3F7),
-  tagline: 'Tap, flap, don\'t crash!',
+  tagline: "Tap to fly through the gaps",
   rules: const [
     'Tap anywhere to flap your wings and fly up.',
     'Fly through the gaps between the pipes. Each one is a point.',
-    'Touch a pipe or the ground and it\'s over!',
+    'Touch a pipe or the ground and it\'s over',
   ],
   scoreUnit: 'pipes',
   splitScreen: false,
@@ -86,7 +86,7 @@ final flappyInfo = LocalGameInfo(
     create: () => FlappyLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🐦 FLAPPY JUMP',
+      title: 'Flap Gap',
       score: g.score,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -145,7 +145,7 @@ class _FlappyPainter extends CustomPainter {
     canvas.restore();
     if (!g.started) {
       final tp = TextPainter(
-        text: const TextSpan(text: 'TAP TO FLY', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 28, shadows: [Shadow(color: Colors.black45, offset: Offset(0, 2))])),
+        text: const TextSpan(text: 'Tap to fly', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 28, shadows: [Shadow(color: Colors.black45, offset: Offset(0, 2))])),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, Offset((size.width - tp.width) / 2, size.height * 0.3));

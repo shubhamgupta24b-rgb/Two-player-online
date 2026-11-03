@@ -92,14 +92,14 @@ class Game2048Logic extends SoloLogic {
 
 final game2048Info = LocalGameInfo(
   id: 'game_2048',
-  title: '2048',
+  title: 'Double Up',
   emoji: '🔢',
   color: const Color(0xFFEDC22E),
-  tagline: 'Merge the tiles, reach 2048!',
+  tagline: "Merge matching tiles to reach 2048",
   rules: const [
     'Swipe up, down, left or right to slide every tile.',
     'Two tiles with the same number merge into one: 2+2=4, 4+4=8…',
-    'A new tile appears after every move. Keep going until no move is left!',
+    'A new tile appears after every move. Keep going until no move is left',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -109,9 +109,9 @@ final game2048Info = LocalGameInfo(
     create: () => Game2048Logic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🔢 2048',
+      title: 'Double Up',
       score: g.score,
-      extra: 'BEST TILE ${g.best}',
+      extra: 'Best tile ${g.best}',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onPanEnd: (d) {
@@ -121,7 +121,7 @@ final game2048Info = LocalGameInfo(
         child: Column(children: [
           Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Board(g: g)))),
           const SizedBox(height: 8),
-          Text(g.over ? 'No moves left!' : 'Swipe to move the tiles', style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.w800)),
+          Text(g.over ? 'No moves left' : 'Swipe to move the tiles', style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.w600)),
         ]),
       ),
     ),
@@ -182,7 +182,7 @@ class _Board extends StatelessWidget {
                       : Padding(
                           padding: const EdgeInsets.all(6),
                           child: FittedBox(
-                            child: Text('${g.grid[i]}', style: TextStyle(color: g.grid[i] <= 4 ? const Color(0xFF776E65) : Colors.white, fontWeight: FontWeight.w900, fontSize: 30)),
+                            child: Text('${g.grid[i]}', style: TextStyle(color: g.grid[i] <= 4 ? const Color(0xFF776E65) : Colors.white, fontWeight: FontWeight.w700, fontSize: 30)),
                           ),
                         ),
                 ),

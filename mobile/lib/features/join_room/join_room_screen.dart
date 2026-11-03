@@ -70,7 +70,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 480),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                      Center(child: GameIcon(GameIcons.lock, size: 52, color: t.flat ? FlatPalette.ink : Brand.gold)),
+                      Center(child: GameIcon(GameIcons.lock, size: 52, color: (t.flat ? Brand.goldDeep : Brand.gold))),
                       const SizedBox(height: 10),
                       Text('Ask the host for the 6-letter code on their screen', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
                       const SizedBox(height: 20),
@@ -94,16 +94,16 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
                                   liveRegion: true,
                                   child: Text(_error!,
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w900, color: t.flat ? FlatPalette.close : const Color(0xFFFF8E8B))),
+                                      style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: t.flat ? FlatPalette.close : const Color(0xFFFF8E8B))),
                                 ),
                               ),
                       ),
                       const SizedBox(height: 24),
                       GoldButton(busy ? 'Joining…' : 'Join room', icon: GameIcons.forward, height: 58, onPressed: _complete && !busy ? _join : null),
                       const SizedBox(height: 24),
-                      const _Tip(icon: GameIcons.wifi, text: 'Everyone plays on the same server: online, or the same Wi-Fi host.'),
+                      const _Tip(icon: GameIcons.wifi, text: 'Everyone connects the same way, online or through the same Wi-Fi host.'),
                       const SizedBox(height: 8),
-                      const _Tip(icon: GameIcons.restart, text: 'The host picks the games: you stay in the room between rounds.'),
+                      const _Tip(icon: GameIcons.restart, text: 'The host picks the games. You stay in the room between rounds.'),
                     ]),
                   ),
                 ),
@@ -129,8 +129,8 @@ class _CodeBoxes extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = ctrl.text;
     final t = context.tk;
-    final ink = t.flat ? FlatPalette.ink : Colors.white;
-    final gold = t.flat ? FlatPalette.ink : Brand.gold;
+    final ink = t.onBg;
+    final gold = (t.flat ? Brand.goldDeep : Brand.gold);
     final red = t.flat ? FlatPalette.close : const Color(0xFFFF5E5B);
     return LayoutBuilder(builder: (context, c) {
       final box = ((c.maxWidth - 5 * 8) / _codeLength).clamp(36.0, 58.0);
@@ -147,12 +147,12 @@ class _CodeBoxes extends StatelessWidget {
                   height: box * 1.2,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: t.flat ? Colors.white : (i < text.length ? Brand.gold.withValues(alpha: 0.14) : Colors.white.withValues(alpha: 0.10)),
+                    color: t.flat ? FlatPalette.surface : (i < text.length ? Brand.gold.withValues(alpha: 0.14) : Colors.white.withValues(alpha: 0.10)),
                     borderRadius: Radii.rCard,
                     border: Border.all(
                       color: error
                           ? red
-                          : (i == text.length && focus.hasFocus ? gold : (i < text.length ? gold.withValues(alpha: 0.6) : (t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14)))),
+                          : (i == text.length && focus.hasFocus ? gold : (i < text.length ? gold.withValues(alpha: 0.6) : (t.stroke))),
                       width: 2,
                     ),
                   ),
@@ -197,10 +197,10 @@ class _Tip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tk;
-    final muted = t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted;
+    final muted = t.onBgMuted;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: t.flat ? Colors.white : t.surface, borderRadius: Radii.rChip, border: Border.all(color: t.flat ? FlatPalette.stroke : t.stroke)),
+      decoration: BoxDecoration(color: t.card, borderRadius: Radii.rChip, border: Border.all(color: t.stroke)),
       child: Row(children: [
         GameIcon(icon, size: 18, color: muted),
         const SizedBox(width: 10),

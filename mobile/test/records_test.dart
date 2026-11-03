@@ -37,10 +37,10 @@ void main() {
     });
     await tester.pumpWidget(ChangeNotifierProvider(create: (_) => AuthenticationManager(), child: const MaterialApp(home: RecordsScreen())));
     await tester.pumpAndSettle();
-    expect(find.text('Fruit Merge'), findsOneWidget);
+    expect(find.text('Juicebox'), findsOneWidget);
     expect(find.text('340'), findsOneWidget);
-    expect(find.text('Bingo'), findsOneWidget);
-    expect(find.text('played 3 · wins 2'), findsOneWidget);
+    expect(find.text('Line Caller'), findsOneWidget);
+    expect(find.text('Played 3 · 2 wins'), findsOneWidget);
     expect(find.bySemanticsLabel('8 games'), findsOneWidget, reason: 'games played in total');
     expect(find.bySemanticsLabel('2 wins'), findsOneWidget);
   });

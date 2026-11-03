@@ -22,7 +22,7 @@ class BattleshipLogic extends LocalGameLogic {
   final List<Set<int>> shots = [{}, {}]; // shots[p] = cells player p fired at (on the other sea)
   int turn = 0;
   int? lastShot;
-  String message = 'Fire at the enemy sea!';
+  String message = 'Fire at the enemy sea';
   int revealedFor = -1; // one phone: whose view is uncovered (not part of the online state)
 
   BattleshipLogic({Random? random}) : ships = [randomFleet(random ?? Random()), randomFleet(random ?? Random())];
@@ -72,12 +72,12 @@ class BattleshipLogic extends LocalGameLogic {
     final target = other(turn);
     final ship = ships[target].where((s) => s.contains(cell)).firstOrNull;
     if (ship == null) {
-      message = '💦 Miss!';
+      message = 'Miss';
       turn = target;
     } else if (sunk(target, ship)) {
-      message = finished ? '🚢 Whole fleet sunk!' : '💥 Sunk a ship of ${ship.length}! Fire again';
+      message = finished ? 'Whole fleet sunk' : 'Sunk a ship of ${ship.length}. Fire again';
     } else {
-      message = '🔥 Hit! Fire again';
+      message = 'Hit. Fire again';
     }
     notifyListeners();
     return true;
@@ -130,14 +130,14 @@ int battleshipBotPick(BattleshipLogic g, int me, Random rng) {
 
 final battleshipInfo = LocalGameInfo(
   id: 'battleship',
-  title: 'Battleship',
+  title: 'Hidden Fleet',
   emoji: '🚢',
   color: const Color(0xFF1E88E5),
-  tagline: 'Find their fleet before they find yours!',
+  tagline: "Find and sink your opponent's ships",
   rules: const [
     'Each of you has a hidden fleet of 5 ships on an 8×8 sea.',
     'On your turn, tap a square of the enemy sea to fire. Hit = fire again, miss = their turn.',
-    'Sink every enemy ship to win!',
+    'Sink every enemy ship to win',
     'On one phone, pass it over between turns and don\'t peek at the other fleet.',
   ],
   scoreUnit: 'wins',
@@ -214,22 +214,22 @@ class _BattleTable extends StatelessWidget {
     ResultScope.of(context)?.subtitle = winner == null ? null : '${g.shipsLeft(winner)} of ${BattleshipLogic.fleet.length} ships still afloat';
     final m = stripEmoji(g.message);
     final Widget banner = g.finished
-        ? TurnBanner(text: '${players[winner!].name} wins!', sub: 'Whole fleet sunk', color: players[winner].color, kind: TurnBannerKind.success, icon: GameIcons.trophy, compact: true)
+        ? TurnBanner(text: '${players[winner!].name} wins', sub: 'Whole fleet sunk', color: players[winner].color, kind: TurnBannerKind.success, icon: GameIcons.trophy, compact: true)
         : g.message.contains('Miss')
             ? TurnBanner(text: 'Miss', sub: myTurn ? 'Pass the phone' : '${current.name} is aiming…', color: current.color, kind: TurnBannerKind.miss, compact: true)
             : (g.message.contains('Hit') || g.message.contains('Sunk'))
                 ? TurnBanner(text: m.split('!').first, sub: 'Fire again', color: current.color, kind: TurnBannerKind.success, icon: GameIcons.target, compact: true)
-                : TurnBanner(text: myTurn ? (passing ? '${possessive(current.name)} turn: fire!' : 'Your turn: fire!') : '${current.name} is aiming…', sub: 'Tap a square on the enemy sea', color: current.color, compact: true);
+                : TurnBanner(text: myTurn ? (passing ? '${possessive(current.name)} turn. Fire' : 'Your turn. Fire') : '${current.name} is aiming…', sub: 'Tap a square on the enemy sea', color: current.color, compact: true);
     return MomentWatcher<int>(
       value: g.shots[0].length + g.shots[1].length,
       onChange: (fx, before, now) {
         if (now <= before) return;
         if (g.message.contains('Sunk') || g.message.contains('Whole fleet')) {
-          keyMoment(fx, 'SUNK!', sub: g.message.contains('Whole') ? 'The whole fleet' : 'A ship goes down', sound: 'boom', buzz: HapticWeight.heavy, shake: true);
+          keyMoment(fx, 'Sunk', sub: g.message.contains('Whole') ? 'The whole fleet' : 'A ship goes down', sound: 'boom', buzz: HapticWeight.heavy, shake: true);
         } else if (g.message.contains('Hit')) {
-          keyMoment(fx, 'HIT!', sub: 'Fire again', sound: 'hit', buzz: HapticWeight.heavy, shake: true);
+          keyMoment(fx, 'Hit', sub: 'Fire again', sound: 'hit', buzz: HapticWeight.heavy, shake: true);
         } else {
-          fx?.pop('MISS', color: Colors.white);
+          fx?.pop('Miss', color: Colors.white);
         }
       },
       child: Stack(children: [
@@ -237,12 +237,12 @@ class _BattleTable extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.s),
           child: Column(children: [
             ScoreHud(
-              title: 'Battleship',
+              title: 'Hidden Fleet',
               state: g.finished ? 'Game over' : '${possessive(current.name)} shot',
               players: players,
               turn: g.finished ? null : g.turn,
               score: (i) => '${g.shipsLeft(i)}',
-              tag: (i) => !g.finished && i == g.turn ? 'FIRING' : null,
+              tag: (i) => !g.finished && i == g.turn ? 'Firing' : null,
               detail: (i, compact) => Pips(filled: g.shipsLeft(i), total: BattleshipLogic.fleet.length, color: players[i].color, size: 10),
             ),
             const SizedBox(height: 6),
@@ -263,7 +263,7 @@ class _BattleTable extends StatelessWidget {
             Expanded(flex: 2, child: Center(child: AspectRatio(aspectRatio: 1, child: _Sea(g: g, owner: viewer, showShips: true)))),
           ]),
         ),
-        if (covered) PassCover(player: current, holdLabel: 'Hold to see your sea', note: 'No peeking at the other fleet!', onReveal: () => g.reveal(g.turn)),
+        if (covered) PassCover(player: current, holdLabel: 'Hold to see your sea', note: 'No peeking at the other fleet', onReveal: () => g.reveal(g.turn)),
       ]),
     );
   }
@@ -280,7 +280,7 @@ class _SeaLabel extends StatelessWidget {
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           GameIcon(icon, size: 14, color: nameColor(color)),
           const SizedBox(width: 6),
-          Flexible(child: Text(text.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: context.tk.styles.label.copyWith(color: nameColor(color)))),
+          Flexible(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: context.tk.styles.label.copyWith(color: nameColor(color)))),
         ]),
       );
 }

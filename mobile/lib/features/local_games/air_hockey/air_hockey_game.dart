@@ -123,10 +123,10 @@ class AirHockeyLogic extends TimedDuel {
 
 final airHockeyInfo = LocalGameInfo(
   id: 'air_hockey',
-  title: 'Air Hockey',
+  title: 'Puck Rush',
   emoji: '🏒',
   color: const Color(0xFF4D96FF),
-  tagline: 'Smash the puck into their goal!',
+  tagline: "Hit the puck into your opponent's goal",
   rules: const [
     'Drag your mallet around your half of the table.',
     'Hit the puck into the goal at the far end.',
@@ -324,7 +324,7 @@ class _TablePainter extends CustomPainter {
     }
     if (g.paused && g.lastGoalBy != null) {
       final tp = TextPainter(
-        text: const TextSpan(text: 'GOAL!', style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 3))])),
+        text: const TextSpan(text: 'Goal', style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w700, shadows: [Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 3))])),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, table.center - Offset(tp.width / 2, tp.height / 2));

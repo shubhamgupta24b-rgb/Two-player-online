@@ -26,9 +26,9 @@ Future<void> shoot(WidgetTester tester, String id, String name) async {
   await tester.ensureVisible(find.text('👤 TAKE TURNS'));
   await tester.pump();
   await snap(tester, key, '${name}1intro_turn');
-  await tapText(tester, 'PLAY');
+  await tapText(tester, 'Play');
   await snap(tester, key, '${name}2pass_turn');
-  await tapText(tester, 'START');
+  await tapText(tester, 'Start');
   for (var i = 0; i < 10; i++) {
     await tester.tapAt(Offset(80.0 + (i % 5) * 60, 500));
     await tester.pump(const Duration(milliseconds: 500));

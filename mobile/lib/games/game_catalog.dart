@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../features/local_games/local_games_hub_screen.dart';
 
 enum GameCategory {
-  cards('CARDS'),
-  board('BOARD'),
-  action('ACTION'),
-  party('PARTY');
+  cards('Cards'),
+  board('Board'),
+  action('Action'),
+  party('Party');
 
   final String label;
   const GameCategory(this.label);
@@ -44,7 +44,7 @@ GameInfo _local(String id, GameCategory category, {int? max}) {
 
 final List<GameInfo> gameCatalog = [
   _local('colour_clash', GameCategory.cards),
-  const GameInfo('raja_mantri', 'Raja Mantri Chor Sipahi',
+  const GameInfo('raja_mantri', 'Chit Court',
       playable: true, minPlayers: 4, maxPlayers: 4, emoji: '👑', color: Color(0xFF8A1C3A), tagline: 'Can the Mantri catch the Chor?', category: GameCategory.cards),
   _local('ludo', GameCategory.board),
   _local('ludo_teams', GameCategory.board),
@@ -56,7 +56,7 @@ final List<GameInfo> gameCatalog = [
   _local('connect_four', GameCategory.board),
   _local('tic_tac_toe', GameCategory.board),
   _local('memory', GameCategory.board, max: 4),
-  const GameInfo('guess_who', 'Guess Who',
+  const GameInfo('guess_who', 'Face Hunt Duel',
       playable: true, maxPlayers: 2, emoji: '🕵️', color: Color(0xFFE0A800), tagline: 'Ask yes/no questions, find their person', category: GameCategory.board),
   _local('air_hockey', GameCategory.action),
   _local('ping_pong', GameCategory.action),

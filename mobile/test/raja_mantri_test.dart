@@ -140,9 +140,9 @@ void main() {
         addTearDown(tester.view.reset);
         await tester.pumpWidget(const MaterialApp(home: LocalGamesHubScreen()));
         expect(find.text('$totalGameCount games'), findsOneWidget);
-        await tester.ensureVisible(find.text('Raja Mantri Chor Sipahi'));
+        await tester.ensureVisible(find.text('Chit Court'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Raja Mantri Chor Sipahi'));
+        await tester.tap(find.text('Chit Court'));
         await tester.pumpAndSettle();
 
         // Small phones: the name fields start below the fold.
@@ -156,13 +156,13 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
         expect(find.text('Round 1 / 20'), findsOneWidget);
-        expect(find.text('SHUFFLING…'), findsOneWidget);
+        expect(find.text('Shuffling…'), findsOneWidget);
         await tester.pump(const Duration(milliseconds: 2400));
 
         // Each player peeks in turn.
         expect(find.text('Pass the phone to Asha'), findsOneWidget);
         for (var i = 0; i < 4; i++) {
-          await tester.tap(find.text('TAP TO REVEAL'));
+          await tester.tap(find.text('Tap to reveal'));
           await flip(tester);
           expect(find.textContaining('Remember your card'), findsOneWidget);
           await tester.tap(find.textContaining('Hide card'));
@@ -170,22 +170,22 @@ void main() {
         }
 
         // Raja, then Mantri.
-        expect(find.textContaining('is the RAJA!'), findsWidgets);
-        expect(find.text('RAJA'), findsOneWidget);
+        expect(find.textContaining('is the Raja'), findsWidgets);
+        expect(find.text('Raja'), findsWidgets);
         await tester.pump(const Duration(milliseconds: 1200));
         await flip(tester); // flip
-        expect(find.text('MANTRI'), findsOneWidget);
-        expect(find.text('CHOR'), findsNothing, reason: 'Chor still hidden');
-        await tester.tap(find.text('Mantri: find the Chor (10s)'));
+        expect(find.text('Mantri'), findsOneWidget);
+        expect(find.text('Chor'), findsNothing, reason: 'Chor still hidden');
+        await tester.tap(find.text('Mantri, find the Chor in 10 seconds'));
         await tester.pump(const Duration(milliseconds: 300));
-        expect(find.textContaining('who is the CHOR?'), findsOneWidget);
-        expect(find.text('TAP TO ACCUSE'), findsNWidgets(2));
+        expect(find.textContaining('who is the Chor?'), findsOneWidget);
+        expect(find.text('Tap to accuse'), findsNWidgets(2));
 
-        await tester.tap(find.text('TAP TO ACCUSE').first);
+        await tester.tap(find.text('Tap to accuse').first);
         await tester.pump(const Duration(milliseconds: 1500));
-        final caught = find.text('Chor caught!').evaluate().isNotEmpty;
-        expect(caught || find.text('Wrong guess: Chor escaped!').evaluate().isNotEmpty, isTrue);
-        expect(find.text('CHOR'), findsOneWidget, reason: 'all cards revealed');
+        final caught = find.text('Chor caught').evaluate().isNotEmpty;
+        expect(caught || find.text('Wrong guess. The Chor escaped').evaluate().isNotEmpty, isTrue);
+        expect(find.text('Chor'), findsOneWidget, reason: 'all cards revealed');
         expect(find.text('+1000'), findsOneWidget);
         expect(find.text('1000 pts'), findsOneWidget);
         await tester.tap(find.text('Next round (2/20)'));
@@ -202,7 +202,7 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(const MaterialApp(home: RmcsMenuScreen()));
-      expect(find.text('4 PLAYERS · 20 ROUNDS · ONE PHONE'), findsOneWidget, reason: 'default');
+      expect(find.text('4 players · 20 rounds · One phone'), findsOneWidget, reason: 'default');
       await tester.scrollUntilVisible(find.text('5'), 200, scrollable: find.byType(Scrollable).first);
       await tester.tap(find.text('5'));
       await tester.pump();
@@ -226,17 +226,17 @@ void main() {
       expect(find.text('10'), findsOneWidget, reason: 'countdown');
       clock = 10000;
       await tester.pump(const Duration(milliseconds: 200));
-      expect(find.text('Wrong guess: Chor escaped!'), findsOneWidget);
-      expect(find.text("Time's up! The Mantri didn't choose."), findsOneWidget);
+      expect(find.text('Wrong guess. The Chor escaped'), findsOneWidget);
+      expect(find.text("Time's up. The Mantri didn't choose."), findsOneWidget);
       await tester.tap(find.text('See final results'));
       await tester.pump(const Duration(milliseconds: 500));
-      expect(find.textContaining(' wins!', findRichText: true).evaluate().isNotEmpty || find.text("It's a draw!").evaluate().isNotEmpty, isTrue);
+      expect(find.textContaining(' wins', findRichText: true).evaluate().isNotEmpty || find.text("It's a draw").evaluate().isNotEmpty, isTrue);
       expect(find.bySemanticsLabel(RegExp('^Place 1, ')), findsWidgets);
       await tester.ensureVisible(find.text('Rematch'));
       await tester.tap(find.text('Rematch'));
       await tester.pump();
       expect(g.round, 1);
-      expect(find.text('SHUFFLING…'), findsOneWidget);
+      expect(find.text('Shuffling…'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 3));
     });
@@ -260,14 +260,14 @@ void main() {
     testWidgets('dealing: only I can turn my card over', (tester) async {
       final s = FakeSession(state('dealing', yourRole: 'sipahi'));
       await pumpGame(tester, const RajaMantriScreen(), s);
-      expect(find.text('ROUND 3 / 20'), findsOneWidget);
+      expect(find.text('Round 3 / 20'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 2400)); // shuffle + deal
-      expect(find.text('ME (YOU)'), findsOneWidget);
-      expect(find.text('SIPAHI'), findsNothing);
-      await tester.tap(find.text('TAP TO SEE YOUR CARD'));
+      expect(find.text('Me (you)'), findsOneWidget);
+      expect(find.text('Sipahi'), findsNothing);
+      await tester.tap(find.text('Tap to see your card'));
       await flip(tester);
-      expect(find.text('SIPAHI'), findsOneWidget);
-      expect(find.text('You are the SIPAHI 👮'), findsOneWidget);
+      expect(find.text('Sipahi'), findsOneWidget);
+      expect(find.text('You are the Sipahi 👮'), findsOneWidget);
       expect(find.text('1500 pts'), findsOneWidget);
       await disposeGame(tester);
     });
@@ -276,10 +276,10 @@ void main() {
       final s = FakeSession(state('guessing', roles: {'me': 'mantri', 'c': 'raja'}));
       await pumpGame(tester, const RajaMantriScreen(), s);
       await flip(tester);
-      expect(find.text('🧠 Who is the CHOR?'), findsOneWidget);
+      expect(find.text('Who is the Chor?'), findsOneWidget);
       expect(find.text('Tap Bina or Dev.'), findsOneWidget);
-      expect(find.text('TAP TO ACCUSE'), findsNWidgets(2));
-      await tester.tap(find.text('DEV'));
+      expect(find.text('Tap to accuse'), findsNWidgets(2));
+      await tester.tap(find.text('Dev'));
       await tester.pump();
       expectCall(s, 'raja_mantri:guess', {'targetId': 'd'});
       await disposeGame(tester);
@@ -289,9 +289,9 @@ void main() {
       final s = FakeSession(state('guessing', yourRole: 'chor', roles: {'me': 'chor', 'b': 'mantri', 'c': 'raja'}));
       await pumpGame(tester, const RajaMantriScreen(), s);
       await flip(tester);
-      expect(find.text('🧠 Bina is choosing…'), findsOneWidget);
-      expect(find.text('Act natural… 😇'), findsOneWidget);
-      expect(find.text('TAP TO ACCUSE'), findsNothing);
+      expect(find.text('Bina is choosing…'), findsOneWidget);
+      expect(find.text('Act natural…'), findsOneWidget);
+      expect(find.text('Tap to accuse'), findsNothing);
       await disposeGame(tester);
     });
 
@@ -303,8 +303,8 @@ void main() {
       }));
       await pumpGame(tester, const RajaMantriScreen(), s);
       await tester.pump(const Duration(milliseconds: 1000));
-      expect(find.text('Chor caught!'), findsOneWidget);
-      for (final t in ['RAJA', 'MANTRI', 'SIPAHI', 'CHOR', '🚨 CAUGHT!', '+1000', '+500', '+300', '+0']) {
+      expect(find.text('Chor caught'), findsOneWidget);
+      for (final t in ['Raja', 'Mantri', 'Sipahi', 'Chor', 'Caught', '+1000', '+500', '+300', '+0']) {
         expect(find.text(t), findsOneWidget, reason: t);
       }
       expect(find.textContaining('Next round in'), findsOneWidget);

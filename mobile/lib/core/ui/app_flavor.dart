@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'tokens.dart';
 
-/// Which app this build is. The second app ("Party Games Flat") is built from the same
-/// code with `--dart-define=APP_STYLE=flat`: Guess the Person, Memory and the word games
-/// get a bright flat board-game look (sky blue, white cards, dark name strips).
-/// It is a compile-time constant, so colours can switch inside `const` expressions.
-const bool flatStyle = String.fromEnvironment('APP_STYLE') == 'flat';
+/// The second app ("Party Games Flat") is built from the same code with
+/// `--dart-define=APP_STYLE=flat`. It keeps its own name and app ID but shares one design,
+/// so there is only one look to maintain.
+const bool flatBuild = String.fromEnvironment('APP_STYLE') == 'flat';
 
-const String appName = flatStyle ? 'Party Games Flat' : 'Party Games';
+/// Retired switch: the old sky-blue look. Always off.
+const bool flatStyle = false;
 
-/// Games that use the flat look in the flat app: the ones that are mostly words and cards.
-const flatGames = {'memory', 'charades', 'heads_up', 'find_spy', 'undercover', 'mafia', 'most_likely', 'would_rather', 'truth_dare'};
+const String appName = flatBuild ? 'Party Games Flat' : 'Party Games';
 
-bool isFlatGame(String id) => flatStyle && flatGames.contains(id);
+/// All games play on the dark surface.
+bool isFlatGame(String id) => false;
 
 /// Thin aliases to the flat token palette (tokens.dart); new code reads `context.tk`.
 class FlatColors {
@@ -58,7 +58,7 @@ class QuestionMarksPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (final (x, y, s, rot) in _marks) {
       final tp = TextPainter(
-        text: TextSpan(text: '?', style: TextStyle(color: color, fontSize: size.width * s, fontWeight: FontWeight.w900)),
+        text: TextSpan(text: '?', style: TextStyle(color: color, fontSize: size.width * s, fontWeight: FontWeight.w700)),
         textDirection: TextDirection.ltr,
       )..layout();
       canvas.save();

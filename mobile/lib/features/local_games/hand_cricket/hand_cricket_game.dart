@@ -74,14 +74,14 @@ class HandCricketLogic extends LocalGameLogic {
 
 final handCricketInfo = LocalGameInfo(
   id: 'hand_cricket',
-  title: 'Hand Cricket',
+  title: 'Gully Fingers',
   emoji: '🏏',
   color: const Color(0xFF16A085),
-  tagline: 'Same number? You\'re OUT!',
+  tagline: "Choose a number. Matching numbers get the batter out",
   rules: const [
     'Player 1 bats first. Both secretly pick a number from 1 to 6 on their own side.',
-    'Different numbers: the batter scores their number. Same number: OUT!',
-    'Then swap: player 2 chases the target. One wicket and 24 balls each. Most runs wins!',
+    'If the numbers differ, the batter scores their number. If they match, the batter is out',
+    'Then swap. Player 2 chases the target. One wicket and 24 balls each. Most runs wins',
   ],
   scoreUnit: 'runs',
   splitScreen: true,
@@ -141,7 +141,7 @@ class _Scoreboard extends StatelessWidget {
   Widget build(BuildContext context) => ScoreMiddleBar(
         players: players,
         scores: g.runs,
-        label: g.innings == 0 ? 'INNINGS 1 · BALL ${g.balls[0].length + 1}' : 'TARGET ${g.target} · BALL ${g.balls[1].length + 1}',
+        label: g.innings == 0 ? 'Innings 1 · Ball ${g.balls[0].length + 1}' : 'Target ${g.target} · Ball ${g.balls[1].length + 1}',
       );
 }
 
@@ -159,24 +159,24 @@ class _CricketHalf extends StatelessWidget {
     final picked = g.picks[index] != null;
     final String title, sub;
     if (g.showingBall && ball != null) {
-      title = ball.out ? (batting ? '☝️ OUT!' : '🎯 WICKET!') : (batting ? '+${ball.bat} RUNS' : '${ball.bat} runs scored');
+      title = ball.out ? (batting ? 'Out' : 'Wicket') : (batting ? '+${ball.bat} runs' : '${ball.bat} runs scored');
       sub = 'Bat ${ball.bat} · Ball ${ball.bowl}';
     } else if (g.over) {
-      title = g.runs[0] == g.runs[1] ? 'TIE!' : (g.runs[index] > g.runs[1 - index] ? '🏆 YOU WIN!' : 'You lose');
+      title = g.runs[0] == g.runs[1] ? 'Tie' : (g.runs[index] > g.runs[1 - index] ? 'You win' : 'You lose');
       sub = '${g.runs[index]} runs';
     } else if (picked) {
-      title = 'LOCKED IN ✓';
+      title = 'Locked in';
       sub = 'Waiting for ${players[1 - index].name}…';
     } else {
-      title = batting ? '🏏 YOU BAT' : '🥎 YOU BOWL';
-      sub = batting ? 'Pick a number. Avoid theirs!' : 'Match their number to get them OUT';
+      title = batting ? 'You bat' : 'You bowl';
+      sub = batting ? 'Pick a number. Avoid theirs' : 'Match their number to get them out';
     }
     return Container(
       color: player.color.withValues(alpha: 0.12),
       padding: const EdgeInsets.all(12),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Text(player.name.toUpperCase(), style: TextStyle(color: player.color, fontWeight: FontWeight.w900, letterSpacing: 1)),
-        FittedBox(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 28))),
+        Text(player.name, style: TextStyle(color: player.color, fontWeight: FontWeight.w700)),
+        FittedBox(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 28))),
         Text(sub, textAlign: TextAlign.center, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         Wrap(alignment: WrapAlignment.center, spacing: 8, runSpacing: 8, children: [
@@ -195,7 +195,7 @@ class _CricketHalf extends StatelessWidget {
                           haptic(HapticWeight.selection);
                           g.pick(index, n);
                         },
-                  child: SizedBox(width: 50, height: 50, child: Center(child: Text('$n', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22)))),
+                  child: SizedBox(width: 50, height: 50, child: Center(child: Text('$n', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 22)))),
                 ),
               ),
             ),

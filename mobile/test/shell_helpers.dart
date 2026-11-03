@@ -30,6 +30,6 @@ bool atResult() => find.text('Rematch').evaluate().isNotEmpty || find.text('Play
 
 /// True when the result screen names a winner or a draw.
 bool hasWinnerLine() =>
-    find.textContaining(' wins!', findRichText: true).evaluate().isNotEmpty ||
-    find.textContaining(' win!', findRichText: true).evaluate().isNotEmpty ||
-    find.text("It's a draw!").evaluate().isNotEmpty;
+    find.textContaining(' wins', findRichText: true).evaluate().isNotEmpty ||
+    find.textContaining(' win', findRichText: true).evaluate().isNotEmpty ||
+    find.text("It's a draw").evaluate().isNotEmpty;

@@ -36,7 +36,7 @@ class GameTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tk;
     LeaveGameScope.stateOf(context)?.value = subtitle == null ? null : stripEmoji(subtitle!);
-    final label = stripEmoji(title).toUpperCase();
+    final label = stripEmoji(title);
     return Row(children: [
       const PauseButton(),
       const SizedBox(width: Space.xs),
@@ -47,7 +47,7 @@ class GameTopBar extends StatelessWidget {
             Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: t.styles.label.copyWith(color: t.flat ? t.onBg : null)),
             if (subtitle != null) ...[
               const SizedBox(height: 2),
-              Text(stripEmoji(subtitle!), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: t.styles.h3.copyWith(color: t.onBg, letterSpacing: 0.4, height: 1.1)),
+              Text(stripEmoji(subtitle!), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: t.styles.h3.copyWith(color: t.onBg, height: 1.1)),
             ],
           ]),
         ),
@@ -101,7 +101,7 @@ class _Handoff extends StatelessWidget {
   final String holdLabel;
   final String note;
   final VoidCallback onReveal;
-  const _Handoff({required this.player, required this.holdLabel, required this.onReveal, this.note = 'Everyone else, look away!'});
+  const _Handoff({required this.player, required this.holdLabel, required this.onReveal, this.note = 'Everyone else, look away'});
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +117,7 @@ class _Handoff extends StatelessWidget {
         child: PlayerBadge(index: seat, size: 88, color: c, initial: player.name),
       ),
       const SizedBox(height: Space.s),
-      Text('PASS THE PHONE TO', style: t.styles.label.copyWith(color: t.flat ? t.onBg : null)),
+      Text('Pass the phone to', style: t.styles.label.copyWith(color: t.flat ? t.onBg : null)),
       const SizedBox(height: 2),
       Semantics(
         liveRegion: true,
@@ -141,7 +141,7 @@ class PassCover extends StatelessWidget {
   final VoidCallback onReveal;
   final String holdLabel;
   final String note;
-  const PassCover({super.key, required this.player, required this.onReveal, this.holdLabel = 'Hold to see your cards', this.note = 'Everyone else, look away!'});
+  const PassCover({super.key, required this.player, required this.onReveal, this.holdLabel = 'Hold to see your cards', this.note = 'Everyone else, look away'});
 
   @override
   Widget build(BuildContext context) {
@@ -286,15 +286,15 @@ class PromptCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(color: band, borderRadius: BorderRadius.circular(9)),
-              child: Text(stripEmoji(header).toUpperCase(),
-                  textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.6, color: onColor(band))),
+              child: Text(stripEmoji(header),
+                  textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w700, color: onColor(band))),
             ),
             const SizedBox(height: Space.m),
             if (icon != null) ...[GameIcon(icon, size: 56, color: band), const SizedBox(height: Space.s)],
             Text(stripEmoji(text), textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.display, fontSize: 30, height: 1.1, color: Brand.onGold)),
             if (footer != null) ...[
               const SizedBox(height: Space.s),
-              Text(stripEmoji(footer!), textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, color: FlatPalette.inkMuted, fontWeight: FontWeight.w800, fontSize: 13.5, height: 1.3)),
+              Text(stripEmoji(footer!), textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, color: FlatPalette.inkMuted, fontWeight: FontWeight.w600, fontSize: 13.5, height: 1.3)),
             ],
           ]),
         ),
@@ -362,9 +362,9 @@ class PlayerPicker extends StatelessWidget {
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   PlayerBadge(index: seat, size: 40, color: p.color, initial: p.name),
                   const SizedBox(height: 6),
-                  Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, color: ink, fontWeight: FontWeight.w900, fontSize: 13)),
+                  Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, color: ink, fontWeight: FontWeight.w700, fontSize: 13)),
                   if (notes[i] != null)
-                    Text(notes[i]!, maxLines: 1, style: TextStyle(fontFamily: Fonts.body, color: picked ? ink : (t.flat ? t.textMuted : NeonPalette.textMuted), fontWeight: FontWeight.w900, fontSize: 11)),
+                    Text(notes[i]!, maxLines: 1, style: TextStyle(fontFamily: Fonts.body, color: picked ? ink : (t.flat ? t.textMuted : NeonPalette.textMuted), fontWeight: FontWeight.w700, fontSize: 11)),
                 ]),
               ),
               if (picked)

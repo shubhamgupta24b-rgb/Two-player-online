@@ -22,14 +22,14 @@ const headsUpWords = [
 
 final headsUpInfo = LocalGameInfo(
   id: 'heads_up',
-  title: 'Heads Up',
+  title: 'Forehead',
   emoji: '🙆',
   color: const Color(0xFF00B8D9),
-  tagline: 'Phone on your forehead. Guess fast!',
+  tagline: "Hold the phone on your forehead and guess the word",
   rules: const [
-    'On your turn, hold the phone on your forehead with the screen facing your friends. Don\'t peek!',
+    'On your turn, hold the phone on your forehead with the screen facing your friends. Don\'t peek',
     'Friends give clues (talk, act, sing) without saying the word. You guess.',
-    'GOT IT if you guess right, SKIP to pass. 60 seconds, 2 turns each. 2 to 6 players.',
+    'Got it if you guess right, skip to pass. 60 seconds, 2 turns each. 2 to 6 players.',
   ],
   scoreUnit: 'words',
   splitScreen: false,
@@ -46,9 +46,9 @@ Widget _view(BuildContext context, WordTurnsLogic g, List players, int? me) => W
       players: players.cast(),
       g: g,
       me: me,
-      title: '🙆 HEADS UP',
-      readyText: "You're guessing! Hold the phone on your forehead, screen facing out.",
-      watchText: 'Give clues, but never say the word!',
+      title: 'Forehead',
+      readyText: "You're guessing. Hold the phone on your forehead, screen facing out.",
+      watchText: 'Give clues, but never say the word',
       performerSeesWord: false,
       color: const Color(0xFF00B8D9),
     );

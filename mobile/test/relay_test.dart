@@ -184,7 +184,7 @@ void main() {
       final s = FakeSession(st(host: 'me'));
       await pumpGame(tester, RelayPlay(game: ticTacToeInfo), s);
       await tester.pump(const Duration(milliseconds: 100));
-      expect(find.text('YOU: ME · HOST'), findsOneWidget);
+      expect(find.text('You: Me · Host'), findsOneWidget);
       expect(s.calls.where((c) => c.$1 == 'relay:state'), isNotEmpty, reason: 'publishes the start position');
 
       // My own tap goes through the same checks: it's my turn (X), so it counts.
@@ -220,7 +220,7 @@ void main() {
 
       s.push(st(host: 'op', version: 1, state: {'cells': [1, -1, -1, -1, -1, -1, -1, -1, -1], 'turn': 1, 'winLine': null, 'winner': null}));
       await tester.pump(const Duration(milliseconds: 100));
-      expect(find.text('YOU: ME'), findsOneWidget);
+      expect(find.text('You: Me'), findsOneWidget);
       expect(find.text('O'), findsWidgets, reason: "the host's O is shown");
 
       await tester.tap(find.bySemanticsLabel(RegExp(r': empty$')).first);

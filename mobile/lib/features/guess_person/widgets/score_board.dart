@@ -29,9 +29,9 @@ class ScoreBoard extends StatelessWidget {
             child: Column(children: [
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(p.name.toUpperCase(), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: big ? 16 : 13)),
+                child: Text(p.name, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: big ? 16 : 13)),
               ),
-              Text('${p.score}', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: big ? 48 : 28, height: 1.1)),
+              Text('${p.score}', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: big ? 48 : 28, height: 1.1)),
               Text(p.score == 1 ? 'point' : 'points', style: const TextStyle(color: GpColors.muted, fontSize: 12)),
             ]),
           ),

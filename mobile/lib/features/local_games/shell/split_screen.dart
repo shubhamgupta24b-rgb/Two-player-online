@@ -184,7 +184,7 @@ class PlayerTagSmall extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         if (seat != null) ...[SizedBox(width: 12, height: 12, child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(seat), onColor(fill)))), const SizedBox(width: 5)],
         Flexible(
-          child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, color: onColor(fill), fontWeight: FontWeight.w900, fontSize: 13)),
+          child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, color: onColor(fill), fontWeight: FontWeight.w700, fontSize: 13)),
         ),
       ]),
     );
@@ -239,8 +239,8 @@ class ScoreMiddleBar extends StatelessWidget {
       child: Row(children: [
         RotatedBox(quarterTurns: 2, child: _ScoreBadge(players[1], scores[1])),
         Expanded(
-          child: Text(stripEmoji(label).toUpperCase(),
-              textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.6, color: NeonPalette.label)),
+          child: Text(stripEmoji(label),
+              textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w700, color: NeonPalette.label)),
         ),
         const PauseButton(),
         const SizedBox(width: Space.xs),

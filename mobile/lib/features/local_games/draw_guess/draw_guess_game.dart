@@ -162,13 +162,13 @@ List<double> _decode(String s) => s.isEmpty ? [] : [for (final p in s.split(';')
 
 final drawGuessInfo = LocalGameInfo(
   id: 'draw_guess',
-  title: 'Draw & Guess',
+  title: 'Sketch Panic',
   emoji: '🎨',
   color: const Color(0xFFE84393),
-  tagline: 'Draw it. Guess it. No words!',
+  tagline: "Draw the clue without writing words",
   rules: const [
-    'On your turn, peek at the secret word (hold the 👁 button) and draw it. No letters or numbers!',
-    'Everyone else guesses out loud. Tap who got it: you both score a point.',
+    'On your turn, peek at the secret word (hold the button) and draw it. No letters or numbers',
+    'Everyone else guesses out loud. Tap who got it and you both score a point.',
     'Online, guessers type their answers and the app checks them. 75 seconds per drawing. 2 to 6 players.',
   ],
   scoreUnit: 'points',
@@ -252,31 +252,31 @@ class _DrawViewState extends State<_DrawView> {
     final g = widget.g, players = widget.players, me = widget.me;
     final artist = players[g.drawer];
     final isArtist = me == null || me == g.drawer;
-    final turnLabel = 'TURN ${min(g.turn + 1, g.totalTurns)} / ${g.totalTurns}';
+    final turnLabel = 'Turn ${min(g.turn + 1, g.totalTurns)} / ${g.totalTurns}';
     switch (g.phase) {
       case DrawPhase.ready:
         return PartyFrame(
-          title: '🎨 DRAW & GUESS',
+          title: 'Sketch Panic',
           subtitle: turnLabel,
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Center(
                 child: PromptCard(
-                  header: '${artist.whose} TURN TO DRAW',
-                  text: isArtist ? 'Take the phone!' : 'Get ready to guess!',
+                  header: '${artist.whose} turn to draw',
+                  text: isArtist ? 'Take the phone' : 'Get ready to guess',
                   emoji: '✏️',
-                  footer: isArtist ? 'Only you may see the word: hold the 👁 button to peek.' : '${artist.name} is about to draw.',
+                  footer: isArtist ? 'Only you may see the word. Hold the button to peek.' : '${artist.name} is about to draw.',
                   color: artist.color,
                 ),
               ),
             ),
-            if (isArtist) GpButton('START DRAWING', icon: Icons.brush_rounded, color: artist.color, textColor: Colors.white, onPressed: g.start) else const WaitingNote('Waiting for the artist…'),
+            if (isArtist) GpButton('Start drawing', icon: Icons.brush_rounded, color: artist.color, textColor: Colors.white, onPressed: g.start) else const WaitingNote('Waiting for the artist…'),
           ]),
         );
       case DrawPhase.drawing:
         final online = me != null;
         return PartyFrame(
-          title: '${artist.name.toUpperCase()} IS DRAWING',
+          title: '${artist.name} is drawing',
           subtitle: turnLabel,
           trailing: TimeChip(g.msLeft),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -291,8 +291,8 @@ class _DrawViewState extends State<_DrawView> {
                       height: 44,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(color: _peek || online ? Colors.white : Colors.white12, borderRadius: BorderRadius.circular(14)),
-                      child: Text(_peek || online ? 'DRAW: ${g.word.toUpperCase()}' : '👁 HOLD TO SEE THE WORD',
-                          style: TextStyle(color: _peek || online ? GpColors.ink : Colors.white, fontWeight: FontWeight.w900)),
+                      child: Text(_peek || online ? 'Draw: ${g.word}' : 'Hold to see the word',
+                          style: TextStyle(color: _peek || online ? GpColors.ink : Colors.white, fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ),
@@ -303,7 +303,7 @@ class _DrawViewState extends State<_DrawView> {
             Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Canvas(g: g, canDraw: isArtist)))),
             const SizedBox(height: 8),
             if (!online) ...[
-              const Text('WHO GUESSED IT?', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+              const Text('Who guessed it?', textAlign: TextAlign.center, style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -315,7 +315,7 @@ class _DrawViewState extends State<_DrawView> {
                         child: ActionChip(
                           backgroundColor: players[i].color,
                           side: BorderSide.none,
-                          label: Text(players[i].name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                          label: Text(players[i].name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                           onPressed: () {
                             haptic(HapticWeight.medium);
                         GameAudio.sfx('coin');
@@ -323,12 +323,12 @@ class _DrawViewState extends State<_DrawView> {
                           },
                         ),
                       ),
-                  AppButton('NOBODY · SKIP', variant: ButtonVariant.ghost, compact: true, onPressed: g.giveUp),
+                  AppButton('Nobody · Skip', variant: ButtonVariant.ghost, compact: true, onPressed: g.giveUp),
                 ]),
               ),
             ] else if (isArtist) ...[
               Text(g.wrongGuesses.isEmpty ? 'Guesses will appear here' : 'Guesses: ${g.wrongGuesses.join(', ')}', textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
-              AppButton('GIVE UP', variant: ButtonVariant.ghost, compact: true, onPressed: g.giveUp),
+              AppButton('Give up', variant: ButtonVariant.ghost, compact: true, onPressed: g.giveUp),
             ] else ...[
               if (g.wrongGuesses.isNotEmpty) Text('Wrong: ${g.wrongGuesses.join(', ')}', textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w700)),
               Row(children: [
@@ -336,7 +336,7 @@ class _DrawViewState extends State<_DrawView> {
                   child: TextField(
                     controller: _guess,
                     textInputAction: TextInputAction.send,
-                    style: TextStyle(color: context.tk.onBg, fontWeight: FontWeight.w800),
+                    style: TextStyle(color: context.tk.onBg, fontWeight: FontWeight.w600),
                     decoration: InputDecoration(
                       hintText: 'Type your guess',
                       hintStyle: TextStyle(color: context.tk.onBgMuted),
@@ -357,14 +357,14 @@ class _DrawViewState extends State<_DrawView> {
       case DrawPhase.done:
         final by = g.guessedBy;
         return PartyFrame(
-          title: by >= 0 ? '🎉 ${players[by].name.toUpperCase()} GOT IT!' : "😅 NOBODY GOT IT",
+          title: by >= 0 ? '${players[by].name} got it' : "Nobody got it",
           subtitle: turnLabel,
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(child: Center(child: AspectRatio(aspectRatio: 1, child: _Canvas(g: g, canDraw: false)))),
             const SizedBox(height: 8),
-            Text('The word was: ${g.word}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
+            Text('The word was: ${g.word}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20)),
             const SizedBox(height: 8),
-            GpButton(g.turn + 1 >= g.totalTurns ? 'SEE SCORES' : 'NEXT ARTIST', icon: Icons.arrow_forward_rounded, onPressed: g.next),
+            GpButton(g.turn + 1 >= g.totalTurns ? 'See scores' : 'Next artist', icon: Icons.arrow_forward_rounded, onPressed: g.next),
           ]),
         );
     }

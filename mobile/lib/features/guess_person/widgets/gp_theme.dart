@@ -57,7 +57,7 @@ class _QuestionMarks extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (final (x, y, s, rot) in _marks) {
       final tp = TextPainter(
-        text: TextSpan(text: '?', style: TextStyle(color: GpCoral.mark, fontSize: size.width * s, fontWeight: FontWeight.w900)),
+        text: TextSpan(text: '?', style: TextStyle(color: GpCoral.mark, fontSize: size.width * s, fontWeight: FontWeight.w700)),
         textDirection: TextDirection.ltr,
       )..layout();
       canvas.save();
@@ -158,8 +158,8 @@ class PlayerTag extends StatelessWidget {
           const Icon(Icons.person, size: 18, color: Colors.white),
           const SizedBox(width: 4),
           Flexible(
-            child: Text(name.toUpperCase(),
-                maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
+            child: Text(name,
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
           ),
           if (role != null) ...[
             const SizedBox(width: 6),

@@ -42,7 +42,7 @@ abstract class SoloLogic extends LocalGameLogic {
 class SoloFrame extends StatefulWidget {
   final String title;
   final int score;
-  final String? extra; // e.g. "⏱ 42s"
+  final String? extra; // e.g. "42s"
   final Widget child;
   const SoloFrame({super.key, required this.title, required this.score, this.extra, required this.child});
 
@@ -86,10 +86,10 @@ class _SoloFrameState extends State<SoloFrame> {
                           key: const ValueKey('new'),
                           padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: 4),
                           decoration: BoxDecoration(color: Brand.gold, borderRadius: Radii.rMd),
-                          child: const Text('🏆 NEW BEST', style: TextStyle(color: Brand.ink, fontWeight: FontWeight.w900, fontSize: 11.5)),
+                          child: const Text('New best', style: TextStyle(color: Brand.ink, fontWeight: FontWeight.w700, fontSize: 11.5)),
                         )
                       : Column(key: const ValueKey('best'), mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                          Text('BEST', style: t.styles.label.copyWith(fontSize: 10, color: t.flat ? t.textMuted : t.onBgMuted)),
+                          Text('Best', style: t.styles.label.copyWith(fontSize: 10, color: t.flat ? t.textMuted : t.onBgMuted)),
                           Text('$best', style: t.styles.score.copyWith(fontSize: 14, color: t.flat ? t.text : t.onBg)),
                         ]),
                 ),

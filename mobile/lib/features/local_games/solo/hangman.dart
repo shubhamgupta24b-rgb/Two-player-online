@@ -9,12 +9,12 @@ import '../shell/ticking_play.dart';
 import 'solo_common.dart';
 
 const hangmanWords = {
-  '🎬 Bollywood': ['SHOLAY', 'DANGAL', 'LAGAAN', 'BAAHUBALI', 'PATHAAN', 'ANDHADHUN', 'BARFI', 'QUEEN', 'DEVDAS', 'SWADES', 'KAHAANI', 'PADMAAVAT'],
-  '🍛 Food': ['BIRYANI', 'SAMOSA', 'DOSA', 'PANEER', 'JALEBI', 'PAKORA', 'KHICHDI', 'RASGULLA', 'CHOLE', 'PARATHA', 'LASSI', 'MOMOS'],
-  '🐾 Animals': ['ELEPHANT', 'GIRAFFE', 'PEACOCK', 'KANGAROO', 'DOLPHIN', 'PENGUIN', 'TIGER', 'CHEETAH', 'OCTOPUS', 'RHINO', 'ZEBRA', 'CAMEL'],
-  '🌍 Countries': ['INDIA', 'JAPAN', 'BRAZIL', 'CANADA', 'EGYPT', 'NEPAL', 'FRANCE', 'MEXICO', 'KENYA', 'NORWAY', 'TURKEY', 'BHUTAN'],
-  '🏏 Sports': ['CRICKET', 'KABADDI', 'HOCKEY', 'TENNIS', 'BADMINTON', 'FOOTBALL', 'CHESS', 'BOXING', 'ARCHERY', 'CYCLING', 'KHOKHO', 'SWIMMING'],
-  '🏙️ Cities': ['MUMBAI', 'DELHI', 'JAIPUR', 'KOLKATA', 'CHENNAI', 'PUNE', 'GOA', 'AGRA', 'LUCKNOW', 'INDORE', 'SHIMLA', 'MYSORE'],
+  'Bollywood': ['SHOLAY', 'DANGAL', 'LAGAAN', 'BAAHUBALI', 'PATHAAN', 'ANDHADHUN', 'BARFI', 'QUEEN', 'DEVDAS', 'SWADES', 'KAHAANI', 'PADMAAVAT'],
+  'Food': ['BIRYANI', 'SAMOSA', 'DOSA', 'PANEER', 'JALEBI', 'PAKORA', 'KHICHDI', 'RASGULLA', 'CHOLE', 'PARATHA', 'LASSI', 'MOMOS'],
+  'Animals': ['ELEPHANT', 'GIRAFFE', 'PEACOCK', 'KANGAROO', 'DOLPHIN', 'PENGUIN', 'TIGER', 'CHEETAH', 'OCTOPUS', 'RHINO', 'ZEBRA', 'CAMEL'],
+  'Countries': ['INDIA', 'JAPAN', 'BRAZIL', 'CANADA', 'EGYPT', 'NEPAL', 'FRANCE', 'MEXICO', 'KENYA', 'NORWAY', 'TURKEY', 'BHUTAN'],
+  'Sports': ['CRICKET', 'KABADDI', 'HOCKEY', 'TENNIS', 'BADMINTON', 'FOOTBALL', 'CHESS', 'BOXING', 'ARCHERY', 'CYCLING', 'KHOKHO', 'SWIMMING'],
+  'Cities': ['MUMBAI', 'DELHI', 'JAIPUR', 'KOLKATA', 'CHENNAI', 'PUNE', 'GOA', 'AGRA', 'LUCKNOW', 'INDORE', 'SHIMLA', 'MYSORE'],
 };
 
 /// Hangman: guess the word one letter at a time. 6 wrong guesses and the drawing is
@@ -77,10 +77,10 @@ class HangmanLogic extends SoloLogic {
 
 final hangmanInfo = LocalGameInfo(
   id: 'hangman',
-  title: 'Hangman',
+  title: 'Last Letter',
   emoji: '🪢',
   color: const Color(0xFF8D6E63),
-  tagline: 'Guess the word before you run out of lives!',
+  tagline: "Guess the word before you lose six lives",
   rules: const [
     'A secret word and its category. Tap letters to guess.',
     'A wrong letter costs a life: 6 and the drawing is done.',
@@ -94,15 +94,15 @@ final hangmanInfo = LocalGameInfo(
     create: () => HangmanLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: g.wonAt != null ? '🎉 GOT IT!' : (g.over ? '💀 IT WAS ${g.word}' : '🪢 HANGMAN'),
+      title: g.wonAt != null ? 'Got it' : (g.over ? 'It was ${g.word}' : 'Last Letter'),
       score: g.score,
-      extra: '${g.category} · ❤️ ${HangmanLogic.lives - g.wrong}',
+      extra: '${g.category} · ${HangmanLogic.lives - g.wrong}',
       child: Column(children: [
         Expanded(flex: 5, child: CustomPaint(size: Size.infinite, painter: _GallowsPainter(g.wrong, g.over && !g.won))),
         const SizedBox(height: 8),
         FittedBox(
           child: Text(g.shown,
-              style: TextStyle(color: g.wonAt != null ? GpColors.yes : (g.over ? GpColors.no : Colors.white), fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 2)),
+              style: TextStyle(color: g.wonAt != null ? GpColors.yes : (g.over ? GpColors.no : Colors.white), fontSize: 36, fontWeight: FontWeight.w700)),
         ),
         const SizedBox(height: 14),
         // Keys at least 48dp wide: 7 a row where they fit, else 6.
@@ -134,7 +134,7 @@ final hangmanInfo = LocalGameInfo(
                             },
                       child: Center(
                         child: Text(l,
-                            style: TextStyle(color: !g.guessed.contains(l) ? Brand.ink : (g.word.contains(l) ? Colors.white : Colors.white38), fontWeight: FontWeight.w900, fontSize: 19)),
+                            style: TextStyle(color: !g.guessed.contains(l) ? Brand.ink : (g.word.contains(l) ? Colors.white : Colors.white38), fontWeight: FontWeight.w700, fontSize: 19)),
                       ),
                     ),
                   ),

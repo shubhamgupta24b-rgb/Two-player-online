@@ -11,15 +11,15 @@ export 'smash_karts_logic.dart';
 
 final LocalGameInfo smashKartsInfo = LocalGameInfo(
   id: 'smash_karts',
-  title: 'Smash Karts',
+  title: 'Bumper Riot',
   emoji: '🏎️',
   color: const Color(0xFFFF5722),
-  tagline: 'Grab a box, wreck your friends!',
+  tagline: "Collect power-ups and hit rival karts",
   rules: const [
-    'Drag the joystick to drive round Sunset Park. Drive through a ❓ box for a power-up, then tap FIRE.',
-    '🚀 Rocket, 🎆 Triple rocket and 💣 Mine wreck a kart in one hit · 🔫 Machine gun: 1 damage a bullet · ⚡ Boost · 🛡️ Shield.',
+    'Drag the joystick to drive round Sunset Park. Drive through a box for a power-up, then tap Fire.',
+    'Rocket, Triple rocket and Mine wreck a kart in one hit · Machine gun: 1 damage a bullet · Boost · Shield.',
     'Karts have 3 ❤️. A wrecked kart respawns with a shield. Yellow pads give a speed boost.',
-    'Most wrecks in 2 minutes wins! Playing alone, the camera follows your kart. 2 to 4 players.',
+    'Most wrecks in 2 minutes wins. Playing alone, the camera follows your kart. 2 to 4 players.',
   ],
   scoreUnit: 'wrecks',
   splitScreen: true,
@@ -180,7 +180,7 @@ class _ParkPainter extends CustomPainter {
   _ParkPainter(this.g, this.players, this.focus, this.s);
 
   static final _text = <String, TextPainter>{};
-  static TextPainter _tp(String t, double size, {Color color = Colors.white, FontWeight weight = FontWeight.w900}) {
+  static TextPainter _tp(String t, double size, {Color color = Colors.white, FontWeight weight = FontWeight.w700}) {
     final key = '$t|${size.round()}|${color.toARGB32()}';
     return _text.putIfAbsent(key, () {
       if (_text.length > 400) _text.clear();
@@ -582,7 +582,7 @@ class _Hud extends StatelessWidget {
                     border: Border.all(color: order[r] == me ? Colors.white : players[order[r]].color, width: order[r] == me ? 2 : 1.5),
                   ),
                   child: Text('${const ['🥇', '🥈', '🥉', '4'][r]} ${players[order[r]].name}  ${g.kills[order[r]]}',
-                      style: TextStyle(color: Color.lerp(players[order[r]].color, Colors.white, 0.45), fontWeight: FontWeight.w900, fontSize: 12)),
+                      style: TextStyle(color: Color.lerp(players[order[r]].color, Colors.white, 0.45), fontWeight: FontWeight.w700, fontSize: 12)),
                 ),
             ]),
             // Centre top: the clock.
@@ -594,7 +594,7 @@ class _Hud extends StatelessWidget {
                 decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white24)),
                 child: Text('${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}',
                     style: TextStyle(
-                        color: s <= 10 ? const Color(0xFFFF5252) : Colors.white, fontWeight: FontWeight.w900, fontSize: 20, fontFeatures: const [FontFeature.tabularFigures()])),
+                        color: s <= 10 ? const Color(0xFFFF5252) : Colors.white, fontWeight: FontWeight.w700, fontSize: 20, fontFeatures: const [FontFeature.tabularFigures()])),
               ),
             ),
             // Right: the kill feed.
@@ -614,7 +614,7 @@ class _Hud extends StatelessWidget {
                             TextSpan(text: '  ${weaponEmoji[f.weapon]}  '),
                             TextSpan(text: players[f.victim].name, style: TextStyle(color: Color.lerp(players[f.victim].color, Colors.white, 0.35))),
                           ]),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
                     ),
                 ]),
               ),
@@ -631,17 +631,17 @@ class _Hud extends StatelessWidget {
                   builder: (_, v, child) => Transform.scale(scale: v, child: child),
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Text(
-                      g.wrecked(me!) ? '💥 WRECKED!' : event!,
+                      g.wrecked(me!) ? 'Wrecked' : event!,
                       style: TextStyle(
                         color: (event ?? '').startsWith('+') ? const Color(0xFFFFEB3B) : const Color(0xFFFF5252),
                         fontSize: 34,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w700,
                         shadows: const [Shadow(color: Colors.black87, offset: Offset(0, 3), blurRadius: 6)],
                       ),
                     ),
                     if (g.wrecked(me!))
                       const Text('Respawning…',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
                   ]),
                 ),
               ),
@@ -709,9 +709,9 @@ class _ControlsState extends State<_Controls> {
                 alignment: Alignment.bottomCenter,
                 child: Column(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
                   if (widget.compact)
-                    Text(widget.player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
-                  Text(has ? weaponName[weapon]! : 'Find a ❓ box',
-                      textAlign: TextAlign.center, style: TextStyle(color: has ? Colors.white : Colors.white60, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.6)),
+                    Text(widget.player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                  Text(has ? weaponName[weapon]! : 'Find a box',
+                      textAlign: TextAlign.center, style: TextStyle(color: has ? Colors.white : Colors.white60, fontWeight: FontWeight.w700, fontSize: 12)),
                   const SizedBox(height: 4),
                   // Health hearts.
                   Text(List.generate(SmashKartsLogic.maxHp, (h) => h < g.karts[i].hp ? '❤️' : '🖤').join(), style: const TextStyle(fontSize: 14)),
@@ -749,8 +749,8 @@ class _ControlsState extends State<_Controls> {
                   child: FittedBox(
                     child: Padding(
                       padding: const EdgeInsets.all(8),
-                      child: Text(has ? weaponEmoji[weapon]! : 'FIRE',
-                          style: TextStyle(color: Colors.white.withValues(alpha: has ? 1 : 0.5), fontWeight: FontWeight.w900, fontSize: 26)),
+                      child: Text(has ? weaponEmoji[weapon]! : 'Fire',
+                          style: TextStyle(color: Colors.white.withValues(alpha: has ? 1 : 0.5), fontWeight: FontWeight.w700, fontSize: 26)),
                     ),
                   ),
                 ),

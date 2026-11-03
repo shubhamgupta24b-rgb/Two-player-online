@@ -84,10 +84,10 @@ class _TurnsPlayState extends State<TurnsPlay> {
         _Step.ready => _Card(
             key: ValueKey('ready$index'),
             player: p,
-            title: index == 0 ? '${p.whose} TURN FIRST' : 'PASS THE PHONE TO',
+            title: index == 0 ? '${p.whose} turn first' : 'Pass the phone to',
             big: p.name,
-            line: '${_time(widget.durationMs)} on the whole screen. Everyone else, just watch! 👀',
-            button: 'START',
+            line: '${_time(widget.durationMs)} to play. Pass the phone when your turn ends.',
+            button: 'Start',
             onTap: () => setState(() => step = _Step.playing),
             scores: scores,
             players: widget.players,
@@ -96,10 +96,10 @@ class _TurnsPlayState extends State<TurnsPlay> {
         _Step.scored => _Card(
             key: ValueKey('scored$index'),
             player: p,
-            title: '${p.whose} SCORE',
+            title: '${p.whose} score',
             big: '${scores[index]}',
             line: _nextLine(),
-            button: _hasNextPerson() ? 'NEXT PLAYER' : 'SEE RESULTS',
+            button: _hasNextPerson() ? 'Next player' : 'See results',
             onTap: _next,
             scores: scores,
             players: widget.players,
@@ -116,7 +116,7 @@ class _TurnsPlayState extends State<TurnsPlay> {
     for (var i = index + 1; i < widget.players.length; i++) {
       if (!widget.botSeats.contains(i)) return 'Next up: ${widget.players[i].name}';
     }
-    return widget.botSeats.isEmpty ? 'That was the last turn!' : 'The computer plays its turns now.';
+    return widget.botSeats.isEmpty ? 'All turns are complete.' : 'The computer plays its turns now.';
   }
 
   static String _time(int ms) {
@@ -174,7 +174,7 @@ class _Card extends StatelessWidget {
                     Semantics(
                       liveRegion: true,
                       child: FittedBox(
-                        child: Text(big.toUpperCase(), style: (scored ? t.styles.scoreLarge : t.styles.display).copyWith(color: Color.lerp(c, Colors.white, 0.35), fontSize: scored ? 60 : 40)),
+                        child: Text(big, style: (scored ? t.styles.scoreLarge : t.styles.display).copyWith(color: Color.lerp(c, Colors.white, 0.35), fontSize: scored ? 60 : 40)),
                       ),
                     ),
                     const SizedBox(height: Space.s),

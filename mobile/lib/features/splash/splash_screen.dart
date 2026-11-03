@@ -66,11 +66,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: FadeTransition(
                 opacity: fade,
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  const AppLogo(size: 200),
-                  const SizedBox(height: 24),
+                  const AppLogo(size: 120),
+                  const SizedBox(height: 16),
                   Text('Party Games', textAlign: TextAlign.center, style: t.styles.h1.copyWith(color: t.onBg)),
                   const SizedBox(height: 6),
-                  Text('One phone or many · play anywhere', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
+                  Text('One phone or many', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: t.onBgMuted)),
                   const SizedBox(height: 28),
                   // A spinner only when loading takes longer than a second.
                   SizedBox(

@@ -4,7 +4,7 @@ import '../shell/local_game_logic.dart';
 enum Weapon { none, rocket, gun, mine, boost, shield, triple }
 
 const weaponEmoji = {Weapon.none: '', Weapon.rocket: '🚀', Weapon.gun: '🔫', Weapon.mine: '💣', Weapon.boost: '⚡', Weapon.shield: '🛡️', Weapon.triple: '🎆'};
-const weaponName = {Weapon.none: '', Weapon.rocket: 'ROCKET', Weapon.gun: 'MACHINE GUN', Weapon.mine: 'MINE', Weapon.boost: 'BOOST', Weapon.shield: 'SHIELD', Weapon.triple: 'TRIPLE ROCKET'};
+const weaponName = {Weapon.none: '', Weapon.rocket: 'Rocket', Weapon.gun: 'Machine gun', Weapon.mine: 'Mine', Weapon.boost: 'Boost', Weapon.shield: 'Shield', Weapon.triple: 'Triple rocket'};
 
 class Kart {
   double x, y, angle; // angle in radians, 0 = facing right (+x), y grows downwards
@@ -391,10 +391,10 @@ class SmashKartsLogic extends TimedDuel {
       ..gunShots = 0;
     blasts.add((k.x, k.y, elapsedMs, true));
     feed.add(Kill(by, victim, weapon, elapsedMs));
-    _event(victim, 'WRECKED!');
+    _event(victim, 'Wrecked');
     if (by != victim) {
       kills[by]++;
-      _event(by, '+1 SMASH!');
+      _event(by, '+1 smash');
     }
   }
 }

@@ -8,7 +8,7 @@ import 'package:multiplayer_game/features/local_games/paint_fight/paint_fight_ga
 import 'package:multiplayer_game/features/local_games/tic_tac_toe/tic_tac_toe_game.dart';
 
 void main() {
-  group('Crush It', () {
+  group('Thumb War', () {
     test('counts taps per player and stops at the time limit', () {
       final g = CrushItLogic(durationMs: 10000);
       g.update(100);
@@ -24,7 +24,7 @@ void main() {
     });
   });
 
-  group('Basketball Hoops', () {
+  group('Swish', () {
     test('points by how far the ball lands from the rim centre', () {
       expect(BasketballLogic.pointsFor(0), 3);
       expect(BasketballLogic.pointsFor(0.1), 3);
@@ -85,7 +85,7 @@ void main() {
     });
   });
 
-  group('Fruit Duel', () {
+  group('Slice Off', () {
     test('first correct slash +2, second +1, wrong lane 0, one try per fruit', () {
       final g = FruitDuelLogic(random: Random(3));
       g.update(10);
@@ -126,7 +126,7 @@ void main() {
     });
   });
 
-  group('Memory', () {
+  group('Flip Twice', () {
     test('pairs score and keep the turn, misses pass the turn after a delay', () {
       final g = MemoryLogic(random: Random(5), mismatchMs: 900);
       int pairOf(int id) => g.cards.indexWhere((c) => c.id != id && c.symbol == g.cards[id].symbol);
@@ -172,7 +172,7 @@ void main() {
     });
   });
 
-  group('Tic-Tac-Toe', () {
+  group('Three Up', () {
     test('players alternate from the chosen starter', () {
       final g = TicTacToeLogic(starter: 1);
       expect(g.turn, 1);
@@ -230,7 +230,7 @@ void main() {
     });
   });
 
-  group('Paint Fight', () {
+  group('Splat Patch', () {
     test('painting claims and steals cells, scores are cell counts', () {
       final g = PaintFightLogic(cols: 4, rows: 4);
       g.update(10);

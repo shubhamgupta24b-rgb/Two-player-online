@@ -8,3 +8,11 @@ mobile/build/
 *.jks
 *.keystore
 key.properties
+
+# Redesign screenshot working files (the side-by-side images in compare/ are kept)
+docs/party-games-before-and-after.zip
+docs/redesign-shots/before/
+docs/redesign-shots/after/
+docs/redesign-shots/after-light/
+docs/redesign-shots/font-pairing/
+docs/redesign-shots/font-pairing-light/

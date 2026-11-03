@@ -86,7 +86,7 @@ void main() {
     expect(g.kills, [1, 0]);
     expect(g.wrecked(1), isTrue);
     expect(g.feed.single.weapon, Weapon.rocket);
-    expect(g.lastEvent[0], '+1 SMASH!');
+    expect(g.lastEvent[0], '+1 smash');
     t = run(g, t, SmashKartsLogic.wreckMs + 100);
     expect(g.wrecked(1), isFalse);
     expect(g.karts[1].hp, SmashKartsLogic.maxHp);

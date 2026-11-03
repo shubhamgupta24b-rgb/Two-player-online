@@ -29,9 +29,9 @@ Future<void> openAndPlay(WidgetTester tester, LocalGameInfo game) async {
   await tester.tap(play);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 2600));
-  if (find.text('START').evaluate().isNotEmpty) {
-    await tester.ensureVisible(find.text('START').last);
-    await tester.tap(find.text('START').last);
+  if (find.text('Start').evaluate().isNotEmpty) {
+    await tester.ensureVisible(find.text('Start').last);
+    await tester.tap(find.text('Start').last);
     await tester.pump();
   }
   for (var i = 0; i < 6; i++) {

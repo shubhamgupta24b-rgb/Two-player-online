@@ -89,13 +89,13 @@ class FruitDuelLogic extends TimedDuel {
 
 final LocalGameInfo fruitDuelInfo = LocalGameInfo(
   id: 'fruit_duel',
-  title: 'Fruit Duel',
+  title: 'Slice Off',
   emoji: '🍉',
   color: const Color(0xFF2ECC71),
-  tagline: 'Slice it before your rival does!',
+  tagline: "Slice the fruit before your opponent",
   rules: const [
     'A fruit pops up in one of three lanes on both sides.',
-    'Tap the lane with the fruit to slice it. One try per fruit!',
+    'Tap the lane with the fruit to slice it. One try per fruit',
     'First to slice gets +2, everyone else who gets it +1. Fruits get faster. Take turns (1-5 minutes each) or split the screen (20 seconds). 2 to 4 players.',
   ],
   scoreUnit: 'points',
@@ -147,7 +147,7 @@ class _FruitHalf extends StatelessWidget {
         Row(children: [
           PlayerTagSmall(player: player),
           const Spacer(),
-          Text('${g.score[index]} pts', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+          Text('${g.score[index]} pts', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
         ]),
         const SizedBox(height: 8),
         Expanded(
@@ -230,8 +230,8 @@ class _Lane extends StatelessWidget {
           Positioned(
             bottom: 12,
             child: Text(
-              s.points == 0 ? '✗ MISS' : '+${s.points}',
-              style: TextStyle(color: s.points == 0 ? GpColors.no : GpColors.yes, fontSize: 20, fontWeight: FontWeight.w900),
+              s.points == 0 ? 'Miss' : '+${s.points}',
+              style: TextStyle(color: s.points == 0 ? GpColors.no : GpColors.yes, fontSize: 20, fontWeight: FontWeight.w700),
             ),
           ),
       ]),

@@ -24,9 +24,9 @@ Future<void> shoot(WidgetTester tester, String name, {required bool bots}) async
     await tester.tap(find.text('🤖 PLAY VS COMPUTER'));
     await tester.pump();
   }
-  await tester.ensureVisible(find.text('PLAY').last);
+  await tester.ensureVisible(find.text('Play').last);
   await tester.pump();
-  await tester.tap(find.text('PLAY').last);
+  await tester.tap(find.text('Play').last);
   await tester.pump();
   for (var i = 0; i < 160; i++) {
     await tester.pump(const Duration(milliseconds: 50));

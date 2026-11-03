@@ -139,7 +139,7 @@ class WordTurnsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = players[g.performer];
     final isPerformer = me == null || me == g.performer;
-    final turnLabel = 'TURN ${min(g.turn + 1, g.totalTurns)} / ${g.totalTurns}';
+    final turnLabel = 'Turn ${min(g.turn + 1, g.totalTurns)} / ${g.totalTurns}';
     switch (g.phase) {
       case TurnPhase.ready:
         return PartyFrame(
@@ -149,17 +149,17 @@ class WordTurnsView extends StatelessWidget {
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
-                  child: PromptCard(header: '${p.whose} TURN', text: isPerformer ? readyText : watchText, emoji: '⏱️', footer: '${g.turnMs ~/ 1000} seconds. Get as many as you can!', color: p.color),
+                  child: PromptCard(header: '${p.whose} turn', text: isPerformer ? readyText : watchText, emoji: '⏱️', footer: '${g.turnMs ~/ 1000} seconds. Get as many as you can', color: p.color),
                 ),
               ),
             ),
-            if (isPerformer) GpButton('START', icon: Icons.play_arrow_rounded, color: p.color, textColor: Colors.white, onPressed: g.start) else WaitingNote('Waiting for ${p.name} to start…'),
+            if (isPerformer) GpButton('Start', icon: Icons.play_arrow_rounded, color: p.color, textColor: Colors.white, onPressed: g.start) else WaitingNote('Waiting for ${p.name} to start…'),
           ]),
         );
       case TurnPhase.playing:
         final showWord = me == null || (me == g.performer) == performerSeesWord;
         return PartyFrame(
-          title: '${p.name.toUpperCase()} · ${g.gotThisTurn} GOT',
+          title: '${p.name} · ${g.gotThisTurn} got',
           subtitle: turnLabel,
           trailing: TimeChip(g.msLeft),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -167,18 +167,18 @@ class WordTurnsView extends StatelessWidget {
               child: Center(
                 child: SingleChildScrollView(
                   child: showWord
-                      ? PromptCard(header: performerSeesWord ? 'ACT THIS OUT' : 'THE WORD IS', text: g.current, color: color)
-                      : PromptCard(header: isPerformer ? 'GUESS!' : 'SHOUT YOUR GUESSES!', text: isPerformer ? 'Listen to the clues' : watchText, emoji: '🤔', color: color),
+                      ? PromptCard(header: performerSeesWord ? 'Act this out' : 'The word is', text: g.current, color: color)
+                      : PromptCard(header: isPerformer ? 'Guess' : 'Shout your guesses', text: isPerformer ? 'Listen to the clues' : watchText, emoji: '🤔', color: color),
                 ),
               ),
             ),
             if (isPerformer)
               Row(children: [
-                Expanded(child: GpButton('SKIP', color: Colors.white24, textColor: Colors.white, onPressed: g.skip)),
+                Expanded(child: GpButton('Skip', color: Colors.white24, textColor: Colors.white, onPressed: g.skip)),
                 const SizedBox(width: 12),
                 Expanded(
                   flex: 2,
-                  child: GpButton('GOT IT ✓', color: GpColors.yes, textColor: Colors.white, onPressed: () {
+                  child: GpButton('Got it', color: GpColors.yes, textColor: Colors.white, onPressed: () {
                     haptic(HapticWeight.medium);
                     g.gotIt();
                   }),
@@ -189,21 +189,21 @@ class WordTurnsView extends StatelessWidget {
       case TurnPhase.turnEnd:
       case TurnPhase.done:
         return PartyFrame(
-          title: "TIME'S UP!",
+          title: "Time's up",
           subtitle: turnLabel,
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
                   child: Column(children: [
-                    PromptCard(header: p.name.toUpperCase(), text: '${g.gotThisTurn} correct!', emoji: g.gotThisTurn >= 5 ? '🔥' : '👏', color: p.color),
+                    PromptCard(header: p.name.toUpperCase(), text: '${g.gotThisTurn} correct', emoji: g.gotThisTurn >= 5 ? '🔥' : '👏', color: p.color),
                     const SizedBox(height: 14),
                     PlayerPicker(players: players, notes: {for (var i = 0; i < players.length; i++) i: '${g.score[i]} pts'}),
                   ]),
                 ),
               ),
             ),
-            GpButton(g.turn + 1 >= g.totalTurns ? 'SEE SCORES' : 'NEXT PLAYER', icon: Icons.arrow_forward_rounded, onPressed: g.next),
+            GpButton(g.turn + 1 >= g.totalTurns ? 'See scores' : 'Next player', icon: Icons.arrow_forward_rounded, onPressed: g.next),
           ]),
         );
     }

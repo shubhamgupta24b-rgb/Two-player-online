@@ -32,13 +32,13 @@ class _BasketballHoopsScreenState extends State<BasketballHoopsScreen> {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(children: [
-        Text(phase == 'playing' ? 'BASKETBALL HOOPS' : 'TIME UP',
+        Text(phase == 'playing' ? 'Swish' : 'Time up',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
         Text('$seconds s remaining • $yourShots shots • $yourScore points'),
         const SizedBox(height: 18),
         _TargetMeter(target: target),
         const SizedBox(height: 18),
-        Text(canShoot ? 'Tap SHOOT when your marker is near the target!' : 'Get ready…', textAlign: TextAlign.center),
+        Text(canShoot ? 'Tap Shoot when your marker is near the target' : 'Get ready…', textAlign: TextAlign.center),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity, height: 180,
@@ -48,7 +48,7 @@ class _BasketballHoopsScreenState extends State<BasketballHoopsScreen> {
                 (state['startedAt'] as num).toInt(), (state['targetCycleMs'] as num).toInt());
               session.action('basketball:shoot', {'timing': position});
             } : null,
-            child: const Text('SHOOT!', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
+            child: const Text('Shoot', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w700)),
           ),
         ),
         const SizedBox(height: 18),
@@ -76,7 +76,7 @@ class _TargetMeter extends StatelessWidget {
   @override Widget build(BuildContext context) {
     return Column(children: [
       const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text('MISS'), Text('2 PT'), Text('3 PT'), Text('2 PT'), Text('MISS')]),
+        children: [Text('Miss'), Text('2 pt'), Text('3 pt'), Text('2 pt'), Text('Miss')]),
       const SizedBox(height: 8),
       SizedBox(height: 30, child: Stack(children: [
         Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(15),

@@ -64,7 +64,7 @@ class _CategoryPanelState extends State<CategoryPanel> {
             padding: const EdgeInsets.fromLTRB(18, 20, 18, 22),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              FittedBox(child: Text(cat.label, style: const TextStyle(color: FlatColors.ink, fontSize: 40, fontWeight: FontWeight.w900, letterSpacing: 1))),
+              FittedBox(child: Text(cat.label, style: const TextStyle(color: FlatColors.ink, fontSize: 40, fontWeight: FontWeight.w700))),
               const SizedBox(height: 16),
               LayoutBuilder(builder: (context, c) {
                 const gap = 14.0;
@@ -122,7 +122,7 @@ class _CategoryPanelState extends State<CategoryPanel> {
             icon: const Icon(Icons.arrow_back_rounded, color: GpCoral.tileInk),
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           ),
-          Text('${cat.emoji}  ${cat.label}', style: const TextStyle(color: GpCoral.tileInk, fontWeight: FontWeight.w900, fontSize: 16)),
+          Text('${cat.emoji}  ${cat.label}', style: const TextStyle(color: GpCoral.tileInk, fontWeight: FontWeight.w700, fontSize: 16)),
         ]),
         const SizedBox(height: 6),
         Wrap(spacing: 8, runSpacing: 8, children: [
@@ -155,9 +155,9 @@ class _CategoryPanelState extends State<CategoryPanel> {
             constraints: const BoxConstraints(minHeight: 46, minWidth: 64),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             child: Text(
-              asked ? '${q.label} · ${ans ? 'YES' : 'NO'}' : q.label,
+              asked ? '${q.label} · ${ans ? 'Yes' : 'No'}' : q.label,
               textAlign: TextAlign.center,
-              style: TextStyle(color: asked ? Color.lerp(color, Colors.black, 0.35) : Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+              style: TextStyle(color: asked ? Color.lerp(color, Colors.black, 0.35) : Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
             ),
           ),
         ),
@@ -215,8 +215,8 @@ class _FlatOption extends StatelessWidget {
             _icon(),
             const SizedBox(height: 6),
             FittedBox(
-              child: Text(a == null ? question.label : '${question.label} · ${a ? 'YES' : 'NO'}',
-                  style: TextStyle(color: a == null ? FlatColors.ink : (a ? const Color(0xFF15803D) : const Color(0xFFB91C1C)), fontWeight: FontWeight.w900, fontSize: 17)),
+              child: Text(a == null ? question.label : '${question.label} · ${a ? 'Yes' : 'No'}',
+                  style: TextStyle(color: a == null ? FlatColors.ink : (a ? const Color(0xFF15803D) : const Color(0xFFB91C1C)), fontWeight: FontWeight.w700, fontSize: 17)),
             ),
           ]),
         ),
@@ -255,7 +255,7 @@ class _Tile extends StatelessWidget {
                   const SizedBox(height: 2),
                   FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text(label, style: const TextStyle(color: GpCoral.tileInk, fontWeight: FontWeight.w900, fontSize: 13)),
+                    child: Text(label, style: const TextStyle(color: GpCoral.tileInk, fontWeight: FontWeight.w700, fontSize: 13)),
                   ),
                 ]),
               ),
@@ -266,7 +266,7 @@ class _Tile extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(color: GpCoral.bg, borderRadius: BorderRadius.circular(8)),
-                    child: Text('$asked', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+                    child: Text('$asked', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                   ),
                 ),
             ]),
@@ -313,7 +313,7 @@ class AnswerBanner extends StatelessWidget {
                 Expanded(child: Text(a.question.prompt, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14))),
                 Icon(a.answer ? Icons.check_circle : Icons.cancel, color: a.answer ? GpColors.yes : GpColors.no),
                 const SizedBox(width: 4),
-                Text(a.answer ? 'YES' : 'NO', style: TextStyle(color: a.answer ? GpColors.yes : GpColors.no, fontWeight: FontWeight.w900, fontSize: 22)),
+                Text(a.answer ? 'Yes' : 'No', style: TextStyle(color: a.answer ? GpColors.yes : GpColors.no, fontWeight: FontWeight.w700, fontSize: 22)),
               ]),
             ),
     );

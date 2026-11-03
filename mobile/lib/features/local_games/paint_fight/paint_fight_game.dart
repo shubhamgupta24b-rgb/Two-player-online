@@ -38,10 +38,10 @@ class PaintFightLogic extends TimedDuel {
 
 final paintFightInfo = LocalGameInfo(
   id: 'paint_fight',
-  title: 'Paint Fight',
+  title: 'Splat Patch',
   emoji: '🎨',
   color: const Color(0xFF4D96FF),
-  tagline: 'Cover the board in your colour!',
+  tagline: "Cover more of the board than your opponents",
   rules: const [
     'Drag your finger to paint the board in your colour.',
     'Start each stroke on your own half, then paint anywhere, even over your rival.',
@@ -88,7 +88,7 @@ class _Hud extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerRight,
-              child: Text('$cells cells · ${(cells * 100 / total).round()}%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+              child: Text('$cells cells · ${(cells * 100 / total).round()}%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
             ),
           ),
         ]),

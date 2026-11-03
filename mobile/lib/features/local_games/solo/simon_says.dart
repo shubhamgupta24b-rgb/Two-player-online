@@ -70,10 +70,10 @@ class SimonLogic extends SoloLogic {
 
 final simonInfo = LocalGameInfo(
   id: 'simon_says',
-  title: 'Simon Says',
+  title: 'Echo Pads',
   emoji: '🟢',
   color: const Color(0xFF26A69A),
-  tagline: 'Watch, remember, repeat!',
+  tagline: "Repeat the sequence of lights",
   rules: const [
     'Watch the coloured pads light up one by one.',
     'Then tap them back in exactly the same order.',
@@ -88,9 +88,9 @@ final simonInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
       title: switch (g.phase) {
-        _ when g.over => '❌ WRONG PAD',
-        SimonPhase.input => '👆 YOUR TURN (${g.typed}/${g.sequence.length})',
-        _ => '👀 WATCH…',
+        _ when g.over => 'Wrong pad',
+        SimonPhase.input => 'YOUR TURN (${g.typed}/${g.sequence.length})',
+        _ => 'Watch…',
       },
       score: g.score,
       child: Center(

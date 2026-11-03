@@ -99,7 +99,7 @@ class BottleLogic extends LocalGameLogic {
       score[turn] += 3;
       GameAudio.sfx('coin');
     }
-    message = cleared ? '🎉 ALL DOWN! +${knocked + 3}' : (knocked == 0 ? 'Missed!' : '🍾 +$knocked');
+    message = cleared ? 'All down +${knocked + 3}' : (knocked == 0 ? 'Missed' : '+$knocked');
     messageAt = ms;
     if (cleared || balls == 0) _nextTurn();
     notifyListeners();
@@ -132,14 +132,14 @@ class BottleLogic extends LocalGameLogic {
 
 final bottleInfo = LocalGameInfo(
   id: 'bottle_smash',
-  title: 'Bottle Smash',
+  title: 'Bottle Knock',
   emoji: '🍾',
   color: const Color(0xFF00897B),
-  tagline: 'Knock the bottle pyramid down!',
+  tagline: "Knock down the bottles",
   rules: const [
     'Swipe up to throw the ball. Where you swipe aims it; a longer swipe throws it higher.',
     'Knock a bottle out and the ones on top come down too. 3 balls a round; clear all 6 for +3.',
-    'From round 3 the shelf slides! 4 rounds each, taking turns. 1 to 4 players.',
+    'From round 3 the shelf slides. 4 rounds each, taking turns. 1 to 4 players.',
   ],
   scoreUnit: 'bottles',
   splitScreen: false,
@@ -221,7 +221,7 @@ class _BottleViewState extends State<_BottleView> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
       child: Column(children: [
-        GameHud(players: widget.players, scores: g.score, turn: g.finished ? null : g.turn, trailing: HudLabel('ROUND ${min(g.round, BottleLogic.rounds)}/${BottleLogic.rounds}')),
+        GameHud(players: widget.players, scores: g.score, turn: g.finished ? null : g.turn, trailing: HudLabel('Round ${min(g.round, BottleLogic.rounds)}/${BottleLogic.rounds}')),
         const SizedBox(height: 8),
         Expanded(
           child: LayoutBuilder(builder: (context, c) {
@@ -247,7 +247,7 @@ class _BottleViewState extends State<_BottleView> {
         const SizedBox(height: 10),
         GameStatus(
           player: current,
-          turnText: g.finished ? 'All rounds done!' : (_myTurn ? '${current.whose} TURN · ${'⚾' * g.balls}' : '${current.name} is throwing…'),
+          turnText: g.finished ? 'All rounds done' : (_myTurn ? '${current.whose} turn · ${'⚾' * g.balls}' : '${current.name} is throwing…'),
           message: showMsg ? g.message : null,
         ),
       ]),

@@ -99,10 +99,10 @@ class PingPongLogic extends LocalGameLogic {
 
 final pingPongInfo = LocalGameInfo(
   id: 'ping_pong',
-  title: 'Ping Pong',
+  title: 'Rally',
   emoji: '🏓',
   color: const Color(0xFFFF9F43),
-  tagline: "Don't let it past you!",
+  tagline: "Return the ball past your opponent",
   rules: const [
     'Slide your finger left and right on your half to move your paddle.',
     'Hit the ball with the edge of the paddle to angle it. It speeds up every hit.',
@@ -151,7 +151,7 @@ final pingPongInfo = LocalGameInfo(
       quarterTurns: me == 1 ? 2 : 0,
       child: Column(children: [
         Expanded(child: Padding(padding: const EdgeInsets.all(8), child: _PongTable(players: players, g: g))),
-        ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+        ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
       ]),
     ),
   ),
@@ -160,7 +160,7 @@ final pingPongInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => Column(children: [
       Expanded(child: Padding(padding: const EdgeInsets.all(8), child: _PongTable(players: players, g: g))),
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
     ]),
   ),
 );
@@ -262,9 +262,9 @@ class _PongPainter extends CustomPainter {
       canvas.drawCircle(b, br, Paint()..shader = RadialGradient(center: const Alignment(-0.35, -0.4), colors: const [Colors.white, Color(0xFFFFE0B2)]).createShader(Rect.fromCircle(center: b, radius: br)));
     }
     if (g.waitingToServe) {
-      final text = g.lastPointTo == null ? 'GET READY' : 'POINT!';
+      final text = g.lastPointTo == null ? 'Get ready' : 'Point';
       final tp = TextPainter(
-        text: TextSpan(text: text, style: const TextStyle(color: Brand.gold, fontSize: 40, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 3))])),
+        text: TextSpan(text: text, style: const TextStyle(color: Brand.gold, fontSize: 40, fontWeight: FontWeight.w700, shadows: [Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 3))])),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, table.center - Offset(tp.width / 2, tp.height / 2));

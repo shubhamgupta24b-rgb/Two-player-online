@@ -67,7 +67,7 @@ class ResultScreen extends StatelessWidget {
   Widget _topBar(BuildContext context, String label) => Row(children: [
         RoundButton(icon: GameIcons.close, label: 'Close', onPressed: onExit),
         Expanded(
-          child: Text('${game.title} · $label'.toUpperCase(),
+          child: Text('${game.title} · $label',
               textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: context.tk.styles.label),
         ),
         const SizedBox(width: kTouchTarget),
@@ -116,13 +116,13 @@ class ResultScreen extends StatelessWidget {
     final scoresLine = order.length <= 3 ? '${[for (final i in order) players[i].score].join(' – ')} · ${game.scoreUnit}' : '${players.length} players · ${game.scoreUnit}';
     final titleStyle = t.styles.h1;
     final InlineSpan title = draw
-        ? const TextSpan(text: "It's a draw!")
+        ? const TextSpan(text: "It's a draw")
         : TextSpan(children: [
             for (var k = 0; k < (teamWin ? 2 : 1); k++) ...[
               if (k > 0) const TextSpan(text: ' & '),
               TextSpan(text: players[leaders[k]].name, style: TextStyle(color: nameColor(players[leaders[k]].color))),
             ],
-            TextSpan(text: teamWin ? ' win!' : ' wins!'),
+            TextSpan(text: teamWin ? ' win' : ' wins'),
           ]);
     final hero = extras?.hero;
     return _frame(
@@ -139,7 +139,7 @@ class ResultScreen extends StatelessWidget {
         const SizedBox(height: 4),
         Text(extras?.subtitle ?? scoresLine,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w800, color: NeonPalette.textMuted, fontFeatures: [FontFeature.tabularFigures()])),
+            style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w600, color: NeonPalette.textMuted, fontFeatures: [FontFeature.tabularFigures()])),
         const SizedBox(height: 14),
         for (final i in order) ...[
           _Row(
@@ -183,10 +183,10 @@ class ResultScreen extends StatelessWidget {
         else
           Center(child: GameIcon(gameIconFor(game.id), size: 52, color: nameColor(game.color))),
         const SizedBox(height: 4),
-        Semantics(header: true, child: Text(newBest ? 'New best!' : 'Game over', textAlign: TextAlign.center, style: t.styles.h1.copyWith(color: newBest ? Brand.gold : Colors.white))),
+        Semantics(header: true, child: Text(newBest ? 'New best' : 'Game over', textAlign: TextAlign.center, style: t.styles.h1.copyWith(color: newBest ? Brand.gold : Colors.white))),
         if (extras?.subtitle != null) ...[
           const SizedBox(height: 4),
-          Text(extras!.subtitle!, textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w800, color: NeonPalette.textMuted)),
+          Text(extras!.subtitle!, textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w600, color: NeonPalette.textMuted)),
         ],
         const SizedBox(height: 18),
         Container(
@@ -197,14 +197,14 @@ class ResultScreen extends StatelessWidget {
             border: Border.all(color: newBest ? Brand.gold : t.stroke, width: newBest ? 2 : 1),
           ),
           child: Column(children: [
-            Text(game.scoreUnit.toUpperCase(), style: t.styles.label),
+            Text(game.scoreUnit, style: t.styles.label),
             const SizedBox(height: 6),
             _CountUp(value: score, style: t.styles.scoreLarge.copyWith(color: newBest ? Brand.gold : Colors.white)),
             const SizedBox(height: 10),
             if (newBest)
-              const EdgeTag('NEW BEST', color: Brand.gold)
+              const EdgeTag('New best', color: Brand.gold)
             else if (best != null)
-              Text('Best so far: $best', style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w900, color: NeonPalette.textMuted, fontFeatures: [FontFeature.tabularFigures()])),
+              Text('Best so far: $best', style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: NeonPalette.textMuted, fontFeatures: [FontFeature.tabularFigures()])),
           ]),
         ),
       ],
@@ -260,11 +260,11 @@ class _Row extends StatelessWidget {
             PlayerBadge(index: shape, size: 16, color: c),
             const SizedBox(width: 8),
             if (detail != null) ...[
-              SizedBox(width: 66, child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: ink))),
+              SizedBox(width: 66, child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: ink))),
               const SizedBox(width: 6),
               Expanded(child: detail!),
             ] else
-              Expanded(child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: ink))),
+              Expanded(child: Text(player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: ink))),
             if (wins > 0) ...[
               const SizedBox(width: 8),
               Container(
@@ -273,7 +273,7 @@ class _Row extends StatelessWidget {
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   const GameIcon(GameIcons.crown, size: 12, color: Brand.gold),
                   const SizedBox(width: 3),
-                  Text('$wins', style: const TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w900, color: kIdleInk)),
+                  Text('$wins', style: const TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w700, color: kIdleInk)),
                 ]),
               ),
             ],
