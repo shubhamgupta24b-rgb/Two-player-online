@@ -18,9 +18,9 @@ class ResultView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (emoji, title, sub, color) = switch (result.outcome) {
-      RoundOutcome.correct => ('🎉', 'CORRECT!', 'YOU FOUND THE PERSON!', GpColors.yes),
-      RoundOutcome.wrong => ('❌', 'WRONG GUESS', 'The correct person was:', GpColors.no),
-      RoundOutcome.timeUp => ('⏰', 'TIME UP!', 'The correct person was:', Colors.orangeAccent),
+      RoundOutcome.correct => ('🎉', 'Correct', 'You found the person', GpColors.yes),
+      RoundOutcome.wrong => ('❌', 'Wrong guess', 'The correct person was:', GpColors.no),
+      RoundOutcome.timeUp => ('⏰', 'Time up', 'The correct person was:', Colors.orangeAccent),
     };
     final found = result.outcome == RoundOutcome.correct;
     final secretCard = SizedBox(
@@ -38,7 +38,7 @@ class ResultView extends StatelessWidget {
             child: DarkPanel(
               padding: const EdgeInsets.all(20),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('$emoji $title', textAlign: TextAlign.center, style: TextStyle(color: color, fontSize: 34, fontWeight: FontWeight.w900)),
+              Text('$emoji $title', textAlign: TextAlign.center, style: TextStyle(color: color, fontSize: 34, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               Text(sub, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
               const SizedBox(height: 16),
@@ -48,19 +48,19 @@ class ResultView extends StatelessWidget {
                 Text('You guessed ${result.guessed!.name}', style: const TextStyle(color: Colors.white70)),
               ],
               const SizedBox(height: 12),
-              Text(result.points == 1 ? '+1 POINT' : '+${result.points} POINTS',
-                  style: TextStyle(color: found ? GpColors.accent : Colors.white54, fontSize: 24, fontWeight: FontWeight.w900)),
+              Text(result.points == 1 ? '+1 point' : '+${result.points} points',
+                  style: TextStyle(color: found ? GpColors.accent : Colors.white54, fontSize: 24, fontWeight: FontWeight.w700)),
               const SizedBox(height: 24),
-              const Text('ROUND COMPLETE', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+              const Text('Round complete', style: TextStyle(color: GpColors.muted, fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
-              Text(found ? '${result.guesser.name} found the person!' : "${result.guesser.name} didn't find the person.",
+              Text(found ? '${result.guesser.name} found the person' : "${result.guesser.name} didn't find the person.",
                   textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
               const SizedBox(height: 12),
               ScoreBoard(players: players),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                child: GpButton(lastRound ? 'SEE FINAL SCORE' : 'NEXT ROUND', onPressed: onNext, icon: lastRound ? Icons.emoji_events_rounded : Icons.arrow_forward_rounded),
+                child: GpButton(lastRound ? 'See final score' : 'Next round', onPressed: onNext, icon: lastRound ? Icons.emoji_events_rounded : Icons.arrow_forward_rounded),
               ),
               ]),
             ),

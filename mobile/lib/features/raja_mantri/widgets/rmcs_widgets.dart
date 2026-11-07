@@ -82,7 +82,7 @@ class RmcsSeat extends StatelessWidget {
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 PlayerBadge(index: seat, size: 18, color: color),
                 const SizedBox(width: 6),
-                Flexible(child: Text(name.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.6))),
+                Flexible(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
               ]),
               const SizedBox(height: 4),
               Expanded(
@@ -96,7 +96,7 @@ class RmcsSeat extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(9), boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 4)]),
-                          child: Text(badge!, style: TextStyle(fontFamily: Fonts.body, color: onColor(badgeColor), fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1)),
+                          child: Text(badge!, style: TextStyle(fontFamily: Fonts.body, color: onColor(badgeColor), fontWeight: FontWeight.w700, fontSize: 10)),
                         ),
                       ),
                     ),
@@ -223,7 +223,7 @@ class _ShuffleDealState extends State<ShuffleDeal> with SingleTickerProviderStat
               top: centre.dy - cardH / 2 - 34,
               child: Opacity(
                 opacity: (1 - (t - 0.5) * 4).clamp(0.0, 1.0),
-                child: const Text('SHUFFLING…', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, color: RmcsColors.gold, letterSpacing: 3, fontSize: 20)),
+                child: const Text('Shuffling…', textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, color: RmcsColors.gold, fontSize: 20)),
               ),
             ),
             for (var i = 0; i < 4; i++) ...() {
@@ -291,8 +291,8 @@ class ResultBanner extends StatelessWidget {
         child: SizedBox(
           width: double.infinity,
           child: TurnBanner(
-            text: caught ? 'Chor caught!' : 'Wrong guess: Chor escaped!',
-            sub: timedOut ? "Time's up! The Mantri didn't choose." : (caught ? 'Mantri +500' : 'Chor +500'),
+            text: caught ? 'Chor caught' : 'Wrong guess. The Chor escaped',
+            sub: timedOut ? "Time's up. The Mantri didn't choose." : (caught ? 'Mantri +500' : 'Chor +500'),
             color: Brand.gold,
             kind: caught ? TurnBannerKind.success : TurnBannerKind.miss,
             icon: caught ? GameIcons.check : GameIcons.cross,
@@ -327,7 +327,7 @@ class RmcsHeadline extends StatelessWidget {
                   Text(title, style: const TextStyle(fontFamily: Fonts.display, color: Colors.white, fontSize: 20, height: 1.15)),
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),
-                    Text(subtitle!, style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.textMuted, fontWeight: FontWeight.w800, fontSize: 12.5)),
+                    Text(subtitle!, style: const TextStyle(fontFamily: Fonts.body, color: NeonPalette.textMuted, fontWeight: FontWeight.w600, fontSize: 12.5)),
                   ],
                 ]),
               ),

@@ -49,14 +49,14 @@ class _AppButtonState extends State<AppButton> {
       ButtonVariant.primary => () {
           final c = widget.color ?? t.accent;
           final fill = widget.color == null || contrast(widget.textColor ?? onColor(c), c) >= 4.5 ? c : fillFor(c);
-          return (fill, widget.textColor ?? onColor(fill), Color.lerp(fill, Colors.black, 0.42));
+          return (fill, widget.textColor ?? onColor(fill), Color.lerp(fill, Colors.black, 0.28));
         }(),
       ButtonVariant.danger => (fillFor(t.danger), Colors.white, Color.lerp(fillFor(t.danger), Colors.black, 0.42)),
       ButtonVariant.secondary => (t.flat ? t.card : t.glassStrong, t.flat ? t.text : t.onBg, t.flat ? t.strokeStrong : null),
       ButtonVariant.ghost => (Colors.transparent, t.onBg, null),
     };
-    final height = widget.compact ? kTouchTarget : 54.0;
-    final radius = BorderRadius.circular(height / 2);
+    final height = widget.compact ? kTouchTarget : 52.0;
+    final radius = Radii.rButton;
     final sink = _down && enabled;
     final duration = Motion.of(context, Motion.fast);
     return Semantics(
@@ -88,9 +88,9 @@ class _AppButtonState extends State<AppButton> {
               color: bg,
               borderRadius: radius,
               border: widget.variant == ButtonVariant.ghost
-                  ? Border.all(color: t.flat ? Colors.white : t.strokeStrong, width: 2)
+                  ? Border.all(color: t.strokeStrong, width: 1)
                   : (widget.variant == ButtonVariant.secondary && !t.flat ? Border.all(color: t.stroke) : null),
-              boxShadow: edge == null || sink || !enabled ? null : [BoxShadow(color: edge, offset: const Offset(0, 4))],
+              boxShadow: edge == null || sink || !enabled ? null : [BoxShadow(color: edge, offset: const Offset(0, 3))],
             ),
             child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
               if (widget.icon != null) ...[Icon(widget.icon, color: fg, size: widget.compact ? 20 : 22), const SizedBox(width: Space.s)],
@@ -118,8 +118,8 @@ class AppIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tk;
-    final fill = color ?? (t.flat ? Colors.white : t.glassStrong);
-    final fg = color != null ? onColor(color!) : (t.flat ? FlatPalette.board : t.onBg);
+    final fill = color ?? (t.flat ? FlatPalette.surface : t.glassStrong);
+    final fg = color != null ? onColor(color!) : t.onBg;
     return Tooltip(
       message: tooltip,
       child: Semantics(
@@ -131,7 +131,7 @@ class AppIconButton extends StatelessWidget {
           child: Center(
             child: Material(
               color: fill,
-              shape: CircleBorder(side: BorderSide(color: t.flat ? FlatPalette.tileShade : t.stroke, width: t.flat ? 2 : 1)),
+              shape: CircleBorder(side: BorderSide(color: t.stroke)),
               child: InkWell(
                 customBorder: const CircleBorder(),
                 onTap: onPressed == null
@@ -191,7 +191,7 @@ class AppChip extends StatelessWidget {
             border: Border.all(color: selected ? (t.flat ? fillFor(c) : Colors.white) : (t.flat ? t.strokeStrong : t.stroke), width: 2),
             boxShadow: selected && !t.flat ? [BoxShadow(color: c.withValues(alpha: 0.45), blurRadius: 12)] : null,
           ),
-          child: Text(label, textAlign: TextAlign.center, style: t.styles.bodyStrong.copyWith(color: fg, fontWeight: FontWeight.w900)),
+          child: Text(label, textAlign: TextAlign.center, style: t.styles.bodyStrong.copyWith(color: fg, fontWeight: FontWeight.w700)),
         ),
       ),
     );
@@ -284,8 +284,7 @@ class _AppDialog extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(Space.xl, Space.xl, Space.xl, Space.l),
                 child: SingleChildScrollView(
                   child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                    if (emoji != null) Text(emoji!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 44)),
-                    Semantics(header: true, child: Text(title, textAlign: TextAlign.center, style: t.cardStyles.headline)),
+                                        Semantics(header: true, child: Text(title, textAlign: TextAlign.center, style: t.cardStyles.headline)),
                     if (message != null) ...[const SizedBox(height: Space.s), Text(message!, textAlign: TextAlign.center, style: t.cardStyles.body.copyWith(color: t.textMuted))],
                     if (body != null) ...[const SizedBox(height: Space.l), body!],
                     const SizedBox(height: Space.xl),
@@ -302,7 +301,7 @@ class _AppDialog extends StatelessWidget {
 }
 
 /// Asks to confirm something destructive. True when confirmed.
-Future<bool> confirmAction(BuildContext context, {required String title, required String message, required String confirm, String cancel = 'CANCEL', String? emoji = '⚠️'}) async {
+Future<bool> confirmAction(BuildContext context, {required String title, required String message, required String confirm, String cancel = 'Cancel', String? emoji}) async {
   final ok = await showAppDialog<bool>(context, title: title, message: message, emoji: emoji, actions: [
     Builder(builder: (ctx) => AppButton(confirm, variant: ButtonVariant.danger, onPressed: () => Navigator.pop(ctx, true))),
     Builder(builder: (ctx) => AppButton(cancel, variant: ButtonVariant.secondary, onPressed: () => Navigator.pop(ctx, false))),
@@ -368,7 +367,7 @@ void showToast(BuildContext context, String message, {Tone tone = Tone.info, Dur
       content: Row(children: [
         Icon(_toneIcon(tone), color: Colors.white),
         const SizedBox(width: Space.s),
-        Expanded(child: Text(message, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
+        Expanded(child: Text(message, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
       ]),
     ));
 }
@@ -397,12 +396,12 @@ class AppBanner extends StatelessWidget {
           else
             Icon(_toneIcon(tone), color: Colors.white, size: 20),
           const SizedBox(width: Space.s),
-          Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14))),
+          Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14))),
           if (actionLabel != null && onAction != null)
             TextButton(
               onPressed: onAction,
               style: TextButton.styleFrom(foregroundColor: Colors.white, minimumSize: const Size(kTouchTarget, kTouchTarget)),
-              child: Text(actionLabel!, style: const TextStyle(fontWeight: FontWeight.w900)),
+              child: Text(actionLabel!, style: const TextStyle(fontWeight: FontWeight.w700)),
             ),
         ]),
       ),
@@ -419,7 +418,7 @@ class EmptyState extends StatelessWidget {
   const EmptyState({super.key, required this.emoji, required this.title, this.message, this.actionLabel, this.onAction});
 
   /// The error flavour of [EmptyState].
-  const EmptyState.error({super.key, this.title = 'Something went wrong', this.message = 'Check your connection and try again.', this.actionLabel = 'TRY AGAIN', this.onAction})
+  const EmptyState.error({super.key, this.title = 'Something went wrong', this.message = 'Check your connection and try again.', this.actionLabel = 'Try again', this.onAction})
       : emoji = '😕';
 
   @override
@@ -534,6 +533,42 @@ class PlayerShapePainter extends CustomPainter {
   bool shouldRepaint(PlayerShapePainter old) => old.shape != shape || old.color != color || old.outline != outline;
 }
 
+/// The signature detail: a player's shape cut like a carrom piece, with a soft contact
+/// shadow, a raised rim and an inner groove. Used wherever a player is shown.
+class CarromPiecePainter extends CustomPainter {
+  final PlayerShape shape;
+  final Color color;
+  const CarromPiecePainter(this.shape, this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = Offset.zero & size;
+    final path = PlayerShapePainter.pathFor(shape, r);
+    canvas.drawPath(path.shift(Offset(0, size.height * 0.05)), Paint()..color = Colors.black.withValues(alpha: 0.28));
+    canvas.drawPath(path, Paint()..color = color);
+    canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeJoin = StrokeJoin.round
+          ..strokeWidth = math.max(1, size.width * 0.04)
+          ..color = Color.lerp(color, Colors.white, 0.5)!);
+    if (size.width >= 20) {
+      final inner = PlayerShapePainter.pathFor(shape, r.deflate(size.width * 0.18));
+      canvas.drawPath(
+          inner,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeJoin = StrokeJoin.round
+            ..strokeWidth = math.max(0.8, size.width * 0.025)
+            ..color = Color.lerp(color, Colors.black, 0.22)!);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CarromPiecePainter old) => old.shape != shape || old.color != color;
+}
+
 /// A player's seat: colour, shape and initial. [seat] picks the shape; when null it's found
 /// from the colour (the default player colours map to seats).
 class PlayerAvatar extends StatelessWidget {
@@ -563,7 +598,7 @@ class PlayerAvatar extends StatelessWidget {
               gradient: LinearGradient(colors: [Color.lerp(color, Colors.white, 0.2)!, fillFor(color)], begin: Alignment.topLeft, end: Alignment.bottomRight),
               border: Border.all(color: Colors.white, width: size * 0.06),
             ),
-            child: Text(initial, style: TextStyle(color: Colors.white, fontSize: size * 0.46, fontWeight: FontWeight.w900, height: 1)),
+            child: Text(initial, style: TextStyle(color: Colors.white, fontSize: size * 0.46, fontWeight: FontWeight.w700, height: 1)),
           ),
           if (s != null)
             Positioned(
@@ -620,12 +655,12 @@ class PlayerChip extends StatelessWidget {
               SizedBox(width: 13, height: 13, child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(s), active ? Colors.white : color))),
               const SizedBox(width: 5),
             ],
-            Flexible(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg, fontWeight: FontWeight.w900, fontSize: 13))),
+            Flexible(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 13))),
             if (score != null) ...[
               const SizedBox(width: 6),
               Text('$score', style: t.styles.score.copyWith(color: fg, fontSize: 15)),
             ],
-            if (suffix != null) ...[const SizedBox(width: 4), Text(suffix!, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 12))],
+            if (suffix != null) ...[const SizedBox(width: 4), Text(suffix!, style: TextStyle(color: fg, fontWeight: FontWeight.w600, fontSize: 12))],
           ]),
         ),
       ),
@@ -767,9 +802,9 @@ class RoomCodeDisplay extends StatelessWidget {
           excludeSemantics: true,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: Space.l, vertical: Space.s),
-            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.25), borderRadius: Radii.rLg, border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 2)),
+            decoration: BoxDecoration(color: t.surfaceStrong, borderRadius: Radii.rLg, border: Border.all(color: t.stroke)),
             child: FittedBox(
-              child: Text(code, style: t.styles.score.copyWith(color: Colors.white, fontSize: size, letterSpacing: size * 0.22, height: 1.1)),
+              child: Text(code, style: t.styles.score.copyWith(color: t.onBg, fontSize: size, letterSpacing: size * 0.22, height: 1.1)),
             ),
           ),
         ),
@@ -792,12 +827,13 @@ String friendlyError(String message) => message.startsWith('Something went wrong
 
 /// A labelled on/off row (settings, pause menu).
 class SettingSwitch extends StatelessWidget {
-  final String emoji, label;
+  final String label;
+  final GameIcons? icon;
   final String? hint;
   final bool value;
   final ValueChanged<bool> onChanged;
   final Color? color;
-  const SettingSwitch({super.key, required this.emoji, required this.label, this.hint, required this.value, required this.onChanged, this.color});
+  const SettingSwitch({super.key, this.icon, required this.label, this.hint, required this.value, required this.onChanged, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -806,7 +842,7 @@ class SettingSwitch extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: kTouchTarget),
         child: Row(children: [
-          SizedBox(width: 34, child: Text(emoji, style: const TextStyle(fontSize: 20))),
+          if (icon != null) SizedBox(width: 34, child: Align(alignment: Alignment.centerLeft, child: GameIcon(icon!, size: 20, color: t.textMuted))),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
               Text(label, style: t.cardStyles.bodyStrong),
@@ -833,8 +869,8 @@ class SettingsPanel extends StatelessWidget {
       listenable: Listenable.merge([AppSettings.haptics, Motion.reduceSetting, AppSettings.playerName, AppSettings.playerColor]),
       builder: (context, _) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         SoundControls(color: color ?? context.tk.accent),
-        SettingSwitch(emoji: '📳', label: 'Vibration', hint: 'Buzz on hits, wins and turns', value: AppSettings.haptics.value, onChanged: AppSettings.setHaptics, color: color),
-        SettingSwitch(emoji: '🐢', label: 'Reduce motion', hint: 'Fewer animations and effects', value: Motion.reduceSetting.value, onChanged: AppSettings.setReduceMotion, color: color),
+        SettingSwitch(icon: GameIcons.vibration, label: 'Vibration', hint: 'Buzz on hits, wins and turns', value: AppSettings.haptics.value, onChanged: AppSettings.setHaptics, color: color),
+        SettingSwitch(icon: GameIcons.clock, label: 'Reduce motion', hint: 'Fewer animations and effects', value: Motion.reduceSetting.value, onChanged: AppSettings.setReduceMotion, color: color),
         if (showProfile) const _ProfileEditor(),
       ]),
     );
@@ -862,7 +898,7 @@ class _ProfileEditorState extends State<_ProfileEditor> {
     final seat = AppSettings.playerColor.value;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       const SizedBox(height: Space.l),
-      Text('YOUR PLAYER (on this phone)', style: t.cardStyles.label),
+      Text('Your player on this phone', style: t.cardStyles.label),
       const SizedBox(height: Space.s),
       Row(children: [
         PlayerAvatar(name: _name.text.isEmpty ? 'You' : _name.text, color: PlayerPalette.color(seat), seat: seat, size: 48),
@@ -872,7 +908,7 @@ class _ProfileEditorState extends State<_ProfileEditor> {
             controller: _name,
             maxLength: 12,
             textCapitalization: TextCapitalization.words,
-            style: TextStyle(color: t.text, fontWeight: FontWeight.w800),
+            style: TextStyle(color: t.text, fontWeight: FontWeight.w600),
             decoration: InputDecoration(
               hintText: 'Your name',
               counterText: '',
@@ -900,7 +936,7 @@ class _ProfileEditorState extends State<_ProfileEditor> {
                 width: kTouchTarget,
                 height: kTouchTarget,
                 padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: i == seat ? t.text : Colors.transparent, width: 3)),
+                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: i == seat ? Brand.gold : Colors.transparent, width: 2)),
                 child: CustomPaint(painter: PlayerShapePainter(PlayerPalette.shape(i), PlayerPalette.color(i))),
               ),
             ),
@@ -980,12 +1016,12 @@ class PlayerBadge extends StatelessWidget {
         width: size,
         height: size,
         child: CustomPaint(
-          painter: PlayerShapePainter(PlayerPalette.shape(index), c, outline: Colors.white, outlineWidth: 1.5),
+          painter: CarromPiecePainter(PlayerPalette.shape(index), c),
           child: initial == null
               ? null
               : Center(
                   child: Text(initial!.characters.first.toUpperCase(),
-                      style: TextStyle(fontFamily: Fonts.display, fontSize: size * 0.5, height: 1, color: onColor(c))),
+                      style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w700, fontSize: size * 0.4, height: 1, color: onColor(c))),
                 ),
         ),
       ),

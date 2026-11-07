@@ -159,9 +159,9 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('🤖 PLAY VS COMPUTER'));
       await tester.pump();
-      await tester.ensureVisible(find.text('PLAY'));
+      await tester.ensureVisible(find.text('Play'));
       await tester.pump();
-      await tester.tap(find.text('PLAY'));
+      await tester.tap(find.text('Play'));
       await tester.pump();
       for (var t = 0; t < 2600 + ms; t += 100) {
         await tester.pump(const Duration(milliseconds: 100));
@@ -176,9 +176,9 @@ void main() {
     for (final (id, secs) in [('flappy_jump', 6), ('crush_it', 34)]) {
       final game = localGames.firstWhere((g) => g.id == id);
       final (key, _, _) = await show(tester, LocalGameShell(game: game));
-      await tester.ensureVisible(find.text('PLAY'));
+      await tester.ensureVisible(find.text('Play'));
       await tester.pump();
-      await tester.tap(find.text('PLAY'));
+      await tester.tap(find.text('Play'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 2600));
       if (id == 'flappy_jump') await tester.tapAt(const Offset(200, 500));

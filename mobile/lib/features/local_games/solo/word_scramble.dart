@@ -84,14 +84,14 @@ class WordScrambleLogic extends SoloLogic {
 
 final wordScrambleInfo = LocalGameInfo(
   id: 'word_scramble',
-  title: 'Word Scramble',
+  title: 'Jumble Rush',
   emoji: '🔤',
   color: const Color(0xFF00897B),
-  tagline: 'Unscramble as many as you can!',
+  tagline: "Unscramble words before time runs out",
   rules: const [
     'The letters of a word are mixed up. Tap them in the right order.',
     'Each word you solve scores its number of letters.',
-    '60 seconds. Stuck? SKIP to the next word.',
+    '60 seconds. Stuck? Skip to the next word.',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -101,12 +101,12 @@ final wordScrambleInfo = LocalGameInfo(
     create: () => WordScrambleLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🔤 WORD SCRAMBLE',
+      title: 'Jumble Rush',
       score: g.score,
       extra: '⏱${(g.msLeft / 1000).ceil()}s',
       child: Column(children: [
         const Spacer(),
-        if (g.over) Text('The word was ${g.word}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800)),
+        if (g.over) Text('The word was ${g.word}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
@@ -114,12 +114,12 @@ final wordScrambleInfo = LocalGameInfo(
           child: FittedBox(
             child: Text(
               [for (var i = 0; i < g.letters.length; i++) i < g.picked.length ? g.letters[g.picked[i]] : '_'].join(' '),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 40, letterSpacing: 4),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 40),
             ),
           ),
         ),
         const SizedBox(height: 8),
-        Text(g.wrongFlash ? 'Not quite! Try again' : '${g.solved} solved', style: TextStyle(color: g.wrongFlash ? GpColors.no : GpColors.muted, fontWeight: FontWeight.w800)),
+        Text(g.wrongFlash ? 'Not quite. Try again' : '${g.solved} solved', style: TextStyle(color: g.wrongFlash ? GpColors.no : GpColors.muted, fontWeight: FontWeight.w600)),
         const SizedBox(height: 20),
         Wrap(alignment: WrapAlignment.center, spacing: 10, runSpacing: 10, children: [
           for (var i = 0; i < g.letters.length; i++)
@@ -131,16 +131,16 @@ final wordScrambleInfo = LocalGameInfo(
                 child: InkWell(
                   borderRadius: BorderRadius.circular(14),
                   onTap: g.picked.contains(i) ? null : () => g.tapLetter(i),
-                  child: SizedBox(width: 54, height: 60, child: Center(child: Text(g.letters[i], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 28)))),
+                  child: SizedBox(width: 54, height: 60, child: Center(child: Text(g.letters[i], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 28)))),
                 ),
               ),
             ),
         ]),
         const Spacer(),
         Row(children: [
-          Expanded(child: GpButton('UNDO', icon: Icons.undo_rounded, outlined: true, onPressed: g.undo)),
+          Expanded(child: GpButton('Undo', icon: Icons.undo_rounded, outlined: true, onPressed: g.undo)),
           const SizedBox(width: 12),
-          Expanded(child: GpButton('SKIP', icon: Icons.skip_next_rounded, color: Colors.white24, textColor: Colors.white, onPressed: g.skip)),
+          Expanded(child: GpButton('Skip', icon: Icons.skip_next_rounded, color: Colors.white24, textColor: Colors.white, onPressed: g.skip)),
         ]),
       ]),
     ),

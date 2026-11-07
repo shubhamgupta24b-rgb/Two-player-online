@@ -67,7 +67,7 @@ class PersonCard extends StatelessWidget {
               child: Text(person.name,
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     fontSize: 14,
                     decoration: out ? TextDecoration.lineThrough : null,
                     decorationColor: Colors.white,
@@ -90,7 +90,7 @@ class PersonCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(color: border == Colors.white ? GpColors.accent : border, borderRadius: BorderRadius.circular(8)),
-              child: Text(badge!, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: GpColors.ink)),
+              child: Text(badge!, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: GpColors.ink)),
             ),
           ),
         ),

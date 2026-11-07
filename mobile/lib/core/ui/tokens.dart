@@ -1,15 +1,15 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Design tokens ("Party Night", docs/ui-redesign/UI_SPEC.md section 1): the raw scales every
+/// Design tokens ("The floor after dinner", docs/design-system.md): the raw scales every
 /// screen is built from. Widgets read the flavour-aware set through `context.tokens` (see
 /// app_theme_ext.dart); the consts here are for const constructors, painters and the
 /// AppColors/FlatColors aliases.
 
 /// Bundled font families (assets/fonts, OFL).
 abstract final class Fonts {
-  static const display = 'Lilita One'; // headings, scores, timers, announcements
-  static const body = 'Nunito'; // everything else (600/700/800/900)
+  static const display = 'Bricolage Grotesque'; // expressive titles and game scores
+  static const body = 'DM Sans'; // readable labels, controls and body text
 }
 
 /// Spacing scale (dp).
@@ -23,7 +23,7 @@ abstract final class Space {
 /// Corner radii (dp). Spec: 6 tiles, 10 cards, 14 chips/banners, 18 player cards/buttons,
 /// 24 boards/scene frames.
 abstract final class Radii {
-  static const double tile = 6, card = 10, chip = 14, button = 18, board = 24, pill = 999;
+  static const double tile = 6, card = 12, chip = 12, button = 14, board = 20, pill = 999;
   // Older names, still used: sm 8 · md 12 · lg 16 · xl 24.
   static const double sm = 8, md = 12, lg = 16, xl = 24;
   static const rTile = BorderRadius.all(Radius.circular(tile));
@@ -43,7 +43,7 @@ abstract final class Shadows {
   static const large = [BoxShadow(color: Color(0x80000000), blurRadius: 34, offset: Offset(0, 14))];
 
   /// The darker "bottom edge" of a pressable thing (4–6 px), which sinks when pressed.
-  static List<BoxShadow> edge(Color c, {double depth = 5}) => [BoxShadow(color: c, offset: Offset(0, depth))];
+  static List<BoxShadow> edge(Color c, {double depth = 3}) => [BoxShadow(color: c, offset: Offset(0, depth))];
 }
 
 /// Durations and curves. Use [Motion.of] so "reduce motion" turns animations off.
@@ -68,72 +68,72 @@ const double kTouchTarget = 48;
 
 /// The logo palette and the spec's shared accents (same in both flavours).
 abstract final class Brand {
-  static const navy = Color(0xFF14207A);
-  static const night = Color(0xFF0A0F3D);
-  static const deep = Color(0xFF060827);
+  static const navy = Color(0xFF2A2723); // raised warm neutral (kept name: used across games)
+  static const night = Color(0xFF1E1C19);
+  static const deep = Color(0xFF161513);
   static const blue = Color(0xFF2E8BFF);
-  static const red = Color(0xFFFF3B5C);
-  static const gold = Color(0xFFFFC93C);
-  static const goldDeep = Color(0xFFA87A12); // button bottom edge
-  static const onGold = Color(0xFF1A1440); // text on gold
-  static const purple = Color(0xFF7B4DFF);
-  static const green = Color(0xFF2ECC71);
-  static const ink = Color(0xFF1E1B3A); // dark text on white
-  static const indigo = Color(0xFF3B2D9A); // hero cards, card backs
-  static const indigoDeep = Color(0xFF1F1666);
-  static const goldLine = Color(0xFFE9C46A); // gold hairlines and labels on indigo
+  static const red = Color(0xFFE5484D);
+  static const gold = Color(0xFFF6A91B); // marigold: the one accent
+  static const goldDeep = Color(0xFFB87708); // button bottom edge
+  static const onGold = Color(0xFF2A1C05); // text on marigold
+  static const purple = Color(0xFF8E6BE0);
+  static const green = Color(0xFF3FB37A);
+  static const ink = Color(0xFF211C16); // dark text on light
+  static const indigo = Color(0xFF2A2723); // hero cards, card backs
+  static const indigoDeep = Color(0xFF1E1C19);
+  static const goldLine = Color(0xFFE8B65A); // marigold hairlines and labels on dark
 }
 
-/// Raw colours of the default "Party Night" look (spec 1.1, Night column).
+/// Raw colours of the dark look.
 abstract final class NeonPalette {
-  static const bgTop = Color(0xFF151A4A);
-  static const bg = Color(0xFF0B0E2E); // bgMid
-  static const bgBottom = Color(0xFF060820);
-  static const surface = Color(0x0FFFFFFF); // rgba(255,255,255,0.06)
-  static const surfaceStrong = Color(0x1AFFFFFF); // rgba(255,255,255,0.10)
-  static const stroke = Color(0x1AFFFFFF); // rgba(255,255,255,0.10)
-  static const overlay = Color(0xA80A0E28); // rgba(10,14,40,0.66)
-  static const text = Colors.white;
-  static const textMuted = Color(0xFFC3C9EE);
-  static const label = Color(0xFFAAB2E8);
-  static const sheet = Color(0xFF121640); // bottom sheets (Pause mockup)
+  static const bgTop = Color(0xFF161513);
+  static const bg = Color(0xFF161513);
+  static const bgBottom = Color(0xFF161513);
+  static const surface = Color(0x0FFFF5E6);
+  static const surfaceStrong = Color(0x1AFFF5E6);
+  static const stroke = Color(0x1AFFF5E6);
+  static const overlay = Color(0xB3161513);
+  static const text = Color(0xFFF5EFE4);
+  static const textMuted = Color(0xFFC0B8AA);
+  static const label = Color(0xFFA89F91);
+  static const sheet = Color(0xFF1E1C19);
   // Older names.
   static const glass = surface;
   static const glassStrong = surfaceStrong;
-  static const card = Color(0xFF1B2160);
-  static const cardRaised = Color(0xFF242B74);
+  static const card = Color(0xFF211F1B);
+  static const cardRaised = Color(0xFF2B2824);
   static const sunken = Color(0x40000000);
-  static const strokeStrong = Color(0x38FFFFFF);
+  static const strokeStrong = Color(0x33FFF5E6);
   static const textFaint = label;
 }
 
-/// Raw colours of the flat app (spec 1.1, Flat column, and section 7).
+/// Raw colours of the light look (the name is historical: `t.flat` means light).
 abstract final class FlatPalette {
-  static const skyLight = Color(0xFF6BB8E0); // bgTop
-  static const sky = Color(0xFF4FA3D1); // bgMid
-  static const skyDeep = Color(0xFF4494C4); // bgBottom (spec #3E8FBF, lightened a touch so ink text passes 4.5:1)
-  static const surface = Colors.white;
-  static const surfaceStrong = Color(0xFFF2F5F9);
-  static const stroke = Color(0xFFD9DEE6);
-  static const overlay = Color(0xB822212B); // rgba(34,33,43,0.72)
-  static const ink = Color(0xFF22212B); // text
-  static const inkMuted = Color(0xFF4A5568); // textMuted
-  static const label = Color(0xFF5A6478);
-  static const board = Color(0xFF2B6488);
-  static const strip = Color(0xFF3A3846);
-  static const tile = Colors.white;
+  static const skyLight = Color(0xFFF6F2EA);
+  static const sky = Color(0xFFF6F2EA);
+  static const skyDeep = Color(0xFFF6F2EA);
+  static const surface = Color(0xFFFFFDF9);
+  static const surfaceStrong = Color(0xFFEEE8DC);
+  static const stroke = Color(0xFFE2DBCE);
+  static const overlay = Color(0xB8211C16);
+  static const ink = Color(0xFF211C16); // text
+  static const inkMuted = Color(0xFF5E554A); // textMuted
+  static const label = Color(0xFF6B6256);
+  static const board = Color(0xFF3A342C);
+  static const strip = Color(0xFF2C2721);
+  static const tile = Color(0xFFFFFDF9);
   static const tileShade = stroke;
-  static const option = Color(0xFFE8EAEE);
-  static const mark = Color(0x1FFFFFFF);
-  static const close = Color(0xFFC9302C);
+  static const option = Color(0xFFEEE8DC);
+  static const mark = Color(0x00FFFFFF);
+  static const close = Color(0xFFC6383D);
 }
 
 /// Status colours (both flavours).
 abstract final class StatusColors {
-  static const success = Color(0xFF2ECC71);
-  static const warn = Color(0xFFFFB020);
-  static const danger = Color(0xFFFF5E5B);
-  static const info = Color(0xFF2E8BFF);
+  static const success = Color(0xFF4CC38A);
+  static const warn = Color(0xFFF2A63B);
+  static const danger = Color(0xFFEF6A6E);
+  static const info = Color(0xFF5AA2F0);
 }
 
 /// Player identity (spec 1.2): colour + shape, always both. Each marker is the shape filled

@@ -16,14 +16,14 @@ const charadesMovies = [
 
 final charadesInfo = LocalGameInfo(
   id: 'charades',
-  title: 'Dumb Charades',
+  title: 'Silent Movie',
   emoji: '🎬',
   color: const Color(0xFFFF7043),
-  tagline: 'Act out the movie. No talking!',
+  tagline: "Act out a movie without speaking",
   rules: const [
-    'On your turn, only you see the movie name. Act it out with no words and no lip-reading tricks!',
-    'Everyone else shouts guesses. Tap GOT IT when someone gets it right, or SKIP a tough one.',
-    '60 seconds per turn, 2 turns each. The best actor wins! 2 to 6 players.',
+    'On your turn, only you see the movie name. Act it out with no words and no lip-reading tricks',
+    'Everyone else shouts guesses. Tap Got it when someone gets it right, or skip a tough one.',
+    '60 seconds per turn, 2 turns each. The best actor wins. 2 to 6 players.',
   ],
   scoreUnit: 'movies',
   splitScreen: false,
@@ -40,9 +40,9 @@ Widget _view(BuildContext context, WordTurnsLogic g, List players, int? me) => W
       players: players.cast(),
       g: g,
       me: me,
-      title: '🎬 DUMB CHARADES',
-      readyText: "You're acting! Hold the phone so only you can see.",
-      watchText: 'Watch the actor and shout the movie name!',
+      title: 'Silent Movie',
+      readyText: "You're acting. Hold the phone so only you can see.",
+      watchText: 'Watch the actor and shout the movie name',
       performerSeesWord: true,
       color: const Color(0xFFFF7043),
     );

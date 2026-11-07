@@ -48,14 +48,14 @@ class GameIntro extends StatelessWidget {
         Expanded(
           child: ListView(padding: EdgeInsets.zero, children: [
             SizedBox(
-              height: 200 + top,
+              height: 248 + top,
               child: Stack(fit: StackFit.expand, children: [
                 GameArt(id: game.id, color: game.color),
                 Positioned(left: 16, top: top + 14, child: RoundButton(icon: GameIcons.back, label: 'Back', dark: true, onPressed: () => Navigator.maybePop(context))),
               ]),
             ),
-            Transform.translate(
-              offset: const Offset(0, -26),
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Center(
@@ -64,8 +64,8 @@ class GameIntro extends StatelessWidget {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                       Semantics(header: true, child: Text(game.title, style: t.styles.h1)),
                       const SizedBox(height: 2),
-                      Text(stripEmoji(game.tagline), style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFFD6DAF7))),
-                      const SizedBox(height: 14),
+                      Text(stripEmoji(game.tagline).replaceAll('!', ''), style: t.styles.body.copyWith(color: t.onBgMuted)),
+                      const SizedBox(height: 16),
                       _rules(context),
                       if (!game.solo) ...[
                         const SizedBox(height: 14),
@@ -96,7 +96,7 @@ class GameIntro extends StatelessWidget {
                       ],
                       if (turns != null && onTurns != null) ...[
                         const SizedBox(height: 14),
-                        Text('PLAY MODE', style: t.styles.label),
+                        Text('Play mode', style: t.styles.label),
                         const SizedBox(height: 8),
                         Row(children: [
                           for (final (on, title, hint) in const [(false, 'Split screen', 'Everyone at once'), (true, 'Take turns', 'Whole screen, one at a time')]) ...[
@@ -120,8 +120,8 @@ class GameIntro extends StatelessWidget {
                           const GameIcon(GameIcons.rotate, size: 16, color: NeonPalette.textMuted),
                           const SizedBox(width: 6),
                           Flexible(
-                            child: Text(count == 2 ? 'Lay the phone flat · Player 1 bottom, Player 2 top' : 'Lay the phone flat · everyone sits at their own zone',
-                                textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: NeonPalette.textMuted)),
+                            child: Text(count == 2 ? 'Lay the phone flat. Player 1 sits at the bottom, Player 2 at the top' : 'Lay the phone flat. Everyone sits at their own zone',
+                                textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w600, color: NeonPalette.textMuted)),
                           ),
                         ]),
                       ],
@@ -137,7 +137,7 @@ class GameIntro extends StatelessWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
-              child: GoldButton('Start', height: 58, fontSize: 24, onPressed: onStart),
+              child: GoldButton('Start', icon: GameIcons.play, onPressed: onStart),
             ),
           ),
         ),
@@ -149,16 +149,16 @@ class GameIntro extends StatelessWidget {
     final t = context.tk;
     final shown = game.rules.take(3).toList();
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: t.surface, borderRadius: Radii.rButton, border: Border.all(color: t.stroke)),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      decoration: BoxDecoration(color: t.card, borderRadius: Radii.rLg, border: Border.all(color: t.stroke)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         for (var i = 0; i < shown.length; i++) ...[if (i > 0) const SizedBox(height: 8), RuleStep(index: i, rule: shown[i])],
         Padding(
           padding: const EdgeInsets.only(left: 34),
           child: TextButton(
             onPressed: () => showHowToPlay(context, game),
-            style: TextButton.styleFrom(foregroundColor: Brand.gold, minimumSize: const Size(kTouchTarget, 40), padding: const EdgeInsets.symmetric(horizontal: 12)),
-            child: Text(game.rules.length > 3 ? 'All rules' : 'How to play', style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900)),
+            style: TextButton.styleFrom(foregroundColor: t.textMuted, minimumSize: const Size(kTouchTarget, 40), padding: const EdgeInsets.symmetric(horizontal: 12)),
+            child: Text(game.rules.length > 3 ? 'All rules' : 'How to play', style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w500)),
           ),
         ),
       ]),
@@ -192,7 +192,7 @@ class GameIntro extends StatelessWidget {
           ),
         );
     return Row(children: [
-      const Expanded(child: Text('PLAYERS', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.82, color: Colors.white))),
+      const Expanded(child: Text('Players', style: TextStyle(fontFamily: Fonts.display, fontSize: 19, color: NeonPalette.text))),
       if (canChange) ...[
         step('-', 'Fewer players', count > game.minPlayers ? () => onPlayerCount(count - 1) : null),
         const SizedBox(width: 6),
@@ -201,7 +201,7 @@ class GameIntro extends StatelessWidget {
           liveRegion: true,
           excludeSemantics: true,
           child: SizedBox(
-              width: 24, child: Text('$count', key: const ValueKey('playerCount'), textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.display, fontSize: 24, color: Colors.white))),
+              width: 24, child: Text('$count', key: const ValueKey('playerCount'), textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.display, fontSize: 24, color: NeonPalette.text))),
         ),
         const SizedBox(width: 6),
         step('+', 'More players', count < game.maxPlayers ? () => onPlayerCount(count + 1) : null),
@@ -246,7 +246,7 @@ class _PlayerRowState extends State<_PlayerRow> {
   Widget build(BuildContext context) {
     final c = widget.player.color;
     final shape = PlayerPalette.indexOf(c) ?? widget.seat;
-    const nameStyle = TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white);
+    const nameStyle = TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: NeonPalette.text);
     return Container(
       height: 54,
       padding: const EdgeInsets.only(left: 12, right: 6),
@@ -279,7 +279,7 @@ class _PlayerRowState extends State<_PlayerRow> {
         ),
         const SizedBox(width: 8),
         if (widget.onComputer == null)
-          const Padding(padding: EdgeInsets.only(right: 6), child: Text('Person', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: NeonPalette.textMuted)))
+          const Padding(padding: EdgeInsets.only(right: 6), child: Text('Person', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w600, color: NeonPalette.textMuted)))
         else
           Semantics(
             key: ValueKey('cpu${widget.seat}'),
@@ -302,10 +302,10 @@ class _PlayerRowState extends State<_PlayerRow> {
                         style: TextStyle(
                             fontFamily: Fonts.body,
                             fontSize: 12,
-                            fontWeight: widget.computer ? FontWeight.w900 : FontWeight.w800,
-                            color: widget.computer ? PlayerPalette.tintFor(c) : NeonPalette.textMuted)),
+                            fontWeight: widget.computer ? FontWeight.w700 : FontWeight.w600,
+                            color: NeonPalette.textMuted)),
                     const SizedBox(width: 6),
-                    IgnorePointer(child: PillSwitch(value: widget.computer, small: true, color: c, onChanged: (_) {})),
+                    IgnorePointer(child: PillSwitch(value: widget.computer, small: true, color: Brand.goldDeep, onChanged: (_) {})),
                   ]),
                 ),
               ),
@@ -343,12 +343,12 @@ class _OptionRow extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(title, style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
+                  Text(title, style: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: NeonPalette.text)),
                   Text(subtitle, style: const TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w700, color: NeonPalette.textMuted)),
                 ]),
               ),
               const SizedBox(width: 8),
-              PillSwitch(value: value, onChanged: onChanged, color: Brand.gold),
+              PillSwitch(value: value, onChanged: onChanged, color: Brand.goldDeep),
             ]),
           ),
         ),
@@ -427,7 +427,7 @@ class _MinuteChip extends StatelessWidget {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 GameIcon(GameIcons.clock, size: 16, color: selected ? Brand.onGold : Colors.white),
                 const SizedBox(width: 6),
-                Text('$minutes min', style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w900, color: selected ? Brand.onGold : Colors.white)),
+                Text('$minutes min', style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: selected ? Brand.onGold : Colors.white)),
               ])),
         ),
       ),

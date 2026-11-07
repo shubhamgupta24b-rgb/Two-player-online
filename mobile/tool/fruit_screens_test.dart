@@ -17,7 +17,7 @@ Future<void> playAndSnap(WidgetTester tester, String name, {int players = 1}) as
   ));
   await tester.pump();
   await snap(tester, key, '${name}_intro_fruit');
-  final play = find.text('PLAY').last;
+  final play = find.text('Play').last;
   await tester.ensureVisible(play);
   await tester.pump();
   await tester.tap(play);

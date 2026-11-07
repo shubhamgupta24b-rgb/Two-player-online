@@ -24,10 +24,11 @@ function privacyHtml() {
 </style></head>
 <body><main>
 <h1>Privacy Policy</h1>
-<p class="date">Party Games and Party Games Flat · Effective 3 October 2026</p>
+<p class="date">Party Games and Party Games Flat · Effective 27 October 2026</p>
 <div class="box">
 <h2>In short</h2>
-<p>No account, no email, no ads, no tracking. You only type a player name. Games on one phone never leave that phone.</p>
+<p>No account and no email. You only type a player name. Game moves on one phone never leave that phone.
+The Android app shows ads from Google AdMob between matches.</p>
 
 <h2>What we collect</h2>
 <ul>
@@ -35,8 +36,16 @@ function privacyHtml() {
   <li><b>A random player ID</b>: made on your phone (it isn't linked to you, your phone number or your Google account) so you can rejoin a room after a short disconnect.</li>
   <li><b>Game moves</b>: when you play online, your moves (and drawings in Draw &amp; Guess) are sent through our server to the other players in your room.</li>
 </ul>
-<p>We do <b>not</b> collect your email, phone number, contacts, location, photos, camera, microphone, or advertising ID.
-The app has no ads and no analytics.</p>
+<p>We do <b>not</b> collect your email, phone number, contacts, precise location, photos, camera or microphone.
+The app has no analytics of its own.</p>
+
+<h2>Ads</h2>
+<p>The Android app shows ads from Google AdMob: a full-screen ad at most every few minutes when you leave a results screen,
+and, only if you choose to watch one, a rewarded ad. To show and measure ads and prevent fraud, Google's ads SDK collects
+your device's advertising ID, IP address (which gives an approximate location), device and app information, and how you interact with ads.
+Where the law requires it (for example in the EEA, UK and Switzerland) the app asks for your consent first using Google's consent message,
+and you can change your choice later. You can reset or delete your advertising ID in your phone's settings.
+See <a href="https://policies.google.com/technologies/partner-sites">how Google uses information from apps that use its services</a>.</p>
 
 <h2>Where it is kept</h2>
 <p>Your name and player ID are saved on your phone so you don't have to type them again.</p>
@@ -44,7 +53,8 @@ ${stored}
 <p>Like any website, the hosting provider may briefly keep technical logs (such as IP addresses) to run and protect the service.</p>
 
 <h2>Who we share it with</h2>
-<p>Only the other players in your room see your name and moves. We do not sell or share data with anyone else.</p>
+<p>Only the other players in your room see your name and moves. Google, as our ad provider, receives the ad data described above.
+We do not sell or share data with anyone else.</p>
 
 <h2>Deleting your data</h2>
 <p>In the app, open <b>Home &gt; Privacy</b> and tap <b>Delete my data on this phone</b>, or uninstall the app.

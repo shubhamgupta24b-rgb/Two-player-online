@@ -18,7 +18,7 @@ void playOut(LocalGameLogic g, LocalGameInfo info, int seats, {int limitMs = 360
 }
 
 void main() {
-  group('Bingo', () {
+  group('Line Caller', () {
     test('cards hold 1-25 once each, in a different order', () {
       final g = BingoLogic(players: 3, random: Random(1));
       for (final c in g.cards) {
@@ -74,7 +74,7 @@ void main() {
     });
   });
 
-  group('Battleship', () {
+  group('Hidden Fleet', () {
     test('random fleets: 5 ships of 4,3,3,2,2, in the sea, not touching', () {
       for (var seed = 0; seed < 30; seed++) {
         final fleet = BattleshipLogic.randomFleet(Random(seed));
@@ -130,7 +130,7 @@ void main() {
     });
   });
 
-  group('Checkers', () {
+  group('Hop & Crown', () {
     test('12 pieces each on dark squares; player 1 moves first, forwards only', () {
       final g = CheckersLogic();
       expect(g.pieces(0), 12);

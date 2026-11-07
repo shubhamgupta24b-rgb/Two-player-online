@@ -145,10 +145,10 @@ class QuizBattleLogic extends LocalGameLogic {
 
 final quizBattleInfo = LocalGameInfo(
   id: 'quiz_battle',
-  title: 'Quiz Battle',
+  title: 'Buzzer Brawl',
   emoji: '🧠',
   color: const Color(0xFF0984E3),
-  tagline: 'Bollywood, cricket & GK. Fastest wins!',
+  tagline: "Answer questions about films, cricket and general knowledge",
   rules: const [
     'Everyone gets the same question with four answers.',
     'Tap the right answer first to score. A wrong answer locks you out of that question.',
@@ -184,7 +184,7 @@ final quizBattleInfo = LocalGameInfo(
       if (name == 'answer' && asInt(a[0]) == from) g.answer(from, '${a[1]}');
     },
     view: (context, g, players, me) => Column(children: [
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
       Expanded(child: _QuizHalf(player: players[me], index: me, g: g)),
     ]),
   ),
@@ -193,8 +193,8 @@ final quizBattleInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => PlayerZones(
       count: players.length,
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
-      center: ZoneCenterChip('FIRST TO ${g.target}'),
+      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
+      center: ZoneCenterChip('First to ${g.target}'),
       zone: (i) => _QuizHalf(player: players[i], index: i, g: g),
     ),
   ),
@@ -210,21 +210,21 @@ class _QuizHalf extends StatelessWidget {
   Widget build(BuildContext context) {
     final locked = g.lockedOut.contains(index);
     final status = g.solvedBy == null
-        ? (locked ? (g.betweenQuestions ? 'Nobody got it!' : 'Wrong! Wait for the next one') : '')
-        : (g.solvedBy == index ? 'Correct! +1' : 'Too slow!');
+        ? (locked ? (g.betweenQuestions ? 'Nobody got it' : 'Wrong. Wait for the next one') : '')
+        : (g.solvedBy == index ? 'Correct +1' : 'Too slow');
     return Padding(
       padding: const EdgeInsets.all(10),
       child: Column(children: [
         Row(children: [
           PlayerTagSmall(player: player),
-          Text('  ${g.score[index]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+          Text('  ${g.score[index]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
           const SizedBox(width: 8),
-          Expanded(child: Text(status, textAlign: TextAlign.right, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
+          Expanded(child: Text(status, textAlign: TextAlign.right, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
         ]),
         Expanded(
           child: Center(
-            child: Text('${g.question.category} ${g.question.text}',
-                textAlign: TextAlign.center, maxLines: 4, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, height: 1.2)),
+            child: Text(g.question.text,
+                textAlign: TextAlign.center, maxLines: 4, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, height: 1.2)),
           ),
         ),
         for (var row = 0; row < 2; row++)
@@ -254,7 +254,7 @@ class _QuizHalf extends StatelessWidget {
                             child: Center(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 6),
-                                child: FittedBox(child: Text(v, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
+                                child: FittedBox(child: Text(v, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15))),
                               ),
                             ),
                           ),

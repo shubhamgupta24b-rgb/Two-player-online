@@ -59,7 +59,7 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
   static const _errors = {
     'NOT_YOUR_TURN': "It's not your turn.",
     'ALREADY_ASKED': 'You already asked that.',
-    'BAD_PHASE': 'Not possible right now.',
+    'BAD_PHASE': "You can't do that right now.",
     'OFFLINE': 'You are offline.',
     'TIMEOUT': 'Server did not respond.',
   };
@@ -102,13 +102,13 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
     final scores = Map<String, dynamic>.from(st['scores'] as Map);
     // Wrap, not Row: long names drop to a second line instead of overflowing.
     return Wrap(alignment: WrapAlignment.spaceBetween, spacing: 6, runSpacing: 6, children: [
-      _pill('ROUND ${st['round']}/${st['totalRounds']}'),
+      _pill('Round ${st['round']}/${st['totalRounds']}'),
       _pill('${me['username']} ${scores[me['userId']]} – ${scores[opp['userId']]} ${opp['username']}'),
       if (status != null)
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(color: statusColor ?? GpCoral.panel, borderRadius: BorderRadius.circular(16)),
-          child: Text(status, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+          child: Text(status, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
         ),
     ]);
   }
@@ -116,7 +116,7 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
   Widget _pill(String text) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(color: GpCoral.panel, borderRadius: BorderRadius.circular(16)),
-        child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+        child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
       );
 
   Widget _choosing(Map<String, dynamic> you, Map opp, List<Person> board) {
@@ -131,7 +131,7 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
         child: PersonGrid(
           people: board,
           markFor: (p) => p.id == mine ? CardMark.selected : CardMark.none,
-          badgeFor: (p) => p.id == mine ? 'YOU' : null,
+          badgeFor: (p) => p.id == mine ? 'You' : null,
           onTap: (p) {
             setState(() => _picked = p.id);
             _send('choose', {'personId': p.id});
@@ -139,13 +139,13 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
         ),
       ),
       const SizedBox(height: 12),
-      Text(waiting ? 'Waiting for ${opp['username']}…\n(tap another card to change)' : 'Choose your\ncharacter!',
+      Text(waiting ? 'Waiting for ${opp['username']}…\n(tap another card to change)' : 'Choose your\ncharacter',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Colors.white,
             fontSize: waiting ? 20 : 30,
             height: 1.1,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w700,
             shadows: const [Shadow(color: Color(0x55000000), offset: Offset(0, 2), blurRadius: 3)],
           )),
       const SizedBox(height: 4),
@@ -172,11 +172,11 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
       final controls = Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         AnswerBanner(
           answer: lastQ == null ? null : AskedQuestion(lastQ, last!['answer'] as bool),
-          emptyHint: myTurn ? 'Your turn: ask a question or make your final guess.' : 'Waiting for ${opp['username']} to ask…',
+          emptyHint: myTurn ? 'Your turn. Ask a question or make your final guess.' : 'Waiting for ${opp['username']} to ask…',
         ),
         if (theirQ != null) ...[
           const SizedBox(height: 6),
-          Text('${opp['username']} asked: ${theirQ.prompt} ${theirLast!['answer'] == true ? 'YES' : 'NO'}',
+          Text('${opp['username']} asked: ${theirQ.prompt} ${theirLast!['answer'] == true ? 'Yes' : 'No'}',
               textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
         ],
         const SizedBox(height: 8),
@@ -189,10 +189,10 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          GpButton('MAKE FINAL GUESS',
+          GpButton('Make final guess',
               icon: Icons.ads_click_rounded, onPressed: myTurn && !_busy ? () => setState(() => _finalMode = true) : null),
         ] else if (pending == null)
-          GpButton('CANCEL', icon: Icons.close_rounded, color: Colors.white, onPressed: () => setState(() => _finalMode = false))
+          GpButton('Cancel', icon: Icons.close_rounded, color: Colors.white, onPressed: () => setState(() => _finalMode = false))
         else
           DarkPanel(
             padding: const EdgeInsets.all(10),
@@ -201,11 +201,11 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  Text('Is ${pending.name} your final guess?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                  Text('Is ${pending.name} your final guess?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
-                  GpButton('YES, GUESS', color: GpColors.yes, textColor: Colors.white, onPressed: _busy ? null : () => _send('guess', {'personId': pending.id})),
+                  GpButton('Yes, guess', color: GpColors.yes, textColor: Colors.white, onPressed: _busy ? null : () => _send('guess', {'personId': pending.id})),
                   const SizedBox(height: 6),
-                  GpButton('CANCEL', outlined: true, onPressed: () => setState(() => _pendingGuess = null)),
+                  GpButton('Cancel', outlined: true, onPressed: () => setState(() => _pendingGuess = null)),
                 ]),
               ),
             ]),
@@ -213,24 +213,24 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
       ]);
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         _header(st, me, opp,
-            status: myTurn ? 'YOUR TURN' : "${opp['username'].toString().toUpperCase()}'S TURN", statusColor: myTurn ? GpColors.yes.withValues(alpha: 0.9) : null),
+            status: myTurn ? 'Your turn' : "${opp['username'].toString()}'s turn", statusColor: myTurn ? GpColors.yes.withValues(alpha: 0.9) : null),
         const SizedBox(height: 6),
         if (secret != null)
           Text('You are ${secret.name} · ${board.length - _eliminated.length} left',
-              textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+              textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
         if (_finalMode)
           Container(
             margin: const EdgeInsets.only(top: 6),
             padding: const EdgeInsets.symmetric(vertical: 6),
             decoration: BoxDecoration(color: GpColors.accent, borderRadius: BorderRadius.circular(14)),
-            child: const Text('WHO IS IT? Tap your final guess', textAlign: TextAlign.center, style: TextStyle(color: GpColors.ink, fontWeight: FontWeight.w900)),
+            child: const Text('Who is it? Tap your final guess', textAlign: TextAlign.center, style: TextStyle(color: GpColors.ink, fontWeight: FontWeight.w700)),
           ),
         const SizedBox(height: 6),
         Expanded(
           child: PersonGrid(
             people: board,
             markFor: (p) => _eliminated.contains(p.id) ? CardMark.eliminated : (p.id == _pendingGuess ? CardMark.selected : CardMark.none),
-            badgeFor: (p) => p.id == _pendingGuess ? 'GUESS' : null,
+            badgeFor: (p) => p.id == _pendingGuess ? 'Guess' : null,
             onTap: (p) => setState(() {
               if (!_finalMode) {
                 if (!_eliminated.remove(p.id)) _eliminated.add(p.id);
@@ -255,14 +255,14 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
     final iWon = rv['winner'] == myId;
     final guesser = rv['guessedBy'] == myId ? 'You' : opp['username'];
     final guessed = _people[rv['guess']];
-    final why = rv['correct'] == true ? '$guesser guessed right!' : '$guesser guessed ${guessed?.name ?? '?'}, which was wrong.';
+    final why = rv['correct'] == true ? '$guesser guessed right' : '$guesser guessed ${guessed?.name ?? '?'}, which was wrong.';
     final ends = st['revealEndsAt'] as num?;
     final left = ends == null ? null : ((ends.toInt() - session.serverNowMs) / 1000).ceil().clamp(0, 99);
     Widget who(String label, int? id) {
       final p = _people[id];
       return Expanded(
         child: Column(children: [
-          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           if (p != null) SizedBox(width: 110, height: 140, child: PersonCard(person: p)),
         ]),
@@ -274,8 +274,8 @@ class _GuessWhoScreenState extends State<GuessWhoScreen> {
         child: DarkPanel(
           padding: const EdgeInsets.all(20),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(iWon ? '🎉 YOU WIN THE ROUND!' : '😅 ${opp['username']} wins the round',
-                textAlign: TextAlign.center, style: TextStyle(color: iWon ? GpColors.yes : GpColors.no, fontSize: 24, fontWeight: FontWeight.w900)),
+            Text(iWon ? 'You win the round' : '${opp['username']} wins the round',
+                textAlign: TextAlign.center, style: TextStyle(color: iWon ? GpColors.yes : GpColors.no, fontSize: 24, fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
             Text(why, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
             const SizedBox(height: 16),

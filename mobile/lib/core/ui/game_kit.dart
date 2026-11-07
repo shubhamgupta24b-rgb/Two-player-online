@@ -15,18 +15,17 @@ export 'icons/game_icons.dart';
 /// (mockups: #2E8BFF -> #6FB0FF, #FF8A1F -> #FFA552).
 Color nameColor(Color c) => Color.lerp(c, Colors.white, 0.28)!;
 
-/// Text on the night background for players who are not in focus (#E6E9FF).
-const kIdleInk = Color(0xFFE6E9FF);
+/// Text on the dark background for players who are not in focus.
+const kIdleInk = Color(0xFFEDE6DA);
 
-/// The big gold button (Resume, Start, Rematch): 56-58 px, radius 18, Lilita 22,
-/// a 5 px deep-gold edge that sinks when pressed.
+/// The main action on a screen: marigold, radius 14, a small edge that sinks when pressed.
 class GoldButton extends StatefulWidget {
   final String label;
   final GameIcons? icon;
   final VoidCallback? onPressed;
   final double height;
   final double fontSize;
-  const GoldButton(this.label, {super.key, this.icon, this.onPressed, this.height = 56, this.fontSize = 22});
+  const GoldButton(this.label, {super.key, this.icon, this.onPressed, this.height = 56, this.fontSize = 17});
 
   @override
   State<GoldButton> createState() => _GoldButtonState();
@@ -79,7 +78,7 @@ class _GoldButtonState extends State<GoldButton> {
                 child: Text(widget.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontFamily: Fonts.display, fontSize: widget.fontSize, height: 1, letterSpacing: widget.fontSize * 0.02, color: Brand.onGold)),
+                    style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w600, fontSize: widget.fontSize > 19 ? 17 : widget.fontSize, height: 1.1, color: Brand.onGold)),
               ),
             ]),
           ),
@@ -115,13 +114,13 @@ class KitButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final flat = context.tk.flat;
-    final danger = flat ? FlatPalette.close : const Color(0xFFFF8E8B);
-    final ink = flat ? FlatPalette.ink : Colors.white;
+    final danger = flat ? FlatPalette.close : StatusColors.danger;
+    final ink = flat ? FlatPalette.ink : NeonPalette.text;
     final (Color fill, Border? border, Color fg) = switch (style) {
-      KitButtonStyle.outline => (flat ? Colors.white.withValues(alpha: 0.5) : Colors.transparent, Border.all(color: flat ? FlatPalette.ink.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.28), width: 2), ink),
-      KitButtonStyle.ghost => (flat ? Colors.white : Colors.white.withValues(alpha: 0.10), null, ink),
-      KitButtonStyle.soft => (flat ? Colors.white : Colors.white.withValues(alpha: 0.08), Border.all(color: flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14)), ink),
-      KitButtonStyle.danger => (flat ? Colors.white : Colors.transparent, Border.all(color: (flat ? FlatPalette.close : const Color(0xFFFF5E5B)).withValues(alpha: 0.55), width: 1.5), danger),
+      KitButtonStyle.outline => (Colors.transparent, Border.all(color: ink.withValues(alpha: 0.28), width: 1), ink),
+      KitButtonStyle.ghost => (flat ? FlatPalette.option : NeonPalette.surfaceStrong, null, ink),
+      KitButtonStyle.soft => (flat ? FlatPalette.surface : NeonPalette.surface, Border.all(color: flat ? FlatPalette.stroke : NeonPalette.stroke), ink),
+      KitButtonStyle.danger => (Colors.transparent, Border.all(color: danger.withValues(alpha: 0.5), width: 1), danger),
     };
     final enabled = onPressed != null;
     return Semantics(
@@ -151,7 +150,7 @@ class KitButton extends StatelessWidget {
                   if (icon != null) ...[GameIcon(icon!, size: 18, color: fg), const SizedBox(width: Space.s)],
                   Flexible(
                     child: Text(label,
-                        maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: fg)),
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w500, color: fg)),
                   ),
                 ]),
               ),
@@ -177,9 +176,9 @@ class RoundButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tk;
     final flat = t.flat && !dark;
-    final fill = dark ? const Color(0x8C0A0E28) : (flat ? Colors.white : Colors.white.withValues(alpha: 0.10));
-    final edge = dark ? Colors.white.withValues(alpha: 0.2) : (flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.18));
-    final ink = flat ? FlatPalette.ink : Colors.white;
+    final fill = dark ? const Color(0x99161513) : (flat ? FlatPalette.surface : NeonPalette.surfaceStrong);
+    final edge = dark ? Colors.white.withValues(alpha: 0.16) : (flat ? FlatPalette.stroke : NeonPalette.stroke);
+    final ink = flat ? FlatPalette.ink : NeonPalette.text;
     return Tooltip(
       message: label,
       child: Semantics(
@@ -270,7 +269,7 @@ class EdgeTag extends StatelessWidget {
       child: Text(text,
           style: score
               ? const TextStyle(fontFamily: Fonts.display, fontSize: 14, height: 1.2, color: Color(0xFF2A1A00))
-              : TextStyle(fontFamily: Fonts.body, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.2, height: 1.3, color: onColor(color))),
+              : TextStyle(fontFamily: Fonts.body, fontSize: 10, fontWeight: FontWeight.w700, height: 1.3, color: onColor(color))),
     );
   }
 }
@@ -318,9 +317,9 @@ class PlayerScoreCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: flat ? (active ? Color.alphaBlend(c.withValues(alpha: 0.16), Colors.white) : Colors.white) : (active ? c.withValues(alpha: 0.16) : t.surface),
         borderRadius: BorderRadius.circular(compact ? 14 : 18),
-        border: Border.all(color: active ? c : (flat ? t.strokeStrong : t.stroke), width: 2),
+        border: Border.all(color: active ? c : (flat ? t.strokeStrong : t.stroke), width: active ? 2 : 1),
         boxShadow: active
-            ? [BoxShadow(color: c.withValues(alpha: 0.16), spreadRadius: 4), if (!flat) const BoxShadow(color: Color(0x59000000), blurRadius: 20, offset: Offset(0, 8))]
+            ? null
             : null,
       ),
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -332,13 +331,13 @@ class PlayerScoreCard extends StatelessWidget {
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   PlayerBadge(index: seat, size: 12, color: c),
                   const SizedBox(width: 5),
-                  Flexible(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w900, color: ink))),
+                  Flexible(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w700, color: ink))),
                 ]),
               ])
             : Row(children: [
                 PlayerBadge(index: seat, size: 30, color: c, initial: name.isEmpty ? null : name),
                 const SizedBox(width: 8),
-                Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: ink))),
+                Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: ink))),
                 if (score != null) Text(score!, style: t.styles.score.copyWith(color: highlightScore ? const Color(0xFFFFE08A) : ink)),
               ]),
         if (detail != null) ...[SizedBox(height: compact ? 4 : 8), detail!],
@@ -431,7 +430,7 @@ class RoundBoxes extends StatelessWidget {
         height: height,
         alignment: Alignment.center,
         decoration: BoxDecoration(color: g ? Brand.gold : (flat ? FlatPalette.option : Colors.white.withValues(alpha: 0.14)), borderRadius: Radii.rTile),
-        child: Text(v, style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w900, color: g ? const Color(0xFF2A1A00) : ink)),
+        child: Text(v, style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w700, color: g ? const Color(0xFF2A1A00) : ink)),
       );
     }
     if (i == current) {
@@ -512,7 +511,7 @@ class OverlayChip extends StatelessWidget {
           if (icon != null) ...[GameIcon(icon!, size: 20, color: iconColor ?? Colors.white), const SizedBox(width: 8)],
           Flexible(
             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(label.toUpperCase(), style: const TextStyle(fontFamily: Fonts.body, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.26, height: 1.1, color: Color(0xFFCFD6FF))),
+              Text(label, style: const TextStyle(fontFamily: Fonts.body, fontSize: 9, fontWeight: FontWeight.w700, height: 1.1, color: Color(0xFFCFD6FF))),
               if (value != null) Text(value!, style: const TextStyle(fontFamily: Fonts.display, fontSize: 18, height: 1.1, color: Colors.white, fontFeatures: [FontFeature.tabularFigures()])),
               if (child != null) ...[const SizedBox(height: 4), child!],
             ]),
@@ -620,7 +619,7 @@ class _CountdownOverlayState extends State<CountdownOverlay> with SingleTickerPr
           haptic(step == 3 ? HapticWeight.medium : HapticWeight.selection);
           GameAudio.sfx(step == 3 ? 'pop' : 'tap');
         }
-        final label = const ['3', '2', '1', 'GO'][step];
+        final label = const ['3', '2', '1', 'Go'][step];
         final scale = reduced ? 1.0 : 1.4 - Curves.easeOut.transform(u) * 0.4;
         final fade = reduced ? 1.0 : (u < 0.75 ? 1.0 : 1 - (u - 0.75) * 4 * 0.6);
         final go = step == 3;
@@ -734,12 +733,12 @@ class ConnectionBanner extends StatelessWidget {
           else
             GameIcon(state == LinkState.switchedToOnline ? GameIcons.globe : GameIcons.wifi, size: 18, color: c),
           const SizedBox(width: 10),
-          Expanded(child: Text(text, style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white))),
+          Expanded(child: Text(text, style: const TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white))),
           for (final (label, onTap) in actions)
             TextButton(
               onPressed: onTap,
               style: TextButton.styleFrom(foregroundColor: Brand.gold, minimumSize: const Size(kTouchTarget, kTouchTarget)),
-              child: Text(label, style: const TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w900)),
+              child: Text(label, style: const TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w700)),
             ),
         ]),
       ),
@@ -823,8 +822,9 @@ class GameFeedback extends State<FeedbackLayer> with TickerProviderStateMixin {
         animation: _shake,
         builder: (_, child) {
           final v = _shake.value;
-          if (v == 0 || v == 1) return child!;
-          final k = (1 - v) * _shakeSize;
+          // Always the same widget type here, offset zero at rest: switching between bare
+          // child and Transform would remount the game and restart it on every shake.
+          final k = v == 0 || v == 1 ? 0.0 : (1 - v) * _shakeSize;
           return Transform.translate(offset: Offset(math.sin(v * math.pi * 8) * k, math.cos(v * math.pi * 6) * k * 0.4), child: child);
         },
         child: widget.child,
@@ -865,7 +865,7 @@ class _EffectView extends StatelessWidget {
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
                       Text(e.text,
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontFamily: Fonts.display, fontSize: 50, height: 1, color: e.color, letterSpacing: 1, shadows: [
+                          style: TextStyle(fontFamily: Fonts.display, fontSize: 50, height: 1, color: e.color, shadows: [
                             Shadow(color: Color.lerp(e.color, Colors.black, 0.6)!, offset: const Offset(0, 4)),
                             Shadow(color: e.color.withValues(alpha: 0.55), blurRadius: 28),
                           ])),
@@ -1065,8 +1065,7 @@ class ConfettiBurst extends StatelessWidget {
   }
 }
 
-/// The header of every app page (spec 4): back or close (44 px) · small caps label with an
-/// optional Lilita title under it · an optional button on the right.
+/// The header of every app page: back or close · title · an optional button on the right.
 class PageHeader extends StatelessWidget {
   final String label;
   final String? title;
@@ -1078,26 +1077,31 @@ class PageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
     return Row(children: [
-      if (showBack)
-        RoundButton(icon: backIcon, label: backIcon == GameIcons.close ? 'Close' : 'Back', onPressed: onBack ?? () => Navigator.maybePop(context))
-      else
-        const SizedBox(width: kTouchTarget),
+      if (showBack) ...[
+        RoundButton(icon: backIcon, label: backIcon == GameIcons.close ? 'Close' : 'Back', onPressed: onBack ?? () => Navigator.maybePop(context)),
+        const SizedBox(width: 4),
+      ],
       Expanded(
         child: Semantics(
           header: true,
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(label.toUpperCase(), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: context.tk.styles.label),
-            if (title != null) Text(title!, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 22, height: 1.15, color: context.tk.onBg)),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (title == null)
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.styles.h3.copyWith(color: t.onBg))
+            else ...[
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.styles.label),
+              Text(title!, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.styles.h2.copyWith(color: t.onBg)),
+            ],
           ]),
         ),
       ),
-      trailing ?? const SizedBox(width: kTouchTarget),
+      if (trailing != null) trailing!,
     ]);
   }
 }
 
-/// A section title with a short gold bar ("FEATURED GAMES"), and an optional link.
+/// A section title, and an optional link.
 class SectionHeader extends StatelessWidget {
   final String text;
   final String? action;
@@ -1105,22 +1109,18 @@ class SectionHeader extends StatelessWidget {
   const SectionHeader(this.text, {super.key, this.action, this.onAction});
 
   @override
-  Widget build(BuildContext context) => Row(children: [
-        Container(width: 4, height: 16, decoration: BoxDecoration(color: Brand.gold, borderRadius: BorderRadius.circular(2))),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Semantics(
-            header: true,
-            child: Text(text.toUpperCase(), style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.82, color: context.tk.onBg)),
-          ),
+  Widget build(BuildContext context) {
+    final t = context.tk;
+    return Row(children: [
+      Expanded(child: Semantics(header: true, child: Text(text, style: t.styles.h3.copyWith(color: t.onBg)))),
+      if (action != null)
+        TextButton(
+          onPressed: onAction,
+          style: TextButton.styleFrom(foregroundColor: t.onBgMuted, minimumSize: const Size(kTouchTarget, kTouchTarget)),
+          child: Text(action!, style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w500, color: t.onBgMuted)),
         ),
-        if (action != null)
-          TextButton(
-            onPressed: onAction,
-            style: TextButton.styleFrom(foregroundColor: context.tk.flat ? FlatPalette.ink : Brand.gold, minimumSize: const Size(kTouchTarget, kTouchTarget)),
-            child: Text(action!, style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900)),
-          ),
-      ]);
+    ]);
+  }
 }
 
 /// A selectable pill (categories: gold when picked; [outline] for the player-count row).
@@ -1134,7 +1134,7 @@ class KitChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final flat = context.tk.flat;
-    final ink = flat ? FlatPalette.ink : Colors.white;
+    final ink = flat ? FlatPalette.ink : NeonPalette.text;
     return Semantics(
       button: true,
       selected: selected,
@@ -1152,14 +1152,14 @@ class KitChip extends StatelessWidget {
             widthFactor: 1,
             child: AnimatedContainer(
               duration: Motion.of(context, Motion.fast),
-              padding: outline ? const EdgeInsets.symmetric(horizontal: 10, vertical: 4) : const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: outline ? (flat ? (selected ? Colors.white : Colors.white.withValues(alpha: 0.5)) : Colors.transparent) : (selected ? Brand.gold : (flat ? Colors.white : Colors.white.withValues(alpha: 0.10))),
-                borderRadius: BorderRadius.circular(outline ? 10 : 14),
-                border: outline ? Border.all(color: selected ? (flat ? FlatPalette.ink : Brand.gold) : ink.withValues(alpha: 0.2), width: 1.5) : null,
+                color: selected ? ink : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: selected ? ink : ink.withValues(alpha: 0.16)),
               ),
               child: Text(label,
-                  style: TextStyle(fontFamily: Fonts.body, fontSize: outline ? 12 : 13, fontWeight: FontWeight.w900, color: !outline && selected ? Brand.onGold : ink)),
+                  style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w500, color: selected ? (flat ? FlatPalette.surface : NeonPalette.bg) : ink)),
             ),
           ),
         ),
@@ -1182,7 +1182,7 @@ class KitField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final flat = context.tk.flat;
-    final ink = flat ? FlatPalette.ink : Colors.white;
+    final ink = flat ? FlatPalette.ink : NeonPalette.text;
     OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(borderRadius: Radii.rLg, borderSide: BorderSide(color: c, width: w));
     return TextField(
       controller: controller,
@@ -1190,21 +1190,21 @@ class KitField extends StatelessWidget {
       maxLength: maxLength,
       textCapitalization: capitalization,
       cursorColor: Brand.gold,
-      style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w800, color: ink),
+      style: TextStyle(fontFamily: Fonts.body, fontSize: 16, fontWeight: FontWeight.w400, color: ink),
       decoration: InputDecoration(
         hintText: hint,
         counterText: '',
-        hintStyle: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: flat ? FlatPalette.inkMuted : NeonPalette.label),
+        hintStyle: TextStyle(fontFamily: Fonts.body, fontSize: 16, fontWeight: FontWeight.w400, color: flat ? FlatPalette.inkMuted : NeonPalette.textMuted),
         filled: true,
-        fillColor: flat ? Colors.white : Colors.white.withValues(alpha: 0.10),
+        fillColor: flat ? FlatPalette.surface : NeonPalette.surface,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         prefixIcon: icon == null ? null : Padding(padding: const EdgeInsets.only(left: 14, right: 10), child: GameIcon(icon!, size: 18, color: flat ? FlatPalette.inkMuted : NeonPalette.textMuted)),
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         suffixIcon: suffix,
-        enabledBorder: border(flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14)),
-        focusedBorder: border(flat ? FlatPalette.ink : Brand.gold, 2),
-        border: border(flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14)),
+        enabledBorder: border(flat ? FlatPalette.stroke : NeonPalette.stroke),
+        focusedBorder: border(Brand.gold, 2),
+        border: border(flat ? FlatPalette.stroke : NeonPalette.stroke),
       ),
     );
   }

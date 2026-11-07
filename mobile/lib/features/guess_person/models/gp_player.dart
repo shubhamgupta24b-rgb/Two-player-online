@@ -8,7 +8,7 @@ class GpPlayer {
   GpPlayer({required this.name, required this.color, this.score = 0});
 
   /// "YOUR" for the player called "You" (vs computer), otherwise "NAME'S".
-  String get whose => name == 'You' ? 'YOUR' : "${name.toUpperCase()}'S";
+  String get whose => name == 'You' ? 'Your' : "$name's";
 }
 
 /// Defaults for up to 6 players: blue, vermilion, green, amber, violet, pink. Each seat also

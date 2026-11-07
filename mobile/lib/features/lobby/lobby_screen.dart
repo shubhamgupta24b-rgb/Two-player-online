@@ -56,7 +56,7 @@ class LobbyScreen extends StatelessWidget {
     }
 
     Future<void> leave() async {
-      if (await confirmAction(context, title: 'Leave the room?', message: 'Your friends can carry on without you.', confirm: 'Leave', cancel: 'Stay', emoji: null)) {
+      if (await confirmAction(context, title: 'Leave the room?', message: 'Your friends can keep playing.', confirm: 'Leave', cancel: 'Stay', emoji: null)) {
         await rm.leave();
       }
     }
@@ -65,7 +65,7 @@ class LobbyScreen extends StatelessWidget {
     final ready = room.players.where((p) => p.ready).length;
     final waitLine = n < game.minPlayers
         ? 'Waiting for ${game.minPlayers - n} more ${game.minPlayers - n == 1 ? 'player' : 'players'}…'
-        : (notReady.isEmpty ? (fits ? 'Everyone is ready!' : 'Pick a game for $n players') : 'Waiting for ${notReady.join(', ')} to tap Ready…');
+        : (notReady.isEmpty ? (fits ? 'Everyone is ready' : 'Pick a game for $n players') : 'Waiting for ${notReady.join(', ')} to tap Ready…');
 
     return PopScope(
       canPop: false,
@@ -81,7 +81,7 @@ class LobbyScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
                 child: Row(children: [
                   SizedBox(width: 92, child: Align(alignment: Alignment.centerLeft, child: _LeaveButton(onTap: leave))),
-                  Expanded(child: Semantics(header: true, child: Text('GAME ROOM', textAlign: TextAlign.center, style: t.styles.label))),
+                  Expanded(child: Semantics(header: true, child: Text('Game room', textAlign: TextAlign.center, style: t.styles.h3.copyWith(color: t.onBg)))),
                   SizedBox(width: 92, child: Align(alignment: Alignment.centerRight, child: RoundButton(icon: GameIcons.settings, label: 'Settings', onPressed: () => showSettingsSheet(context)))),
                 ]),
               ),
@@ -107,8 +107,8 @@ class LobbyScreen extends StatelessWidget {
                   _CodeCard(code: room.code, quickPlay: room.isPublic),
                   const SizedBox(height: 14),
                   Row(children: [
-                    Expanded(child: Text('PLAYERS · $n / ${room.maxPlayers}', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.82, color: t.onBg))),
-                    Text('$ready ready', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: t.onBgMuted)),
+                    Expanded(child: Text('Players · $n of ${room.maxPlayers}', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: t.onBg))),
+                    Text('$ready ready', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w600, color: t.onBgMuted)),
                   ]),
                   const SizedBox(height: 8),
                   for (var i = 0; i < room.players.length; i++) ...[
@@ -126,7 +126,7 @@ class LobbyScreen extends StatelessWidget {
                   Semantics(
                     liveRegion: true,
                     child: Text(isHost ? waitLine : (me?.ready == true ? 'You are ready. The host starts the game.' : 'Tap Ready when you are set'),
-                        textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w800, color: t.onBgMuted)),
+                        textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w600, color: t.onBgMuted)),
                   ),
                   const SizedBox(height: 10),
                   if (isHost) ...[
@@ -167,7 +167,7 @@ class _LeaveButton extends StatelessWidget {
             height: kTouchTarget,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: Center(child: Text('Leave', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900, color: c))),
+              child: Center(child: Text('Leave', style: TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w700, color: c))),
             ),
           ),
         ),
@@ -188,7 +188,7 @@ class _ReadyDone extends StatelessWidget {
       label: 'Ready. Tap to undo',
       excludeSemantics: true,
       child: Material(
-        color: t.flat ? Colors.white : StatusColors.success.withValues(alpha: 0.12),
+        color: t.flat ? FlatPalette.surface : StatusColors.success.withValues(alpha: 0.12),
         shape: RoundedRectangleBorder(borderRadius: Radii.rButton, side: BorderSide(color: t.success, width: 2)),
         child: InkWell(
           borderRadius: Radii.rButton,
@@ -201,9 +201,9 @@ class _ReadyDone extends StatelessWidget {
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               GameIcon(GameIcons.check, size: 22, color: t.success),
               const SizedBox(width: 10),
-              Text('Ready', style: TextStyle(fontFamily: Fonts.display, fontSize: 22, color: t.flat ? t.success : const Color(0xFFB5F0CD))),
+              Text('Ready', style: TextStyle(fontFamily: Fonts.body, fontWeight: FontWeight.w600, fontSize: 17, color: t.flat ? t.success : const Color(0xFFB5F0CD))),
               const SizedBox(width: 10),
-              Text('tap to undo', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: t.onBgMuted)),
+              Text('tap to undo', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w600, color: t.onBgMuted)),
             ]),
           ),
         ),
@@ -220,12 +220,13 @@ class _CodeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tk;
     Widget small(GameIcons icon, String label, VoidCallback onTap) => Semantics(
           button: true,
           label: label,
           excludeSemantics: true,
           child: Material(
-            color: Colors.white.withValues(alpha: 0.14),
+            color: t.surfaceStrong,
             borderRadius: Radii.rChip,
             child: InkWell(
               borderRadius: Radii.rChip,
@@ -235,9 +236,9 @@ class _CodeCard extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    GameIcon(icon, size: 16),
+                    GameIcon(icon, size: 16, color: t.text),
                     const SizedBox(width: 6),
-                    Text(label, style: const TextStyle(fontFamily: Fonts.body, fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white)),
+                    Text(label, style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w500, color: t.text)),
                   ]),
                 ),
               ),
@@ -247,21 +248,20 @@ class _CodeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Brand.indigo, Brand.indigoDeep]),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-        boxShadow: Shadows.small,
+        color: t.card,
+        borderRadius: Radii.rBoard,
+        border: Border.all(color: t.stroke),
       ),
       child: Column(children: [
         if (quickPlay) ...[
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(color: StatusColors.success.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10), border: Border.all(color: StatusColors.success.withValues(alpha: 0.6))),
-            child: const Text('Open to everyone', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFFB5F0CD))),
+            child: const Text('Open to everyone', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFB5F0CD))),
           ),
           const SizedBox(height: 8),
         ],
-        const Text('ROOM CODE', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.76, color: Brand.goldLine)),
+        Text('Room code', style: t.cardStyles.label),
         const SizedBox(height: 10),
         Semantics(
           container: true,
@@ -276,8 +276,8 @@ class _CodeCard extends StatelessWidget {
                   width: w,
                   height: w * 1.24,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.12), borderRadius: Radii.rCard),
-                  child: Text(code[i], style: TextStyle(fontFamily: Fonts.display, fontSize: w * 0.74, height: 1, color: Colors.white)),
+                  decoration: BoxDecoration(color: const Color(0xFFFBF3E2), borderRadius: Radii.rCard, boxShadow: const [BoxShadow(color: Color(0xFFD8CBB2), offset: Offset(0, 3))]),
+                  child: Text(code[i], style: TextStyle(fontFamily: Fonts.display, fontSize: w * 0.66, height: 1, color: const Color(0xFF2A1C05))),
                 ),
               ],
             ]);
@@ -293,8 +293,8 @@ class _CodeCard extends StatelessWidget {
           small(GameIcons.share, 'Share', () => shareText(context, 'Join my Party Games room: $code', copied: 'Room code $code copied')),
         ]),
         const SizedBox(height: 10),
-        Text(quickPlay ? 'New players are matched in automatically, or join with this code' : 'Friends tap Join room and enter this code',
-            textAlign: TextAlign.center, style: const TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFFD6DAF7))),
+        Text(quickPlay ? 'New players join automatically or with this code' : 'Friends tap Join room and enter this code',
+            textAlign: TextAlign.center, style: t.cardStyles.bodySmall),
       ]),
     );
   }
@@ -310,19 +310,19 @@ class _GameCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tk;
-    final ink = t.flat ? FlatPalette.ink : Colors.white;
+    final ink = t.onBg;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: t.flat ? Colors.white : t.surface, borderRadius: Radii.rButton, border: Border.all(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.10))),
+      decoration: BoxDecoration(color: t.card, borderRadius: Radii.rButton, border: Border.all(color: t.stroke)),
       child: Row(children: [
         GameThumb(id: game.id, color: game.color, size: 56, radius: 14),
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('NEXT GAME', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.54, color: t.flat ? FlatPalette.label : NeonPalette.label)),
+            Text('Next game', style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w700, color: t.flat ? FlatPalette.label : NeonPalette.label)),
             Text(game.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 20, height: 1.1, color: ink)),
             Text(fits ? '${game.playersLabel} players' : 'Needs ${game.playersLabel} players · you have $playerCount',
-                style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w800, color: fits ? (t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted) : (t.flat ? FlatPalette.close : Brand.gold))),
+                style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w600, color: fits ? (t.onBgMuted) : (t.flat ? FlatPalette.close : Brand.gold))),
           ]),
         ),
         if (isHost) KitButton('Change', style: KitButtonStyle.outline, height: 40, onPressed: onChange),
@@ -341,12 +341,12 @@ class _PlayerRow extends StatelessWidget {
     final t = context.tk;
     final c = PlayerPalette.color(seat);
     final (String status, Color fg, Color bg) = !player.connected
-        ? ('OFFLINE', t.flat ? const Color(0xFF8A5A00) : const Color(0xFFFFD27A), t.warn.withValues(alpha: 0.2))
+        ? ('Offline', t.flat ? const Color(0xFF8A5A00) : const Color(0xFFFFD27A), t.warn.withValues(alpha: 0.2))
         : (player.ready
-            ? ('READY', t.flat ? t.success : const Color(0xFFB5F0CD), StatusColors.success.withValues(alpha: 0.2))
-            : ('NOT READY', t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted, (t.flat ? FlatPalette.ink : Colors.white).withValues(alpha: 0.10)));
-    final ink = t.flat ? FlatPalette.ink : Colors.white;
-    final tags = [if (isMe) 'YOU', if (isHost) 'HOST'].join(' · ');
+            ? ('Ready', t.flat ? t.success : const Color(0xFFB5F0CD), StatusColors.success.withValues(alpha: 0.2))
+            : ('Not ready', t.onBgMuted, (t.onBg).withValues(alpha: 0.10)));
+    final ink = t.onBg;
+    final tags = [if (isMe) 'You', if (isHost) 'Host'].join(' · ');
     return Semantics(
       label: '${player.username}${isMe ? ', you' : ''}${isHost ? ', host' : ''}, ${status.toLowerCase()}',
       excludeSemantics: true,
@@ -354,9 +354,9 @@ class _PlayerRow extends StatelessWidget {
         height: 54,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: t.flat ? Colors.white : (isMe ? c.withValues(alpha: 0.14) : t.surface),
+          color: t.flat ? FlatPalette.surface : (isMe ? c.withValues(alpha: 0.14) : t.surface),
           borderRadius: Radii.rLg,
-          border: Border.all(color: isMe ? c.withValues(alpha: 0.6) : (t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.10)), width: 1.5),
+          border: Border.all(color: isMe ? c.withValues(alpha: 0.6) : (t.stroke), width: 1.5),
         ),
         child: Row(children: [
           Opacity(opacity: player.connected ? 1 : 0.5, child: PlayerBadge(index: seat, size: 26, initial: player.username.isEmpty ? '?' : player.username)),
@@ -369,7 +369,7 @@ class _PlayerRow extends StatelessWidget {
               ]),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900, color: ink),
+              style: TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w700, color: ink),
             ),
           ),
           if (isHost) ...[GameIcon(GameIcons.crown, size: 18, color: t.flat ? const Color(0xFF8A5A00) : Brand.gold), const SizedBox(width: 8)],
@@ -379,7 +379,7 @@ class _PlayerRow extends StatelessWidget {
               key: ValueKey(status),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
-              child: Text(status, style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w900, color: fg)),
+              child: Text(status, style: TextStyle(fontFamily: Fonts.body, fontSize: 11, fontWeight: FontWeight.w700, color: fg)),
             ),
           ),
         ]),
@@ -404,7 +404,7 @@ class _EmptySeat extends StatelessWidget {
           child: Row(children: [
             SizedBox(width: 26, height: 26, child: CustomPaint(painter: _Dashed(PlayerPalette.color(seat).withValues(alpha: 0.7), 6))),
             const SizedBox(width: 10),
-            Expanded(child: Text('Waiting for a player…', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w800, color: t.onBgMuted))),
+            Expanded(child: Text('Waiting for a player…', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.body, fontSize: 14, fontWeight: FontWeight.w600, color: t.onBgMuted))),
           ]),
         ),
       ),

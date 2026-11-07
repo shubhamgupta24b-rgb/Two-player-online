@@ -95,14 +95,14 @@ class SwitchLogic extends SoloLogic {
 
 final colorSwitchInfo = LocalGameInfo(
   id: 'color_switch',
-  title: 'Color Switch',
+  title: 'Hue Gate',
   emoji: '🎨',
   color: const Color(0xFFFF1E6E),
-  tagline: 'Only pass through your own colour!',
+  tagline: "Pass through obstacles of your colour",
   rules: const [
     'Tap to hop up. Don\'t fall off the bottom.',
     'Pass through a spinning ring only where it\'s the same colour as your ball.',
-    'The 🔘 orb above each ring changes your colour. Every ⭐ is a point.',
+    'The orb above each ring changes your colour. Every is a point.',
   ],
   scoreUnit: 'stars',
   splitScreen: false,
@@ -112,7 +112,7 @@ final colorSwitchInfo = LocalGameInfo(
     create: () => SwitchLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🎨 COLOR SWITCH',
+      title: 'Hue Gate',
       score: g.score,
       extra: g.started ? null : 'Tap to start',
       child: LayoutBuilder(builder: (context, c) {
@@ -163,7 +163,7 @@ class _SwitchPainter extends CustomPainter {
     canvas.drawCircle(ball, SwitchLogic.ballR * s * 1.8, Paint()..color = switchColors[g.colour].withValues(alpha: 0.25));
     canvas.drawCircle(ball, SwitchLogic.ballR * s, Paint()..color = switchColors[g.colour]);
     if (!g.started) {
-      final tp = TextPainter(text: const TextSpan(text: 'TAP TO START', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 2)), textDirection: TextDirection.ltr)..layout();
+      final tp = TextPainter(text: const TextSpan(text: 'Tap to start', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 16)), textDirection: TextDirection.ltr)..layout();
       tp.paint(canvas, Offset(cx - tp.width / 2, ball.dy + 30));
     }
   }

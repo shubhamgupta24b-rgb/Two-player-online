@@ -42,7 +42,7 @@ void main() {
   testWidgets('countdown, pause menu and a 4-player result', (tester) async {
     final key = await open(tester, localGames.firstWhere((g) => g.id == 'crush_it'));
     await tapText(tester, '4');
-    await tapText(tester, 'PLAY');
+    await tapText(tester, 'Play');
     await tester.pump(const Duration(milliseconds: 500));
     await snap(tester, key, 'shell_countdown');
     await tester.pump(const Duration(milliseconds: 2400));
@@ -67,7 +67,7 @@ void main() {
 
   testWidgets('a solo result', (tester) async {
     final key = await open(tester, localGames.firstWhere((g) => g.id == 'whack_mole'));
-    await tapText(tester, 'PLAY');
+    await tapText(tester, 'Play');
     await tester.pump(const Duration(seconds: 40));
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 120));

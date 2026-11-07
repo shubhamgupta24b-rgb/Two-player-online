@@ -17,5 +17,6 @@ register(require('./fruit_duel').game);
 register(require('./paint_fight').game);
 register(require('./guess_who').game);
 register(require('./raja_mantri').game);
+register(require('./nitro_knockout').game);
 for (const g of require('./relay').games) register(g);
 module.exports={register,get,has,list};

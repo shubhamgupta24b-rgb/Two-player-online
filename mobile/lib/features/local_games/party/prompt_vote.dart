@@ -120,7 +120,7 @@ class _PromptVoteViewState extends State<PromptVoteView> {
   List<String> get options => g.prompt.split('|');
 
   Widget _promptCard() => PromptCard(
-        header: 'ROUND ${g.round + 1} OF ${g.rounds}',
+        header: 'Round ${g.round + 1} of ${g.rounds}',
         text: mostLikely ? 'Who is most likely to ${g.prompt}?' : 'Would you rather…',
         emoji: mostLikely ? '👉' : '🤔',
         color: widget.color,
@@ -160,7 +160,7 @@ class _PromptVoteViewState extends State<PromptVoteView> {
               child: Column(children: [
                 _promptCard(),
                 const SizedBox(height: 16),
-                if (voted) const WaitingNote('Vote in! Waiting for the others…') else _choices(me, after: () {}),
+                if (voted) const WaitingNote('Vote in. Waiting for the others…') else _choices(me, after: () {}),
               ]),
             ),
           );
@@ -174,7 +174,7 @@ class _PromptVoteViewState extends State<PromptVoteView> {
             revealed: _shown,
             onReveal: () => setState(() => _shown = true),
             onDone: null, // voting is the way on
-            doneLabel: 'TAP YOUR CHOICE ABOVE',
+            doneLabel: 'Tap your choice above',
             secret: Column(children: [_promptCard(), const SizedBox(height: 16), _choices(p, after: () => setState(() => _shown = false))]),
           ),
         );
@@ -184,8 +184,8 @@ class _PromptVoteViewState extends State<PromptVoteView> {
         if (mostLikely) {
           final t = g.tally(players.length);
           results = Column(children: [
-            Text(g.lastWinners.map((w) => players[w].name).join(' & '), textAlign: TextAlign.center, style: const TextStyle(color: GpColors.accent, fontWeight: FontWeight.w900, fontSize: 26)),
-            const Text('👑 +1 point', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+            Text(g.lastWinners.map((w) => players[w].name).join(' & '), textAlign: TextAlign.center, style: const TextStyle(color: GpColors.accent, fontWeight: FontWeight.w700, fontSize: 26)),
+            const Text('+1 point', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
             const SizedBox(height: 14),
             PlayerPicker(players: players, counts: {for (var i = 0; i < players.length; i++) i: t[i]}, highlight: g.lastWinners.length == 1 ? g.lastWinners.single : null),
           ]);
@@ -201,19 +201,19 @@ class _PromptVoteViewState extends State<PromptVoteView> {
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Row(children: [
-                  Expanded(child: Text(options[o], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
-                  Text('${t[o]} 🙋', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                  Expanded(child: Text(options[o], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16))),
+                  Text('${t[o]}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
                 ]),
               ),
-            Text(g.lastWinners.isEmpty ? 'A perfect split! No points.' : 'The majority scores a point!', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800)),
+            Text(g.lastWinners.isEmpty ? 'A perfect split. No points.' : 'The majority scores a point', style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w600)),
           ]);
         }
         return PartyFrame(
           title: widget.title,
-          subtitle: 'The votes are in!',
+          subtitle: 'The votes are in',
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(child: SingleChildScrollView(child: Column(children: [_promptCard(), const SizedBox(height: 16), results]))),
-            GpButton(g.round + 1 >= g.rounds ? 'SEE SCORES' : 'NEXT QUESTION', icon: Icons.arrow_forward_rounded, onPressed: g.next),
+            GpButton(g.round + 1 >= g.rounds ? 'See scores' : 'Next question', icon: Icons.arrow_forward_rounded, onPressed: g.next),
           ]),
         );
     }

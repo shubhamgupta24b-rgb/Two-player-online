@@ -15,16 +15,24 @@ Future<void> pumpHub(WidgetTester tester, [Map<String, Object> prefs = const {}]
 /// The sideways row of category chips.
 Finder chips() => find.descendant(of: find.byType(ListView).first, matching: find.byType(Scrollable)).first;
 
+/// Picks [label] from the Game type dropdown on the Play tab.
+Future<void> pickFilter(WidgetTester tester, String label) async {
+  await tester.tap(find.byKey(const ValueKey('gameFilter')));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label).last);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('search finds games by name or description', (tester) async {
     await pumpHub(tester);
     await tester.enterText(find.byType(TextField), 'ludo');
     await tester.pump();
-    expect(find.text('Ludo'), findsOneWidget);
-    expect(find.text('Bingo'), findsNothing);
+    expect(find.text('Token Rush'), findsOneWidget);
+    expect(find.text('Line Caller'), findsNothing);
     await tester.enterText(find.byType(TextField), 'watermelon'); // in Fruit Merge's description
     await tester.pump();
-    expect(find.text('Fruit Merge'), findsOneWidget);
+    expect(find.text('Juicebox'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'zzzz');
     await tester.pump();
     expect(find.textContaining('No games match'), findsOneWidget);
@@ -32,51 +40,35 @@ void main() {
 
   testWidgets('categories: solo shows only solo games, cards only card games', (tester) async {
     await pumpHub(tester);
-    // The chips scroll sideways: swipe to the last one.
-    await tester.ensureVisible(find.text('Solo'));
-    await tester.pump();
-    await tester.tap(find.text('Solo'));
-    await tester.pump();
-    expect(find.text('PLAY TOGETHER'), findsNothing);
-    expect(find.text('2048'), findsOneWidget);
-    expect(find.text('Ludo'), findsNothing);
-    await tester.ensureVisible(find.text('Cards'));
-    await tester.pump();
-    await tester.tap(find.text('Cards'));
-    await tester.pump();
-    expect(find.text('Colour Clash'), findsOneWidget);
-    expect(find.text('Ludo'), findsNothing);
+    await pickFilter(tester, 'Solo');
+    expect(find.text('Play together'), findsNothing);
+    expect(find.text('Double Up'), findsOneWidget);
+    expect(find.text('Token Rush'), findsNothing);
+    await pickFilter(tester, 'Cards');
+    expect(find.text('Colour Riot'), findsOneWidget);
+    expect(find.text('Token Rush'), findsNothing);
   });
 
   testWidgets('long-press stars a favourite; the Favourites chip lists it', (tester) async {
     await pumpHub(tester);
-    await tester.ensureVisible(find.text('Favourites'));
-    await tester.pump();
-    await tester.tap(find.text('Favourites'));
-    await tester.pump();
+    await pickFilter(tester, 'Favourites');
     expect(find.textContaining('No favourites yet'), findsOneWidget);
-    await tester.ensureVisible(find.text('All'));
-    await tester.pump();
-    await tester.tap(find.text('All'));
-    await tester.pump();
-    await tester.ensureVisible(find.text('Ludo'));
+    await pickFilter(tester, 'All');
+    await tester.ensureVisible(find.text('Token Rush'));
     await tester.pumpAndSettle();
-    await tester.longPress(find.text('Ludo'));
+    await tester.longPress(find.text('Token Rush'));
     await tester.pumpAndSettle();
-    expect(find.bySemanticsLabel('Unstar Ludo'), findsOneWidget);
+    expect(find.bySemanticsLabel('Unstar Token Rush'), findsOneWidget);
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 2000));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Favourites'));
-    await tester.pump();
-    await tester.tap(find.text('Favourites'));
-    await tester.pump();
-    expect(find.text('Ludo'), findsOneWidget);
-    expect(find.text('Colour Clash'), findsNothing);
+    await pickFilter(tester, 'Favourites');
+    expect(find.text('Token Rush'), findsOneWidget);
+    expect(find.text('Colour Riot'), findsNothing);
   });
 
   testWidgets('recently played games come first', (tester) async {
     await pumpHub(tester, {'recent_games': ['bingo', 'ludo']});
-    expect(find.text('RECENTLY PLAYED'), findsOneWidget);
+    expect(find.text('Recently played'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('^Play .* again\$')), findsNWidgets(2));
   });
 }

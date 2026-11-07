@@ -181,7 +181,7 @@ class GolfLogic extends LocalGameLogic {
     score[turn] += 7 - taken;
     message = pickedUp
         ? 'Picked up · +0'
-        : (strokes == 1 ? '⛳ HOLE IN ONE! +6' : (strokes == 2 ? '🐦 BIRDIE! +5' : 'In the cup in $strokes · +${7 - strokes}'));
+        : (strokes == 1 ? 'Hole in one +6' : (strokes == 2 ? 'Birdie +5' : 'In the cup in $strokes · +${7 - strokes}'));
     messageAt = now;
     HapticFeedback.mediumImpact().ignore();
     GameAudio.sfx(pickedUp ? 'lose' : 'coin');
@@ -225,14 +225,14 @@ class GolfLogic extends LocalGameLogic {
 
 final golfInfo = LocalGameInfo(
   id: 'mini_golf',
-  title: 'Mini Golf',
+  title: 'Six Holes',
   emoji: '⛳',
   color: const Color(0xFF43A047),
-  tagline: 'Six tricky holes. Sink it!',
+  tagline: "Complete six holes with the fewest strokes",
   rules: const [
-    'Drag back from the ball and let go to putt: the further you pull, the harder you hit.',
+    'Drag back from the ball and let go to putt. Pull further to hit harder.',
     'Bounce off the walls, keep out of the sand. Each hole is worth 7 minus your strokes.',
-    'A hole in one is 6 points! After 6 strokes the ball is picked up. 6 holes, 1 to 4 players.',
+    'A hole in one is 6 points. After 6 strokes the ball is picked up. 6 holes, 1 to 4 players.',
   ],
   scoreUnit: 'points',
   splitScreen: false,
@@ -323,7 +323,7 @@ class _GolfViewState extends State<_GolfView> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
       child: Column(children: [
-        GameHud(players: widget.players, scores: g.score, turn: g.finished ? null : g.turn, trailing: HudLabel('HOLE ${g.hole + 1}/${golfHoles.length}')),
+        GameHud(players: widget.players, scores: g.score, turn: g.finished ? null : g.turn, trailing: HudLabel('Hole ${g.hole + 1}/${golfHoles.length}')),
         const SizedBox(height: 8),
         Expanded(
           child: LayoutBuilder(builder: (context, c) {
@@ -353,7 +353,7 @@ class _GolfViewState extends State<_GolfView> {
         const SizedBox(height: 8),
         GameStatus(
           player: current,
-          turnText: g.finished ? 'Round over!' : (_mine ? '${current.whose} PUTT · stroke ${g.strokes + 1}' : (g.moving ? 'Rolling…' : '${current.name} is lining up…')),
+          turnText: g.finished ? 'Round over' : (_mine ? '${current.whose} putt · stroke ${g.strokes + 1}' : (g.moving ? 'Rolling…' : '${current.name} is lining up…')),
           message: showMsg ? g.message : null,
         ),
       ]),

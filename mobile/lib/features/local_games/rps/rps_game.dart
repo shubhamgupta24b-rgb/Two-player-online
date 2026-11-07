@@ -13,7 +13,7 @@ enum RpsPhase { pick, reveal, done }
 /// score a point for every player your pick beats. First to [target] wins.
 class RpsLogic extends LocalGameLogic {
   static const emoji = ['✊', '✋', '✌️'];
-  static const names = ['ROCK', 'PAPER', 'SCISSORS'];
+  static const names = ['Rock', 'Paper', 'Scissors'];
   final int players;
   final int target;
   final int revealMs;
@@ -72,14 +72,14 @@ class RpsLogic extends LocalGameLogic {
 
 final rpsInfo = LocalGameInfo(
   id: 'rock_paper_scissors',
-  title: 'Rock Paper Scissors',
+  title: 'Triple Throw',
   emoji: '✊',
   color: const Color(0xFFFD7E14),
-  tagline: 'Stone, paper, scissors… SHOOT!',
+  tagline: "Choose rock, paper or scissors",
   rules: const [
-    'Everyone secretly picks ✊ Rock, ✋ Paper or ✌️ Scissors on their own side.',
+    'Everyone secretly picks Rock, Paper or Scissors on their own side.',
     'Rock beats scissors, scissors beats paper, paper beats rock.',
-    'You score a point for every player you beat. First to 5 (or 7 with more players) wins!',
+    'You score a point for every player you beat. First to 5 (or 7 with more players) wins',
   ],
   scoreUnit: 'points',
   splitScreen: true,
@@ -112,7 +112,7 @@ final rpsInfo = LocalGameInfo(
       if (name == 'pick' && asInt(a[0]) == from) g.pick(from, asInt(a[1]));
     },
     view: (context, g, players, me) => Column(children: [
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'ROUND ${g.round} · FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'Round ${g.round} · First to ${g.target}'),
       Expanded(child: _RpsZone(player: players[me], index: me, g: g, players: players)),
     ]),
   ),
@@ -121,8 +121,8 @@ final rpsInfo = LocalGameInfo(
     onFinished: onFinished,
     builder: (context, g) => PlayerZones(
       count: players.length,
-      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'ROUND ${g.round} · FIRST TO ${g.target}'),
-      center: ZoneCenterChip('ROUND ${g.round}'),
+      middle: ScoreMiddleBar(players: players, scores: g.scores, label: 'Round ${g.round} · First to ${g.target}'),
+      center: ZoneCenterChip('Round ${g.round}'),
       zone: (i) => _RpsZone(player: players[i], index: i, g: g, players: players),
     ),
   ),
@@ -144,7 +144,7 @@ class _RpsZone extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       // Small zones (6 players on a small phone): shrink to fit rather than overflow.
       child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('${player.name.toUpperCase()} · ${g.score[index]}', style: TextStyle(color: player.color, fontWeight: FontWeight.w900, letterSpacing: 1)),
+        Text('${player.name} · ${g.score[index]}', style: TextStyle(color: player.color, fontWeight: FontWeight.w700)),
         const SizedBox(height: 6),
         if (reveal) ...[
           TweenAnimationBuilder<double>(
@@ -155,7 +155,7 @@ class _RpsZone extends StatelessWidget {
             builder: (_, s, child) => Transform.scale(scale: s, child: child),
             child: Text(RpsLogic.emoji[g.lastPicks[index]], style: const TextStyle(fontSize: 64)),
           ),
-          Text(g.lastPoints[index] > 0 ? '+${g.lastPoints[index]} 🎉' : 'no points', style: TextStyle(color: g.lastPoints[index] > 0 ? GpColors.yes : GpColors.muted, fontWeight: FontWeight.w900, fontSize: 18)),
+          Text(g.lastPoints[index] > 0 ? '+${g.lastPoints[index]}' : 'no points', style: TextStyle(color: g.lastPoints[index] > 0 ? GpColors.yes : GpColors.muted, fontWeight: FontWeight.w700, fontSize: 18)),
           if (players.length > 2)
             Padding(
               padding: const EdgeInsets.only(top: 6),
@@ -163,7 +163,7 @@ class _RpsZone extends StatelessWidget {
                   textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 12)),
             ),
         ] else ...[
-          Text(picked ? '🔒 LOCKED IN' : 'PICK ONE!', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+          Text(picked ? 'Locked in' : 'Pick one', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
           const SizedBox(height: 10),
           FittedBox(
             child: Row(children: [

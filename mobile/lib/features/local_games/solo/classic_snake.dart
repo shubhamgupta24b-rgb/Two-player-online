@@ -67,13 +67,13 @@ class ClassicSnakeLogic extends SoloLogic {
 
 final classicSnakeInfo = LocalGameInfo(
   id: 'classic_snake',
-  title: 'Classic Snake',
+  title: 'Noodle',
   emoji: '🐍',
   color: const Color(0xFF55B33B),
-  tagline: 'Eat, grow, don\'t bite yourself!',
+  tagline: "Eat fruit and avoid your own tail",
   rules: const [
     'Swipe on the board (or tap the arrows) to steer.',
-    'Eat the 🍎 to grow longer. You get faster as you grow.',
+    'Eat the to grow longer. You get faster as you grow.',
     'Hit a wall or your own tail and it\'s game over.',
   ],
   scoreUnit: 'apples',
@@ -84,7 +84,7 @@ final classicSnakeInfo = LocalGameInfo(
     create: () => ClassicSnakeLogic(),
     onFinished: onFinished,
     builder: (context, g) => SoloFrame(
-      title: '🐍 CLASSIC SNAKE',
+      title: 'Noodle',
       score: g.score,
       child: Column(children: [
         Expanded(

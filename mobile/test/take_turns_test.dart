@@ -42,9 +42,9 @@ void main() {
     await tapStart(tester);
 
     // Player 1's turn: the pass screen, then the whole box.
-    expect(find.text('PLAYER 1'), findsOneWidget);
-    expect(find.textContaining('1 min on the whole screen'), findsOneWidget);
-    await tapText(tester, 'START');
+    expect(find.text('Player 1'), findsWidgets);
+    expect(find.textContaining('1 min to play'), findsOneWidget);
+    await tapText(tester, 'Start');
     expect(find.text('1:00'), findsOneWidget, reason: 'a full-screen turn with its clock');
     for (var i = 0; i < 5; i++) {
       await tester.tapAt(const Offset(200, 500)); // drop fruit
@@ -53,20 +53,20 @@ void main() {
     await tester.pump(const Duration(seconds: 61));
     await tester.pump(const Duration(seconds: 1)); // the turn shows its end for a moment
     await tester.pump();
-    expect(find.text("PLAYER 1'S SCORE"), findsOneWidget);
+    expect(find.text("Player 1's score"), findsOneWidget);
     expect(find.text('Next up: Player 2'), findsOneWidget);
 
     // Player 2.
-    await tapText(tester, 'NEXT PLAYER');
-    expect(find.text('PLAYER 2'), findsOneWidget);
-    await tapText(tester, 'START');
+    await tapText(tester, 'Next player');
+    expect(find.text('Player 2'), findsWidgets);
+    await tapText(tester, 'Start');
     await tester.pump(const Duration(seconds: 61));
     await tester.pump(const Duration(seconds: 1)); // the turn shows its end for a moment
     await tester.pump();
-    expect(find.text("PLAYER 2'S SCORE"), findsOneWidget);
+    expect(find.text("Player 2's score"), findsOneWidget);
 
     // The computer's turn happens instantly, then the results.
-    await tapText(tester, 'SEE RESULTS');
+    await tapText(tester, 'See results');
     await tester.pump(const Duration(milliseconds: 500));
     expect(hasWinnerLine(), isTrue);
     expect(find.text('CPU 1'), findsWidgets);
@@ -81,10 +81,10 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: LocalGameShell(game: localGames.firstWhere((g) => g.id == 'basketball_hoops'))));
     await tapText(tester, '3 min');
     await tapStart(tester);
-    expect(find.textContaining('3 min on the whole screen'), findsOneWidget);
-    await tapText(tester, 'START');
+    expect(find.textContaining('3 min to play'), findsOneWidget);
+    await tapText(tester, 'Start');
     expect(find.text('3:00'), findsOneWidget);
-    expect(find.text('SWIPE UP TO SHOOT'), findsOneWidget, reason: 'one big court, not two halves');
+    expect(find.text('Swipe up to shoot'), findsOneWidget, reason: 'one big court, not two halves');
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));
   });

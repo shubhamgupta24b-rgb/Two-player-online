@@ -5,10 +5,9 @@ import 'svg_path.dart';
 
 export 'svg_path.dart' show svgPath;
 
-/// Drawn icons (UI_SPEC 2.13) that replace every emoji in the game UI, plus the fruit
-/// illustrations (Memory, Fruit Duel, Fruit Merge). The fruit paths are ported from
-/// docs/ui-redesign/mockups/memory/Main.dc.html (`<g id="f-…">`); orange, pear and melon
-/// are drawn in the same style. Icons with a stroke-only design draw in [GameIcon.color].
+/// The app's icon set, all on one 24 grid. Interface icons draw in [GameIcon.color] with one
+/// line weight. "Things" (fruit, pieces, characters) are flat two-tone cut-outs from one warm
+/// palette, with no highlights or gradients.
 enum GameIcons {
   // App and HUD
   back, forward, close, pause, play, help, restart, sound, vibration, clock, globe, wifi, trophy, copy, share, search, settings,
@@ -38,7 +37,7 @@ class GameIcon extends StatelessWidget {
   final double size;
   final Color color;
   final String? semanticLabel;
-  const GameIcon(this.icon, {super.key, this.size = 24, this.color = Colors.white, this.semanticLabel});
+  const GameIcon(this.icon, {super.key, this.size = 24, this.color = const Color(0xFFF5EFE4), this.semanticLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -88,490 +87,311 @@ class _Art {
 IconInk _f(String d, Color c, {double o = 1}) => IconInk(svgPath(d), fill: c, opacity: o);
 IconInk _fp(Path p, Color c, {double o = 1}) => IconInk(p, fill: c, opacity: o);
 IconInk _s(String d, Color c, double w, {double o = 1}) => IconInk(svgPath(d), stroke: c, style: InkStroke(w), opacity: o);
-IconInk _sp(Path p, Color c, double w, {double o = 1}) => IconInk(p, stroke: c, style: InkStroke(w), opacity: o);
 IconInk _cs(String d, [double w = 2]) => IconInk(svgPath(d), strokeCurrent: true, style: InkStroke(w));
 IconInk _csp(Path p, [double w = 2]) => IconInk(p, strokeCurrent: true, style: InkStroke(w));
 IconInk _cf(String d) => IconInk(svgPath(d), fillCurrent: true);
 IconInk _cfp(Path p) => IconInk(p, fillCurrent: true);
-IconInk _fs(Path p, Color fill, Color stroke, double w) => IconInk(p, fill: fill, stroke: stroke, style: InkStroke(w));
 
-const _ink = Color(0xFF1A1440);
-const _white = Color(0xFFFFFFFF);
-const _gold = Color(0xFFFFC93C);
-const _goldDeep = Color(0xFFA87A12);
-const _red = Color(0xFFE53935);
-const _leaf = Color(0xFF43A047);
-const _stem = Color(0xFF6D4C41);
-const _wood = Color(0xFFD7A15A);
-const _woodDark = Color(0xFF8A5A2B);
-const _skin = Color(0xFFF2C29B);
-const _skinEdge = Color(0xFFB9825A);
+// The palette of "things": warm, flat, two tones each, no highlights.
+const _ink = Color(0xFF2A1C05);
+const _bone = Color(0xFFFBF3E2);
+const _boneDark = Color(0xFFDCCFB6);
+const _gold = Color(0xFFF6A91B);
+const _goldDeep = Color(0xFFB87708);
+const _red = Color(0xFFD9423D);
+const _redDeep = Color(0xFF9E2A2B);
+const _leaf = Color(0xFF3F9A5B);
+const _leafDeep = Color(0xFF2B6F41);
+const _stem = Color(0xFF6B4A2F);
+const _wood = Color(0xFFC98F4F);
+const _woodDeep = Color(0xFF8C5D2C);
+const _steel = Color(0xFF8E98A3);
+const _steelDeep = Color(0xFF59626C);
+const _blue = Color(0xFF3B86D9);
+const _blueDeep = Color(0xFF1F5A9E);
+const _plum = Color(0xFF7A4FB5);
+const _plumDeep = Color(0xFF55337F);
+const _pink = Color(0xFFF08FA6);
+const _skin = Color(0xFFE5B28A);
 
 List<IconInk> _dice(List<(double, double)> pips) => [
-      _fs(svgRect(2, 2, 20, 20, 4.5), _white, const Color(0xFFD9DEE6), 1),
-      for (final (x, y) in pips) _fp(svgCircle(x, y, 2.1), _ink),
+      _fp(svgRect(2.5, 3.5, 19, 19, 5), _boneDark),
+      _fp(svgRect(2.5, 2, 19, 19, 5), _bone),
+      for (final (x, y) in pips) _fp(svgCircle(x, y, 1.9), _ink),
     ];
 
-/// Shifts every ink by ([dx], [dy]) and scales by [k] (for icons made of smaller copies).
-List<IconInk> _place(List<IconInk> inks, double dx, double dy, double k) {
-  final m = Float64List.fromList([k, 0, 0, 0, 0, k, 0, 0, 0, 0, 1, 0, dx, dy, 0, 1]);
-  return [
-    for (final i in inks)
-      IconInk(i.path.transform(m), fill: i.fill, fillCurrent: i.fillCurrent, stroke: i.stroke, strokeCurrent: i.strokeCurrent, style: i.style == null ? null : InkStroke(i.style!.width * k), opacity: i.opacity),
-  ];
-}
-
 List<IconInk> _rocket() => [
-      _f('M12 2c4 3 5 8 4 13H8C7 10 8 5 12 2z', const Color(0xFFECEFF1)),
-      _f('M8 13l-3.5 4.5H9zM16 13l3.5 4.5H15z', _red),
-      _fp(svgCircle(12, 9, 2), const Color(0xFF2E8BFF)),
-      _f('M10 15.5h4l-2 6z', const Color(0xFFFF9800)),
+      _f('M12 1.5c3.6 2.6 5 7 4.2 13H7.800c-.8-6 .6-10.400 4.200-13z', _bone),
+      _f('M12 1.500c1.700 1.200 2.900 2.800 3.600 4.800H8.400c.7-2 1.900-3.600 3.600-4.800z', _red),
+      _f('M7.800 12 4 18h4zM16.200 12 20 18h-4z', _redDeep),
+      _fp(svgCircle(12, 10, 1.9), _blue),
+      _f('M9.800 15.500h4.400L12 22z', _gold),
     ];
 
 List<IconInk> _mole(Color fur, Color dark) => [
-      _f('M4 22c0-9 3.5-15 8-15s8 6 8 15z', fur),
-      _fp(svgEllipse(12, 15, 3.4, 2.5), const Color(0xFFF8BBD0)),
-      _fp(svgCircle(12, 13.6, 1.2), dark),
-      _fp(svgCircle(9.2, 11, 1.1), _ink),
-      _fp(svgCircle(14.8, 11, 1.1), _ink),
-      _f('M11 17h2v2h-2z', _white),
+      _f('M4 23c0-10 3.400-16 8-16s8 6 8 16z', fur),
+      _fp(svgEllipse(12, 16.500, 4, 3), dark),
+      _fp(svgCircle(9, 11.500, 1.200), _ink),
+      _fp(svgCircle(15, 11.500, 1.200), _ink),
+      _fp(svgEllipse(12, 14.500, 1.500, 1.100), _pink),
+      _f('M10.900 18h2.200v2.200h-2.200z', _bone),
+    ];
+
+/// A round fruit in the flat two-tone style: body, darker lower crescent, leaf.
+List<IconInk> _round(Color body, Color deep, {double cy = 13.500, double r = 8.500}) => [
+      _fp(svgCircle(12, cy, r), body),
+      IconInk(svgCircle(9.500, cy - 2.500, r), fill: const Color(0x00000000)),
+      IconInk(svgCircle(12, cy + r * 0.45, r * 0.8), fill: deep, opacity: 0.55, clip: svgCircle(12, cy, r)),
+      _s('M12 ${cy - r + 0.5} Q12.300 3.800 13.300 2.800', _stem, 1.500),
+      _f('M13 4.800 Q17 1.500 20 4 Q16.500 7 13 4.800Z', _leaf),
     ];
 
 _Art _build(GameIcons i) {
   switch (i) {
-    // ---------------------------------------------------------------- app and HUD
+    // App and HUD: one solid-ended 2 px line weight on a 24 grid, in the current colour.
     case GameIcons.back:
-      return _Art(24, [_cs('M15 5L8 12l7 7', 2.6)]);
+      return _Art(24, [_cs('M15 5l-7 7 7 7', 2.400)]);
     case GameIcons.forward:
-      return _Art(24, [_cs('M9 5l7 7-7 7', 2.6)]);
-    case GameIcons.chevronDown:
-      return _Art(24, [_cs('M6 9l6 6 6-6', 2.6)]);
+      return _Art(24, [_cs('M9 5l7 7-7 7', 2.400)]);
     case GameIcons.close:
+      return _Art(24, [_cs('M6 6l12 12M18 6 6 18', 2.400)]);
     case GameIcons.cross:
-      return _Art(24, [_cs('M6 6l12 12M18 6L6 18', 2.8)]);
+      return _Art(24, [_cs('M5.500 5.500l13 13M18.500 5.500l-13 13', 3.400)]);
     case GameIcons.pause:
-      return _Art(24, [_cfp(svgRect(6, 4, 4.4, 16, 1.6)), _cfp(svgRect(13.6, 4, 4.4, 16, 1.6))]);
+      return _Art(24, [_cfp(svgRect(6, 4.500, 4.200, 15, 1.500)), _cfp(svgRect(13.800, 4.500, 4.200, 15, 1.500))]);
     case GameIcons.play:
-      return _Art(24, [_cf('M7 4l13 8-13 8z')]);
+      return _Art(24, [_cf('M7.500 4.700c0-1 1.100-1.600 1.900-1.100l11 7.300c.8.500.8 1.700 0 2.200l-11 7.300c-.8.500-1.900-.1-1.900-1.100z')]);
     case GameIcons.help:
-      return _Art(24, [_csp(svgCircle(12, 12, 9.4)), _cs('M9.3 9.3a2.9 2.9 0 1 1 4 2.7c-.7.3-1.3 1-1.3 1.8v.5'), _cfp(svgCircle(12, 17.4, 0.9))]);
+      return _Art(24, [_csp(svgCircle(12, 12, 9.500)), _cs('M9.300 9.300a2.800 2.800 0 1 1 4.200 2.400c-.9.600-1.500 1.200-1.500 2.300', 2.200), _cfp(svgCircle(12, 17.200, 1.300))]);
     case GameIcons.restart:
-      return _Art(22, [_cs('M3 11a8 8 0 0 1 14-5.3M19 3v4h-4', 2.4), _cs('M19 11a8 8 0 0 1-14 5.3M3 19v-4h4', 2.4)]);
+      return _Art(24, [_cs('M19.500 12a7.500 7.500 0 1 1-2.300-5.400', 2.300), _cf('M20.500 2.800v6h-6z')]);
+    case GameIcons.undo:
+      return _Art(24, [_cs('M9 14 4.500 9.500 9 5', 2.300), _cs('M5 9.500h9.500a5 5 0 0 1 0 10H9', 2.300)]);
     case GameIcons.sound:
-      return _Art(20, [_cs('M3 8h3l4-3v10l-4-3H3z', 1.8), _cs('M13 7a4 4 0 0 1 0 6M15.5 4.5a8 8 0 0 1 0 11', 1.8)]);
+      return _Art(24, [_cf('M3.500 9.300c0-.7.600-1.300 1.300-1.300H8l4.300-3.600c.6-.5 1.700-.1 1.700.8v13.600c0 .9-1.100 1.300-1.700.8L8 16H4.800c-.7 0-1.300-.6-1.300-1.300z'), _cs('M17.300 8.500a5 5 0 0 1 0 7M19.800 6a8.500 8.500 0 0 1 0 12', 2)]);
     case GameIcons.vibration:
-      return _Art(20, [_csp(svgRect(6, 2, 8, 16, 2), 1.8), _cs('M2 7v6M18 7v6', 1.8)]);
+      return _Art(24, [_csp(svgRect(8, 3.500, 8, 17, 2.200)), _cs('M4.800 8v8M19.200 8v8M2 10.500v3M22 10.500v3', 2)]);
     case GameIcons.clock:
-      return _Art(20, [_csp(svgCircle(10, 10, 7), 1.8), _cs('M10 6v4l3 2', 1.8)]);
+      return _Art(24, [_csp(svgCircle(12, 12, 9.500)), _cs('M12 6.800V12l3.600 2.200', 2.300)]);
     case GameIcons.globe:
-      return _Art(24, [_csp(svgCircle(12, 12, 9)), _cs('M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18')]);
+      return _Art(24, [_csp(svgCircle(12, 12, 9.500)), _cs('M2.800 12h18.400M12 2.500c3 2.800 4.300 6 4.300 9.500s-1.300 6.700-4.300 9.500c-3-2.800-4.300-6-4.300-9.500S9 5.300 12 2.500z', 1.900)]);
     case GameIcons.wifi:
-      return _Art(24, [_cs('M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0'), _cfp(svgCircle(12, 19.5, 1.3))]);
+      return _Art(24, [_cs('M2.500 9.300a14 14 0 0 1 19 0M6 13a9 9 0 0 1 12 0M9.300 16.500a4 4 0 0 1 5.400 0', 2.300), _cfp(svgCircle(12, 19.600, 1.600))]);
     case GameIcons.trophy:
       return _Art(24, [
-        _f('M7 4h10v5a5 5 0 0 1-10 0z', _gold),
-        _s('M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4', _gold, 2),
-        _f('M11 13.6h2v4h-2z', _goldDeep),
-        _fp(svgRect(7.5, 18, 9, 3.4, 1.2), _goldDeep),
-        _f('M9 5.5h2v3.5a2 2 0 0 1-2-2z', _white, o: 0.45),
+        _f('M7 3h10v7a5 5 0 0 1-10 0z', _gold),
+        _s('M7 5H3.800c0 3.400 1.200 5.400 3.700 6M17 5h3.200c0 3.400-1.200 5.400-3.700 6', _goldDeep, 1.800),
+        _f('M10.800 14.500h2.400v3.500h-2.400z', _goldDeep),
+        _fp(svgRect(7.500, 18, 9, 3, 1), _goldDeep),
       ]);
     case GameIcons.copy:
-      return _Art(16, [_csp(svgRect(5, 5, 9, 9, 2), 1.8), _cs('M11 5V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h2', 1.8)]);
+      return _Art(24, [_csp(svgRect(9, 9, 11.500, 11.500, 2.500)), _cs('M15 5.500c0-1.100-.9-2-2-2H5.500c-1.100 0-2 .9-2 2V13c0 1.100.9 2 2 2', 2)]);
     case GameIcons.share:
-      return _Art(16, [_csp(svgCircle(12, 3.5, 2), 1.8), _csp(svgCircle(4, 8, 2), 1.8), _csp(svgCircle(12, 12.5, 2), 1.8), _cs('M6 7l4-2.5M6 9l4 2.5', 1.8)]);
+      return _Art(24, [_cs('M12 15V3.800M7.500 7.800 12 3.300l4.500 4.500', 2.200), _cs('M5 12.500v6c0 1.100.9 2 2 2h10c1.100 0 2-.9 2-2v-6', 2.200)]);
     case GameIcons.search:
-      return _Art(18, [_csp(svgCircle(8, 8, 5.5)), _cs('M12.5 12.5L16 16')]);
+      return _Art(24, [_csp(svgCircle(10.500, 10.500, 6.800), 2.300), _cs('M15.600 15.600 21 21', 2.600)]);
     case GameIcons.settings:
-      return _Art(24, [_cs('M4 7h9M19 7h1M4 17h3M13 17h7'), _csp(svgCircle(16, 7, 2.4)), _csp(svgCircle(10, 17, 2.4))]);
+      return _Art(24, [_cs('M3.500 7.500h9M18.500 7.500h2M3.500 16.500h2M11.500 16.500h9', 2.200), _csp(svgCircle(15.500, 7.500, 2.800), 2.200), _csp(svgCircle(8.500, 16.500, 2.800), 2.200)]);
     case GameIcons.plus:
-      return _Art(24, [_cs('M12 5v14M5 12h14', 2.8)]);
+      return _Art(24, [_cs('M12 4.500v15M4.500 12h15', 2.800)]);
     case GameIcons.minus:
-      return _Art(24, [_cs('M5 12h14', 2.8)]);
+      return _Art(24, [_cs('M4.500 12h15', 2.800)]);
     case GameIcons.people:
-      return _Art(24, [_csp(svgCircle(9, 8, 3.5)), _cs('M3 20a6 6 0 0 1 12 0'), _csp(svgCircle(17, 9, 2.5)), _cs('M15.5 14.4A5 5 0 0 1 21 19')]);
+      return _Art(24, [_cfp(svgCircle(9, 8, 3.800)), _cf('M2 20c0-4 3-6.500 7-6.500s7 2.500 7 6.500c0 .6-.4 1-1 1H3c-.6 0-1-.4-1-1z'), _cfp(svgCircle(17.300, 9, 2.800)), _cf('M17.800 20.800c0-2.700-.9-5-2.600-6.400 3.700-.9 7 1.300 7 5.400 0 .6-.4 1-1 1z')]);
     case GameIcons.check:
-      return _Art(24, [_cs('M5 12.5l4.5 4.5L19 7', 3)]);
-    case GameIcons.undo:
-      return _Art(24, [_cs('M9 14L4 9l5-5', 2.4), _cs('M4 9h10a6 6 0 0 1 0 12h-3', 2.4)]);
+      return _Art(24, [_cs('M4.500 12.500 10 18 19.500 6.500', 3.200)]);
     case GameIcons.skip:
-      return _Art(24, [_cf('M5 5l9 7-9 7z'), _cfp(svgRect(16, 5, 3, 14, 1))]);
+      return _Art(24, [_cf('M4.500 5.800c0-1 1.100-1.600 1.900-1l9.100 6.200c.7.500.7 1.500 0 2l-9.100 6.200c-.8.600-1.900 0-1.900-1z'), _cfp(svgRect(16.800, 4.500, 3, 15, 1.200))]);
     case GameIcons.eye:
-      return _Art(24, [_cs('M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z'), _cfp(svgCircle(12, 12, 3.2))]);
+      return _Art(24, [_cs('M2 12c2.800-4.700 6.100-7 10-7s7.200 2.300 10 7c-2.800 4.700-6.100 7-10 7s-7.200-2.300-10-7z', 2.100), _cfp(svgCircle(12, 12, 3.300))]);
     case GameIcons.lock:
-      return _Art(24, [_cs('M8 11V8a4 4 0 0 1 8 0v3', 2.4), _cfp(svgRect(5, 11, 14, 10, 2.4))]);
+      return _Art(24, [_cfp(svgRect(4.500, 10.500, 15, 11, 3)), _cs('M8 10.500V7.500a4 4 0 0 1 8 0v3', 2.300)]);
     case GameIcons.lightbulb:
-      return _Art(24, [_f('M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z', _gold), _s('M9.5 18.5h5M10.5 21h3', const Color(0xFFB0BEC5), 2)]);
+      return _Art(24, [_f('M12 2.500a7 7 0 0 0-4 12.700c.7.500 1 1.200 1 2V18h6v-.8c0-.8.300-1.500 1-2a7 7 0 0 0-4-12.700z', _gold), _fp(svgRect(9.300, 19, 5.400, 2.800, 1.200), _steelDeep)]);
     case GameIcons.flag:
-      return _Art(24, [_s('M6 21V3.5', _stem, 2.2), _f('M6 4h12l-3 4 3 4H6z', _red)]);
+      return _Art(24, [_s('M6 2.500v19', _steelDeep, 2.200), _f('M7 3.500 19.500 8 7 13z', _red)]);
     case GameIcons.star:
-      return _Art(24, [_f('M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.6 5.7 21l1.5-7L2 9.3l7-.8z', _gold), _f('M12 5.5l1.6 3.6 1.6.2-2.8.9z', _white, o: 0.5)]);
+      return _Art(24, [_cf('M12 2.300l2.900 6.100 6.700.900-4.900 4.600 1.200 6.600L12 17.300l-5.900 3.200 1.200-6.600-4.900-4.600 6.700-.900z')]);
     case GameIcons.heart:
-      return _Art(24, [_f('M12 21s-8.5-5.4-8.5-11.3A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8.5 2.7C20.5 15.6 12 21 12 21z', const Color(0xFFFF5E5B)), _fp(svgEllipse(8, 9.6, 1.6, 2.4), _white, o: 0.45)]);
+      return _Art(24, [_f('M12 21C5.500 16.300 2.500 12.700 2.500 8.700 2.500 5.700 4.800 3.500 7.600 3.500c1.800 0 3.400.9 4.400 2.500 1-1.600 2.600-2.500 4.400-2.500 2.800 0 5.100 2.200 5.100 5.200 0 4-3 7.600-9.500 12.300z', _red)]);
     case GameIcons.heartEmpty:
-      return _Art(24, [_cs('M12 20s-7.7-5-7.7-10.4A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.7 2.4C19.7 15 12 20 12 20z', 2.2)]);
+      return _Art(24, [_s('M12 20C6 15.700 3.500 12.400 3.500 8.800c0-2.400 1.800-4.300 4.100-4.300 1.900 0 3.400 1.200 4.400 3 1-1.800 2.500-3 4.400-3 2.300 0 4.100 1.900 4.100 4.300 0 3.600-2.500 6.900-8.500 11.200z', _steel, 2)]);
     case GameIcons.shield:
-      return _Art(24, [_f('M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z', const Color(0xFF2E8BFF)), _s('M12 5l5 1.9V11c0 3.4-2.2 6.2-5 7.6', _white, 1.6, o: 0.7)]);
+      return _Art(24, [_f('M12 2 20.500 5v7c0 4.800-3.300 8.200-8.500 10-5.200-1.800-8.500-5.200-8.500-10V5z', _blue), _f('M12 2v20c-5.200-1.800-8.500-5.200-8.500-10V5z', _blueDeep)]);
     case GameIcons.crown:
-      return _Art(18, [_f('M1 13L3 4l4 4 2-6 2 6 4-4 2 9z', _gold), _fp(svgRect(1.4, 13, 15.2, 2.6, 1), _goldDeep)]);
+      return _Art(24, [_f('M3 8l4.800 4.300L12 4.500l4.200 7.800L21 8l-1.800 10.500H4.800z', _gold), _fp(svgRect(4.800, 18.500, 14.400, 2.500, 1), _goldDeep)]);
     case GameIcons.crownKing:
-      return _Art(24, [
-        _f('M3 17L5 7l4.5 4.5L12 5l2.5 6.5L19 7l2 10z', _gold),
-        _fp(svgRect(3.5, 17, 17, 3, 1.2), _goldDeep),
-        _fp(svgCircle(5, 6.4, 1.5), _gold),
-        _fp(svgCircle(12, 4.4, 1.5), _gold),
-        _fp(svgCircle(19, 6.4, 1.5), _gold),
-        _fp(svgCircle(12, 14, 1.7), _red),
-      ]);
+      return _Art(24, [_f('M3.500 9l4.300 3.500L12 6l4.200 6.500L20.500 9l-1.600 9H5.100z', _gold), _fp(svgRect(5.100, 18, 13.800, 2.600, 1), _goldDeep), _fp(svgCircle(12, 14.500, 1.500), _red)]);
     case GameIcons.coin:
-      return _Art(24, [_fp(svgCircle(12, 12, 9.5), _gold), _sp(svgCircle(12, 12, 6.6), _goldDeep, 1.6), _f('M12 7.8l1.3 2.8 3 .3-2.3 2 .7 3L12 14.4 9.3 16l.7-3-2.3-2 3-.3z', _goldDeep)]);
+      return _Art(24, [_fp(svgCircle(12, 12.800, 9.300), _goldDeep), _fp(svgCircle(12, 11.500, 9.300), _gold), _s('M12 7v9', _goldDeep, 2.200), _s('M8.500 11.500h7', _goldDeep, 2.200)]);
     case GameIcons.target:
-      return _Art(20, [
-        _fp(svgCircle(10, 10, 9), const Color(0xFFF4F2EC)),
-        _fp(svgCircle(10, 10, 7.2), const Color(0xFF222222)),
-        _fp(svgCircle(10, 10, 5.5), const Color(0xFF1F7BD0)),
-        _fp(svgCircle(10, 10, 3.8), const Color(0xFFE12A2F)),
-        _fp(svgCircle(10, 10, 2), const Color(0xFFF7C51E)),
-      ]);
+      return _Art(24, [_fp(svgCircle(12, 12, 10), _red), _fp(svgCircle(12, 12, 7), _bone), _fp(svgCircle(12, 12, 4), _red), _fp(svgCircle(12, 12, 1.600), _gold)]);
     case GameIcons.wind:
-      return _Art(20, [_cs('M2 7h10a2.5 2.5 0 1 0-2.5-2.5', 1.8), _cs('M2 11h13a2.5 2.5 0 1 1-2.5 2.5', 1.8), _cs('M2 15h6', 1.8)]);
+      return _Art(24, [_cs('M3 9h12a3 3 0 1 0-3-3M3 13.500h15.500a2.800 2.800 0 1 1-2.800 2.800M3 18h7a2.500 2.500 0 1 1-2.500 2.500', 2.100)]);
     case GameIcons.arrow:
-      return _Art(24, [_cs('M20 4L8 16M8 16l-1 5-3-3 5-1z'), _cs('M14 4h6v6')]);
+      return _Art(24, [_s('M4 20 18.500 5.500', _wood, 2.200), _f('M21.500 2.500 20 9.500l-5.500-5.500z', _steelDeep), _s('M3 17.500l3.500 3.500M3 21l3.500-3.500', _red, 1.800)]);
     case GameIcons.bow:
-      return _Art(24, [
-        _s('M7 2.5c8.5 4 8.5 15 0 19', const Color(0xFF7A5230), 2.6),
-        _s('M7 2.5v19', const Color(0xFFEDE7DA), 1),
-        _s('M3 12h15', const Color(0xFF3E2723), 1.6),
-        _f('M21 12l-4-2.4v4.8z', const Color(0xFF90A4AE)),
-        _f('M3 12l-1.5-2h2.5l1.5 2-1.5 2H1.5z', _red),
-      ]);
+      return _Art(24, [_s('M6 2.500C16 5 20 12 20 12s-4 7-14 9.500', _wood, 2.800), _s('M6 2.500v19', _bone, 1.400), _s('M2 12h17', _steelDeep, 1.800)]);
     case GameIcons.home:
-      return _Art(24, [_cs('M3 11l9-7 9 7'), _cs('M5.5 9.5V20h13V9.5'), _cs('M10 20v-5h4v5')]);
+      return _Art(24, [_cf('M12 3 2.500 11.300c-.5.400-.2 1.200.5 1.200H5V20c0 .6.400 1 1 1h4v-6h4v6h4c.6 0 1-.4 1-1v-7.500h2c.7 0 1-.8.500-1.200z')]);
+    case GameIcons.chevronDown:
+      return _Art(24, [_cs('M5 9l7 7 7-7', 2.400)]);
+    case GameIcons.arrowLeft:
+      return _Art(24, [_cs('M20 12H4.500M11 5l-7 7 7 7', 2.600)]);
+    case GameIcons.arrowRight:
+      return _Art(24, [_cs('M4 12h15.500M13 5l7 7-7 7', 2.600)]);
+    case GameIcons.arrowUp:
+      return _Art(24, [_cs('M12 20V4.500M5 11l7-7 7 7', 2.600)]);
+    case GameIcons.arrowDown:
+      return _Art(24, [_cs('M12 4v15.500M5 13l7 7 7-7', 2.600)]);
+    case GameIcons.rotate:
+      return _Art(24, [_cs('M4.500 12a7.500 7.500 0 0 1 12.900-5.200', 2.300), _cs('M19.500 12a7.500 7.500 0 0 1-12.900 5.200', 2.300), _cf('M20 2.500v6h-6zM4 21.500v-6h6z')]);
 
-    // ---------------------------------------------------------------- weapons and power-ups
+    // Weapons and power-ups
     case GameIcons.rocket:
       return _Art(24, _rocket());
     case GameIcons.tripleRocket:
-      return _Art(24, [..._place(_rocket(), -3.5, 4, 0.62), ..._place(_rocket(), 16.5, 4, 0.62), ..._place(_rocket(), 6.5, -1, 0.62)]);
+      List<IconInk> small(double dx, double dy, double k) {
+        final m = Float64List.fromList([k, 0, 0, 0, 0, k, 0, 0, 0, 0, 1, 0, dx, dy, 0, 1]);
+        return [for (final ink in _rocket()) IconInk(ink.path.transform(m), fill: ink.fill)];
+      }
+      return _Art(24, [...small(-1, 7, 0.55), ...small(11.500, 7, 0.55), ...small(5.500, 0, 0.6)]);
     case GameIcons.mine:
       return _Art(24, [
-        _s('M12 3.5v4M12 18.5v2.5M3.5 13h3M17.5 13h3M5.8 6.8l2.6 2.6M18.2 6.8l-2.6 2.6M5.8 19.2l2.6-2.6M18.2 19.2l-2.6-2.6', const Color(0xFF37474F), 2.2),
-        _fp(svgCircle(12, 13, 6.4), const Color(0xFF37474F)),
-        _fp(svgCircle(12, 13, 2.3), const Color(0xFFFF5E5B)),
-        _fp(svgCircle(10, 11, 1.2), _white, o: 0.4),
+        for (final d in const ['M12 1.500v21', 'M1.500 12h21', 'M4.500 4.500l15 15', 'M19.500 4.500l-15 15']) _s(d, _steelDeep, 2.400),
+        _fp(svgCircle(12, 12, 7.500), _steelDeep),
+        _fp(svgCircle(12, 12, 3), _red),
       ]);
     case GameIcons.bolt:
-      return _Art(24, [_f('M13.5 2L4 14h7l-1.5 8L20 10h-7z', _gold), _f('M12.4 4.5L7 11.6h3', _white, o: 0.4)]);
+      return _Art(24, [_f('M13.800 1.500 4.500 13.500h6L9.300 22.500 19.500 9.800h-6.300z', _gold)]);
     case GameIcons.gun:
-      return _Art(24, [_f('M2.5 8.5h16l1.5-1.5h1.5v5h-6.5l-1 2.2h-3l-1 5.3H6l1.2-5.3H2.5z', const Color(0xFF455A64)), _f('M3.5 9.6h14v1.2h-14z', _white, o: 0.3)]);
+      return _Art(24, [_fp(svgRect(2, 7.500, 18, 6, 1.500), _steelDeep), _fp(svgRect(17, 8.800, 5.500, 3, .8), _steel), _f('M5 13.500h6l-1.500 7.500H4.500z', _woodDeep), _fp(svgRect(5, 6, 3, 1.800, .5), _steel)]);
     case GameIcons.mysteryBox:
-      return _Art(24, [
-        _fs(svgRect(3, 4, 18, 17, 3.2), const Color(0xFFFFB300), _goldDeep, 1.4),
-        _s('M9.4 10.2a2.6 2.6 0 1 1 3.7 2.3c-.7.4-1.1 1-1.1 1.7v.7', _white, 2.4),
-        _fp(svgCircle(12, 17.6, 1.2), _white),
-      ]);
+      return _Art(24, [_fp(svgRect(2.500, 4, 19, 19, 4), _goldDeep), _fp(svgRect(2.500, 2, 19, 19, 4), _gold), _s('M9 8.300a3 3 0 1 1 4.600 2.500c-1 .7-1.600 1.300-1.600 2.500', _ink, 2.300), _fp(svgCircle(12, 16.800, 1.300), _ink)]);
     case GameIcons.bomb:
-      return _Art(24, [
-        _fp(svgCircle(11, 14, 7), const Color(0xFF263238)),
-        _fp(svgEllipse(8.5, 11.5, 1.6, 2.4), _white, o: 0.35),
-        _f('M14.6 7.3l2-2 2 2-2 2z', const Color(0xFF455A64)),
-        _s('M17.5 6Q19 2.5 21.5 3.5', const Color(0xFF8D6E63), 1.6),
-        _f('M21.5 1l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z', _gold),
-      ]);
+      return _Art(24, [_fp(svgCircle(11, 14, 8), _steelDeep), _s('M15.500 7.500c1-3 3-4.500 5.500-4', _wood, 2), _fp(svgCircle(21, 3.500, 1.700), _gold)]);
 
-    // ---------------------------------------------------------------- dice
+    // Dice
     case GameIcons.dice1:
-      return _Art(24, _dice([(12, 12)]));
+      return _Art(24, _dice(const [(12, 11.500)]));
     case GameIcons.dice2:
-      return _Art(24, _dice([(7.5, 7.5), (16.5, 16.5)]));
+      return _Art(24, _dice(const [(8, 7.500), (16, 15.500)]));
     case GameIcons.dice3:
-      return _Art(24, _dice([(7.5, 7.5), (12, 12), (16.5, 16.5)]));
+      return _Art(24, _dice(const [(7.500, 7), (12, 11.500), (16.500, 16)]));
     case GameIcons.dice4:
-      return _Art(24, _dice([(7.5, 7.5), (16.5, 7.5), (7.5, 16.5), (16.5, 16.5)]));
+      return _Art(24, _dice(const [(8, 7.500), (16, 7.500), (8, 15.500), (16, 15.500)]));
     case GameIcons.dice5:
-      return _Art(24, _dice([(7.5, 7.5), (16.5, 7.5), (12, 12), (7.5, 16.5), (16.5, 16.5)]));
+      return _Art(24, _dice(const [(7.500, 7), (16.500, 7), (12, 11.500), (7.500, 16), (16.500, 16)]));
     case GameIcons.dice6:
-      return _Art(24, _dice([(7.5, 7), (16.5, 7), (7.5, 12), (16.5, 12), (7.5, 17), (16.5, 17)]));
+      return _Art(24, _dice(const [(8, 6.500), (16, 6.500), (8, 11.500), (16, 11.500), (8, 16.500), (16, 16.500)]));
 
-    // ---------------------------------------------------------------- characters and things
+    // Characters and game things
     case GameIcons.duck:
-      return _Art(24, [
-        _f('M3 15c0-3 3-4.5 7-4.5h4c1.5-1 1.5-4.5 4.5-4.5s3.5 3 2 5c2 4-1 9-8.5 9C6 20 3 18 3 15z', const Color(0xFFFFD54F)),
-        _f('M20.5 8.2l3 .8-3 1.2z', const Color(0xFFFF9800)),
-        _fp(svgCircle(18.4, 8, 0.9), _ink),
-        _f('M7 14q3 3 7 0', _white, o: 0.5),
-      ]);
+      return _Art(24, [_f('M3 13.500c0 5 4 8 9.500 8 5.500 0 8.500-3.500 8.500-8-2 1.500-5 1.500-7.500.5-3 1-7 1-10.500-.5z', _gold), _fp(svgCircle(15, 8, 5), _gold), _f('M19.500 6.800 23.500 8l-4 1.500z', _red), _fp(svgCircle(16.200, 7, 1), _ink)]);
     case GameIcons.rabbit:
-      return _Art(24, [
-        _fp(svgEllipse(8.8, 6, 2, 5.2), const Color(0xFFE0E0E0)),
-        _fp(svgEllipse(15.2, 6, 2, 5.2), const Color(0xFFE0E0E0)),
-        _fp(svgEllipse(8.8, 6.4, 0.9, 3.6), const Color(0xFFF8BBD0)),
-        _fp(svgEllipse(15.2, 6.4, 0.9, 3.6), const Color(0xFFF8BBD0)),
-        _fp(svgCircle(12, 15, 7), const Color(0xFFF5F5F5)),
-        _fp(svgCircle(9.4, 14, 1.1), _ink),
-        _fp(svgCircle(14.6, 14, 1.1), _ink),
-        _fp(svgEllipse(12, 16.6, 1.3, 1), const Color(0xFFF48FB1)),
-      ]);
+      return _Art(24, [_fp(svgEllipse(8.800, 6, 2.200, 5.500), _bone), _fp(svgEllipse(15.200, 6, 2.200, 5.500), _bone), _fp(svgEllipse(8.800, 6, 1, 3.800), _pink), _fp(svgEllipse(15.200, 6, 1, 3.800), _pink), _fp(svgCircle(12, 15.500, 7), _bone), _fp(svgCircle(9.500, 14.500, 1.100), _ink), _fp(svgCircle(14.500, 14.500, 1.100), _ink), _fp(svgEllipse(12, 17.500, 1.400, 1), _pink)]);
     case GameIcons.mole:
-      return _Art(24, _mole(const Color(0xFF8D6E63), const Color(0xFF4E342E)));
+      return _Art(24, _mole(const Color(0xFF8A6647), const Color(0xFFC29A76)));
     case GameIcons.goldenMole:
-      return _Art(24, [..._mole(_gold, _goldDeep), _f('M20 2l.8 1.8 1.8.8-1.8.8L20 7.2l-.8-1.8-1.8-.8 1.8-.8z', _white)]);
+      return _Art(24, _mole(_gold, const Color(0xFFFBD98A)));
     case GameIcons.alien:
-      return _Art(24, [
-        _f('M5 9a7 7 0 0 1 14 0v5H5z', const Color(0xFF66BB6A)),
-        _s('M7 14l-2 5M10 14l-1 5M14 14l1 5M17 14l2 5', const Color(0xFF388E3C), 2),
-        _s('M8 3.5L9.5 6M16 3.5L14.5 6', const Color(0xFF388E3C), 1.6),
-        _fp(svgEllipse(9.3, 9.5, 1.6, 2.1), _ink),
-        _fp(svgEllipse(14.7, 9.5, 1.6, 2.1), _ink),
-      ]);
+      return _Art(24, [_f('M12 2C6.500 2 3.500 6 3.500 10.500c0 5.500 5 11.500 8.500 11.500s8.500-6 8.500-11.500C20.500 6 17.500 2 12 2z', _leaf), _f('M6.500 10.500c2.500 0 4.200 1.700 4.200 4-2.500 0-4.200-1.700-4.200-4zM17.500 10.500c-2.500 0-4.200 1.700-4.200 4 2.500 0 4.200-1.700 4.200-4z', _ink)]);
     case GameIcons.ufo:
-      return _Art(24, [
-        _fp(svgEllipse(12, 10, 5, 4.4), const Color(0xFF90CAF9)),
-        _fp(svgEllipse(12, 14, 10, 3.6), const Color(0xFFB0BEC5)),
-        _fp(svgEllipse(12, 13, 10, 2), const Color(0xFFCFD8DC)),
-        for (final x in [6.0, 12.0, 18.0]) _fp(svgCircle(x, 14.4, 1), _gold),
-        _fp(svgEllipse(10.4, 8.6, 1.2, 1.6), _white, o: 0.6),
-      ]);
+      return _Art(24, [_fp(svgEllipse(12, 9.500, 5, 5), const Color(0xFF9FD3E8)), _fp(svgEllipse(12, 14, 10.500, 4.500), _steelDeep), for (final x in const [6.0, 12.0, 18.0]) _fp(svgCircle(x, 14.500, 1.300), _gold)]);
     case GameIcons.tank:
-      return _Art(24, [
-        _fp(svgRect(2, 15, 20, 5, 2.5), const Color(0xFF37474F)),
-        for (final x in [5.0, 9.5, 14.5, 19.0]) _fp(svgCircle(x, 17.5, 1.3), const Color(0xFF90A4AE)),
-        _fp(svgRect(4, 11, 16, 4.5, 1.5), const Color(0xFF6D8B3A)),
-        _fp(svgRect(8, 7.5, 8, 4.5, 2), const Color(0xFF7FA046)),
-        _fp(svgRect(15, 8.6, 8, 2, 1), const Color(0xFF55702C)),
-      ]);
+      return _Art(24, [_fp(svgRect(2, 15, 20, 6.500, 3.200), _steelDeep), _fp(svgRect(4, 9.500, 15, 6, 1.500), _leaf), _fp(svgRect(7, 5.500, 8, 5, 1.500), _leafDeep), _fp(svgRect(14, 6.800, 8.500, 2.200, .8), _leafDeep)]);
     case GameIcons.cactus:
-      return _Art(24, [
-        _f('M10 22V5a2 2 0 0 1 4 0v17z', _leaf),
-        _f('M10 14H7a2 2 0 0 1-2-2V8.5a1.5 1.5 0 0 1 3 0V11h2zM14 12h3V7.5a1.5 1.5 0 0 1 3 0V12a3 3 0 0 1-3 3h-3z', _leaf),
-        _s('M12 5v16', const Color(0xFF2E7D32), 1),
-        _fp(svgRect(6, 21, 12, 2, 1), const Color(0xFFD7B57A)),
-      ]);
+      return _Art(24, [_s('M12 22V3.500M12 15H7c-1.500 0-2.500-1-2.500-2.500V9.500M12 12h5c1.500 0 2.500-1 2.500-2.500V7', _leaf, 4.200)]);
     case GameIcons.bird:
-      return _Art(24, [
-        IconInk(svgCircle(12, 13, 8.5), fillCurrent: true),
-        _fp(svgEllipse(12, 17, 5, 3.6), const Color(0xFFFFE0B2)),
-        _fp(svgCircle(9.4, 11.4, 2.1), _white),
-        _fp(svgCircle(14.6, 11.4, 2.1), _white),
-        _fp(svgCircle(9.9, 11.7, 1), _ink),
-        _fp(svgCircle(15.1, 11.7, 1), _ink),
-        _s('M6.8 8.3l4 1.8M17.2 8.3l-4 1.8', _ink, 1.4),
-        _f('M10.6 13.4h2.8L12 15.8z', const Color(0xFFFFA000)),
-      ]);
+      return _Art(24, [_fp(svgCircle(11, 13, 8.500), _red), _f('M18.500 11 23.500 13l-5 2.500z', _gold), _fp(svgCircle(14, 10.500, 2.200), _bone), _fp(svgCircle(14.700, 10.500, 1), _ink), _f('M6 13.500c2 0 4 1 4.500 3.500-2.500.5-5-1-4.500-3.500z', _redDeep)]);
     case GameIcons.pig:
-      return _Art(24, [
-        _fp(svgCircle(6.5, 6.5, 2.4), const Color(0xFF7CB342)),
-        _fp(svgCircle(17.5, 6.5, 2.4), const Color(0xFF7CB342)),
-        _fp(svgCircle(12, 13, 9), const Color(0xFF8BC34A)),
-        _fp(svgEllipse(12, 15, 3.6, 2.6), const Color(0xFFAED581)),
-        _fp(svgCircle(10.6, 15, 0.9), const Color(0xFF33691E)),
-        _fp(svgCircle(13.4, 15, 0.9), const Color(0xFF33691E)),
-        _fp(svgCircle(8.4, 10.5, 1.5), _white),
-        _fp(svgCircle(15.6, 10.5, 1.5), _white),
-        _fp(svgCircle(8.6, 10.7, 0.7), _ink),
-        _fp(svgCircle(15.4, 10.7, 0.7), _ink),
-      ]);
+      return _Art(24, [_f('M5.500 7 3.500 3 8.500 5zM18.500 7l2-4-5 2z', _pink), _fp(svgCircle(12, 13, 9), _pink), _fp(svgEllipse(12, 15.500, 3.800, 2.800), const Color(0xFFD97089)), _fp(svgCircle(10.500, 15.500, .8), _ink), _fp(svgCircle(13.500, 15.500, .8), _ink), _fp(svgCircle(8.500, 10.500, 1.100), _ink), _fp(svgCircle(15.500, 10.500, 1.100), _ink)]);
     case GameIcons.ladder:
-      return _Art(24, [_s('M7 2v20M17 2v20', _woodDark, 2.4), _s('M7 6h10M7 10.5h10M7 15h10M7 19.5h10', _wood, 2)]);
+      return _Art(24, [_s('M7.500 2v20M16.500 2v20', _wood, 2.600), _s('M7.500 6h9M7.500 11h9M7.500 16h9', _woodDeep, 2.200)]);
     case GameIcons.snake:
-      return _Art(24, [
-        _s('M4 20c4 0 4-5 8-5s4 5 8 5M12 15c-4 0-6-3-4-6s6-2 8-5', const Color(0xFF43A047), 3.4),
-        _fp(svgEllipse(16.8, 3.8, 2.6, 2), const Color(0xFF2E7D32)),
-        _fp(svgCircle(17.6, 3.3, 0.6), _white),
-        _s('M19.3 4.4l2 .8', _red, 1),
-      ]);
+      return _Art(24, [_s('M5 21h9c3.300 0 5-1.700 5-3.800 0-2.200-1.700-3.700-5-3.700H9.500C6.700 13.500 5 12 5 9.800 5 7.600 6.700 6 9.500 6H15', _leaf, 3.800), _fp(svgEllipse(17.500, 6, 3.800, 3), _leafDeep), _fp(svgCircle(18.500, 5, .9), _bone), _s('M21 6.500h2', _red, 1.200)]);
     case GameIcons.rock:
-      return _Art(24, [
-        _fs(svgPath('M5 11a3 3 0 0 1 3-3h8a4 4 0 0 1 4 4v3a6 6 0 0 1-6 6h-3a6 6 0 0 1-6-6z'), _skin, _skinEdge, 1.4),
-        _s('M9 8v3.5M12.5 8v3.5M16 8.3v3.5', _skinEdge, 1.2),
-        _f('M5 13.5a2.5 2.5 0 0 1 5 0v1H5z', _skin),
-      ]);
+      return _Art(24, [_f('M6 8.500c0-1 .8-1.800 1.800-1.800.4 0 .8.100 1.100.400.200-1 1-1.600 2-1.600.8 0 1.500.5 1.800 1.200.3-.5.900-.8 1.500-.8 1 0 1.800.8 1.800 1.800v.5c.3-.2.700-.3 1-.3 1 0 1.800.8 1.800 1.800V15c0 4-2.800 7-7 7-3.700 0-6.800-2.600-6.800-6.500z', _skin)]);
     case GameIcons.paper:
-      return _Art(24, [
-        _fs(svgPath('M6 22V10a1.5 1.5 0 0 1 3 0V4a1.5 1.5 0 0 1 3 0v-1a1.5 1.5 0 0 1 3 0v1.5a1.5 1.5 0 0 1 3 0V13l1.6-2.2a1.5 1.5 0 0 1 2.4 1.8L18 19a6 6 0 0 1-5 3z'), _skin, _skinEdge, 1.3),
-        _s('M9 10v5M12 4v10M15 3.5V14M18 6v8', _skinEdge, 1),
-      ]);
+      return _Art(24, [_f('M6 11V5.500c0-.9.700-1.500 1.500-1.500S9 4.600 9 5.500V10h.5V3.500C9.500 2.600 10.200 2 11 2s1.500.6 1.500 1.500V10h.5V4.500c0-.9.700-1.500 1.500-1.500s1.500.6 1.500 1.500V11h.5V7c0-.9.700-1.500 1.500-1.500S19.500 6.100 19.500 7v8c0 4-2.800 7-7 7-3 0-5-1.300-6.500-3.800L3 13.200c-.4-.8-.1-1.700.6-2.100.7-.4 1.600-.2 2.100.5z', _skin)]);
     case GameIcons.scissors:
-      return _Art(24, [
-        _fs(svgPath('M8 22l-1-8V4.5a1.5 1.5 0 0 1 3 0V12l2.5-8.5a1.5 1.5 0 0 1 2.9.9L13 13l3.5-.5a2.5 2.5 0 0 1 2.5 2.5v1a6 6 0 0 1-6 6z'), _skin, _skinEdge, 1.3),
-      ]);
+      return _Art(24, [_f('M6.500 12.500V3.700c0-.9.700-1.700 1.700-1.700S10 2.800 10 3.700v6.800h.8V3c0-.9.700-1.600 1.600-1.600S14 2.100 14 3v8.500c.4-.3.800-.4 1.200-.4 1 0 1.800.8 1.800 1.800.3-.2.700-.3 1-.3 1 0 1.800.8 1.800 1.800 0 4.300-2.800 8.600-7.300 8.600-3.800 0-6-2.600-6-6.500z', _skin)]);
     case GameIcons.bat:
-      return _Art(24, [_fp(svgRotate(svgRect(10, 2, 4.4, 14, 1.6), 35, 12, 12), const Color(0xFFE6C08A)), _sp(svgRotate(svgLine(12.2, 15, 12.2, 22), 35, 12, 12), const Color(0xFF5D4037), 2.6)]);
+      return _Art(24, [_s('M4 20 7 17', _stem, 3), _f('M6 14.500 16.500 4c.8-.8 2-.8 2.800 0l.7.700c.8.800.8 2 0 2.800L9.500 18z', _wood), _f('M6 14.500 18.500 3.300l.8.700L8 16.500z', _woodDeep)]);
     case GameIcons.ball:
-      return _Art(24, [_fp(svgCircle(12, 12, 9), const Color(0xFFFF8F00)), _s('M3.4 10.5Q12 13 20.6 10.5M12 3c-3 4-3 14 0 18', const Color(0xFF5D2E00), 1.3)]);
+      return _Art(24, [_fp(svgCircle(12, 12, 10), const Color(0xFFE2762B)), _s('M2 12h20M12 2v20M5 5c3 3.500 3 10.500 0 14M19 5c-3 3.500-3 10.500 0 14', const Color(0xFF7A3B12), 1.400)]);
     case GameIcons.cricketBall:
-      return _Art(24, [_fp(svgCircle(12, 12, 9), const Color(0xFFC62828)), _s('M6 6.5q6 5.5 12 11', _white, 1.2), _s('M7.4 5.6q6 5.5 11.6 10.4', _white, 0.6, o: 0.8), _fp(svgEllipse(9, 8.6, 1.6, 2.3), _white, o: 0.3)]);
+      return _Art(24, [_fp(svgCircle(12, 12, 10), _redDeep), _s('M5.500 4.500c5 3.500 8 9 8 17M9.500 2.800c5 3.700 8 9.500 8 17', _bone, 1.200)]);
     case GameIcons.puck:
-      return _Art(24, [_fp(svgEllipse(12, 14, 9, 4), const Color(0xFF15181F)), _fp(svgEllipse(12, 12, 9, 4), const Color(0xFF3A3F4B)), _sp(svgEllipse(12, 12, 6, 2.4), _white, 1, o: 0.3)]);
+      return _Art(24, [_fp(svgEllipse(12, 15, 10, 5.500), _ink), _fp(svgEllipse(12, 11, 10, 5.500), const Color(0xFF4B4136))]);
     case GameIcons.mallet:
-      return _Art(24, [IconInk(svgCircle(12, 14, 9), fillCurrent: true), _fp(svgCircle(12, 14, 9), _ink, o: 0.2), IconInk(svgCircle(12, 11.5, 4.6), fillCurrent: true), _fp(svgCircle(10.8, 10, 1.8), _white, o: 0.5)]);
+      return _Art(24, [_fp(svgCircle(12, 14.500, 9), _redDeep), _fp(svgCircle(12, 13, 9), _red), _fp(svgCircle(12, 11, 3.800), _redDeep)]);
     case GameIcons.football:
-      return _Art(24, [
-        _fs(svgCircle(12, 12, 9.4), _white, const Color(0xFF263238), 1.2),
-        _fp(svgPolygon([12, 8.2, 15.4, 10.6, 14.1, 14.6, 9.9, 14.6, 8.6, 10.6]), const Color(0xFF263238)),
-        _s('M12 8.2V3M15.4 10.6l4.6-1.7M14.1 14.6l3 4M9.9 14.6l-3 4M8.6 10.6L4 8.9', const Color(0xFF263238), 1.2),
-      ]);
+      return _Art(24, [_fp(svgCircle(12, 12, 10), _bone), _f('M12 7.500l4.300 3.100-1.600 5h-5.400l-1.600-5z', _ink), _s('M12 7.500V2.500M16.300 10.600l4.800-1.500M14.700 15.600l3 4M9.300 15.600l-3 4M7.700 10.600 2.900 9.100', _ink, 1.500)]);
     case GameIcons.glove:
-      return _Art(24, [
-        _fs(svgPath('M7 22v-4L4.6 13a1.6 1.6 0 0 1 2.8-1.5L9 14V5a1.5 1.5 0 0 1 3 0V3.8a1.5 1.5 0 0 1 3 0V5a1.5 1.5 0 0 1 3 0v1a1.5 1.5 0 0 1 3 0v8a8 8 0 0 1-4 7v1z'), const Color(0xFF26A69A), const Color(0xFF00695C), 1.3),
-        _fp(svgRect(6.5, 19.5, 11, 3, 1), const Color(0xFF00695C)),
-      ]);
+      return _Art(24, [_f('M6 12V5.500c0-.9.700-1.500 1.500-1.500S9 4.600 9 5.500V3.500C9 2.600 9.700 2 10.500 2s1.500.6 1.500 1.500V4c0-.9.700-1.500 1.500-1.500S15 3.100 15 4v1.500c0-.8.700-1.500 1.500-1.500s1.500.7 1.500 1.500V14c0 4-2.700 6-6 6s-5-1.500-6.500-4L3 11.700c-.5-.8-.2-1.700.5-2.100.8-.4 1.700-.1 2.100.6z', _blue), _fp(svgRect(7.500, 19, 9, 3.500, 1), _blueDeep)]);
     case GameIcons.bottle:
-      return _Art(24, [
-        _f('M10 2h4v4l2.4 3.4V21a1.5 1.5 0 0 1-1.5 1.5H9.1A1.5 1.5 0 0 1 7.6 21V9.4L10 6z', const Color(0xFF2E9E47)),
-        _fp(svgRect(7.6, 12.5, 8.8, 5, 0.6), const Color(0xFFF5E9D2)),
-        _fp(svgRect(9.6, 1.5, 4.8, 2, 0.8), _gold),
-        _f('M9 10.5h1.2v9H9z', _white, o: 0.4),
-      ]);
+      return _Art(24, [_fp(svgRect(10, 1.500, 4, 3, 1), _woodDeep), _f('M10 4.500h4v3c0 1.300 3 2.500 3 5.500v7c0 1.400-1.100 2.500-2.500 2.500h-5C8.100 22.500 7 21.400 7 20v-7c0-3 3-4.200 3-5.500z', _leaf), _fp(svgRect(7, 13, 10, 5, 0), _bone)]);
     case GameIcons.woodBlock:
-      return _Art(24, [_fs(svgRect(2.5, 4, 19, 16, 2), _wood, _woodDark, 1.4), _s('M5 9h14M5 14.5h9M15.5 14.5H19', _woodDark, 1, o: 0.6)]);
+      return _Art(24, [_fp(svgRect(2.500, 5, 19, 16, 2.500), _woodDeep), _fp(svgRect(2.500, 3, 19, 16, 2.500), _wood), _s('M6 8h12M6 13h8', _woodDeep, 1.300)]);
     case GameIcons.stoneBlock:
-      return _Art(24, [_fs(svgRect(2.5, 4, 19, 16, 2), const Color(0xFF9E9E9E), const Color(0xFF616161), 1.4), _s('M9 4l2 5-3 4 2 7M15 13l4 2', const Color(0xFF616161), 1.2)]);
+      return _Art(24, [_fp(svgRect(2.500, 5, 19, 16, 2.500), _steelDeep), _fp(svgRect(2.500, 3, 19, 16, 2.500), _steel), _s('M2.500 11h19M9 3v8M15 11v8', _steelDeep, 1.300)]);
     case GameIcons.paintBrush:
-      return _Art(24, [_s('M15 4l5 5', const Color(0xFF8D6E63), 3), _f('M13.5 5.5l5 5-6 6-5-5z', const Color(0xFFB0BEC5)), IconInk(svgPath('M7.5 11.5l5 5c-1.5 3-4 5-8.5 5 .4-4.4 2-7.6 3.5-10z'), fillCurrent: true)]);
+      return _Art(24, [_s('M21 3 11.500 12.500', _wood, 3), _f('M11.800 11 13.500 12.800c.5 3-1.500 8.200-9 8.700-1.700.1-2.300-.7-1.500-1.500 2-2 1-4.500 3-6.800 1.200-1.500 3.800-2.700 5.800-2.200z', _red)]);
     case GameIcons.pencil:
-      return _Art(24, [_f('M4 20l1.2-5L16 4.2 19.8 8 9 18.8z', _gold), _f('M4 20l1.2-5 3.8 3.8z', const Color(0xFFF2D49B)), _f('M3.6 21.2l.8-3 2.2 2.2z', _ink), _f('M16 4.2l1.6-1.6a1.4 1.4 0 0 1 2 0l1.8 1.8a1.4 1.4 0 0 1 0 2L19.8 8z', const Color(0xFFF48FB1))]);
+      return _Art(24, [_f('M4 16 16 4l4 4L8 20l-5 1z', _gold), _f('M15 5l2-2c.6-.6 1.400-.6 2 0l2 2c.6.6.6 1.400 0 2l-2 2z', _red), _f('M4 16l4 4-5 1z', _ink)]);
     case GameIcons.magnifier:
-      return _Art(24, [_fs(svgCircle(10, 10, 6.4), const Color(0x339CC9FF), const Color(0xFF90A4AE), 2.6), _s('M14.8 14.8L21 21', const Color(0xFF5D4037), 3.2)]);
+      return _Art(24, [_fp(svgCircle(10, 10, 7.500), const Color(0xFFBBDCE8)), _s('M10 2.500a7.500 7.500 0 1 1 0 15 7.500 7.500 0 0 1 0-15', _steelDeep, 2.400), _s('M15.800 15.800l5.700 5.700', _woodDeep, 3.400)]);
     case GameIcons.mask:
-      return _Art(24, [_f('M2 9c3-2 7-2 10 0 3-2 7-2 10 0 0 5-3 8-6 8-2 0-3-2-4-2s-2 2-4 2c-3 0-6-3-6-8z', const Color(0xFF263238)), _fp(svgEllipse(7.4, 11.6, 2.2, 1.4), _white), _fp(svgEllipse(16.6, 11.6, 2.2, 1.4), _white)]);
+      return _Art(24, [_f('M3 6c6-2.500 12-2.500 18 0 .5 7-2.500 14-9 15C5.500 20 2.500 13 3 6z', _plum), _f('M6 10.300c1.500-1 3.300-1 4.800 0-.5 1.800-4.300 1.800-4.800 0zM13.200 10.300c1.500-1 3.300-1 4.800 0-.5 1.800-4.300 1.800-4.800 0z', _ink), _s('M9 15.500c2 1.200 4 1.200 6 0', _plumDeep, 1.800)]);
     case GameIcons.scroll:
-      return _Art(24, [_fs(svgRect(5, 4, 14, 16, 2), const Color(0xFFF5E9D2), const Color(0xFFB08A50), 1.3), _fp(svgRect(3, 3, 18, 3, 1.5), const Color(0xFFD8B169)), _fp(svgRect(3, 18, 18, 3, 1.5), const Color(0xFFD8B169)), _s('M8 9.5h8M8 12.5h8M8 15.5h5', const Color(0xFF8A6A3A), 1.2)]);
+      return _Art(24, [_fp(svgRect(5, 3.500, 14, 17, 1), _bone), _fp(svgRect(3, 2, 18, 3.500, 1.700), _boneDark), _fp(svgRect(3, 18.500, 18, 3.500, 1.700), _boneDark), _s('M8 9h8M8 12.500h8M8 16h5', _woodDeep, 1.400)]);
     case GameIcons.moon:
-      return _Art(24, [_f('M15 3a9 9 0 1 0 6 15.5A8 8 0 0 1 15 3z', const Color(0xFFFFF3C4))]);
+      return _Art(24, [_f('M20 15A9 9 0 1 1 9.500 3.500 7.500 7.500 0 0 0 20 15z', const Color(0xFFF5E2A6))]);
     case GameIcons.sun:
-      return _Art(24, [_fp(svgCircle(12, 12, 5), _gold), _s('M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1', _gold, 2)]);
+      return _Art(24, [_fp(svgCircle(12, 12, 5.500), _gold), _s('M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2', _gold, 2.200)]);
     case GameIcons.medical:
-      return _Art(24, [_fp(svgRect(2.5, 2.5, 19, 19, 5), _white), _f('M10 6h4v4h4v4h-4v4h-4v-4H6v-4h4z', _red)]);
+      return _Art(24, [_fp(svgRect(2.500, 2.500, 19, 19, 5), _bone), _s('M12 7v10M7 12h10', _red, 3.600)]);
     case GameIcons.clapper:
-      return _Art(24, [_fp(svgRect(3, 9, 18, 12, 1.6), const Color(0xFF263238)), _f('M3 5.5l17-3 .8 4-17 3z', const Color(0xFF263238)), _s('M6.5 4.8l1.6 3.6M11 4l1.6 3.6M15.5 3.2l1.6 3.6', _white, 1.6), _s('M6 13h12M6 16.5h8', _white, 1.4, o: 0.6)]);
+      return _Art(24, [_fp(svgRect(2.500, 9.500, 19, 12, 2), _ink), _f('M2.500 5.800 19.800 2l1.200 4.700L3.500 10.500z', _bone), _f('M6.500 5 9 9l-2.500.5-2.200-4zM12 3.800l2.500 4-2.600.5-2.200-4zM17.500 2.500l2.500 4-2.600.6-2.200-4z', _ink), _s('M6 14h12M6 17.500h8', _boneDark, 1.300)]);
     case GameIcons.speech:
-      return _Art(24, [_cs('M4 5h16v11H11l-5 4v-4H4z', 2.2)]);
+      return _Art(24, [_cf('M4 3h16c1.100 0 2 .9 2 2v11c0 1.100-.9 2-2 2h-8l-5.300 3.800c-.5.400-1.200 0-1.200-.6V18H4c-1.100 0-2-.9-2-2V5c0-1.100.9-2 2-2z')]);
     case GameIcons.hammer:
-      return _Art(24, [_s('M14 10l7 7', const Color(0xFF8D6E63), 3), _fp(svgRotate(svgRect(3, 4, 12, 7, 1.6), 45, 9, 7.5), const Color(0xFF78909C))]);
-    case GameIcons.arrowLeft:
-      return _Art(24, [_cf('M16 4L6 12l10 8z')]);
-    case GameIcons.arrowRight:
-      return _Art(24, [_cf('M8 4l10 8-10 8z')]);
-    case GameIcons.arrowUp:
-      return _Art(24, [_cf('M4 16l8-10 8 10z')]);
-    case GameIcons.arrowDown:
-      return _Art(24, [_cf('M4 8l8 10 8-10z')]);
-    case GameIcons.rotate:
-      return _Art(24, [_cs('M20 12a8 8 0 1 1-2.6-5.9', 2.6), _cf('M20.5 3v6.5H14z')]);
+      return _Art(24, [_s('M11 11 20 20.500', _wood, 3), _f('M9.500 2.500 15.500 8.500l-2 2L11 9l-3.500 3.500L4 9l3.500-3.500-1-1z', _steelDeep)]);
     case GameIcons.drop:
-      return _Art(24, [_cs('M12 3v12', 2.6), _cf('M6 12h12l-6 7z'), _cfp(svgRect(5, 20, 14, 2, 1))]);
+      return _Art(24, [_f('M12 2c3.800 4.600 6.800 8.500 6.800 12.300A6.800 6.800 0 0 1 12 21a6.800 6.800 0 0 1-6.800-6.700C5.200 10.500 8.200 6.600 12 2z', _blue)]);
 
-    // ---------------------------------------------------------------- fruit (40-unit, from the Memory mockup)
+    // Fruit: flat, two tones
     case GameIcons.apple:
-      return _Art(40, [
-        _f('M20 12 C14 8 6 11 7 21 C8 31 14 36 20 33 C26 36 32 31 33 21 C34 11 26 8 20 12Z', const Color(0xFFE53935)),
-        _fp(svgEllipse(13, 18, 3, 5), _white, o: 0.35),
-        _s('M20 12 Q21 7 23 5', _stem, 2),
-        _f('M22 8 Q28 4 31 8 Q26 11 22 8Z', _leaf),
-      ]);
-    case GameIcons.banana:
-      return _Art(40, [
-        IconInk(svgPath('M8 12 Q10 30 30 32 Q34 31 33 28 Q16 26 13 10 Q11 8 8 12Z'), fill: const Color(0xFFFFD54F), stroke: const Color(0xFFC99A00), style: const InkStroke(1.2)),
-        _s('M11 13 Q14 26 28 29', const Color(0xFFFFF3B0), 1.5),
-        _s('M8 12 L6 9', _stem, 2.5),
-        _fp(svgCircle(32, 30, 1.5), _stem),
-      ]);
-    case GameIcons.grapes:
-      return _Art(40, [
-        _s('M20 12 L20 6', _stem, 2),
-        _f('M20 9 Q27 4 30 9 Q25 12 20 9Z', const Color(0xFF66BB6A)),
-        for (final (x, y) in const [(15.5, 16.0), (24.5, 16.0), (11.5, 22.0), (20.0, 22.0), (28.5, 22.0), (15.5, 28.0), (24.5, 28.0), (20.0, 34.0)]) _fp(svgCircle(x, y, 4.6), const Color(0xFF7E57C2)),
-        for (final (x, y) in const [(14.0, 14.5), (18.5, 20.5), (23.0, 26.5), (27.0, 20.5)]) _fp(svgCircle(x, y, 1.3), _white, o: 0.45),
-      ]);
-    case GameIcons.watermelon:
-      return _Art(40, [
-        _f('M5 16 A15 15 0 0 0 35 16 Z', const Color(0xFF43A047)),
-        _f('M7.5 16 A12.5 12.5 0 0 0 32.5 16 Z', const Color(0xFFF1F8E9)),
-        _f('M9 16 A11 11 0 0 0 31 16 Z', const Color(0xFFEF5350)),
-        for (final (x, y) in const [(14.0, 20.0), (20.0, 23.0), (26.0, 20.0), (17.0, 26.0), (23.0, 26.0)]) _fp(svgEllipse(x, y, 1, 1.8), const Color(0xFF263238)),
-      ]);
-    case GameIcons.strawberry:
-      return _Art(40, [
-        _f('M20 35 C10 28 7 20 10 15 C13 11 27 11 30 15 C33 20 30 28 20 35Z', const Color(0xFFE53935)),
-        for (final (x, y) in const [(15.0, 19.0), (20.0, 18.0), (25.0, 19.0), (17.0, 24.0), (23.0, 24.0), (20.0, 29.0)]) _fp(svgEllipse(x, y, 0.8, 1.3), const Color(0xFFFFE082)),
-        _f('M12 14 L15 8 L18 12 L20 7 L22 12 L25 8 L28 14 Q20 17 12 14Z', _leaf),
-      ]);
-    case GameIcons.kiwi:
-      return _Art(40, [
-        _fp(svgCircle(20, 20, 14), const Color(0xFF8D6E63)),
-        _fp(svgCircle(20, 20, 12), const Color(0xFF8BC34A)),
-        _fp(svgCircle(20, 20, 8), const Color(0xFFAED581)),
-        _fp(svgEllipse(20, 20, 4, 3), const Color(0xFFF1F8E9)),
-        for (final (x, y) in const [(20.0, 13.5), (24.6, 15.4), (26.5, 20.0), (24.6, 24.6), (20.0, 26.5), (15.4, 24.6), (13.5, 20.0), (15.4, 15.4)]) _fp(svgCircle(x, y, 0.9), const Color(0xFF212121)),
-      ]);
-    case GameIcons.cherry:
-      return _Art(40, [
-        _s('M13 27 Q17 14 26 7 M27 27 Q27 15 26 7', _stem, 2),
-        _f('M26 7 Q32 3 34 8 Q29 10 26 7Z', _leaf),
-        _fp(svgCircle(13, 29, 6), const Color(0xFFC62828)),
-        _fp(svgCircle(27, 29, 6), const Color(0xFFD32F2F)),
-        _fp(svgCircle(11, 27, 1.6), _white, o: 0.5),
-        _fp(svgCircle(25, 27, 1.6), _white, o: 0.5),
-      ]);
-    case GameIcons.mango:
-      return _Art(40, [
-        _f('M12 30 C6 22 10 10 20 8 C30 7 34 16 30 26 C27 33 17 35 12 30Z', const Color(0xFFFFB300)),
-        _fp(svgEllipse(25, 15, 6, 5), const Color(0xFFFB8C00), o: 0.6),
-        _fp(svgEllipse(14, 22, 2.5, 5), _white, o: 0.3),
-        _f('M20 8 Q24 3 30 5 Q26 9 20 8Z', _leaf),
-      ]);
+      return _Art(24, _round(_red, _redDeep));
     case GameIcons.peach:
-      return _Art(40, [
-        _fp(svgCircle(20, 22, 12), const Color(0xFFFFAB91)),
-        _fp(svgCircle(24, 25, 8), const Color(0xFFFF7043), o: 0.5),
-        _s('M20 11 Q15 21 20 34', const Color(0xFFE64A19), 1.2, o: 0.45),
-        _f('M20 10 Q26 4 31 8 Q26 12 20 10Z', _leaf),
-      ]);
-    case GameIcons.pineapple:
-      final body = svgEllipse(20, 25, 9, 12);
-      return _Art(40, [
-        _f('M20 14 L14 4 L18 9 L20 2 L22 9 L26 4 Z', _leaf),
-        _fp(body, const Color(0xFFFFC107)),
-        IconInk(svgPath('M8 14L32 38M8 22L24 38M16 13L32 29M32 14L8 38M32 22L16 38M24 13L8 29'), stroke: const Color(0xFFD68A00), style: const InkStroke(1.1), clip: body),
-      ]);
-    case GameIcons.coconut:
-      return _Art(40, [
-        _fp(svgCircle(20, 20, 14), const Color(0xFF6D4C41)),
-        _fp(svgCircle(20, 20, 11), const Color(0xFFFAFAFA)),
-        _fp(svgCircle(20, 20, 7), const Color(0xFFECEFF1)),
-        _s('M9 14 Q11 10 14 9', const Color(0xFF8D6E63), 1.2),
-      ]);
-    case GameIcons.lemon:
-      return _Art(40, [
-        IconInk(svgPath('M6 20 Q8 10 20 10 Q32 10 34 20 Q32 30 20 30 Q8 30 6 20Z'), fill: const Color(0xFFFFEB3B), stroke: const Color(0xFFF9A825), style: const InkStroke(1.2)),
-        _fp(svgEllipse(14, 16, 4, 2), _white, o: 0.5),
-        _f('M20 10 Q24 5 29 7 Q25 11 20 10Z', _leaf),
-      ]);
+      return _Art(24, _round(const Color(0xFFF7A77E), const Color(0xFFE2703F)));
     case GameIcons.orange:
-      return _Art(40, [
-        _fp(svgCircle(20, 22, 13), const Color(0xFFFB8C00)),
-        _fp(svgCircle(24, 25, 8), const Color(0xFFEF6C00), o: 0.45),
-        for (final (x, y) in const [(14.0, 20.0), (18.0, 27.0), (25.0, 18.0), (27.0, 28.0)]) _fp(svgCircle(x, y, 0.7), const Color(0xFFE65100), o: 0.6),
-        _fp(svgEllipse(14, 17, 3, 4.5), _white, o: 0.35),
-        _s('M20 9.5 Q20.5 7.5 21 6.5', _stem, 2),
-        _f('M21 8 Q27 4 30 8 Q25 11 21 8Z', _leaf),
-      ]);
+      return _Art(24, _round(const Color(0xFFF2922C), const Color(0xFFD06A10)));
+    case GameIcons.coconut:
+      return _Art(24, [_fp(svgCircle(12, 12, 10), _stem), _fp(svgCircle(12, 12, 7.500), _bone), _fp(svgCircle(12, 12, 4.500), _boneDark)]);
+    case GameIcons.kiwi:
+      return _Art(24, [_fp(svgCircle(12, 12, 10), const Color(0xFF7D5B3D)), _fp(svgCircle(12, 12, 8.500), const Color(0xFF8DBE45)), _fp(svgCircle(12, 12, 3), _bone), for (final (x, y) in const [(12.0, 6.5), (16.0, 8.0), (17.5, 12.0), (16.0, 16.0), (12.0, 17.5), (8.0, 16.0), (6.5, 12.0), (8.0, 8.0)]) _fp(svgCircle(x, y, .8), _ink)]);
+    case GameIcons.banana:
+      return _Art(24, [_f('M4 4c-.5 9 5 15.500 16.500 15.500.8 0 1.200-1 .5-1.500C14 15 9.500 10.500 7.500 3.800 7.200 2.800 4 2.800 4 4z', const Color(0xFFF4CE3D)), _f('M4 4c-.5 9 5 15.500 16.500 15.500.8 0 1.200-1 .5-1.500-8 .8-14-6-14.500-14.700C5.700 2.700 4 3 4 4z', const Color(0xFFD9A81C))]);
+    case GameIcons.grapes:
+      return _Art(24, [_s('M12 6 13 2.500', _stem, 1.600), _f('M13 4.500Q17 1.500 20 4 16.500 7 13 4.500Z', _leaf), for (final (x, y) in const [(7.5, 9.0), (12.0, 9.0), (16.5, 9.0), (9.7, 13.2), (14.3, 13.2), (12.0, 17.5)]) _fp(svgCircle(x, y, 3), _plum), for (final (x, y) in const [(12.0, 9.0), (9.7, 13.2)]) _fp(svgCircle(x, y, 3), _plumDeep)]);
+    case GameIcons.watermelon:
+      return _Art(24, [_f('M2 8a10 10 0 0 0 20 0z', _leafDeep), _f('M3.800 8a8.200 8.200 0 0 0 16.400 0z', _bone), _f('M5 8a7 7 0 0 0 14 0z', _red), for (final (x, y) in const [(9.0, 11.0), (12.0, 13.0), (15.0, 11.0)]) _fp(svgEllipse(x, y, .7, 1.200), _ink)]);
+    case GameIcons.strawberry:
+      return _Art(24, [_f('M12 22C6 18 3.500 12.500 5.500 9c2-2.500 11-2.500 13 0 2 3.500-.5 9-6.500 13z', _red), for (final (x, y) in const [(9.0, 11.5), (12.0, 11.0), (15.0, 11.5), (10.5, 15.0), (13.5, 15.0), (12.0, 18.0)]) _fp(svgEllipse(x, y, .5, .8), const Color(0xFFF7DE8E)), _f('M6.500 8 9 4l2 2.500L12 3l1 3.500L15 4l2.500 4c-3.500 1.500-7.500 1.500-11 0z', _leaf)]);
+    case GameIcons.cherry:
+      return _Art(24, [_s('M7.500 15C9 9 12 5.500 16 3M16.500 15C16.500 9 16.500 6 16 3', _stem, 1.600), _f('M16 3 Q19.500 .5 22 3 18.500 5.500 16 3Z', _leaf), _fp(svgCircle(7.500, 17.500, 4.500), _red), _fp(svgCircle(16.500, 17.500, 4.500), _redDeep)]);
+    case GameIcons.mango:
+      return _Art(24, [_f('M6.500 19C2.500 13.500 5 5.500 12 4.500 19 4 21.500 10 19 16 17 21 10 22.500 6.500 19z', const Color(0xFFF7B32B)), _f('M12 4.500C19 4 21.500 10 19 16c-.8 2-2.300 3.300-4 4.300 2.500-5.500 2-11.500-3-15.800z', const Color(0xFFE5613F)), _f('M12 5 Q14.500 1.500 18 3 15.500 6 12 5Z', _leaf)]);
+    case GameIcons.pineapple:
+      return _Art(24, [_f('M12 9 8 2.500l2.500 3L12 1.500l1.500 4 2.500-3z', _leaf), _fp(svgEllipse(12, 15.500, 6, 7), const Color(0xFFF4BE2F)), IconInk(svgPath('M5 12 17 24M5 17l10 10M9 8l12 12M19 12 7 24M19 17 9 27M15 8 3 20'), stroke: _goldDeep, style: const InkStroke(.9), clip: svgEllipse(12, 15.500, 6, 7))]);
+    case GameIcons.lemon:
+      return _Art(24, [_f('M3 13c1-5 4.500-7.500 9-7.500s8 2.500 9 7.500c-1 5-4.500 7.500-9 7.500S4 18 3 13z', const Color(0xFFF7E04B)), _f('M3 13c6 2.500 12 2.500 18 0-1 5-4.500 7.500-9 7.500S4 18 3 13z', const Color(0xFFE3C321)), _f('M12 5.500 Q15 2 19 3.500 16 7 12 5.500Z', _leaf)]);
     case GameIcons.pear:
-      return _Art(40, [
-        _f('M20 9 C16 9 15 13 15 16 C15 19 9 22 9 28 C9 34 14 37 20 37 C26 37 31 34 31 28 C31 22 25 19 25 16 C25 13 24 9 20 9Z', const Color(0xFFC0CA33)),
-        _fp(svgEllipse(25, 29, 5, 6), const Color(0xFF9E9D24), o: 0.4),
-        _fp(svgEllipse(14.5, 26, 2.5, 5), _white, o: 0.3),
-        _s('M20 9 Q20.5 6 22 4', _stem, 2),
-        _f('M21.5 6 Q27 2 30 6 Q25 9 21.5 6Z', _leaf),
-      ]);
+      return _Art(24, [_f('M12 4.500c-2.500 0-3.300 2.300-3.300 4.200 0 2-4.200 3.800-4.200 7.800 0 3.800 3.300 6 7.500 6s7.500-2.200 7.500-6c0-4-4.200-5.800-4.200-7.800 0-1.900-.8-4.200-3.300-4.200z', const Color(0xFFB9C744)), _s('M12 4.500 13.300 1.800', _stem, 1.600), _f('M13 3 Q16.500 .5 19 3 16 5.500 13 3Z', _leaf)]);
     case GameIcons.melon:
-      return _Art(40, [
-        _fp(svgEllipse(20, 22, 15, 12), const Color(0xFF9CCC65)),
-        _s('M8 17 Q20 22 32 17M7 24 Q20 29 33 24M10 30 Q20 34 30 30', const Color(0xFFF1F8E9), 1.3, o: 0.8),
-        _s('M14 11 Q12 22 14 33M26 11 Q28 22 26 33', const Color(0xFFF1F8E9), 1.1, o: 0.6),
-        _fp(svgEllipse(13, 17, 3, 2), _white, o: 0.4),
-        _s('M20 10 Q20.5 7 22 5.5', _stem, 2),
-      ]);
+      return _Art(24, [_fp(svgEllipse(12, 13, 10, 8.500), const Color(0xFF8FBF5A)), _s('M12 4.500v17M6.500 6c-2 4-2 10 0 14M17.500 6c2 4 2 10 0 14', const Color(0xFFE4EFC8), 1.300)]);
   }
 }
 

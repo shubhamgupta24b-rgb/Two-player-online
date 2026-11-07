@@ -49,7 +49,7 @@ class _RajaMantriScreenState extends State<RajaMantriScreen> {
     if (r['ok'] != true) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(r['error'] == 'BAD_PHASE' ? 'Too late: time is up!' : 'Could not do that (${r['error']}).')));
+        ..showSnackBar(SnackBar(content: Text(r['error'] == 'BAD_PHASE' ? 'Too late. Time is up' : 'Could not do that (${r['error']}).')));
     }
   }
 
@@ -100,24 +100,24 @@ class _RajaMantriScreenState extends State<RajaMantriScreen> {
       if (phase == 'dealing' && me) {
         faceUp = _peeking;
         highlight = true;
-        badge = _peeking ? 'TAP TO HIDE' : 'TAP TO SEE YOUR CARD';
+        badge = _peeking ? 'Tap to hide' : 'Tap to see your card';
         onTap = () => setState(() => _peeking = !_peeking);
       }
       if (phase == 'raja' || phase == 'guessing') highlight = role == RmcsRole.raja || role == RmcsRole.mantri;
       if (phase == 'guessing' && suspects.contains(id)) {
         highlight = iAmMantri;
         if (iAmMantri) {
-          badge = 'TAP TO ACCUSE';
+          badge = 'Tap to accuse';
           badgeColor = GpColors.no;
           onTap = () => _accuse(id);
         }
       }
       if (over) {
         if (id == accused) {
-          badge = caught ? '🚨 CAUGHT!' : '👉 ACCUSED';
+          badge = caught ? 'Caught' : 'Accused';
           badgeColor = Colors.white;
         } else if (role == RmcsRole.chor) {
-          badge = 'ESCAPED!';
+          badge = 'Escaped';
           badgeColor = GpColors.no;
         }
         highlight = role == RmcsRole.chor;
@@ -139,16 +139,16 @@ class _RajaMantriScreenState extends State<RajaMantriScreen> {
 
     final Widget headline = switch (phase) {
       'dealing' => RmcsHeadline(
-          title: myRole == null ? '🃏 Dealing…' : (_peeking ? 'You are the ${myRole.title} ${myRole.emoji}' : '🤫 Check your card'),
+          title: myRole == null ? 'Dealing…' : (_peeking ? 'You are the ${myRole.title} ${myRole.emoji}' : 'Check your card'),
           subtitle: _peeking ? '${myRole!.subtitle} · ${myRole.pointsLine}' : "Only you can see it. Raja revealed in ${(msLeft / 1000).ceil()}s.",
         ),
       'raja' => RmcsHeadline(
-          title: '👑 ${raja == null ? '?' : name(raja)} is the RAJA!',
-          subtitle: '🧠 ${mantri == null ? '?' : name(mantri)} is the Mantri and must find the Chor.',
+          title: '${raja == null ? '?' : name(raja)} is the Raja',
+          subtitle: '${mantri == null ? '?' : name(mantri)} is the Mantri and must find the Chor.',
         ),
       'guessing' => RmcsHeadline(
-          title: iAmMantri ? '🧠 Who is the CHOR?' : '🧠 ${mantri == null ? 'The Mantri' : name(mantri)} is choosing…',
-          subtitle: iAmMantri ? 'Tap ${suspects.map(name).join(' or ')}.' : (myRole == RmcsRole.chor ? 'Act natural… 😇' : 'Who will they pick?'),
+          title: iAmMantri ? 'Who is the Chor?' : '${mantri == null ? 'The Mantri' : name(mantri)} is choosing…',
+          subtitle: iAmMantri ? 'Tap ${suspects.map(name).join(' or ')}.' : (myRole == RmcsRole.chor ? 'Act natural…' : 'Who will they pick?'),
           trailing: CountdownRing(msLeft: msLeft, totalMs: guessMs, size: 52),
         ),
       _ => ResultBanner(caught: caught, timedOut: result?['timedOut'] == true),
@@ -163,7 +163,7 @@ class _RajaMantriScreenState extends State<RajaMantriScreen> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
         child: Column(children: [
-          Text('ROUND $round / ${st['totalRounds']}', style: const TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 2)),
+          Text('Round $round / ${st['totalRounds']}', style: const TextStyle(color: RmcsColors.gold, fontWeight: FontWeight.w700, fontSize: 18)),
           const SizedBox(height: 6),
           headline,
           const SizedBox(height: 8),
@@ -178,7 +178,7 @@ class _RajaMantriScreenState extends State<RajaMantriScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(round >= (st['totalRounds'] as num) ? 'Final scores coming up…' : 'Next round in ${(msLeft / 1000).ceil()}s',
-                  style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w800)),
+                  style: const TextStyle(color: GpColors.muted, fontWeight: FontWeight.w600)),
             ),
         ]),
       ),

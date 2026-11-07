@@ -54,13 +54,13 @@ const _errorText = {
   'NOT_ENOUGH_PLAYERS': 'Not enough players for this game.',
   'TOO_MANY_PLAYERS': 'Too many players for this game. Pick another one.',
   'PLAYERS_NOT_READY': 'Everyone must be ready.',
-  'GAME_NOT_AVAILABLE': 'This game is not implemented yet.',
-  'NEEDS_INTERNET': 'This game needs 🌐 Online mode (internet). Pick another game for hotspot play.',
+  'GAME_NOT_AVAILABLE': 'This game is not available yet.',
+  'NEEDS_INTERNET': 'This game needs Online mode (internet). Pick another game for hotspot play.',
   'INVALID_PAYLOAD': 'Invalid input.',
-  'OFFLINE': 'Not connected yet. The server may be waking up (up to a minute): try again shortly.',
+  'OFFLINE': 'Connecting to the server. Try again in a minute.',
   'TIMEOUT': 'Server did not respond. Check your internet and try again.',
-  'BAD_PHASE': 'Not possible right now.',
-  'RATE_LIMITED': 'Too many requests, slow down.',
+  'BAD_PHASE': "You can't do that right now.",
+  'RATE_LIMITED': 'Too many requests. Wait a moment.',
 };
 String errorMessage(String? code) => _errorText[code] ?? 'Something went wrong ($code).';
 

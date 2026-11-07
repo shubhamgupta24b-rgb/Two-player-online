@@ -21,16 +21,16 @@ class _FruitDuelScreenState extends State<FruitDuelScreen>{
     final id=(state['fruitId'] as num).toInt();
     final players=(state['players'] as List).cast<Map>();
     return Padding(padding:const EdgeInsets.all(16),child:Column(children:[
-      Text(phase=='playing'?'FRUIT DUEL':'TIME UP',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.bold)),
+      Text(phase=='playing'?'Slice Off':'Time up',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.bold)),
       Text(left.toString()+' s • Your score: '+state['yourScore'].toString()),
-      const SizedBox(height:16),const Text('SLASH THE FRUIT!'),
+      const SizedBox(height:16),const Text('Slash the fruit'),
       const SizedBox(height:12),
       Expanded(child:Row(children:[
         for(int i=0;i<3;i++) Expanded(child:Padding(padding:const EdgeInsets.all(6),child:FilledButton(
           onPressed:phase=='playing'?()=>session.action('fruit_duel:slash',{'fruitId':id,'lane':i}):null,
           child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
             Text(i==lane?'🍎':'•',style:TextStyle(fontSize:i==lane?58:30)),
-            Text('LANE '+(i+1).toString())
+            Text('Lane '+(i+1).toString())
           ]),
         )))
       ])),

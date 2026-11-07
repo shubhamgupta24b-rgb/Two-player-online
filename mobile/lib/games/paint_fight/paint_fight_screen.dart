@@ -21,7 +21,7 @@ class _PaintFightScreenState extends State<PaintFightScreen>{
     final w=(state['width'] as num).toInt(),h=(state['height'] as num).toInt();
     final players=(state['players'] as List).cast<Map>();
     return Padding(padding:const EdgeInsets.all(12),child:Column(children:[
-      Text(phase=='playing'?'PAINT FIGHT':'TIME UP',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.bold)),
+      Text(phase=='playing'?'Splat Patch':'Time up',style:Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight:FontWeight.bold)),
       Text(left.toString()+' s • Your territory: '+state['yourScore'].toString()),
       const SizedBox(height:8),
       Expanded(child:AspectRatio(aspectRatio:w/h,child:GridView.builder(

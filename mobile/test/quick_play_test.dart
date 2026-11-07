@@ -42,9 +42,9 @@ void main() {
 
   testWidgets('Quick Play: pick a game and only rooms for it are joined', (tester) async {
     final socket = await pumpQuickPlay(tester);
-    await tester.tap(find.text('Ludo').first);
+    await tester.tap(find.text('Token Rush').first);
     await tester.pump();
-    expect(find.textContaining('Ludo · 2–4 players'), findsOneWidget);
+    expect(find.textContaining('Token Rush · 2–4 players'), findsOneWidget);
     await tester.tap(find.text('Find a room'));
     await tester.pump();
     expectReq(socket, 'quick_play', {'gameType': 'ludo'});

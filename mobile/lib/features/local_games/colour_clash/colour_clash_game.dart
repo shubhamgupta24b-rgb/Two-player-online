@@ -42,15 +42,15 @@ String _colourName(ClashColor c) => c == ClashColor.wild ? 'wild' : c.name;
 
 final colourClashInfo = LocalGameInfo(
   id: 'colour_clash',
-  title: 'Colour Clash',
+  title: 'Colour Riot',
   emoji: '🃏',
   color: const Color(0xFFE53935),
-  tagline: 'Match colours, dodge +4s, call ONE!',
+  tagline: "Match cards by colour or number",
   rules: const [
     'Everyone gets 7 cards. Play a card that matches the top card by colour, number or symbol, or play a Wild.',
     "Can't play? Draw one. Skip ⊘, Reverse ⇄, +2 and Wild +4 work like the classic game.",
-    'Down to two cards? Tap ONE! before you play, or pick up 2. First to empty their hand wins!',
-    'The phone is passed between turns and your cards stay hidden until you tap SHOW MY CARDS.',
+    'Down to two cards? Tap One. before you play, or pick up 2. First to empty their hand wins',
+    'The phone is passed between turns and your cards stay hidden until you tap Show my cards.',
   ],
   scoreUnit: 'wins',
   splitScreen: false,
@@ -340,7 +340,7 @@ class _ClashTable extends StatelessWidget {
     final t = context.tk;
     ResultScope.of(context)
       ?..subtitle = g.winner == null ? null : '${players[g.winner!].name} played their last card'
-      ..detail = ((_, i) => Text('${g.hands[i].length} ${g.hands[i].length == 1 ? 'card' : 'cards'} left', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w800, color: NeonPalette.textMuted)));
+      ..detail = ((_, i) => Text('${g.hands[i].length} ${g.hands[i].length == 1 ? 'card' : 'cards'} left', style: TextStyle(fontFamily: Fonts.body, fontSize: 12, fontWeight: FontWeight.w600, color: NeonPalette.textMuted)));
     return MomentWatcher<int>(
       value: g.discard.length,
       onChange: (fx, before, now) {
@@ -352,11 +352,11 @@ class _ClashTable extends StatelessWidget {
           case ClashKind.wildFour:
             keyMoment(fx, '+4!', sub: g.message.isEmpty ? 'Draw four' : stripEmoji(g.message), sound: 'boom', buzz: HapticWeight.heavy, shake: true);
           case ClashKind.skip:
-            fx?.pop('SKIP!');
+            fx?.pop('Skip');
           case ClashKind.reverse:
-            fx?.pop('REVERSE!');
+            fx?.pop('Reverse');
           default:
-            if (g.winner == null && g.hands.any((h) => h.length == 1)) fx?.pop('ONE CARD!');
+            if (g.winner == null && g.hands.any((h) => h.length == 1)) fx?.pop('One card');
         }
         if (top.kind == ClashKind.number) GameAudio.sfx('tap');
       },
@@ -365,12 +365,12 @@ class _ClashTable extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.s),
           child: Column(children: [
             ScoreHud(
-              title: 'Colour Clash',
+              title: 'Colour Riot',
               state: g.winner != null ? '${players[g.winner!].name} wins' : '${possessive(players[g.turn].name)} turn',
               players: players,
               turn: g.winner != null ? null : g.turn,
               score: (i) => '${g.hands[i].length}',
-              tag: (i) => g.hands[i].length == 1 ? 'ONE!' : (i == g.turn && g.winner == null ? 'PLAYING' : null),
+              tag: (i) => g.hands[i].length == 1 ? 'One' : (i == g.turn && g.winner == null ? 'Playing' : null),
             ),
             const SizedBox(height: 6),
             Expanded(child: _Centre(g: g, players: players, canAct: myTurn, waitingFor: myTurn ? null : players[g.turn].name)),
@@ -384,7 +384,7 @@ class _ClashTable extends StatelessWidget {
                 PlayerBadge(index: PlayerPalette.indexOf(player.color) ?? holder, size: 18, color: player.color),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text(online ? 'YOUR HAND · ${hand.length} cards' : '${possessive(player.name).toUpperCase()} HAND · ${hand.length} cards',
+                  child: Text(online ? 'Your hand · ${hand.length} cards' : '${possessive(player.name)} hand · ${hand.length} cards',
                       maxLines: 1, overflow: TextOverflow.ellipsis, style: t.styles.label.copyWith(color: nameColor(player.color))),
                 ),
                 if (myTurn && hand.length == 2 && g.phase == ClashPhase.play) _OneButton(called: g.calledOne, onTap: g.callOne),
@@ -433,7 +433,7 @@ class _OneButtonState extends State<_OneButton> with SingleTickerProviderStateMi
         child: const Row(mainAxisSize: MainAxisSize.min, children: [
           GameIcon(GameIcons.check, size: 14, color: Color(0xFFB5F0CD)),
           SizedBox(width: 4),
-          Text('ONE!', style: TextStyle(fontFamily: Fonts.display, fontSize: 16, color: Color(0xFFB5F0CD))),
+          Text('One', style: TextStyle(fontFamily: Fonts.display, fontSize: 16, color: Color(0xFFB5F0CD))),
         ]),
       );
     }
@@ -442,7 +442,7 @@ class _OneButtonState extends State<_OneButton> with SingleTickerProviderStateMi
       builder: (_, child) => Transform.scale(scale: Motion.reduced(context) ? 1 : 1 + _c.value * 0.08, child: child),
       child: SizedBox(
         width: 92,
-        child: GoldButton('ONE!', height: 44, fontSize: 18, onPressed: () {
+        child: GoldButton('One', height: 44, fontSize: 18, onPressed: () {
           haptic(HapticWeight.medium);
           GameAudio.sfx('coin');
           widget.onTap();
@@ -493,7 +493,7 @@ class _Centre extends StatelessWidget {
                         ClashCardView(card: null, width: w * 0.85, highlight: canDraw && g.playable.isEmpty),
                       ]),
                       const SizedBox(height: 6),
-                      Text('DRAW · ${g.drawPile.length}', style: const TextStyle(fontFamily: Fonts.body, color: Color(0xFFE9C46A), fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.2)),
+                      Text('Draw · ${g.drawPile.length}', style: const TextStyle(fontFamily: Fonts.body, color: Color(0xFFE9C46A), fontWeight: FontWeight.w700, fontSize: 11)),
                     ]),
                   ),
                 ),
@@ -515,8 +515,8 @@ class _Centre extends StatelessWidget {
                       child: ClashCardView(card: g.top, width: w),
                     ),
                   ]),
-                  Text('COLOUR: ${_colourName(g.color).toUpperCase()}',
-                      style: TextStyle(fontFamily: Fonts.body, color: g.color == ClashColor.wild ? Colors.white : Color.lerp(col, Colors.white, 0.3), fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.2)),
+                  Text('Colour: ${_colourName(g.color)}',
+                      style: TextStyle(fontFamily: Fonts.body, color: g.color == ClashColor.wild ? Colors.white : Color.lerp(col, Colors.white, 0.3), fontWeight: FontWeight.w700, fontSize: 11)),
                 ]),
               ]),
             ),
@@ -527,7 +527,7 @@ class _Centre extends StatelessWidget {
                 [if (waitingFor != null) '${possessive(waitingFor!)} turn', g.message.isEmpty && waitingFor == null ? 'Match the colour, number or symbol' : stripEmoji(g.message)].where((t) => t.isNotEmpty).join(' · '),
                 textAlign: TextAlign.center,
                 maxLines: 2,
-                style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12.5),
+                style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12.5),
               ),
             ),
           ]),
@@ -659,7 +659,7 @@ class _ColorPicker extends StatelessWidget {
                             child: CustomPaint(painter: _SuitPainter(c)),
                           ),
                           const SizedBox(height: 4),
-                          Text(c.name.toUpperCase(), style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
+                          Text(c.name[0].toUpperCase() + c.name.substring(1), style: const TextStyle(fontFamily: Fonts.body, color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
                         ]),
                       ),
                     ),
@@ -712,7 +712,7 @@ class _Handoff extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: Space.xs),
-          Text('Everyone else, no peeking at the cards!', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: NeonPalette.textMuted)),
+          Text('Everyone else, no peeking at the cards', textAlign: TextAlign.center, style: t.styles.body.copyWith(color: NeonPalette.textMuted)),
           const SizedBox(height: Space.m),
           HoldToReveal(label: 'Hold to see my cards', color: player.color, onRevealed: g.reveal),
         ]),

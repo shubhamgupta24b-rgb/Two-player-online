@@ -85,8 +85,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 2600));
       // Take-turns games show a pass screen first: start the first turn.
-      if (find.text('START').evaluate().isNotEmpty) {
-        await tester.tap(find.text('START').last);
+      if (find.text('Start').evaluate().isNotEmpty) {
+        await tester.tap(find.text('Start').last);
         await tester.pump();
       }
       for (var i = 0; i < 10; i++) {

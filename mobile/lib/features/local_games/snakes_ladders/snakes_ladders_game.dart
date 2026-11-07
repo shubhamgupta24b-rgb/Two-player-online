@@ -50,10 +50,10 @@ class SnakesLaddersLogic extends LocalGameLogic {
     } else {
       var land = target;
       if (ladders.containsKey(land)) {
-        message = '🪜 Ladder! Up from $land to ${ladders[land]}';
+        message = 'Ladder. Up from $land to ${ladders[land]}';
         land = ladders[land]!;
       } else if (snakes.containsKey(land)) {
-        message = '🐍 Snake! Down from $land to ${snakes[land]}';
+        message = 'Snake. Down from $land to ${snakes[land]}';
         land = snakes[land]!;
       } else {
         message = 'Moved to $land';
@@ -61,13 +61,13 @@ class SnakesLaddersLogic extends LocalGameLogic {
       pos[p] = land;
       if (land == 100) {
         winner = p;
-        message = 'Reached 100!';
+        message = 'Reached 100';
         notifyListeners();
         return r;
       }
     }
     if (r == 6) {
-      message += ' · Rolled 6, go again!';
+      message += ' · Rolled 6, go again';
     } else {
       turn = (turn + 1) % players;
     }
@@ -86,13 +86,13 @@ class SnakesLaddersLogic extends LocalGameLogic {
 
 final snakesLaddersInfo = LocalGameInfo(
   id: 'snakes_ladders',
-  title: 'Snakes & Ladders',
+  title: 'Ups & Hisses',
   emoji: '🐍',
   color: const Color(0xFF2EAA4F),
-  tagline: 'Climb up, slide down, race to 100!',
+  tagline: "Race to square 100 using snakes and ladders",
   rules: const [
     'Take turns tapping the dice. Your token moves that many squares.',
-    'Land at the foot of a ladder 🪜 to climb up; land on a snake 🐍 head and slide down.',
+    'Land at the foot of a ladder to climb up; land on a snake head and slide down.',
     'Rolling a 6 gives you another roll. You need the exact number to land on 100.',
   ],
   scoreUnit: 'wins',
@@ -138,24 +138,24 @@ class _SnlTable extends StatelessWidget {
       value: g.rolls,
       onChange: (fx, _, __) {
         final m = g.message;
-        if (m.contains('Ladder!')) {
-          keyMoment(fx, 'LADDER!', sub: stripEmoji(m).replaceFirst('Ladder! ', ''), sound: 'jump');
-        } else if (m.contains('Snake!')) {
-          keyMoment(fx, 'SNAKE!', sub: stripEmoji(m).replaceFirst('Snake! ', ''), sound: 'lose', color: StatusColors.danger, buzz: HapticWeight.heavy, shake: true);
+        if (m.contains('Ladder')) {
+          keyMoment(fx, 'Ladder', sub: stripEmoji(m).replaceFirst('Ladder. ', ''), sound: 'jump');
+        } else if (m.contains('Snake')) {
+          keyMoment(fx, 'Snake', sub: stripEmoji(m).replaceFirst('Snake. ', ''), sound: 'lose', color: StatusColors.danger, buzz: HapticWeight.heavy, shake: true);
         } else if (g.lastRoll == 6 && !g.finished) {
-          fx?.pop('ROLL AGAIN');
+          fx?.pop('Roll again');
         }
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
         child: Column(children: [
           ScoreHud(
-            title: 'Snakes & Ladders',
+            title: 'Ups & Hisses',
             state: g.finished ? 'Game over' : '${current.name}: roll',
             players: players,
             turn: g.finished ? null : g.turn,
             score: (i) => '${g.pos[i]}',
-            tag: (i) => i == g.turn && !g.finished ? 'ROLL' : null,
+            tag: (i) => i == g.turn && !g.finished ? 'Roll' : null,
           ),
           const SizedBox(height: Space.s),
           Expanded(
@@ -266,7 +266,7 @@ class _SnlPainter extends CustomPainter {
         paintIcon(canvas, GameIcons.flag, Rect.fromCenter(center: rect.center, width: s * 0.62, height: s * 0.62));
       } else {
         final tp = TextPainter(
-          text: TextSpan(text: '$n', style: TextStyle(fontFamily: Fonts.body, color: _ink.withValues(alpha: 0.75), fontSize: s * 0.24, fontWeight: FontWeight.w900)),
+          text: TextSpan(text: '$n', style: TextStyle(fontFamily: Fonts.body, color: _ink.withValues(alpha: 0.75), fontSize: s * 0.24, fontWeight: FontWeight.w700)),
           textDirection: TextDirection.ltr,
         )..layout();
         tp.paint(canvas, Offset(c * s + s * 0.08, r * s + s * 0.04));

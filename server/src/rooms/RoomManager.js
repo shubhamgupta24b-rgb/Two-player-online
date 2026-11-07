@@ -39,7 +39,8 @@ class RoomManager extends EventEmitter {
     const game = registry.get(gameType);
     if (!game) throw new GameError('INVALID_PAYLOAD', 'unknown gameType');
     // The room size is independent of the game: the host can switch games in the lobby.
-    if (![2, 3, 4, 5, 6].includes(maxPlayers)) throw new GameError('INVALID_PAYLOAD', 'maxPlayers must be 2 to 6');
+    // Up to 10 seats so Nitro Knockout rooms can fill a full 10-kart grid.
+    if (![2, 3, 4, 5, 6, 7, 8, 9, 10].includes(maxPlayers)) throw new GameError('INVALID_PAYLOAD', 'maxPlayers must be 2 to 10');
     const code = this._code();
     const room = { code, gameType, maxPlayers, hostId: user.userId, status: 'lobby', players: [], game: null, seqs: {}, party: null, createdAt: Date.now() };
     room.players.push({ ...user, ready: true, connected: true });
@@ -93,15 +94,30 @@ class RoomManager extends EventEmitter {
     room.players = room.players.filter(p => p.userId !== userId);
     delete room.seqs[userId];
     if (room.players.length === 0) { this.store.delete(room.code); this.emit('room_closed', room.code); return; }
+    let gameHostMoved = false, hostlessGame = false;
     if (room.hostId === userId) {
       room.hostId = (room.players.find(p => p.connected) || room.players[0]).userId;
       room.players.find(p => p.userId === room.hostId).ready = true;
+      // Relay-style games run on the host's phone. Games that can hand over (Nitro) get the
+      // new host; the others can't carry on without the old host, so the match ends.
+      if (room.status === 'playing' && room.game && 'host' in room.game) {
+        if (registry.get(room.gameType)?.hostMigration) {
+          room.game.host = room.hostId;
+          gameHostMoved = true;
+        } else {
+          hostlessGame = true;
+        }
+      }
     }
-    if (room.status !== 'lobby' && room.players.length < 2) {
+    if (room.status !== 'lobby' && (room.players.length < 2 || hostlessGame)) {
       this._toLobby(room);
       this.emit('game_aborted', room.code);
+      gameHostMoved = false;
     }
     this._changed(room);
+    // Clients learn the game's host from game_state, not room_state: without this the new
+    // host never takes over (Nitro guests' inputs are silent, so nothing else broadcasts).
+    if (gameHostMoved) this.emit('game_updated', room.code);
   }
 
   _toLobby(room) {
@@ -233,8 +249,13 @@ class RoomManager extends EventEmitter {
       room.status = 'finished';
       result = this._ended(room, game.getResult(room.game));
     }
-    this._changed(room);
-    this.emit('game_updated', room.code, result);
+    // High-frequency actions (Nitro guest inputs) opt out of broadcasting: the host
+    // pulls them with its own snapshot publishes instead of every input echoing state.
+    // Host frames (~12 Hz) change the game, not the room: skip room_state unless it ended.
+    if (!response || !response.silent) {
+      if (result || !response || !response.gameOnly) this._changed(room);
+      this.emit('game_updated', room.code, result);
+    }
     return { room, result, response };
   }
 

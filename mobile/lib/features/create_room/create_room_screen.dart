@@ -95,11 +95,11 @@ class _RoomSize extends StatelessWidget {
         );
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
-      decoration: BoxDecoration(color: t.flat ? Colors.white : t.surface, borderRadius: Radii.rLg, border: Border.all(color: t.flat ? FlatPalette.stroke : t.stroke)),
+      decoration: BoxDecoration(color: t.card, borderRadius: Radii.rLg, border: Border.all(color: t.stroke)),
       child: Row(children: [
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('ROOM SIZE', style: t.styles.label.copyWith(color: t.flat ? FlatPalette.label : null)),
+            Text('Room size', style: t.styles.label.copyWith(color: t.flat ? FlatPalette.label : null)),
             const SizedBox(height: 4),
             ExcludeSemantics(
               child: Wrap(spacing: 4, runSpacing: 4, children: [for (var i = 0; i < players; i++) PlayerBadge(index: i, size: 18)]),
@@ -113,10 +113,10 @@ class _RoomSize extends StatelessWidget {
           excludeSemantics: true,
           child: SizedBox(
             width: 28,
-            child: Text('$players', key: const ValueKey('playerCount'), textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, fontSize: 26, color: t.flat ? FlatPalette.ink : Colors.white)),
+            child: Text('$players', key: const ValueKey('playerCount'), textAlign: TextAlign.center, style: TextStyle(fontFamily: Fonts.display, fontSize: 26, color: t.onBg)),
           ),
         ),
-        step('players+', GameIcons.plus, 'More players', players < 6 ? () => onPlayers(players + 1) : null),
+        step('players+', GameIcons.plus, 'More players', players < 10 ? () => onPlayers(players + 1) : null),
       ]),
     );
   }
@@ -133,15 +133,14 @@ class _BottomPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tk;
     final compact = MediaQuery.sizeOf(context).height < 700; // small phones: leave room for the games
-    final ink = t.flat ? FlatPalette.ink : Colors.white;
+    final ink = t.onBg;
     return Container(
       padding: EdgeInsets.fromLTRB(16, compact ? 10 : 14, 16, compact ? 12 : 22),
       decoration: BoxDecoration(
-        color: t.flat ? Colors.white : NeonPalette.sheet,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border(top: BorderSide(color: t.flat ? FlatPalette.stroke : Colors.white.withValues(alpha: 0.14))),
-        boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 32, offset: Offset(0, -12))],
-      ),
+        color: t.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        border: Border(top: BorderSide(color: t.stroke)),
+              ),
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
           GameThumb(id: game.id, color: game.color, size: compact ? 40 : 48, radius: 12),
@@ -149,10 +148,10 @@ class _BottomPanel extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(game.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: Fonts.display, fontSize: 19, color: ink)),
-              Text(fits ? game.tagline : 'Needs ${game.playersLabel} players: you can switch games in the room',
+              Text(fits ? game.tagline : 'Needs ${game.playersLabel} players. You can switch games in the room',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w800, color: fits ? (t.flat ? FlatPalette.inkMuted : NeonPalette.textMuted) : (t.flat ? FlatPalette.close : Brand.gold))),
+                  style: TextStyle(fontFamily: Fonts.body, fontSize: 12.5, fontWeight: FontWeight.w600, color: fits ? (t.onBgMuted) : (t.flat ? FlatPalette.close : Brand.gold))),
             ]),
           ),
         ]),

@@ -3,7 +3,7 @@ import 'tokens.dart';
 
 export 'tokens.dart';
 
-/// The type scale (spec 1.3). Display faces are Lilita One, the rest Nunito. Numbers that
+/// The type scale. Bricolage Grotesque headings pair with DM Sans body text. Numbers that
 /// change (scores, timers) use tabular figures.
 @immutable
 class GameType {
@@ -34,19 +34,19 @@ class GameType {
 
   /// The scale in a given text, muted and label colour.
   factory GameType.of(Color text, Color muted, Color label) => GameType(
-        display: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 48, height: 1.0),
-        h1: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 38, height: 1.05),
-        h2: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 26, height: 1.1),
-        h3: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 20, height: 1.15),
-        score: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 28, height: 1.0, fontFeatures: _tabular),
-        scoreLarge: TextStyle(fontFamily: Fonts.display, color: text, fontSize: 64, height: 1.0, fontFeatures: _tabular),
-        body: TextStyle(fontFamily: Fonts.body, color: text, fontSize: 15, fontWeight: FontWeight.w800, height: 1.35),
-        bodyStrong: TextStyle(fontFamily: Fonts.body, color: text, fontSize: 15, fontWeight: FontWeight.w900, height: 1.3),
-        bodySmall: TextStyle(fontFamily: Fonts.body, color: muted, fontSize: 13, fontWeight: FontWeight.w700, height: 1.3),
-        label: TextStyle(fontFamily: Fonts.body, color: label, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 11 * 0.16),
-        micro: TextStyle(fontFamily: Fonts.body, color: text, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.6),
-        button: const TextStyle(fontFamily: Fonts.display, fontSize: 22, height: 1.0),
-        buttonSmall: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w900),
+        display: TextStyle(fontFamily: Fonts.display, fontWeight: FontWeight.w600, color: text, fontSize: 44, height: 1.05),
+        h1: TextStyle(fontFamily: Fonts.display, fontWeight: FontWeight.w600, color: text, fontSize: 34, height: 1.1),
+        h2: TextStyle(fontFamily: Fonts.display, fontWeight: FontWeight.w600, color: text, fontSize: 24, height: 1.15),
+        h3: TextStyle(fontFamily: Fonts.display, fontWeight: FontWeight.w600, color: text, fontSize: 19, height: 1.2),
+        score: TextStyle(fontFamily: Fonts.display, fontWeight: FontWeight.w600, color: text, fontSize: 26, height: 1.0, fontFeatures: _tabular),
+        scoreLarge: TextStyle(fontFamily: Fonts.display, fontWeight: FontWeight.w600, color: text, fontSize: 60, height: 1.0, fontFeatures: _tabular),
+        body: TextStyle(fontFamily: Fonts.body, color: text, fontSize: 16, fontWeight: FontWeight.w400, height: 1.4),
+        bodyStrong: TextStyle(fontFamily: Fonts.body, color: text, fontSize: 16, fontWeight: FontWeight.w600, height: 1.35),
+        bodySmall: TextStyle(fontFamily: Fonts.body, color: muted, fontSize: 14, fontWeight: FontWeight.w400, height: 1.35),
+        label: TextStyle(fontFamily: Fonts.body, color: label, fontSize: 13, fontWeight: FontWeight.w500),
+        micro: TextStyle(fontFamily: Fonts.body, color: text, fontSize: 11, fontWeight: FontWeight.w600),
+        button: const TextStyle(fontFamily: Fonts.body, fontSize: 17, height: 1.1, fontWeight: FontWeight.w600),
+        buttonSmall: const TextStyle(fontFamily: Fonts.body, fontSize: 15, fontWeight: FontWeight.w600),
       );
 
   static GameType lerp(GameType a, GameType b, double t) {
@@ -69,8 +69,8 @@ class GameType {
   }
 }
 
-/// The flavour-aware design tokens (spec 1.1, 2.1). Two instances: [neon] (night, the
-/// default) and [flatSet] (the flat app). Read them with `context.tokens`.
+/// The flavour-aware design tokens Two instances: [neon] (dark) and [flatSet]
+/// (light; app screens follow the phone's setting, games always play on dark). Read them with `context.tokens`.
 ///
 /// Text pairs: [onBg]/[onBgMuted] go straight on the background or on [surface];
 /// [text]/[textMuted] go on [card] surfaces.
@@ -145,7 +145,7 @@ class GameTokens extends ThemeExtension<GameTokens> {
     cardRaised: NeonPalette.cardRaised,
     sunken: NeonPalette.sunken,
     strokeStrong: NeonPalette.strokeStrong,
-    scrim: const Color(0x9E060820), // rgba(6,8,32,0.62), as over the game in the Pause mockup
+    scrim: const Color(0xA3100F0D),
     onBg: NeonPalette.text,
     onBgMuted: NeonPalette.textMuted,
     text: NeonPalette.text,
@@ -172,7 +172,7 @@ class GameTokens extends ThemeExtension<GameTokens> {
     bgTop: FlatPalette.skyLight,
     bg: FlatPalette.sky,
     bgBottom: FlatPalette.skyDeep,
-    surface: const Color(0xD9FFFFFF),
+    surface: FlatPalette.surface,
     surfaceStrong: FlatPalette.surfaceStrong,
     stroke: FlatPalette.stroke,
     overlay: FlatPalette.overlay,
@@ -183,21 +183,21 @@ class GameTokens extends ThemeExtension<GameTokens> {
     strokeStrong: FlatPalette.stroke,
     scrim: const Color(0xB822212B),
     onBg: FlatPalette.ink,
-    onBgMuted: FlatPalette.ink,
+    onBgMuted: FlatPalette.inkMuted,
     text: FlatPalette.ink,
     textMuted: FlatPalette.inkMuted,
     label: FlatPalette.label,
     gold: Brand.gold,
     goldDeep: Brand.goldDeep,
     onGold: Brand.onGold,
-    success: const Color(0xFF1E9E57),
+    success: const Color(0xFF1A7F4B),
     warn: StatusColors.warn,
     danger: FlatPalette.close,
     info: StatusColors.info,
-    shadowSm: const [BoxShadow(color: Color(0x33000000), offset: Offset(0, 3))],
-    shadowMd: const [BoxShadow(color: Color(0x38000000), offset: Offset(0, 4))],
-    shadowLg: const [BoxShadow(color: Color(0x40000000), offset: Offset(0, 6))],
-    styles: GameType.of(FlatPalette.ink, FlatPalette.ink, FlatPalette.ink),
+    shadowSm: const [BoxShadow(color: Color(0x1A211C16), blurRadius: 6, offset: Offset(0, 2))],
+    shadowMd: const [BoxShadow(color: Color(0x1F211C16), blurRadius: 10, offset: Offset(0, 3))],
+    shadowLg: const [BoxShadow(color: Color(0x26211C16), blurRadius: 24, offset: Offset(0, 8))],
+    styles: GameType.of(FlatPalette.ink, FlatPalette.inkMuted, FlatPalette.label),
     cardStyles: GameType.of(FlatPalette.ink, FlatPalette.inkMuted, FlatPalette.label),
   );
 
@@ -263,6 +263,15 @@ class TokenScope extends StatelessWidget {
     final theme = Theme.of(context);
     final want = flat ? GameTokens.flatSet : GameTokens.neon;
     if (identical(theme.extension<GameTokens>(), want)) return child;
-    return Theme(data: theme.copyWith(extensions: [...theme.extensions.values.where((e) => e is! GameTokens), want]), child: child);
+    final brightness = flat ? Brightness.light : Brightness.dark;
+    return Theme(
+      data: theme.copyWith(
+        brightness: brightness,
+        scaffoldBackgroundColor: want.bg,
+        colorScheme: theme.colorScheme.copyWith(brightness: brightness, surface: want.card, onSurface: want.text, onPrimary: Brand.onGold),
+        extensions: [...theme.extensions.values.where((e) => e is! GameTokens), want],
+      ),
+      child: child,
+    );
   }
 }

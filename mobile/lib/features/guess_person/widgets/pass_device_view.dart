@@ -16,7 +16,7 @@ class PassDeviceView extends StatelessWidget {
     required this.to,
     required this.onReady,
     this.message = "Don't let the other player see your selection.",
-    this.buttonLabel = "I'M READY",
+    this.buttonLabel = "I'm ready",
     this.icon = Icons.lock_rounded,
   });
 
@@ -37,14 +37,14 @@ class PassDeviceView extends StatelessWidget {
               child: Icon(icon, size: 56, color: Colors.white),
             ),
             const SizedBox(height: 20),
-            Text(title, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 1)),
+            Text(title, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700)),
             const SizedBox(height: 24),
             const Text('Pass the device to:', style: TextStyle(color: GpColors.muted, fontSize: 16)),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
               decoration: BoxDecoration(color: to.color, borderRadius: BorderRadius.circular(30)),
-              child: Text(to.name.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900)),
+              child: Text(to.name, style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w700)),
             ),
             const SizedBox(height: 20),
             Text('"$message"', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 15, fontStyle: FontStyle.italic)),

@@ -113,10 +113,10 @@ class SnakeDuelLogic extends LocalGameLogic {
 
 final snakeDuelInfo = LocalGameInfo(
   id: 'snake_duel',
-  title: 'Snake Duel',
+  title: 'Coil Clash',
   emoji: '🐍',
   color: const Color(0xFF00B894),
-  tagline: "Trap your rival, don't crash!",
+  tagline: "Trap your opponent without crashing",
   rules: const [
     'Your snake moves on its own and leaves a trail that never goes away.',
     'Tap ◀ or ▶ at your end to turn left or right.',
@@ -182,7 +182,7 @@ final snakeDuelInfo = LocalGameInfo(
           child: RotatedBox(quarterTurns: me == 1 ? 2 : 0, child: _Arena(players: players, g: g)),
         ),
       ),
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
       _Controls(player: players[me], index: me, g: g),
     ]),
   ),
@@ -192,7 +192,7 @@ final snakeDuelInfo = LocalGameInfo(
     builder: (context, g) => Column(children: [
       RotatedBox(quarterTurns: 2, child: _Controls(player: players[1], index: 1, g: g)),
       Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: _Arena(players: players, g: g))),
-      ScoreMiddleBar(players: players, scores: g.scores, label: 'FIRST TO ${g.target}'),
+      ScoreMiddleBar(players: players, scores: g.scores, label: 'First to ${g.target}'),
       _Controls(player: players[0], index: 0, g: g),
     ]),
   ),
@@ -217,17 +217,17 @@ class _Controls extends StatelessWidget {
               margin: const EdgeInsets.all(6),
               alignment: Alignment.center,
               decoration: BoxDecoration(color: player.color, borderRadius: BorderRadius.circular(20)),
-              child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w900)),
+              child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700)),
             ),
           ),
         );
     final status = g.roundWinner == null
-        ? player.name.toUpperCase()
+        ? player.name
         : g.roundWinner == -1
-            ? 'TIE!'
-            : (g.roundWinner == index ? 'YOU WIN THE ROUND!' : 'CRASH!');
+            ? 'Tie'
+            : (g.roundWinner == index ? 'You win the round' : 'Crash');
     return Column(children: [
-      Text(status, style: TextStyle(color: player.color, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+      Text(status, style: TextStyle(color: player.color, fontWeight: FontWeight.w700)),
       Row(children: [btn('◀', -1), btn('▶', 1)]),
     ]);
   }

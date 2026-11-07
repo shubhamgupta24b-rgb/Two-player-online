@@ -91,7 +91,7 @@ class ColourClashLogic extends LocalGameLogic {
     return cards;
   }
 
-  static String _colorName(ClashColor c) => c.name.toUpperCase();
+  static String _colorName(ClashColor c) => c.name[0].toUpperCase() + c.name.substring(1);
 
   ClashCard get top => discard.last;
   List<ClashCard> get hand => hands[turn];
@@ -177,7 +177,7 @@ class ColourClashLogic extends LocalGameLogic {
     final me = turn;
     if (hand.length == 1 && !calledOne) {
       _give(me, 2);
-      message = "Forgot to call ONE! +2 cards";
+      message = "Forgot to call One. +2 cards";
     } else {
       message = '';
     }
@@ -209,7 +209,7 @@ class ColourClashLogic extends LocalGameLogic {
     }
     final effect = switch (card.kind) {
       ClashKind.skip => 'Next player skipped',
-      ClashKind.reverse => players == 2 ? 'Reverse: same player again' : 'Direction reversed',
+      ClashKind.reverse => players == 2 ? 'Reverse. Same player again' : 'Direction reversed',
       ClashKind.drawTwo => 'Next player draws 2 and is skipped',
       ClashKind.wildFour => 'Next player draws 4 and is skipped. Colour: ${_colorName(color)}',
       ClashKind.wild => 'Colour is now ${_colorName(color)}',

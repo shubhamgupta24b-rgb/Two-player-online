@@ -1,125 +1,92 @@
 import 'package:flutter/material.dart';
-import 'app_flavor.dart';
 import 'app_theme_ext.dart';
 import 'party_logo.dart';
 
 export 'app_theme_ext.dart';
 export 'party_logo.dart';
 
-/// Colours taken from the app logo: deep navy, neon blue vs red, and gold.
-/// The flat app swaps the navy for board-game blues (sky background, dark-blue panels).
 /// Thin aliases to the design tokens (tokens.dart); new code reads `context.tk` instead.
 class AppColors {
-  static const navy = flatStyle ? FlatPalette.board : Brand.navy;
-  static const night = flatStyle ? Color(0xFF1D5276) : Brand.night;
-  static const deep = flatStyle ? Color(0xFF17435F) : Brand.deep;
+  static const navy = Brand.navy;
+  static const night = Brand.night;
+  static const deep = Brand.deep;
   static const blue = Brand.blue;
   static const red = Brand.red;
   static const gold = Brand.gold;
   static const purple = Brand.purple;
   static const green = Brand.green;
-  static const text = Colors.white;
-  static const muted = flatStyle ? Color(0xFFEAF4FB) : NeonPalette.textMuted;
-  static const glass = flatStyle ? Color(0x2EFFFFFF) : Color(0x1AFFFFFF);
-  static const stroke = flatStyle ? Color(0x4DFFFFFF) : NeonPalette.stroke;
+  static const text = NeonPalette.text;
+  static const muted = NeonPalette.textMuted;
+  static const glass = NeonPalette.surfaceStrong;
+  static const stroke = NeonPalette.stroke;
 }
 
-/// The token set for app screens in this build.
-final appTokens = flatStyle ? GameTokens.flatSet : GameTokens.neon;
+/// The token set app screens use when no theme says otherwise.
+final appTokens = GameTokens.neon;
 
-ThemeData buildAppTheme() {
-  final scheme = ColorScheme.fromSeed(seedColor: AppColors.purple, brightness: Brightness.dark).copyWith(
-    primary: AppColors.gold,
-    onPrimary: AppColors.night,
-    secondary: AppColors.blue,
-    surface: AppColors.night,
+/// The app theme. App screens follow the phone's light or dark setting.
+ThemeData buildAppTheme([Brightness brightness = Brightness.dark]) {
+  final dark = brightness == Brightness.dark;
+  final tk = dark ? GameTokens.neon : GameTokens.flatSet;
+  final scheme = ColorScheme.fromSeed(seedColor: Brand.gold, brightness: brightness).copyWith(
+    primary: Brand.gold,
+    onPrimary: Brand.onGold,
+    secondary: dark ? Brand.goldLine : Brand.goldDeep,
+    surface: tk.card,
+    onSurface: tk.text,
   );
   return ThemeData(
     useMaterial3: true,
+    brightness: brightness,
     fontFamily: Fonts.body,
     colorScheme: scheme,
-    extensions: [appTokens],
-    scaffoldBackgroundColor: AppColors.deep,
-    appBarTheme: const AppBarTheme(backgroundColor: AppColors.night, foregroundColor: Colors.white, centerTitle: true),
-    snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating, backgroundColor: AppColors.navy, contentTextStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-    dialogTheme: const DialogThemeData(backgroundColor: AppColors.night),
+    extensions: [tk],
+    scaffoldBackgroundColor: tk.bg,
+    appBarTheme: AppBarTheme(backgroundColor: tk.bg, foregroundColor: tk.onBg, centerTitle: true, elevation: 0),
+    snackBarTheme: SnackBarThemeData(behavior: SnackBarBehavior.floating, backgroundColor: tk.flat ? FlatPalette.strip : NeonPalette.cardRaised, contentTextStyle: const TextStyle(color: NeonPalette.text, fontWeight: FontWeight.w500)),
+    dialogTheme: DialogThemeData(backgroundColor: tk.card),
+    switchTheme: SwitchThemeData(
+      thumbColor: const WidgetStatePropertyAll(Colors.white),
+      trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+      trackColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? Brand.goldDeep : tk.text.withValues(alpha: 0.24)),
+    ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppColors.glass,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: AppColors.gold, width: 2)),
-      hintStyle: const TextStyle(color: Colors.white38),
+      fillColor: tk.flat ? FlatPalette.surface : NeonPalette.surfaceStrong,
+      border: OutlineInputBorder(borderRadius: Radii.rButton, borderSide: BorderSide(color: tk.stroke)),
+      enabledBorder: OutlineInputBorder(borderRadius: Radii.rButton, borderSide: BorderSide(color: tk.stroke)),
+      focusedBorder: OutlineInputBorder(borderRadius: Radii.rButton, borderSide: const BorderSide(color: Brand.gold, width: 2)),
+      hintStyle: TextStyle(color: tk.textMuted),
     ),
   );
 }
 
-/// Navy night background with soft blue and red glows, like the logo.
+/// The page surface: one calm neutral. Colour lives in the game previews.
 class AppBackground extends StatelessWidget {
   final Widget child;
   const AppBackground({super.key, required this.child});
   @override
-  Widget build(BuildContext context) => flatStyle ? FlatBackground(child: child) : DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, stops: [0, 0.45, 1], colors: [NeonPalette.bgTop, NeonPalette.bg, NeonPalette.bgBottom]),
-        ),
-        child: Stack(children: [
-          const Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _Glows()))),
-          Positioned.fill(child: child),
-        ]),
-      );
+  Widget build(BuildContext context) => ColoredBox(color: context.tk.bg, child: child);
 }
 
-class _Glows extends CustomPainter {
-  const _Glows();
-  @override
-  void paint(Canvas canvas, Size size) {
-    void glow(Offset c, double r, Color color) => canvas.drawCircle(
-        c, r, Paint()..shader = RadialGradient(colors: [color.withValues(alpha: 0.12), color.withValues(alpha: 0)]).createShader(Rect.fromCircle(center: c, radius: r)));
-    glow(Offset(-size.width * 0.1, size.height * 0.12), size.width * 0.7, AppColors.blue);
-    glow(Offset(size.width * 1.1, size.height * 0.35), size.width * 0.7, AppColors.red);
-    glow(Offset(size.width * 0.5, size.height * 1.05), size.width * 0.8, AppColors.purple);
-    // A few sparkles.
-    final dot = Paint()..color = Colors.white.withValues(alpha: 0.35);
-    for (final (x, y, r) in const [(0.12, 0.06, 1.6), (0.82, 0.1, 2.0), (0.6, 0.22, 1.2), (0.25, 0.42, 1.4), (0.9, 0.55, 1.8), (0.08, 0.75, 1.5), (0.7, 0.85, 1.3)]) {
-      canvas.drawCircle(Offset(size.width * x, size.height * y), r, dot);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// The app logo with a soft neon glow behind it.
+/// The app logo.
 class AppLogo extends StatelessWidget {
   final double size;
   const AppLogo({super.key, this.size = 180});
   @override
-  Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(color: AppColors.blue.withValues(alpha: 0.35), blurRadius: size * 0.3, offset: Offset(-size * 0.06, 0)),
-            BoxShadow(color: AppColors.red.withValues(alpha: 0.3), blurRadius: size * 0.3, offset: Offset(size * 0.06, 0)),
-          ],
-        ),
-        child: PartyLogoIcon(size: size),
-      );
+  Widget build(BuildContext context) => PartyLogoIcon(size: size);
 }
 
-/// Small caps heading for a section of a page.
+/// Heading for a section of a page.
 class SectionTitle extends StatelessWidget {
   final String text;
   final Widget? trailing;
   const SectionTitle(this.text, {super.key, this.trailing});
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 22, bottom: 10, left: 2),
+        padding: const EdgeInsets.only(top: 24, bottom: 8),
         child: Row(children: [
-          Container(width: 4, height: 16, decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(2))),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1.6))),
+          Expanded(child: Text(text, style: context.tk.styles.bodyStrong)),
           if (trailing != null) trailing!,
         ]),
       );
@@ -157,10 +124,10 @@ class _PressableCardState extends State<PressableCard> {
           transform: Matrix4.translationValues(0, _down ? 4 : 0, 0),
           padding: widget.padding,
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: widget.colors, begin: Alignment.topLeft, end: Alignment.bottomRight),
-            borderRadius: BorderRadius.circular(24),
+            color: widget.colors.first,
+            borderRadius: Radii.rLg,
             border: Border.all(color: AppColors.stroke),
-            boxShadow: [if (!_down) BoxShadow(color: shadow, offset: const Offset(0, 5))],
+            boxShadow: [if (!_down) BoxShadow(color: shadow, offset: const Offset(0, 3))],
           ),
           child: Opacity(opacity: enabled ? 1 : 0.55, child: widget.child),
         ),
